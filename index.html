@@ -853,66 +853,146 @@ function copyReport(){
 
 async function exportToSheets(){
   if(!gToken){ showToast('Conecte o Google primeiro'); return; }
-  showToast('⏳ Enviando para o Sheets...');
+  showToast('⏳ Criando planilha...');
 
-  // Monta linhas da planilha
-  const headers = ['Dia','Turno','Funcionário','Status','Detalhe','Data/Hora'];
-  const rows = [headers];
-  for(let d=0;d<6;d++){
-    TURNOS.forEach(t=> t.membros.forEach(m=>{
-      const isFolga = (FOLGAS[t.id]||{})[m]===DAYS[d];
-      if(isFolga){ rows.push([DAY_NAMES[d],t.label,m,'FOLGA','','']); return; }
-      const r=getRec(d,m);
-      const st = r.status ? STATUS.find(s=>s.id===r.status)?.label||r.status : 'Sem registro';
-      const ex=r.extra||{};
-      let det='';
-      if(r.status==='falta'&&ex.obs)                  det=`Medida: ${ex.obs}`;
-      if(r.status==='atestado'&&ex.ini)               det=`${ex.ini} a ${ex.fim||'?'} (${ex.dias||'?'} dias)`;
-      if(r.status==='troca-horario'&&(ex.ini||ex.fim)) det=`${ex.ini||'?'} às ${ex.fim||'?'}${ex.quem?' com '+ex.quem:''}`;
-      if(r.status==='troca-folga'&&ex.trab)           det=`Trab: ${ex.trab} Folga: ${ex.folga||'?'}`;
-      if(r.status==='medida')                         det=`${ex.motivo||''} ${ex.acao||''}`.trim();
-      const ts = r.ts ? new Date(r.ts).toLocaleString('pt-BR') : '';
-      rows.push([DAY_NAMES[d], t.label, m, st, det, ts]);
-    }));
-  }
+  const allMembers = [];
+  TURNOS.forEach(t=> t.membros.forEach(m=> allMembers.push({name:m, turno:t})));
+  allMembers.sort((a,b)=>a.name.localeCompare(b.name));
+
+  const today = new Date();
+  const mes = today.toLocaleString('pt-BR',{month:'long'}).toUpperCase();
+  const ano = today.getFullYear();
+  const dataAtual = today.toLocaleDateString('pt-BR');
+
+  // Segunda-feira da semana atual
+  const dow = today.getDay();
+  const diffToMon = dow===0?-6:1-dow;
+  const monday = new Date(today);
+  monday.setDate(today.getDate()+diffToMon);
+  const dayNums = Array.from({length:6},(_,i)=>{
+    const d2=new Date(monday); d2.setDate(monday.getDate()+i); return d2.getDate();
+  });
+
+  // A=Colaborador B=Funcao C=Periodo D-I=dias (9 colunas)
+  const TC = 9;
+  const rowInfo   = ['COCO BAMBU\nRESTAURANTE','','',`Atualizado: ${dataAtual}`,'','','Responsável: FELIPE H. COSTA','',''];
+  const rowEmpty  = Array(TC).fill('');
+  const rowTitulo = ['CONTROLE DE FREQUÊNCIA DO EFETIVO - '+ano,...Array(TC-1).fill('')];
+  const rowMes    = ['Mês:','Função:','PERIODO:', mes,'','','','',''];
+  const rowDias   = ['Colaborador:','','', ...dayNums.map(n=>String(n))];
+
+  const dataRows = allMembers.map(({name,turno})=>{
+    const row = [name, 'GARÇOM', turno.label];
+    for(let d=0;d<6;d++){
+      const isFolga=(FOLGAS[turno.id]||{})[name]===DAYS[d];
+      if(isFolga){row.push('FOLGA');continue;}
+      const r=getRec(d,name);
+      if(!r.status){row.push('-');continue;}
+      const map={presente:'OK',falta:'FALTA',atestado:'ATESTADO','troca-horario':'TROCA H.','troca-folga':'TROCA F.',medida:'MEDIDA'};
+      row.push(map[r.status]||'-');
+    }
+    return row;
+  });
+
+  const allRows=[rowInfo,rowEmpty,rowTitulo,rowMes,rowDias,...dataRows];
+  const numRows=allRows.length;
 
   try{
-    // Cria planilha nova
-    const title = `Presença Garçons - Semana ${new Date().toLocaleDateString('pt-BR')}`;
-    const createRes = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
+    const title=`Presença Garçons — ${mes} ${ano}`;
+    const createRes=await fetch('https://sheets.googleapis.com/v4/spreadsheets',{
       method:'POST',
       headers:{'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},
-      body: JSON.stringify({ properties:{title}, sheets:[{properties:{title:'Presença'}}] })
+      body:JSON.stringify({
+        properties:{title},
+        sheets:[{properties:{title:'Frequência',gridProperties:{frozenRowCount:5,frozenColumnCount:3}}}]
+      })
     });
-    const sheet = await createRes.json();
-    if(!sheet.spreadsheetId){ showToast('❌ Erro ao criar planilha'); return; }
+    const sheet=await createRes.json();
+    if(!sheet.spreadsheetId){showToast('❌ Erro ao criar planilha');return;}
+    const sid=sheet.spreadsheetId;
+    const sheetId=sheet.sheets[0].properties.sheetId;
 
-    // Insere dados
-    const range = `Presença!A1:F${rows.length}`;
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheet.spreadsheetId}/values/${range}?valueInputOption=RAW`, {
+    showToast('⏳ Inserindo dados...');
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}/values/Frequência!A1:I${numRows}?valueInputOption=RAW`,{
       method:'PUT',
       headers:{'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},
-      body: JSON.stringify({ values: rows })
+      body:JSON.stringify({values:allRows})
     });
 
-    // Formata cabeçalho
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheet.spreadsheetId}:batchUpdate`, {
+    showToast('⏳ Formatando...');
+    const rgb=(r,g,b)=>({red:r/255,green:g/255,blue:b/255});
+    const white=rgb(255,255,255),black=rgb(0,0,0);
+    const cocoBrown=rgb(101,53,28),cocoGold=rgb(207,160,60);
+    const headerYel=rgb(255,192,0),rowAlt=rgb(235,241,251);
+
+    const cr=(r1,r2,c1,c2,bg,fg,bold,sz,ha,wrap)=>({repeatCell:{
+      range:{sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2},
+      cell:{userEnteredFormat:{
+        backgroundColor:bg||white,
+        textFormat:{bold:!!bold,foregroundColor:fg||black,fontSize:sz||10},
+        horizontalAlignment:ha||'CENTER',verticalAlignment:'MIDDLE',
+        wrapStrategy:wrap?'WRAP':'OVERFLOW_CELL'
+      }},
+      fields:'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment,wrapStrategy)'
+    }});
+    const mg=(r1,r2,c1,c2)=>({mergeCells:{range:{sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2},mergeType:'MERGE_ALL'}});
+    const cw=(c1,c2,px)=>({updateDimensionProperties:{range:{sheetId,dimension:'COLUMNS',startIndex:c1,endIndex:c2},properties:{pixelSize:px},fields:'pixelSize'}});
+    const rh=(r,px)=>({updateDimensionProperties:{range:{sheetId,dimension:'ROWS',startIndex:r,endIndex:r+1},properties:{pixelSize:px},fields:'pixelSize'}});
+    const bd=(r1,r2,c1,c2)=>({updateBorders:{
+      range:{sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2},
+      top:{style:'SOLID',width:1,color:rgb(180,180,180)},bottom:{style:'SOLID',width:1,color:rgb(180,180,180)},
+      left:{style:'SOLID',width:1,color:rgb(180,180,180)},right:{style:'SOLID',width:1,color:rgb(180,180,180)},
+      innerHorizontal:{style:'SOLID',width:1,color:rgb(200,200,200)},innerVertical:{style:'SOLID',width:1,color:rgb(200,200,200)}
+    }});
+    const cf=(txt,bg,fg)=>({addConditionalFormatRule:{rule:{
+      ranges:[{sheetId,startRowIndex:5,endRowIndex:5+dataRows.length,startColumnIndex:3,endColumnIndex:9}],
+      booleanRule:{condition:{type:'TEXT_EQ',values:[{userEnteredValue:txt}]},format:{backgroundColor:bg,textFormat:{bold:true,foregroundColor:fg}}}
+    },index:0}});
+
+    const requests=[
+      cw(0,1,200),cw(1,2,110),cw(2,3,100),cw(3,9,65),
+      rh(0,70),rh(1,6),rh(2,30),rh(3,26),rh(4,26),
+      mg(0,2,0,3),mg(0,1,3,6),mg(0,1,6,9),
+      mg(2,3,0,9),
+      mg(3,4,3,9),
+      // Topo
+      cr(0,2,0,3,cocoBrown,white,true,13,'CENTER',true),
+      cr(0,1,3,6,rgb(245,245,245),rgb(100,100,100),false,9,'RIGHT'),
+      cr(0,1,6,9,rgb(245,245,245),cocoBrown,true,10,'RIGHT'),
+      // Título
+      cr(2,3,0,9,cocoGold,white,true,13,'CENTER'),
+      // Cabeçalho mês (amarelo)
+      cr(3,4,0,3,headerYel,black,true,11,'CENTER'),
+      cr(3,4,3,9,headerYel,black,true,13,'CENTER'),
+      // Subheader dias (marrom)
+      cr(4,5,0,3,cocoBrown,white,true,11,'CENTER'),
+      cr(4,5,3,9,cocoBrown,white,true,12,'CENTER'),
+      // Linhas alternadas
+      ...dataRows.map((_,i)=>cr(5+i,6+i,0,3,i%2===0?rowAlt:white,black,false,10,'CENTER')),
+      ...dataRows.map((_,i)=>cr(5+i,6+i,3,9,i%2===0?rowAlt:white,black,false,10,'CENTER')),
+      bd(3,5+dataRows.length,0,9),
+      // Formatação condicional
+      cf('OK',      rgb(0,176,80),   white),
+      cf('FALTA',   rgb(255,199,206),rgb(156,0,6)),
+      cf('ATESTADO',rgb(255,235,156),rgb(156,87,0)),
+      cf('FOLGA',   rgb(217,217,217),rgb(80,80,80)),
+      cf('TROCA H.',rgb(189,215,238),rgb(0,70,127)),
+      cf('TROCA F.',rgb(218,190,255),rgb(80,0,160)),
+      cf('MEDIDA',  rgb(255,180,220),rgb(160,0,80)),
+    ];
+
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}:batchUpdate`,{
       method:'POST',
       headers:{'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},
-      body: JSON.stringify({ requests:[{
-        repeatCell:{
-          range:{sheetId:0,startRowIndex:0,endRowIndex:1},
-          cell:{ userEnteredFormat:{ backgroundColor:{red:.18,green:.27,blue:.44}, textFormat:{bold:true,foregroundColor:{red:1,green:1,blue:1}} } },
-          fields:'userEnteredFormat(backgroundColor,textFormat)'
-        }
-      }]})
+      body:JSON.stringify({requests})
     });
 
-    save('last_sheet_id', sheet.spreadsheetId);
+    save('last_sheet_id',sid);
     showToast('✅ Planilha salva no Google Drive!');
-    setTimeout(()=>{ window.open(`https://docs.google.com/spreadsheets/d/${sheet.spreadsheetId}`, '_blank'); }, 1500);
-  } catch(e){
-    showToast('❌ Erro ao exportar. Tente novamente.');
+    setTimeout(()=>{window.open(`https://docs.google.com/spreadsheets/d/${sid}`,'_blank');},1500);
+  }catch(e){
+    console.error(e);
+    showToast('❌ Erro ao exportar. Verifique o console.');
   }
 }
 

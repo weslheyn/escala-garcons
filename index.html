@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Presença — Garçons</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Barlow:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg: #10121a;
+  --s1: #181b24;
+  --s2: #1f2330;
+  --s3: #272c3a;
+  --border: #2d3346;
+  --accent: #f5c842;
+  --green: #27ae60;
+  --red: #e74c3c;
+  --blue: #2980b9;
+  --orange: #d35400;
+  --purple: #8e44ad;
+  --pink: #e84393;
+  --muted: #6b7591;
+  --text: #e8eaf2;
+  --sub: #8891a8;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+
+body{
+  font-family:'Barlow',sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;max-width:480px;margin:0 auto;
+  padding-bottom:80px;
+}
+
+.header{
+  background:var(--s1);
+  border-bottom:2.5px solid var(--accent);
+  padding:14px 16px 10px;
+  position:sticky;top:0;z-index:300;
+}
+.hrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.app-title{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:21px;font-weight:800;letter-spacing:.3px;line-height:1
+}
+.app-title em{color:var(--accent);font-style:normal}
+.total-pill{
+  background:var(--accent);color:#111;
+  font-size:11px;font-weight:700;
+  padding:4px 11px;border-radius:20px;
+  font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px
+}
+
+.day-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.day-tabs::-webkit-scrollbar{display:none}
+.dtab{
+  flex-shrink:0;padding:6px 14px;border-radius:20px;
+  border:1.5px solid var(--border);background:transparent;
+  color:var(--muted);font-size:12px;font-weight:600;
+  font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;
+  cursor:pointer;transition:all .18s;white-space:nowrap
+}
+.dtab.active{background:var(--accent);color:#111;border-color:var(--accent)}
+
+.date-bar{
+  background:var(--s2);padding:8px 16px;
+  font-size:12px;color:var(--sub);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between
+}
+.date-bar strong{color:var(--text);font-size:13px}
+
+.summary{
+  display:flex;gap:8px;padding:12px 16px;
+  overflow-x:auto;scrollbar-width:none;
+  border-bottom:1px solid var(--border)
+}
+.summary::-webkit-scrollbar{display:none}
+.scard{
+  flex-shrink:0;background:var(--s2);border-radius:10px;
+  padding:8px 12px;min-width:60px;text-align:center;
+  border:1px solid var(--border)
+}
+.scard-num{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800}
+.scard-lbl{font-size:9px;color:var(--sub);font-weight:500;margin-top:1px;text-transform:uppercase;letter-spacing:.8px}
+.c-green{color:var(--green)}
+.c-red{color:var(--red)}
+.c-blue{color:var(--blue)}
+.c-orange{color:var(--orange)}
+.c-purple{color:var(--purple)}
+.c-pink{color:var(--pink)}
+
+.section{margin:14px 0 0}
+.sec-header{
+  display:flex;align-items:center;gap:8px;
+  padding:0 16px 8px;
+}
+.sec-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.sec-title{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:15px;font-weight:700;letter-spacing:.8px;text-transform:uppercase
+}
+.sec-time{
+  margin-left:auto;font-size:11px;color:var(--sub);
+  background:var(--s2);padding:3px 8px;border-radius:10px;
+  border:1px solid var(--border)
+}
+
+.emp-list{display:flex;flex-direction:column;padding:0 16px;gap:8px}
+
+.emp-card{
+  background:var(--s2);border-radius:12px;
+  padding:12px 14px;
+  border:1px solid var(--border);
+  transition:all .15s;
+}
+.emp-card.has-status{border-left:3px solid transparent}
+.emp-card.st-presente{border-left-color:var(--green)}
+.emp-card.st-falta{border-left-color:var(--red)}
+.emp-card.st-atestado{border-left-color:var(--blue)}
+.emp-card.st-troca-horario{border-left-color:var(--orange)}
+.emp-card.st-troca-folga{border-left-color:var(--purple)}
+.emp-card.st-medida{border-left-color:var(--pink)}
+
+.emp-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.emp-name{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;letter-spacing:.3px}
+.emp-status-badge{
+  font-size:10px;font-weight:600;padding:3px 9px;border-radius:12px;
+  text-transform:uppercase;letter-spacing:.5px;font-family:'Barlow Condensed',sans-serif
+}
+.badge-presente{background:#27ae6022;color:var(--green);border:1px solid #27ae6055}
+.badge-falta{background:#e74c3c22;color:var(--red);border:1px solid #e74c3c55}
+.badge-atestado{background:#2980b922;color:var(--blue);border:1px solid #2980b955}
+.badge-troca-horario{background:#d3540022;color:var(--orange);border:1px solid #d3540055}
+.badge-troca-folga{background:#8e44ad22;color:var(--purple);border:1px solid #8e44ad55}
+.badge-medida{background:#e8439322;color:var(--pink);border:1px solid #e8439355}
+.badge-vazio{background:var(--s3);color:var(--muted);border:1px solid var(--border)}
+
+.status-btns{display:flex;flex-wrap:wrap;gap:6px}
+.sbtn{
+  flex:1;min-width:calc(33% - 4px);
+  padding:8px 4px;border-radius:9px;border:1.5px solid var(--border);
+  background:var(--s3);color:var(--sub);
+  font-size:11px;font-weight:600;cursor:pointer;
+  font-family:'Barlow',sans-serif;
+  transition:all .15s;text-align:center;line-height:1.3
+}
+.sbtn:active{transform:scale(.96)}
+.sbtn.sel-presente{background:#27ae6022;border-color:var(--green);color:var(--green)}
+.sbtn.sel-falta{background:#e74c3c22;border-color:var(--red);color:var(--red)}
+.sbtn.sel-atestado{background:#2980b922;border-color:var(--blue);color:var(--blue)}
+.sbtn.sel-troca-horario{background:#d3540022;border-color:var(--orange);color:var(--orange)}
+.sbtn.sel-troca-folga{background:#8e44ad22;border-color:var(--purple);color:var(--purple)}
+.sbtn.sel-medida{background:#e8439322;border-color:var(--pink);color:var(--pink)}
+
+.extra-fields{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.field-label{font-size:11px;color:var(--sub);font-weight:500;margin-bottom:3px;display:block}
+.field-input{
+  width:100%;background:var(--s1);border:1.5px solid var(--border);
+  border-radius:8px;padding:9px 12px;color:var(--text);
+  font-size:13px;font-family:'Barlow',sans-serif;
+  outline:none;transition:border-color .15s
+}
+.field-input:focus{border-color:var(--accent)}
+.field-row{display:flex;gap:8px}
+.field-row .field-wrap{flex:1}
+.field-wrap{width:100%}
+
+.save-btn{
+  width:100%;margin-top:4px;padding:10px;
+  background:var(--accent);color:#111;
+  border:none;border-radius:9px;font-size:14px;font-weight:700;
+  font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;
+  cursor:pointer;transition:all .15s
+}
+.save-btn:active{transform:scale(.97);opacity:.9}
+
+.saved-info{
+  margin-top:8px;padding:8px 10px;background:var(--s1);
+  border-radius:8px;border:1px solid var(--border);
+  font-size:11px;color:var(--sub);line-height:1.6
+}
+
+.slide-panel{
+  position:fixed;top:0;right:-100%;width:100%;max-width:480px;
+  height:100%;background:var(--bg);z-index:500;
+  transition:right .3s cubic-bezier(.4,0,.2,1);
+  overflow-y:auto;
+}
+.slide-panel.open{right:0}
+
+.panel-header{
+  background:var(--s1);border-bottom:2px solid var(--accent);
+  padding:16px;position:sticky;top:0;z-index:10;
+  display:flex;align-items:center;gap:12px
+}
+.panel-back{
+  background:none;border:none;color:var(--accent);
+  font-size:24px;cursor:pointer;padding:0;line-height:1
+}
+.panel-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800}
+
+.hist-entry{
+  margin:8px 16px;background:var(--s2);border-radius:12px;
+  padding:12px 14px;border:1px solid var(--border)
+}
+.hist-entry-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.hist-entry-name{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700}
+.hist-entry-sub{font-size:11px;color:var(--sub);margin-top:2px}
+
+.filter-row{
+  display:flex;gap:6px;padding:10px 16px;
+  overflow-x:auto;scrollbar-width:none;
+  border-bottom:1px solid var(--border)
+}
+.filter-row::-webkit-scrollbar{display:none}
+.fbtn{
+  flex-shrink:0;padding:5px 12px;border-radius:16px;
+  border:1.5px solid var(--border);background:transparent;
+  color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;
+  font-family:'Barlow Condensed',sans-serif;
+  transition:all .15s
+}
+.fbtn.active{background:var(--s3);border-color:var(--accent);color:var(--accent)}
+
+.bottom-nav{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;
+  background:var(--s1);border-top:1px solid var(--border);
+  display:flex;z-index:200
+}
+.bnav-btn{
+  flex:1;padding:12px 4px;background:none;border:none;
+  color:var(--muted);font-size:10px;font-weight:600;
+  font-family:'Barlow',sans-serif;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  transition:color .15s
+}
+.bnav-btn.active{color:var(--accent)}
+.bnav-icon{font-size:20px;line-height:1}
+
+.export-card{
+  background:var(--s2);border-radius:12px;padding:14px;
+  border:1px solid var(--border);margin-bottom:10px
+}
+.export-card h3{font-family:'Barlow Condensed',sans-serif;font-size:15px;margin-bottom:10px;color:var(--accent)}
+.export-btn{
+  width:100%;padding:11px 14px;background:var(--s3);
+  border:1.5px solid var(--border);border-radius:9px;
+  color:var(--text);font-size:13px;font-weight:600;
+  font-family:'Barlow',sans-serif;cursor:pointer;margin-bottom:6px;
+  transition:all .15s;text-align:left;display:block
+}
+.export-btn:active{background:var(--border)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+
+.toast{
+  position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--accent);color:#111;
+  padding:9px 20px;border-radius:20px;
+  font-size:13px;font-weight:700;font-family:'Barlow Condensed',sans-serif;
+  opacity:0;transition:all .3s;z-index:1000;white-space:nowrap;pointer-events:none
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
+.sec-spacer{height:8px}
+.day-group-label{
+  padding:10px 16px 4px;
+  font-size:11px;color:var(--sub);font-weight:700;
+  text-transform:uppercase;letter-spacing:1px
+}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="hrow">
+    <div class="app-title">ESCALA <em>GARÇONS</em></div>
+    <div class="total-pill">16 TOTAL</div>
+  </div>
+  <div class="day-tabs" id="dayTabs"></div>
+</div>
+
+<!-- DATE + PRESENT COUNT -->
+<div class="date-bar">
+  <span id="dateLabel">—</span>
+  <strong id="presentCount">0 presentes</strong>
+</div>
+
+<!-- SUMMARY -->
+<div class="summary" id="summary"></div>
+
+<!-- MAIN -->
+<div id="mainContent"></div>
+
+<!-- HISTORY PANEL -->
+<div class="slide-panel" id="histPanel">
+  <div class="panel-header">
+    <button class="panel-back" onclick="closePanel('histPanel')">←</button>
+    <div class="panel-title">HISTÓRICO</div>
+  </div>
+  <div class="filter-row" id="histFilter"></div>
+  <div id="histContent"></div>
+</div>
+
+<!-- REPORT PANEL -->
+<div class="slide-panel" id="reportPanel">
+  <div class="panel-header">
+    <button class="panel-back" onclick="closePanel('reportPanel')">←</button>
+    <div class="panel-title">RELATÓRIO</div>
+  </div>
+  <div style="padding:16px" id="reportContent"></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="bnav-btn active" id="navEscala" onclick="showEscala()">
+    <span class="bnav-icon">📋</span>Escala
+  </button>
+  <button class="bnav-btn" id="navHist" onclick="openHist()">
+    <span class="bnav-icon">🕐</span>Histórico
+  </button>
+  <button class="bnav-btn" id="navRel" onclick="openReport()">
+    <span class="bnav-icon">📊</span>Relatório
+  </button>
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────
+const DAYS = ['SEG','TER','QUA','QUI','SEX','SAB'];
+const DAY_NAMES = ['Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+
+const TURNOS = [
+  {
+    id:'abertura', label:'ABERTURA', color:'#f5c842',
+    horario:'08:00 às 16:20',
+    membros:['RICKSON','SAMUEL','WILLIAM']
+  },
+  {
+    id:'intercalado', label:'INTERCALADO', color:'#3498db',
+    horario:'11:00 às 22:20',
+    membros:['CAMILA','ALEXANDRE','FABIELLY','ANA LUCIA','FABRICIA','ANDRE','MARINA','KAIAN']
+  },
+  {
+    id:'fechamento', label:'FECHAMENTO', color:'#e74c3c',
+    horario:'16:00 às 0:20',
+    membros:['SARA','MIGUEL','JADSON','LUIZ','KLEBER']
+  }
+];
+
+// Folgas padrão por turno (X na escala original)
+const FOLGAS = {
+  abertura:   { RICKSON:'SEG', SAMUEL:'QUA', WILLIAM:'QUA' },
+  intercalado:{ CAMILA:'SEG', ALEXANDRE:'TER', FABIELLY:'TER', 'ANA LUCIA':'TER',
+                FABRICIA:'TER', ANDRE:'QUA', MARINA:'QUI', KAIAN:'QUI' },
+  fechamento: { SARA:'SEG', MIGUEL:'TER', JADSON:'TER' }
+};
+
+const STATUS = [
+  {id:'presente',      emoji:'✅', label:'Presente',        color:'#27ae60'},
+  {id:'falta',         emoji:'❌', label:'Falta',            color:'#e74c3c'},
+  {id:'atestado',      emoji:'🏥', label:'Atestado',         color:'#2980b9'},
+  {id:'troca-horario', emoji:'🔄', label:'Troca Horário',   color:'#d35400'},
+  {id:'troca-folga',   emoji:'📅', label:'Troca Folga',     color:'#8e44ad'},
+  {id:'medida',        emoji:'⚠️', label:'Medida Discipl.', color:'#e84393'},
+];
+
+const SK = 'gp3_';
+const save = (k,v) => localStorage.setItem(SK+k, JSON.stringify(v));
+const load = (k) => { try{ const v=localStorage.getItem(SK+k); return v?JSON.parse(v):null }catch{return null} };
+
+let curDay = (() => {
+  const map={1:0,2:1,3:2,4:3,5:4,6:5};
+  return map[new Date().getDay()] ?? 0;
+})();
+
+// ─── RECORDS ─────────────────────────────────────────
+function getRec(day, name){ return load(`${day}_${name}`) || {status:'', extra:{}} }
+function setRec(day, name, status, extra){ save(`${day}_${name}`, {status, extra, ts:Date.now()}) }
+
+// ─── BUILD TABS ───────────────────────────────────────
+function buildTabs(){
+  document.getElementById('dayTabs').innerHTML = DAYS.map((d,i)=>
+    `<button class="dtab${i===curDay?' active':''}" onclick="setDay(${i})">${d}</button>`
+  ).join('');
+}
+
+function setDay(i){ curDay=i; buildTabs(); buildMain(); }
+
+// ─── SUMMARY ─────────────────────────────────────────
+function buildSummary(){
+  const cnt={presente:0,falta:0,atestado:0,'troca-horario':0,'troca-folga':0,medida:0};
+  TURNOS.forEach(t=> t.membros.forEach(m=>{ const r=getRec(curDay,m); if(r.status) cnt[r.status]=(cnt[r.status]||0)+1; }));
+  document.getElementById('presentCount').textContent = `${cnt.presente} presentes`;
+  document.getElementById('summary').innerHTML = `
+    <div class="scard"><div class="scard-num c-green">${cnt.presente}</div><div class="scard-lbl">Presente</div></div>
+    <div class="scard"><div class="scard-num c-red">${cnt.falta}</div><div class="scard-lbl">Falta</div></div>
+    <div class="scard"><div class="scard-num c-blue">${cnt.atestado}</div><div class="scard-lbl">Atestado</div></div>
+    <div class="scard"><div class="scard-num c-orange">${cnt['troca-horario']}</div><div class="scard-lbl">Troca H.</div></div>
+    <div class="scard"><div class="scard-num c-purple">${cnt['troca-folga']}</div><div class="scard-lbl">Troca F.</div></div>
+    <div class="scard"><div class="scard-num c-pink">${cnt.medida}</div><div class="scard-lbl">Discipl.</div></div>
+  `;
+}
+
+// ─── MAIN ─────────────────────────────────────────────
+function buildMain(){
+  document.getElementById('dateLabel').textContent = DAY_NAMES[curDay];
+  buildSummary();
+  document.getElementById('mainContent').innerHTML =
+    TURNOS.map(t => buildTurno(t)).join('<div class="sec-spacer"></div>');
+}
+
+function buildTurno(t){
+  const isFolga = m => (FOLGAS[t.id]||{})[m] === DAYS[curDay];
+  const cards = t.membros.map(m => isFolga(m) ? buildFolgaCard(m) : buildCard(m, t.id)).join('');
+  return `<div class="section">
+    <div class="sec-header">
+      <div class="sec-dot" style="background:${t.color}"></div>
+      <div class="sec-title" style="color:${t.color}">${t.label}</div>
+      <div class="sec-time">${t.horario}</div>
+    </div>
+    <div class="emp-list">${cards}</div>
+  </div>`;
+}
+
+function buildFolgaCard(name){
+  return `<div class="emp-card" style="opacity:.4">
+    <div class="emp-top">
+      <div class="emp-name">${name}</div>
+      <span class="emp-status-badge badge-vazio">📆 FOLGA</span>
+    </div>
+  </div>`;
+}
+
+function buildCard(name, turnoId){
+  const r = getRec(curDay, name);
+  const st = r.status;
+  const stObj = STATUS.find(s=>s.id===st);
+  const badgeTxt = stObj ? `${stObj.emoji} ${stObj.label.toUpperCase()}` : 'SEM REGISTRO';
+  const badgeCls = st ? `badge-${st}` : 'badge-vazio';
+  const cardCls = st ? `has-status st-${st}` : '';
+
+  const btns = STATUS.map(s=>
+    `<button class="sbtn${st===s.id?` sel-${s.id}`:''}"
+      onclick="selectStatus('${name}','${turnoId}','${s.id}')">
+      ${s.emoji}<br><span style="font-size:10px">${s.label}</span>
+    </button>`
+  ).join('');
+
+  return `<div class="emp-card ${cardCls}" id="card_${eid(name)}">
+    <div class="emp-top">
+      <div class="emp-name">${name}</div>
+      <span class="emp-status-badge ${badgeCls}">${badgeTxt}</span>
+    </div>
+    <div class="status-btns">${btns}</div>
+    ${buildExtra(name, turnoId, st, r.extra||{})}
+    ${buildSavedInfo(st, r.extra||{})}
+  </div>`;
+}
+
+const eid = n => n.replace(/ /g,'_');
+
+// ─── EXTRA FIELDS ────────────────────────────────────
+function buildExtra(name, turnoId, st, ex){
+  const id = eid(name);
+  if(!st || st==='presente') return '';
+
+  if(st==='falta') return `<div class="extra-fields">
+    <div class="field-wrap">
+      <span class="field-label">⚠️ Medida disciplinar (opcional)</span>
+      <input class="field-input" id="f_falta_${id}" placeholder="Ex: Advertência verbal, escrita, suspensão..." value="${ex.obs||''}">
+    </div>
+    <button class="save-btn" onclick="saveRec('${name}','${turnoId}','${st}')">💾 SALVAR</button>
+  </div>`;
+
+  if(st==='atestado') return `<div class="extra-fields">
+    <div class="field-row">
+      <div class="field-wrap">
+        <span class="field-label">📅 Início do atestado</span>
+        <input class="field-input" type="date" id="f_at_ini_${id}" value="${ex.ini||''}">
+      </div>
+      <div class="field-wrap">
+        <span class="field-label">📅 Fim do atestado</span>
+        <input class="field-input" type="date" id="f_at_fim_${id}" value="${ex.fim||''}">
+      </div>
+    </div>
+    <div class="field-wrap">
+      <span class="field-label">🔢 Quantidade de dias</span>
+      <input class="field-input" type="number" min="1" id="f_at_dias_${id}" placeholder="Ex: 3" value="${ex.dias||''}">
+    </div>
+    <div class="field-wrap">
+      <span class="field-label">📝 Observação (CID, motivo...)</span>
+      <input class="field-input" id="f_at_obs_${id}" placeholder="Opcional" value="${ex.obs||''}">
+    </div>
+    <button class="save-btn" onclick="saveRec('${name}','${turnoId}','${st}')">💾 SALVAR</button>
+  </div>`;
+
+  if(st==='troca-horario') return `<div class="extra-fields">
+    <div class="field-row">
+      <div class="field-wrap">
+        <span class="field-label">🕐 Novo horário início</span>
+        <input class="field-input" type="time" id="f_thi_${id}" value="${ex.ini||''}">
+      </div>
+      <div class="field-wrap">
+        <span class="field-label">🕐 Novo horário fim</span>
+        <input class="field-input" type="time" id="f_thf_${id}" value="${ex.fim||''}">
+      </div>
+    </div>
+    <div class="field-wrap">
+      <span class="field-label">👤 Trocou turno com (opcional)</span>
+      <input class="field-input" id="f_th_quem_${id}" placeholder="Nome do colega" value="${ex.quem||''}">
+    </div>
+    <div class="field-wrap">
+      <span class="field-label">📝 Observação</span>
+      <input class="field-input" id="f_th_obs_${id}" placeholder="Motivo da troca..." value="${ex.obs||''}">
+    </div>
+    <button class="save-btn" onclick="saveRec('${name}','${turnoId}','${st}')">💾 SALVAR</button>
+  </div>`;
+
+  if(st==='troca-folga') return `<div class="extra-fields">
+    <div class="field-row">
+      <div class="field-wrap">
+        <span class="field-label">📆 Vai trabalhar em</span>
+        <select class="field-input" id="f_tf_trab_${id}">
+          ${DAYS.map(d=>`<option value="${d}" ${ex.trab===d?'selected':''}>${d}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field-wrap">
+        <span class="field-label">📆 Vai folgar em</span>
+        <select class="field-input" id="f_tf_folga_${id}">
+          ${DAYS.map(d=>`<option value="${d}" ${ex.folga===d?'selected':''}>${d}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="field-wrap">
+      <span class="field-label">👤 Trocou folga com (opcional)</span>
+      <input class="field-input" id="f_tf_quem_${id}" placeholder="Nome do colega" value="${ex.quem||''}">
+    </div>
+    <button class="save-btn" onclick="saveRec('${name}','${turnoId}','${st}')">💾 SALVAR</button>
+  </div>`;
+
+  if(st==='medida') return `<div class="extra-fields">
+    <div class="field-wrap">
+      <span class="field-label">❌ Motivo / descrição da ocorrência</span>
+      <input class="field-input" id="f_med_mot_${id}" placeholder="Descreva o que aconteceu..." value="${ex.motivo||''}">
+    </div>
+    <div class="field-wrap">
+      <span class="field-label">⚠️ Medida disciplinar tomada</span>
+      <input class="field-input" id="f_med_acao_${id}" placeholder="Ex: Advertência verbal, escrita, suspensão 1 dia..." value="${ex.acao||''}">
+    </div>
+    <div class="field-wrap">
+      <span class="field-label">👤 Registrado por (gestor/supervisor)</span>
+      <input class="field-input" id="f_med_resp_${id}" placeholder="Nome de quem registrou" value="${ex.resp||''}">
+    </div>
+    <button class="save-btn" onclick="saveRec('${name}','${turnoId}','${st}')">💾 SALVAR</button>
+  </div>`;
+
+  return '';
+}
+
+function buildSavedInfo(st, ex){
+  if(!st || st==='presente' || !Object.keys(ex).length) return '';
+  let lines = [];
+  if(st==='falta' && ex.obs) lines.push(`⚠️ ${ex.obs}`);
+  if(st==='atestado'){
+    if(ex.ini||ex.fim) lines.push(`📅 ${ex.ini||'?'} até ${ex.fim||'?'}`);
+    if(ex.dias) lines.push(`🔢 ${ex.dias} dia(s)`);
+    if(ex.obs) lines.push(`📝 ${ex.obs}`);
+  }
+  if(st==='troca-horario'){
+    if(ex.ini||ex.fim) lines.push(`🕐 ${ex.ini||'?'} às ${ex.fim||'?'}`);
+    if(ex.quem) lines.push(`👤 Com: ${ex.quem}`);
+    if(ex.obs) lines.push(`📝 ${ex.obs}`);
+  }
+  if(st==='troca-folga'){
+    if(ex.trab||ex.folga) lines.push(`📆 Trabalha: ${ex.trab||'?'} | Folga: ${ex.folga||'?'}`);
+    if(ex.quem) lines.push(`👤 Com: ${ex.quem}`);
+  }
+  if(st==='medida'){
+    if(ex.motivo) lines.push(`❌ ${ex.motivo}`);
+    if(ex.acao) lines.push(`⚠️ ${ex.acao}`);
+    if(ex.resp) lines.push(`👤 Por: ${ex.resp}`);
+  }
+  if(!lines.length) return '';
+  return `<div class="saved-info">${lines.map(l=>`<div>${l}</div>`).join('')}</div>`;
+}
+
+// ─── ACTIONS ─────────────────────────────────────────
+function selectStatus(name, turnoId, newSt){
+  const r = getRec(curDay, name);
+  const status = r.status === newSt ? '' : newSt;
+  if(status === '' || status === 'presente'){
+    setRec(curDay, name, status, {});
+    showToast(status==='presente' ? '✅ Presente registrado!' : 'Registro removido');
+  } else {
+    setRec(curDay, name, status, r.extra||{});
+  }
+  buildMain();
+}
+
+function saveRec(name, turnoId, st){
+  const id = eid(name);
+  let ex = {};
+  const v = sel => document.getElementById(sel)?.value || '';
+
+  if(st==='falta')         { ex.obs = v(`f_falta_${id}`); }
+  if(st==='atestado')      { ex.ini=v(`f_at_ini_${id}`); ex.fim=v(`f_at_fim_${id}`); ex.dias=v(`f_at_dias_${id}`); ex.obs=v(`f_at_obs_${id}`); }
+  if(st==='troca-horario') { ex.ini=v(`f_thi_${id}`); ex.fim=v(`f_thf_${id}`); ex.quem=v(`f_th_quem_${id}`); ex.obs=v(`f_th_obs_${id}`); }
+  if(st==='troca-folga')   { ex.trab=v(`f_tf_trab_${id}`); ex.folga=v(`f_tf_folga_${id}`); ex.quem=v(`f_tf_quem_${id}`); }
+  if(st==='medida')        { ex.motivo=v(`f_med_mot_${id}`); ex.acao=v(`f_med_acao_${id}`); ex.resp=v(`f_med_resp_${id}`); }
+
+  setRec(curDay, name, st, ex);
+  showToast('💾 Salvo!');
+  buildMain();
+}
+
+// ─── HISTORY ─────────────────────────────────────────
+function openHist(){ buildHist('all'); openPanel('histPanel'); }
+
+function buildHist(filter){
+  const filters = [{id:'all',label:'Todos'}, ...STATUS.map(s=>({id:s.id,label:`${s.emoji} ${s.label}`}))];
+  document.getElementById('histFilter').innerHTML = filters.map(f=>
+    `<button class="fbtn${filter===f.id?' active':''}" onclick="buildHist('${f.id}')">${f.label}</button>`
+  ).join('');
+
+  const entries = [];
+  for(let d=0;d<6;d++){
+    TURNOS.forEach(t=> t.membros.forEach(m=>{
+      const r = getRec(d,m);
+      if(r.status && (filter==='all'||filter===r.status)){
+        entries.push({d,m,t,r});
+      }
+    }));
+  }
+
+  if(!entries.length){
+    document.getElementById('histContent').innerHTML = '<div class="empty">Nenhum registro encontrado.</div>';
+    return;
+  }
+
+  const byDay = {};
+  entries.forEach(e=>{ (byDay[e.d]||(byDay[e.d]=[])).push(e); });
+
+  let html = '';
+  Object.keys(byDay).sort((a,b)=>a-b).forEach(d=>{
+    html += `<div class="day-group-label">${DAY_NAMES[d]}</div>`;
+    byDay[d].forEach(e=>{
+      const stObj = STATUS.find(s=>s.id===e.r.status);
+      html += `<div class="hist-entry" style="border-left:3px solid ${stObj?.color||'var(--border)'}">
+        <div class="hist-entry-top">
+          <div class="hist-entry-name">${e.m}</div>
+          <span class="emp-status-badge badge-${e.r.status}">${stObj?.emoji} ${stObj?.label?.toUpperCase()}</span>
+        </div>
+        <div class="hist-entry-sub">${e.t.label} · ${e.t.horario}</div>
+        ${buildSavedInfo(e.r.status, e.r.extra||{})}
+      </div>`;
+    });
+  });
+  document.getElementById('histContent').innerHTML = html;
+}
+
+// ─── GOOGLE AUTH ─────────────────────────────────────
+const GCLIENT_ID = '497562767891-ri2j7ijd4033d5ubeov91puhgq7ib6ic.apps.googleusercontent.com';
+const GSCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
+let gToken = null;
+
+function gLogin(){
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: GCLIENT_ID,
+    scope: GSCOPES,
+    callback: (resp) => {
+      if(resp.error){ showToast('❌ Erro no login Google'); return; }
+      gToken = resp.access_token;
+      save('gtoken_exp', Date.now() + (resp.expires_in*1000));
+      showToast('✅ Conectado ao Google!');
+      buildReport(window._reportPeriod||'semana');
+    }
+  });
+  client.requestAccessToken();
+}
+
+function gLogout(){
+  gToken = null;
+  localStorage.removeItem(SK+'gtoken_exp');
+  showToast('Desconectado do Google');
+  buildReport(window._reportPeriod||'semana');
+}
+
+// ─── REPORT ──────────────────────────────────────────
+let _reportPeriod = 'semana';
+function openReport(){ buildReport(_reportPeriod); openPanel('reportPanel'); }
+
+function buildDayReport(d){
+  const isFolga = (tid,m) => (FOLGAS[tid]||{})[m]===DAYS[d];
+  const grupos = { presente:[], falta:[], atestado:[], 'troca-horario':[], 'troca-folga':[], medida:[], folga:[], sem:[] };
+  const detalhes = {};
+
+  TURNOS.forEach(t=> t.membros.forEach(m=>{
+    if(isFolga(t.id,m)){ grupos.folga.push(`${m}`); return; }
+    const r=getRec(d,m);
+    const st = r.status||'sem';
+    (grupos[st]||(grupos[st]=[])).push(m);
+    if(r.status && r.status!=='presente'){
+      const ex=r.extra||{};
+      let det='';
+      if(st==='falta'&&ex.obs)                  det=`   ⚠️ Medida: ${ex.obs}`;
+      if(st==='atestado'&&ex.ini)               det=`   📅 ${ex.ini} a ${ex.fim||'?'} (${ex.dias||'?'} dia(s))${ex.obs?' - '+ex.obs:''}`;
+      if(st==='troca-horario'&&(ex.ini||ex.fim)) det=`   🕐 ${ex.ini||'?'} às ${ex.fim||'?'}${ex.quem?' com '+ex.quem:''}${ex.obs?' - '+ex.obs:''}`;
+      if(st==='troca-folga'&&ex.trab)           det=`   📆 Trabalha: ${ex.trab} | Folga: ${ex.folga||'?'}${ex.quem?' com '+ex.quem:''}`;
+      if(st==='medida'){
+        det='';
+        if(ex.motivo) det+=`   ❌ ${ex.motivo}\n`;
+        if(ex.acao)   det+=`   ⚠️ ${ex.acao}\n`;
+        if(ex.resp)   det+=`   👤 Por: ${ex.resp}`;
+      }
+      if(det) detalhes[m]=det;
+    }
+  }));
+
+  let txt = `*${DAY_NAMES[d].toUpperCase()}*\n`;
+
+  const sec = (emoji, label, lista, color) => {
+    if(!lista.length) return '';
+    let s = `${emoji} *${label} (${lista.length}):* ${lista.join(', ')}\n`;
+    lista.forEach(m=>{ if(detalhes[m]) s+=detalhes[m]+'\n'; });
+    return s;
+  };
+
+  txt += sec('✅','PRESENTES',     grupos.presente,  'green');
+  txt += sec('📆','FOLGAS',        grupos.folga,     'muted');
+  txt += sec('❌','FALTAS',        grupos.falta,     'red');
+  txt += sec('🏥','ATESTADOS',     grupos.atestado,  'blue');
+  txt += sec('🔄','TROCA HORÁRIO', grupos['troca-horario'], 'orange');
+  txt += sec('📅','TROCA FOLGA',   grupos['troca-folga'],   'purple');
+  txt += sec('⚠️','MEDIDA DISCIP.',grupos.medida,    'pink');
+  if(grupos.sem.length) txt += `➖ *SEM REGISTRO (${grupos.sem.length}):* ${grupos.sem.join(', ')}\n`;
+
+  return { txt, cnt: grupos };
+}
+
+function buildReport(period){
+  _reportPeriod = period;
+  window._reportPeriod = period;
+
+  const totalCnt={presente:0,falta:0,atestado:0,'troca-horario':0,'troca-folga':0,medida:0};
+  let fullText = '🍽️ *CONTROLE DE PRESENÇA — GARÇONS*\n';
+  fullText += '━'.repeat(30)+'\n\n';
+
+  const days = period==='dia' ? [curDay]
+             : period==='semana' ? [0,1,2,3,4,5]
+             : [0,1,2,3,4,5]; // mês = semana por ora
+
+  days.forEach(d=>{
+    const {txt, cnt} = buildDayReport(d);
+    fullText += txt + '\n';
+    Object.keys(totalCnt).forEach(k=>{ if(cnt[k]) totalCnt[k]+=cnt[k].length; });
+  });
+
+  fullText += '━'.repeat(30)+'\n';
+  fullText += `📊 *RESUMO:* ✅${totalCnt.presente} presentes | ❌${totalCnt.falta} faltas | 🏥${totalCnt.atestado} atestados\n`;
+  fullText += `🔄${totalCnt['troca-horario']} troca-h | 📅${totalCnt['troca-folga']} troca-f | ⚠️${totalCnt.medida} disciplinar\n`;
+
+  window._reportText = fullText;
+
+  // Prévia colorida
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const previewHtml = fullText.split('\n').map(line=>{
+    const l = esc(line);
+    if(/PRESENTES/.test(l))     return `<span style="color:var(--green)">${l}</span>`;
+    if(/FALTAS/.test(l))        return `<span style="color:var(--red)">${l}</span>`;
+    if(/ATESTADOS/.test(l))     return `<span style="color:var(--blue)">${l}</span>`;
+    if(/TROCA HOR/.test(l))     return `<span style="color:var(--orange)">${l}</span>`;
+    if(/TROCA FOL/.test(l))     return `<span style="color:var(--purple)">${l}</span>`;
+    if(/MEDIDA/.test(l))        return `<span style="color:var(--pink)">${l}</span>`;
+    if(/FOLGAS/.test(l))        return `<span style="color:var(--muted)">${l}</span>`;
+    if(/SEM REGISTRO/.test(l))  return `<span style="color:var(--muted)">${l}</span>`;
+    if(/^\*[A-Z]/.test(l.trim())) return `<span style="color:var(--accent);font-weight:700">${l}</span>`;
+    if(/^━/.test(l.trim()))     return `<span style="color:var(--border)">${l}</span>`;
+    return `<span style="color:var(--sub)">${l}</span>`;
+  }).join('\n');
+
+  const gConnected = !!gToken;
+  const gBtn = gConnected
+    ? `<button class="export-btn" onclick="exportToSheets()" style="background:#1a7340;color:#fff;border-color:#1a7340;font-weight:700;text-align:center">
+        📊 SALVAR NO GOOGLE SHEETS
+       </button>
+       <button class="export-btn" onclick="gLogout()" style="color:var(--muted);font-size:11px;margin-top:2px">Desconectar conta Google</button>`
+    : `<button class="export-btn" onclick="gLogin()" style="background:#fff;color:#111;border-color:#ddd;font-weight:700;text-align:center">
+        <span style="margin-right:6px">🔑</span> Conectar Google Drive
+       </button>`;
+
+  const periods = [{id:'dia',l:'Hoje'},{id:'semana',l:'Semana'},{id:'mes',l:'Mês'}];
+
+  document.getElementById('reportContent').innerHTML = `
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      ${periods.map(p=>`<button onclick="buildReport('${p.id}')"
+        style="flex:1;padding:8px;border-radius:9px;border:1.5px solid ${period===p.id?'var(--accent)':'var(--border)'};
+        background:${period===p.id?'var(--accent)':'var(--s3)'};color:${period===p.id?'#111':'var(--sub)'};
+        font-weight:700;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;cursor:pointer">
+        ${p.l}</button>`).join('')}
+    </div>
+    <div class="export-card">
+      <h3>📊 RESUMO ${period==='dia'?DAY_NAMES[curDay].toUpperCase():'DA SEMANA'}</h3>
+      <div class="grid2">
+        <div class="scard"><div class="scard-num c-green">${totalCnt.presente}</div><div class="scard-lbl">Presença</div></div>
+        <div class="scard"><div class="scard-num c-red">${totalCnt.falta}</div><div class="scard-lbl">Falta</div></div>
+        <div class="scard"><div class="scard-num c-blue">${totalCnt.atestado}</div><div class="scard-lbl">Atestado</div></div>
+        <div class="scard"><div class="scard-num c-orange">${totalCnt['troca-horario']}</div><div class="scard-lbl">Troca H.</div></div>
+        <div class="scard"><div class="scard-num c-purple">${totalCnt['troca-folga']}</div><div class="scard-lbl">Troca F.</div></div>
+        <div class="scard"><div class="scard-num c-pink">${totalCnt.medida}</div><div class="scard-lbl">Discipl.</div></div>
+      </div>
+    </div>
+    <div class="export-card">
+      <h3>📤 EXPORTAR</h3>
+      <button class="export-btn" onclick="copyReport()" style="background:var(--accent);color:#111;border-color:var(--accent);font-weight:700;font-size:14px;text-align:center">
+        📋 COPIAR PARA WHATSAPP
+      </button>
+      ${gBtn}
+      <button class="export-btn" onclick="clearAll()" style="color:#e74c3c;border-color:#e74c3c44;margin-top:4px">🗑️ Limpar registros da semana</button>
+    </div>
+    <div class="export-card" style="background:var(--s1)">
+      <h3 style="color:var(--muted);margin-bottom:8px">PRÉVIA</h3>
+      <pre style="font-size:10px;white-space:pre-wrap;line-height:1.8;-webkit-user-select:text;user-select:text">${previewHtml}</pre>
+    </div>`;
+}
+
+function copyReport(){
+  const txt = window._reportText || '';
+  const doFallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = txt;
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0.01;font-size:16px;width:1px;height:1px';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); showToast('✅ Copiado! Cole no WhatsApp'); }
+    catch(e){ showToast('⚠️ Toque e segure o texto da prévia para copiar'); }
+    document.body.removeChild(ta);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt)
+      .then(()=> showToast('✅ Copiado! Cole no WhatsApp ou E-mail'))
+      .catch(doFallback);
+  } else { doFallback(); }
+}
+
+async function exportToSheets(){
+  if(!gToken){ showToast('Conecte o Google primeiro'); return; }
+  showToast('⏳ Criando planilha...');
+
+  const allMembers = [];
+  TURNOS.forEach(t=> t.membros.forEach(m=> allMembers.push({name:m, turno:t})));
+  allMembers.sort((a,b)=>a.name.localeCompare(b.name));
+
+  const today = new Date();
+  const mes = today.toLocaleString('pt-BR',{month:'long'}).toUpperCase();
+  const ano = today.getFullYear();
+  const dataAtual = today.toLocaleDateString('pt-BR');
+
+  // Segunda-feira da semana atual
+  const dow = today.getDay();
+  const diffToMon = dow===0?-6:1-dow;
+  const monday = new Date(today);
+  monday.setDate(today.getDate()+diffToMon);
+  const dayNums = Array.from({length:6},(_,i)=>{
+    const d2=new Date(monday); d2.setDate(monday.getDate()+i); return d2.getDate();
+  });
+
+  // A=Colaborador B=Funcao C=Periodo D-I=dias (9 colunas)
+  const TC = 9;
+  const rowInfo   = ['COCO BAMBU\nRESTAURANTE','','',`Atualizado: ${dataAtual}`,'','','Responsável: FELIPE H. COSTA','',''];
+  const rowEmpty  = Array(TC).fill('');
+  const rowTitulo = ['CONTROLE DE FREQUÊNCIA DO EFETIVO - '+ano,...Array(TC-1).fill('')];
+  const rowMes    = ['Mês:','Função:','PERIODO:', mes,'','','','',''];
+  const rowDias   = ['Colaborador:','','', ...dayNums.map(n=>String(n))];
+
+  const dataRows = allMembers.map(({name,turno})=>{
+    const row = [name, 'GARÇOM', turno.label];
+    for(let d=0;d<6;d++){
+      const isFolga=(FOLGAS[turno.id]||{})[name]===DAYS[d];
+      if(isFolga){row.push('FOLGA');continue;}
+      const r=getRec(d,name);
+      if(!r.status){row.push('-');continue;}
+      const map={presente:'OK',falta:'FALTA',atestado:'ATESTADO','troca-horario':'TROCA H.','troca-folga':'TROCA F.',medida:'MEDIDA'};
+      row.push(map[r.status]||'-');
+    }
+    return row;
+  });
+
+  const allRows=[rowInfo,rowEmpty,rowTitulo,rowMes,rowDias,...dataRows];
+  const numRows=allRows.length;
+
+  try{
+    const title=`Presença Garçons — ${mes} ${ano}`;
+    const createRes=await fetch('https://sheets.googleapis.com/v4/spreadsheets',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},
+      body:JSON.stringify({
+        properties:{title},
+        sheets:[{properties:{title:'Frequência',gridProperties:{frozenRowCount:5,frozenColumnCount:3}}}]
+      })
+    });
+    const sheet=await createRes.json();
+    if(!sheet.spreadsheetId){showToast('❌ Erro ao criar planilha');return;}
+    const sid=sheet.spreadsheetId;
+    const sheetId=sheet.sheets[0].properties.sheetId;
+
+    showToast('⏳ Inserindo dados...');
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}/values/Frequência!A1:I${numRows}?valueInputOption=RAW`,{
+      method:'PUT',
+      headers:{'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},
+      body:JSON.stringify({values:allRows})
+    });
+
+    showToast('⏳ Formatando...');
+    const rgb=(r,g,b)=>({red:r/255,green:g/255,blue:b/255});
+    const white=rgb(255,255,255),black=rgb(0,0,0);
+    const cocoBrown=rgb(101,53,28),cocoGold=rgb(207,160,60);
+    const headerYel=rgb(255,192,0),rowAlt=rgb(235,241,251);
+
+    const cr=(r1,r2,c1,c2,bg,fg,bold,sz,ha,wrap)=>({repeatCell:{
+      range:{sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2},
+      cell:{userEnteredFormat:{
+        backgroundColor:bg||white,
+        textFormat:{bold:!!bold,foregroundColor:fg||black,fontSize:sz||10},
+        horizontalAlignment:ha||'CENTER',verticalAlignment:'MIDDLE',
+        wrapStrategy:wrap?'WRAP':'OVERFLOW_CELL'
+      }},
+      fields:'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment,wrapStrategy)'
+    }});
+    const mg=(r1,r2,c1,c2)=>({mergeCells:{range:{sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2},mergeType:'MERGE_ALL'}});
+    const cw=(c1,c2,px)=>({updateDimensionProperties:{range:{sheetId,dimension:'COLUMNS',startIndex:c1,endIndex:c2},properties:{pixelSize:px},fields:'pixelSize'}});
+    const rh=(r,px)=>({updateDimensionProperties:{range:{sheetId,dimension:'ROWS',startIndex:r,endIndex:r+1},properties:{pixelSize:px},fields:'pixelSize'}});
+    const bd=(r1,r2,c1,c2)=>({updateBorders:{
+      range:{sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2},
+      top:{style:'SOLID',width:1,color:rgb(180,180,180)},bottom:{style:'SOLID',width:1,color:rgb(180,180,180)},
+      left:{style:'SOLID',width:1,color:rgb(180,180,180)},right:{style:'SOLID',width:1,color:rgb(180,180,180)},
+      innerHorizontal:{style:'SOLID',width:1,color:rgb(200,200,200)},innerVertical:{style:'SOLID',width:1,color:rgb(200,200,200)}
+    }});
+    const cf=(txt,bg,fg)=>({addConditionalFormatRule:{rule:{
+      ranges:[{sheetId,startRowIndex:5,endRowIndex:5+dataRows.length,startColumnIndex:3,endColumnIndex:9}],
+      booleanRule:{condition:{type:'TEXT_EQ',values:[{userEnteredValue:txt}]},format:{backgroundColor:bg,textFormat:{bold:true,foregroundColor:fg}}}
+    },index:0}});
+
+    const requests=[
+      cw(0,1,200),cw(1,2,110),cw(2,3,100),cw(3,9,65),
+      rh(0,70),rh(1,6),rh(2,30),rh(3,26),rh(4,26),
+      mg(0,2,0,3),mg(0,1,3,6),mg(0,1,6,9),
+      mg(2,3,0,9),
+      mg(3,4,3,9),
+      // Topo
+      cr(0,2,0,3,cocoBrown,white,true,13,'CENTER',true),
+      cr(0,1,3,6,rgb(245,245,245),rgb(100,100,100),false,9,'RIGHT'),
+      cr(0,1,6,9,rgb(245,245,245),cocoBrown,true,10,'RIGHT'),
+      // Título
+      cr(2,3,0,9,cocoGold,white,true,13,'CENTER'),
+      // Cabeçalho mês (amarelo)
+      cr(3,4,0,3,headerYel,black,true,11,'CENTER'),
+      cr(3,4,3,9,headerYel,black,true,13,'CENTER'),
+      // Subheader dias (marrom)
+      cr(4,5,0,3,cocoBrown,white,true,11,'CENTER'),
+      cr(4,5,3,9,cocoBrown,white,true,12,'CENTER'),
+      // Linhas alternadas
+      ...dataRows.map((_,i)=>cr(5+i,6+i,0,3,i%2===0?rowAlt:white,black,false,10,'CENTER')),
+      ...dataRows.map((_,i)=>cr(5+i,6+i,3,9,i%2===0?rowAlt:white,black,false,10,'CENTER')),
+      bd(3,5+dataRows.length,0,9),
+      // Formatação condicional
+      cf('OK',      rgb(0,176,80),   white),
+      cf('FALTA',   rgb(255,199,206),rgb(156,0,6)),
+      cf('ATESTADO',rgb(255,235,156),rgb(156,87,0)),
+      cf('FOLGA',   rgb(217,217,217),rgb(80,80,80)),
+      cf('TROCA H.',rgb(189,215,238),rgb(0,70,127)),
+      cf('TROCA F.',rgb(218,190,255),rgb(80,0,160)),
+      cf('MEDIDA',  rgb(255,180,220),rgb(160,0,80)),
+    ];
+
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}:batchUpdate`,{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},
+      body:JSON.stringify({requests})
+    });
+
+    save('last_sheet_id',sid);
+    showToast('✅ Planilha salva no Google Drive!');
+    setTimeout(()=>{window.open(`https://docs.google.com/spreadsheets/d/${sid}`,'_blank');},1500);
+  }catch(e){
+    console.error(e);
+    showToast('❌ Erro ao exportar. Verifique o console.');
+  }
+}
+
+function clearAll(){
+  if(!confirm('Apagar TODOS os registros da semana?')) return;
+  for(let d=0;d<6;d++)
+    TURNOS.forEach(t=> t.membros.forEach(m=> localStorage.removeItem(SK+`${d}_${m}`)));
+  showToast('🗑️ Registros apagados');
+  buildReport(_reportPeriod||'semana'); buildMain();
+}
+
+// ─── PANELS ──────────────────────────────────────────
+function openPanel(id){ document.getElementById(id).classList.add('open'); }
+function closePanel(id){ document.getElementById(id).classList.remove('open'); }
+
+function showEscala(){
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('navEscala').classList.add('active');
+}
+
+// ─── TOAST ───────────────────────────────────────────
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2300);
+}
+
+// ─── INIT ────────────────────────────────────────────
+buildTabs();
+buildMain();
+</script>
+</body>
+</html>

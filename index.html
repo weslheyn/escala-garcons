@@ -199,6 +199,9 @@ body{font-family:"Barlow",sans-serif;background:var(--bg);color:var(--text);min-
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .divider{height:1px;background:var(--border);margin:8px 0}
 </style>
+<!-- Firebase SDK (Realtime Database — sync em tempo real) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
 <body>
 <div class="toast" id="toast"></div>
@@ -213,8 +216,8 @@ body{font-family:"Barlow",sans-serif;background:var(--bg);color:var(--text);min-
 
 <div class="sync-bar" id="syncBar">
   <div class="sync-dot" id="syncDot"></div>
-  <span id="syncMsg">Não conectado ao Google</span>
-  <button onclick="gToken?syncFrequenciaTotal():gLogin()" style="margin-left:auto;background:none;border:1px solid var(--border);color:var(--accent);border-radius:6px;padding:3px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:Barlow,sans-serif;transition:all .2s" id="syncBtn">CONECTAR</button>
+  <span id="syncMsg">Iniciando sync em tempo real...</span>
+  <button onclick="pullFromFirebase()" style="margin-left:auto;background:none;border:1px solid var(--border);color:var(--accent);border-radius:6px;padding:3px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:Barlow,sans-serif;transition:all .2s" id="syncBtn">🔄 SYNC</button>
 </div>
 
 <div class="date-bar">
@@ -602,6 +605,92 @@ const GCLIENT_ID='497562767891-ri2j7ijd4033d5ubeov91puhgq7ib6ic.apps.googleuserc
 const GSCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
 
 // ═══════════════════════════════════════════════════
+// FIREBASE — SYNC EM TEMPO REAL
+// ═══════════════════════════════════════════════════
+const FB_CONFIG = {
+  apiKey: "AIzaSyDemo_REPLACE_WITH_REAL_KEY",
+  authDomain: "coco-bambu-presenca.firebaseapp.com",
+  databaseURL: "https://coco-bambu-presenca-default-rtdb.firebaseio.com",
+  projectId: "coco-bambu-presenca",
+};
+
+let fbApp = null;
+let fbDb  = null;
+let fbConnected = false;
+let fbSyncTimer = null;
+let _ignoringRemoteUpdate = false;
+
+function initFirebase(){
+  try {
+    fbApp = firebase.initializeApp(FB_CONFIG);
+    fbDb  = firebase.database();
+
+    // Monitora conexão
+    fbDb.ref('.info/connected').on('value', snap => {
+      fbConnected = !!snap.val();
+      if(fbConnected){
+        setSyncStatus('ok','🔄 Sync em tempo real ativo');
+        document.getElementById('syncBtn').textContent='✅ SINCRONIZADO';
+        document.getElementById('syncBtn').style.background='var(--green)';
+        document.getElementById('syncBtn').style.color='#fff';
+        // Ao reconectar, puxa dados do servidor
+        pullFromFirebase();
+      } else {
+        setSyncStatus('loading','Reconectando...');
+      }
+    });
+
+    // Escuta mudanças em tempo real
+    fbDb.ref('presenca').on('value', snap => {
+      if(_ignoringRemoteUpdate) return;
+      const data = snap.val();
+      if(!data) return;
+      // Atualiza localStorage com dados remotos
+      Object.entries(data).forEach(([k,v])=>{
+        localStorage.setItem(SK+k, JSON.stringify(v));
+      });
+      buildMain();
+      refreshPendBadge();
+      buildSummary();
+    });
+
+    setSyncStatus('loading','Conectando ao Firebase...');
+  } catch(e) {
+    setSyncStatus('err','Firebase não configurado');
+    console.warn('Firebase não inicializado:', e.message);
+  }
+}
+
+// Envia um registro específico para o Firebase
+function pushToFirebase(key, value){
+  if(!fbDb || !fbConnected) return;
+  _ignoringRemoteUpdate = true;
+  fbDb.ref('presenca/'+key).set(value).finally(()=>{
+    setTimeout(()=>{ _ignoringRemoteUpdate = false; }, 500);
+  });
+}
+
+// Puxa todos os dados do Firebase para o localStorage
+function pullFromFirebase(){
+  if(!fbDb) return;
+  fbDb.ref('presenca').once('value').then(snap=>{
+    const data = snap.val();
+    if(!data) return;
+    Object.entries(data).forEach(([k,v])=>{
+      localStorage.setItem(SK+k, JSON.stringify(v));
+    });
+    buildMain(); refreshPendBadge(); buildSummary();
+    showToast('🔄 Dados sincronizados!');
+  });
+}
+
+// Wrapper: salva localmente E envia ao Firebase
+const saveAndSync = (k, v) => {
+  save(k, v);
+  pushToFirebase(k.replace(/\//g,'_'), v);
+};
+
+// ═══════════════════════════════════════════════════
 // STORAGE
 // ═══════════════════════════════════════════════════
 const SK='gp5_';
@@ -769,7 +858,14 @@ let curDay=(()=>{const dow=new Date().getDay();return dow===0?6:dow-1;})();
 // RECORDS DE PRESENÇA
 // ═══════════════════════════════════════════════════
 function getRec(day,name){return load(day+'_'+name,{status:'',extra:{}})}
-function setRec(day,name,status,extra){save(day+'_'+name,{status,extra,ts:Date.now()})}
+function setRec(day,name,status,extra){
+  const key=day+'_'+name;
+  const val={status,extra,ts:Date.now()};
+  save(key,val);
+  // Sincroniza em tempo real — chave segura para Firebase (sem caracteres especiais)
+  const fbKey=key.replace(/[.#$\[\]/]/g,'_');
+  pushToFirebase(fbKey, val);
+}
 
 // ═══════════════════════════════════════════════════
 // JUSTIFICATIVAS
@@ -1248,8 +1344,11 @@ function setRecByDate(nome,ano,mes,dia,status,extra){
 // ─── Bridge: quando selecionar status na semana atual, salva também por data ───
 function bridgeSaveByDate(nome,dayIdx,status,extra){
   const d=WEEK_DATES[dayIdx];
-  setRecByDate(nome,d.getFullYear(),d.getMonth()+1,d.getDate(),status,extra);
-  // Enfileira sync da célula específica
+  const key=`drec_${nome}_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const val={status,extra,ts:Date.now()};
+  save(key,val);
+  const fbKey=key.replace(/[.#$\[\]/]/g,'_');
+  pushToFirebase(fbKey, val);
   if(gToken)enqueueSyncCell(nome,d.getDate());
 }
 
@@ -2040,11 +2139,8 @@ function buildReport(period){
   window._reportText=fullText;
   const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const previewHtml=fullText.split('\n').map(line=>{const l=esc(line);if(/PRESENTES/.test(l))return '<span style="color:#27ae60">'+l+'</span>';if(/FALTAS/.test(l))return '<span style="color:#e74c3c">'+l+'</span>';if(/ATESTADOS/.test(l))return '<span style="color:#2980b9">'+l+'</span>';return '<span style="color:#8891a8">'+l+'</span>';}).join('\n');
-  const gBtn=gToken
-    ?'<button class="export-btn" onclick="syncFrequenciaTotal()" style="background:#1a7340;color:#fff;border-color:#1a7340;font-weight:700;text-align:center;font-size:14px;padding:14px">📊 ATUALIZAR GOOGLE SHEETS AGORA</button>'
-      +'<div style="font-size:11px;color:var(--sub);text-align:center;margin-top:4px;margin-bottom:6px">🔄 Auto-sync a cada 60s quando conectado</div>'
-      +(SHEET_ID?'<button class="export-btn" onclick="window.open(\'https://docs.google.com/spreadsheets/d/'+SHEET_ID+'\',\'_blank\')" style="background:var(--s3);border-color:#1a7340;color:#27ae60;font-size:13px;text-align:center">🔗 Abrir Planilha Google</button>':'')
-    :'<button class="export-btn" onclick="gLogin()" style="background:#fff;color:#111;font-weight:700;text-align:center;font-size:14px;padding:14px">🔑 Conectar Google para Sync Automático</button>';
+  const gBtn='<button class="export-btn" onclick="copyReport()" style="background:var(--accent);color:#111;font-weight:700;font-size:14px;text-align:center">📋 COPIAR PARA WHATSAPP</button>'
+    +'<div style="font-size:11px;color:var(--sub);text-align:center;margin-top:4px;margin-bottom:6px">🔄 Sync automático ativo — dados compartilhados em tempo real</div>';
   const periods=[{id:'dia',l:'Hoje'},{id:'semana',l:'Semana'}];
   document.getElementById('reportContent').innerHTML=
     '<div style="display:flex;gap:6px;margin-bottom:12px">'+periods.map(p=>'<button onclick="buildReport(\''+p.id+'\')" style="flex:1;padding:8px;border-radius:9px;border:1.5px solid '+(period===p.id?'var(--accent)':'var(--border)')+';background:'+(period===p.id?'var(--accent)':'var(--s3)')+';color:'+(period===p.id?'#111':'var(--sub)')+';font-weight:700;font-family:Barlow Condensed,sans-serif;font-size:13px;cursor:pointer">'+p.l+'</button>').join('')+'</div>'+
@@ -2380,6 +2476,8 @@ function clearDomFolga(nome){clearFolgaRec(nome,6);}
 // ═══════════════════════════════════════════════════
 document.getElementById('totalPill').textContent=EQUIPE.length+' TOTAL';
 buildTabs();buildMain();refreshPendBadge();
+// Inicia Firebase para sync em tempo real
+setTimeout(initFirebase, 500);
 </script>
 </body>
 </html>

@@ -725,19 +725,52 @@ function initFirebase(){
   }
 }
 
+// Mapa bidirecional: chave-firebase → chave-localStorage original
+// Necessário para nomes com acentos/espaços (ex: FABIELLY RAIANNY → FABIELLY_RAIANNY)
+const _fbKeyMap = {}; // fbSafeKey(original) → original
+
+function registerFbKey(originalKey){
+  const safe = fbSafeKey(originalKey);
+  _fbKeyMap[safe] = originalKey;
+  return safe;
+}
+
+function localKeyFromFbKey(fbKey){
+  // Tenta encontrar a chave original no mapa
+  if(_fbKeyMap[fbKey]) return _fbKeyMap[fbKey];
+  // Fallback: usa a chave como está (para chaves sem caracteres especiais)
+  return fbKey;
+}
+
 function startFbListener(){
   if(!fbDb || _fbListenerActive) return;
   _fbListenerActive = true;
+
+  // Pré-registra todas as chaves possíveis da semana atual para todos os funcionários
+  EQUIPE.forEach(f=>{
+    for(let d=0;d<7;d++){
+      const recKey = d+'_'+f.nome;
+      registerFbKey(recKey);
+      if(WEEK_DATES[d]){
+        const dd=WEEK_DATES[d];
+        const dateKey=`drec_${f.nome}_${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,'0')}-${String(dd.getDate()).padStart(2,'0')}`;
+        registerFbKey(dateKey);
+      }
+    }
+  });
+
   fbDb.ref('presenca/'+WEEK_KEY).on('value', snap => {
     if(_ignoringRemoteUpdate) return;
     const data = snap.val();
     if(!data) return;
     let changed = false;
-    Object.entries(data).forEach(([k,v])=>{
-      const localRaw = localStorage.getItem(SK+k);
+    Object.entries(data).forEach(([fbKey,v])=>{
+      // Usa a chave original (com acentos) para salvar no localStorage
+      const localKey = localKeyFromFbKey(fbKey);
+      const localRaw = localStorage.getItem(SK+localKey);
       const local = localRaw ? JSON.parse(localRaw) : null;
       if(!local || (v && v.ts && (!local.ts || v.ts > local.ts))){
-        localStorage.setItem(SK+k, JSON.stringify(v));
+        localStorage.setItem(SK+localKey, JSON.stringify(v));
         changed = true;
       }
     });
@@ -746,10 +779,21 @@ function startFbListener(){
   pullFromFirebase();
 }
 
+// Sanitiza chave para Firebase — remove TODOS os chars problemáticos
+// Firebase não aceita: . # $ [ ] / e chars fora do ASCII básico
+function fbSafeKey(str){
+  return str
+    .normalize('NFD')               // decompõe acentos: Ã → A + til
+    .replace(/[\u0300-\u036f]/g,'') // remove diacríticos (acentos, cedilha, etc)
+    .replace(/[^a-zA-Z0-9_\-]/g,'_')// substitui tudo fora de alfanum/underscore/hifen
+    .replace(/_+/g,'_')             // colapsa múltiplos underscores
+    .replace(/^_|_$/g,'');          // remove underscore no início/fim
+}
+
 function pushToFirebase(key, value){
   if(!fbDb || !fbConnected) return;
   _ignoringRemoteUpdate = true;
-  const safeKey = key.replace(/[.#$\[\]/\s]/g,'_');
+  const safeKey = fbSafeKey(key);
   fbDb.ref('presenca/'+WEEK_KEY+'/'+safeKey).set(value)
     .catch(e=>console.warn('Push FB:', e.message))
     .finally(()=>{ setTimeout(()=>{ _ignoringRemoteUpdate = false; }, 800); });
@@ -760,7 +804,10 @@ function pullFromFirebase(){
   setSyncStatus('loading','Sincronizando...');
   fbDb.ref('presenca/'+WEEK_KEY).once('value').then(snap=>{
     const data = snap.val();
-    if(data) Object.entries(data).forEach(([k,v])=>{ localStorage.setItem(SK+k, JSON.stringify(v)); });
+    if(data) Object.entries(data).forEach(([fbKey,v])=>{
+      const localKey = localKeyFromFbKey(fbKey);
+      localStorage.setItem(SK+localKey, JSON.stringify(v));
+    });
     buildMain(); refreshPendBadge(); buildSummary();
     setSyncStatus('ok','🔄 Sync em tempo real ativo');
     showToast('🔄 Sincronizado!');
@@ -942,9 +989,7 @@ function setRec(day,name,status,extra){
   const key=day+'_'+name;
   const val={status,extra,ts:Date.now()};
   save(key,val);
-  // Sincroniza em tempo real — chave segura para Firebase (sem caracteres especiais)
-  const fbKey=key.replace(/[.#$\[\]/]/g,'_');
-  pushToFirebase(fbKey, val);
+  pushToFirebase(registerFbKey(key), val);
 }
 
 // ═══════════════════════════════════════════════════
@@ -1427,8 +1472,7 @@ function bridgeSaveByDate(nome,dayIdx,status,extra){
   const key=`drec_${nome}_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const val={status,extra,ts:Date.now()};
   save(key,val);
-  const fbKey=key.replace(/[.#$\[\]/]/g,'_');
-  pushToFirebase(fbKey, val);
+  pushToFirebase(registerFbKey(key), val);
   if(gToken)enqueueSyncCell(nome,d.getDate());
 }
 

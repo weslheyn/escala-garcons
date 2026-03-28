@@ -1100,27 +1100,38 @@ function setSheetsStatus(type,msg,btnTxt,btnAction){
 function gLogin(){
   if(!window.google){showToast('Aguarde o Google carregar...');return;}
   setSheetsStatus('loading','Aguardando autorização Google...','⏳ AGUARDE...');
-  // Limpa sheet_id salvo para forçar nova busca/criação
   SHEET_ID=null;
-  google.accounts.oauth2.initTokenClient({
-    client_id:GCLIENT_ID,scope:GSCOPES,
-    callback:async(resp)=>{
-      if(resp.error){
-        setSheetsStatus('err','Erro no login Google — tente novamente','📊 TENTAR NOVAMENTE',gLogin);
-        showToast('❌ Erro ao conectar Google');
-        return;
+  try{
+    const client=google.accounts.oauth2.initTokenClient({
+      client_id:GCLIENT_ID,
+      scope:GSCOPES,
+      callback:async(resp)=>{
+        if(resp.error){
+          setSheetsStatus('err','Erro: '+resp.error,'📊 TENTAR NOVAMENTE',gLogin);
+          showToast('❌ Erro ao conectar: '+resp.error);
+          return;
+        }
+        gToken=resp.access_token;
+        save('g_token_ts',Date.now());
+        setSheetsStatus('loading','Criando planilha...','⏳ AGUARDE...');
+        showToast('✅ Google conectado! Criando planilha...');
+        const ok=await ensurePlanilha();
+        if(ok){
+          await syncFrequenciaTotal();
+          startAutoSync();
+        }
+      },
+      error_callback:(err)=>{
+        console.warn('OAuth error:', err);
+        setSheetsStatus('err','Erro ao conectar — tente no computador','📊 TENTAR NOVAMENTE',gLogin);
+        showToast('❌ Erro OAuth: use o computador para conectar pela primeira vez');
       }
-      gToken=resp.access_token;
-      save('g_token_ts',Date.now());
-      setSheetsStatus('loading','Criando planilha...','⏳ AGUARDE...');
-      showToast('✅ Google conectado! Criando planilha...');
-      const ok=await ensurePlanilha();
-      if(ok){
-        await syncFrequenciaTotal();
-        startAutoSync();
-      }
-    }
-  }).requestAccessToken();
+    });
+    client.requestAccessToken({prompt:'consent'});
+  }catch(e){
+    setSheetsStatus('err','Erro: '+e.message,'📊 TENTAR NOVAMENTE',gLogin);
+    showToast('❌ Use o computador para conectar ao Google');
+  }
 }
 
 function setSyncStatus(type,msg){
@@ -1491,12 +1502,26 @@ async function syncFrequenciaTotal(){
   }
 }
 
-// ─── AUTO-SYNC a cada 60 segundos ───
+// ─── AUTO-SYNC a cada 30 segundos + sync imediato ao salvar ───
 function startAutoSync(){
   if(autoSyncInterval)clearInterval(autoSyncInterval);
+  // Sync imediato ao conectar
+  if(gToken&&SHEET_ID) syncFrequenciaTotal().catch(()=>{});
+  // Depois a cada 30 segundos
   autoSyncInterval=setInterval(()=>{
-    if(gToken)syncFrequenciaTotal().catch(()=>{});
-  },60000);
+    if(gToken&&SHEET_ID) syncFrequenciaTotal().catch(()=>{});
+  },30000);
+}
+
+// Chamado toda vez que um status é salvo — dispara sync da planilha
+function triggerSheetsSync(){
+  if(gToken&&SHEET_ID){
+    // Debounce: aguarda 3s para acumular múltiplos saves
+    clearTimeout(window._sheetsSyncTimer);
+    window._sheetsSyncTimer=setTimeout(()=>{
+      syncFrequenciaTotal().catch(()=>{});
+    },3000);
+  }
 }
 
 // ─── Armazenamento por data específica (dia/mês/ano) ───
@@ -1515,8 +1540,8 @@ function bridgeSaveByDate(nome,dayIdx,status,extra){
   const key=`drec_${nome}_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const val={status,extra,ts:Date.now()};
   save(key,val);
-  pushToFirebase(key, val); // pushToFirebase faz fbEncode internamente
-  if(gToken)enqueueSyncCell(nome,d.getDate());
+  pushToFirebase(key, val);
+  if(gToken&&SHEET_ID) triggerSheetsSync(); // sync automático ao salvar
 }
 
 // ═══════════════════════════════════════════════════

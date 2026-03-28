@@ -725,39 +725,39 @@ function initFirebase(){
   }
 }
 
-// Mapa bidirecional: chave-firebase → chave-localStorage original
-// Necessário para nomes com acentos/espaços (ex: FABIELLY RAIANNY → FABIELLY_RAIANNY)
-const _fbKeyMap = {}; // fbSafeKey(original) → original
+// ═══════════════════════════════════════════════════
+// FIREBASE KEY SYSTEM — usa Base64 para evitar
+// qualquer problema com caracteres especiais nos nomes
+// ═══════════════════════════════════════════════════
 
-function registerFbKey(originalKey){
-  const safe = fbSafeKey(originalKey);
-  _fbKeyMap[safe] = originalKey;
-  return safe;
+// Codifica chave para Firebase usando Base64 (sem chars problemáticos)
+function fbEncode(key){
+  try{
+    // btoa precisa de string ASCII — converte UTF-8 primeiro
+    return btoa(unescape(encodeURIComponent(key)))
+      .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  }catch(e){
+    // Fallback: remove chars ruins manualmente
+    return key.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-zA-Z0-9_\-]/g,'_')
+      .replace(/_+/g,'_').replace(/^_|_$/g,'');
+  }
 }
 
-function localKeyFromFbKey(fbKey){
-  // Tenta encontrar a chave original no mapa
-  if(_fbKeyMap[fbKey]) return _fbKeyMap[fbKey];
-  // Fallback: usa a chave como está (para chaves sem caracteres especiais)
-  return fbKey;
+// Decodifica chave do Firebase de volta para a chave original
+function fbDecode(encoded){
+  try{
+    const b64 = encoded.replace(/-/g,'+').replace(/_/g,'/');
+    return decodeURIComponent(escape(atob(b64)));
+  }catch(e){
+    return encoded; // fallback: retorna como está
+  }
 }
 
 function startFbListener(){
   if(!fbDb || _fbListenerActive) return;
   _fbListenerActive = true;
-
-  // Pré-registra todas as chaves possíveis da semana atual para todos os funcionários
-  EQUIPE.forEach(f=>{
-    for(let d=0;d<7;d++){
-      const recKey = d+'_'+f.nome;
-      registerFbKey(recKey);
-      if(WEEK_DATES[d]){
-        const dd=WEEK_DATES[d];
-        const dateKey=`drec_${f.nome}_${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,'0')}-${String(dd.getDate()).padStart(2,'0')}`;
-        registerFbKey(dateKey);
-      }
-    }
-  });
 
   fbDb.ref('presenca/'+WEEK_KEY).on('value', snap => {
     if(_ignoringRemoteUpdate) return;
@@ -765,8 +765,8 @@ function startFbListener(){
     if(!data) return;
     let changed = false;
     Object.entries(data).forEach(([fbKey,v])=>{
-      // Usa a chave original (com acentos) para salvar no localStorage
-      const localKey = localKeyFromFbKey(fbKey);
+      // Decodifica a chave Base64 para obter a chave original
+      const localKey = fbDecode(fbKey);
       const localRaw = localStorage.getItem(SK+localKey);
       const local = localRaw ? JSON.parse(localRaw) : null;
       if(!local || (v && v.ts && (!local.ts || v.ts > local.ts))){
@@ -779,21 +779,11 @@ function startFbListener(){
   pullFromFirebase();
 }
 
-// Sanitiza chave para Firebase — remove TODOS os chars problemáticos
-// Firebase não aceita: . # $ [ ] / e chars fora do ASCII básico
-function fbSafeKey(str){
-  return str
-    .normalize('NFD')               // decompõe acentos: Ã → A + til
-    .replace(/[\u0300-\u036f]/g,'') // remove diacríticos (acentos, cedilha, etc)
-    .replace(/[^a-zA-Z0-9_\-]/g,'_')// substitui tudo fora de alfanum/underscore/hifen
-    .replace(/_+/g,'_')             // colapsa múltiplos underscores
-    .replace(/^_|_$/g,'');          // remove underscore no início/fim
-}
-
 function pushToFirebase(key, value){
   if(!fbDb || !fbConnected) return;
   _ignoringRemoteUpdate = true;
-  const safeKey = fbSafeKey(key);
+  // Codifica a chave em Base64 — funciona com qualquer nome
+  const safeKey = fbEncode(key);
   fbDb.ref('presenca/'+WEEK_KEY+'/'+safeKey).set(value)
     .catch(e=>console.warn('Push FB:', e.message))
     .finally(()=>{ setTimeout(()=>{ _ignoringRemoteUpdate = false; }, 800); });
@@ -804,10 +794,13 @@ function pullFromFirebase(){
   setSyncStatus('loading','Sincronizando...');
   fbDb.ref('presenca/'+WEEK_KEY).once('value').then(snap=>{
     const data = snap.val();
-    if(data) Object.entries(data).forEach(([fbKey,v])=>{
-      const localKey = localKeyFromFbKey(fbKey);
-      localStorage.setItem(SK+localKey, JSON.stringify(v));
-    });
+    if(data){
+      Object.entries(data).forEach(([fbKey,v])=>{
+        // Decodifica Base64 → chave original → localStorage
+        const localKey = fbDecode(fbKey);
+        localStorage.setItem(SK+localKey, JSON.stringify(v));
+      });
+    }
     buildMain(); refreshPendBadge(); buildSummary();
     setSyncStatus('ok','🔄 Sync em tempo real ativo');
     showToast('🔄 Sincronizado!');
@@ -989,7 +982,7 @@ function setRec(day,name,status,extra){
   const key=day+'_'+name;
   const val={status,extra,ts:Date.now()};
   save(key,val);
-  pushToFirebase(registerFbKey(key), val);
+  pushToFirebase(key, val); // pushToFirebase faz fbEncode internamente
 }
 
 // ═══════════════════════════════════════════════════
@@ -1472,7 +1465,7 @@ function bridgeSaveByDate(nome,dayIdx,status,extra){
   const key=`drec_${nome}_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const val={status,extra,ts:Date.now()};
   save(key,val);
-  pushToFirebase(registerFbKey(key), val);
+  pushToFirebase(key, val); // pushToFirebase faz fbEncode internamente
   if(gToken)enqueueSyncCell(nome,d.getDate());
 }
 

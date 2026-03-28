@@ -641,7 +641,7 @@ const PROG_FALTA=['Advertência escrita','Suspensão 1 dia','Suspensão 3 dias',
 const PROG_OUTROS=['Advertência verbal','Advertência escrita','Suspensão 1 dia','Suspensão 3 dias','Suspensão 5 dias','Justa causa'];
 const MOTIVOS_FALTA=['Falta sem justificativa'];
 const GCLIENT_ID='429328314952-7haf0e82uj6vbrk74tklsf8q2asoeken.apps.googleusercontent.com';
-const GSCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
+const GSCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive';
 
 // ═══════════════════════════════════════════════════
 // FIREBASE — SYNC EM TEMPO REAL
@@ -1100,6 +1100,8 @@ function setSheetsStatus(type,msg,btnTxt,btnAction){
 function gLogin(){
   if(!window.google){showToast('Aguarde o Google carregar...');return;}
   setSheetsStatus('loading','Aguardando autorização Google...','⏳ AGUARDE...');
+  // Limpa sheet_id salvo para forçar nova busca/criação
+  SHEET_ID=null;
   google.accounts.oauth2.initTokenClient({
     client_id:GCLIENT_ID,scope:GSCOPES,
     callback:async(resp)=>{
@@ -1112,9 +1114,11 @@ function gLogin(){
       save('g_token_ts',Date.now());
       setSheetsStatus('loading','Criando planilha...','⏳ AGUARDE...');
       showToast('✅ Google conectado! Criando planilha...');
-      await ensurePlanilha();
-      await syncFrequenciaTotal();
-      startAutoSync();
+      const ok=await ensurePlanilha();
+      if(ok){
+        await syncFrequenciaTotal();
+        startAutoSync();
+      }
     }
   }).requestAccessToken();
 }
@@ -1211,15 +1215,15 @@ async function ensurePlanilha(){
   const hoje=new Date();
   const ano=hoje.getFullYear();
   const mes=hoje.getMonth()+1;
-  const nomePlanilha=`Coco Bambu — Frequência ${ano}`;
+  const nomePlanilha=`Coco Bambu Frequencia ${ano}`;
   const nomeAba=`${String(mes).padStart(2,'0')}-${ano}`;
 
+  setSheetsStatus('loading','Verificando planilha...','⏳ AGUARDE...');
+
   if(SHEET_ID){
-    // Verifica se ainda existe
     try{
       const info=await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}?fields=spreadsheetId,sheets.properties`);
       if(info&&info.spreadsheetId){
-        // Garante que a aba do mês atual existe
         const hasAba=info.sheets?.some(s=>s.properties.title===nomeAba);
         if(!hasAba){
           await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,'POST',{
@@ -1228,21 +1232,32 @@ async function ensurePlanilha(){
         }
         return true;
       }
-    }catch(e){}
+    }catch(e){
+      console.warn('Planilha anterior não encontrada, criando nova...');
+      SHEET_ID=null;
+    }
   }
 
   // Cria nova planilha
-  setSyncStatus('loading','Criando planilha mensal...');
+  setSheetsStatus('loading','Criando planilha...','⏳ AGUARDE...');
   try{
     const r=await gFetch('https://sheets.googleapis.com/v4/spreadsheets','POST',{
       properties:{title:nomePlanilha},
-      sheets:[{properties:{title:nomeAba}}]
+      sheets:[{properties:{title:nomeAba,gridProperties:{rowCount:300,columnCount:40}}}]
     });
-    if(!r||!r.spreadsheetId){setSyncStatus('err','Erro ao criar planilha');return false;}
+    if(!r||!r.spreadsheetId){
+      setSheetsStatus('err','Erro ao criar planilha — tente novamente','📊 TENTAR NOVAMENTE',gLogin);
+      return false;
+    }
     SHEET_ID=r.spreadsheetId;
     save('sheet_id_v2',SHEET_ID);
+    setSheetsStatus('loading','Planilha criada! Preenchendo dados...','⏳ AGUARDE...');
     return true;
-  }catch(e){setSyncStatus('err','Erro ao criar planilha');return false;}
+  }catch(e){
+    console.error('Erro ensurePlanilha:', e);
+    setSheetsStatus('err','Erro: '+e.message,'📊 TENTAR NOVAMENTE',gLogin);
+    return false;
+  }
 }
 
 // ═══════════════════════════════════════════════════

@@ -216,8 +216,41 @@ body{font-family:"Barlow",sans-serif;background:var(--bg);color:var(--text);min-
 
 <div class="sync-bar" id="syncBar">
   <div class="sync-dot" id="syncDot"></div>
-  <span id="syncMsg">Iniciando sync em tempo real...</span>
+  <span id="syncMsg">Conectando ao Firebase...</span>
   <button onclick="pullFromFirebase()" style="margin-left:auto;background:none;border:1px solid var(--border);color:var(--accent);border-radius:6px;padding:3px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:Barlow,sans-serif;transition:all .2s" id="syncBtn">🔄 SYNC</button>
+</div>
+
+<!-- MODAL CONFIGURAÇÃO FIREBASE -->
+<div class="modal-overlay" id="fbConfigModal" onclick="if(event.target===this)closeModal('fbConfigModal')">
+  <div class="modal-box">
+    <div class="modal-title">🔥 CONFIGURAR SYNC EM TEMPO REAL</div>
+    <div style="background:#1abc9c11;border:1px solid #1abc9c33;border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:#1abc9c;line-height:1.7">
+      Para sincronizar em tempo real entre dispositivos, crie um projeto <strong>Firebase gratuito</strong>:<br>
+      1️⃣ Acesse <strong>console.firebase.google.com</strong><br>
+      2️⃣ Crie projeto → Realtime Database → Modo teste<br>
+      3️⃣ Configurações ⚙️ → Seus apps → Web → Copie o config<br>
+      4️⃣ Cole a URL do banco abaixo
+    </div>
+    <div class="field-wrap" style="margin-bottom:10px">
+      <span class="field-label">🔗 Database URL</span>
+      <input class="field-input" id="fb_db_url" placeholder="https://SEU-PROJETO-default-rtdb.firebaseio.com" style="font-size:12px">
+    </div>
+    <div class="field-wrap" style="margin-bottom:10px">
+      <span class="field-label">🔑 API Key</span>
+      <input class="field-input" id="fb_api_key" placeholder="AIzaSy..." style="font-size:12px">
+    </div>
+    <div class="field-wrap" style="margin-bottom:10px">
+      <span class="field-label">📦 Project ID</span>
+      <input class="field-input" id="fb_project_id" placeholder="meu-projeto-12345" style="font-size:12px">
+    </div>
+    <div style="background:var(--s2);border-radius:8px;padding:10px;font-size:11px;color:var(--sub);margin-bottom:10px">
+      💡 Essas configurações são salvas no dispositivo. Todos que usam o app precisam ter as mesmas configurações.
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('fbConfigModal')">CANCELAR</button>
+      <button class="btn-confirm" onclick="saveFbConfig()">🔥 CONECTAR</button>
+    </div>
+  </div>
 </div>
 
 <div class="date-bar">
@@ -607,88 +640,135 @@ const GSCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleap
 // ═══════════════════════════════════════════════════
 // FIREBASE — SYNC EM TEMPO REAL
 // ═══════════════════════════════════════════════════
-const FB_CONFIG = {
-  apiKey: "AIzaSyDemo_REPLACE_WITH_REAL_KEY",
+// Credenciais reais do projeto coco-bambu-presenca
+const FB_CONFIG_DEFAULT = {
+  apiKey: "AIzaSyBYJkigpHe2O7ge1XXBEM3DbvHfyqU3QHo",
   authDomain: "coco-bambu-presenca.firebaseapp.com",
   databaseURL: "https://coco-bambu-presenca-default-rtdb.firebaseio.com",
   projectId: "coco-bambu-presenca",
+  storageBucket: "coco-bambu-presenca.firebasestorage.app",
+  messagingSenderId: "429328314952",
+  appId: "1:429328314952:web:8602247aa1306991c79e7d",
 };
+const WEEK_KEY = (()=>{
+  const d=new Date(); const dow=d.getDay(); const diff=dow===0?-6:1-dow;
+  const mon=new Date(d); mon.setDate(d.getDate()+diff);
+  return `semana_${mon.getFullYear()}_${String(mon.getMonth()+1).padStart(2,'0')}_${String(mon.getDate()).padStart(2,'0')}`;
+})();
 
 let fbApp = null;
 let fbDb  = null;
 let fbConnected = false;
-let fbSyncTimer = null;
 let _ignoringRemoteUpdate = false;
+let _fbListenerActive = false;
+
+// Abre modal de configuração Firebase (override manual)
+function openFbConfig(){
+  const saved = load('fb_config', {});
+  document.getElementById('fb_db_url').value = saved.databaseURL || FB_CONFIG_DEFAULT.databaseURL;
+  document.getElementById('fb_api_key').value = saved.apiKey || FB_CONFIG_DEFAULT.apiKey;
+  document.getElementById('fb_project_id').value = saved.projectId || FB_CONFIG_DEFAULT.projectId;
+  openModal('fbConfigModal');
+}
+
+// Salva e reconecta Firebase com config manual
+function saveFbConfig(){
+  const databaseURL = document.getElementById('fb_db_url').value.trim();
+  const apiKey      = document.getElementById('fb_api_key').value.trim();
+  const projectId   = document.getElementById('fb_project_id').value.trim();
+  if(!databaseURL || !apiKey || !projectId){showToast('⚠️ Preencha todos os campos');return;}
+  const cfg={databaseURL,apiKey,projectId,
+    authDomain:projectId+'.firebaseapp.com',
+    storageBucket:projectId+'.firebasestorage.app'};
+  save('fb_config',cfg);
+  closeModal('fbConfigModal');
+  _fbListenerActive=false; fbDb=null; fbApp=null; fbConnected=false;
+  initFirebase();
+  showToast('🔥 Reconectando...');
+}
 
 function initFirebase(){
+  // Usa credenciais salvas manualmente, ou as credenciais reais embutidas
+  const cfg = load('fb_config', null) || FB_CONFIG_DEFAULT;
   try {
-    fbApp = firebase.initializeApp(FB_CONFIG);
-    fbDb  = firebase.database();
+    if(!window.firebase){
+      setSyncStatus('err','Firebase SDK não carregado');
+      setTimeout(initFirebase, 2000);
+      return;
+    }
+    // Inicializa ou reutiliza app Firebase
+    try { fbApp = firebase.app(); }
+    catch(e){ fbApp = firebase.initializeApp(cfg); }
+    fbDb = firebase.database();
 
-    // Monitora conexão
+    // Monitora status de conexão em tempo real
     fbDb.ref('.info/connected').on('value', snap => {
       fbConnected = !!snap.val();
+      const btn = document.getElementById('syncBtn');
       if(fbConnected){
         setSyncStatus('ok','🔄 Sync em tempo real ativo');
-        document.getElementById('syncBtn').textContent='✅ SINCRONIZADO';
-        document.getElementById('syncBtn').style.background='var(--green)';
-        document.getElementById('syncBtn').style.color='#fff';
-        // Ao reconectar, puxa dados do servidor
-        pullFromFirebase();
+        btn.textContent='✅ ONLINE';
+        btn.onclick=pullFromFirebase;
+        btn.style.cssText='background:var(--green);color:#fff;border-color:var(--green);margin-left:auto;border-radius:6px;padding:3px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:Barlow,sans-serif';
+        if(!_fbListenerActive) startFbListener();
       } else {
         setSyncStatus('loading','Reconectando...');
+        btn.textContent='🔄 SYNC';
+        btn.onclick=pullFromFirebase;
+        btn.style.cssText='background:none;border:1px solid var(--border);color:var(--accent);margin-left:auto;border-radius:6px;padding:3px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:Barlow,sans-serif';
       }
     });
-
-    // Escuta mudanças em tempo real
-    fbDb.ref('presenca').on('value', snap => {
-      if(_ignoringRemoteUpdate) return;
-      const data = snap.val();
-      if(!data) return;
-      // Atualiza localStorage com dados remotos
-      Object.entries(data).forEach(([k,v])=>{
-        localStorage.setItem(SK+k, JSON.stringify(v));
-      });
-      buildMain();
-      refreshPendBadge();
-      buildSummary();
-    });
-
     setSyncStatus('loading','Conectando ao Firebase...');
   } catch(e) {
-    setSyncStatus('err','Firebase não configurado');
-    console.warn('Firebase não inicializado:', e.message);
+    setSyncStatus('err','Erro: '+e.message);
+    console.warn('Firebase:', e.message);
   }
 }
 
-// Envia um registro específico para o Firebase
+function startFbListener(){
+  if(!fbDb || _fbListenerActive) return;
+  _fbListenerActive = true;
+  fbDb.ref('presenca/'+WEEK_KEY).on('value', snap => {
+    if(_ignoringRemoteUpdate) return;
+    const data = snap.val();
+    if(!data) return;
+    let changed = false;
+    Object.entries(data).forEach(([k,v])=>{
+      const localRaw = localStorage.getItem(SK+k);
+      const local = localRaw ? JSON.parse(localRaw) : null;
+      if(!local || (v && v.ts && (!local.ts || v.ts > local.ts))){
+        localStorage.setItem(SK+k, JSON.stringify(v));
+        changed = true;
+      }
+    });
+    if(changed){ buildMain(); refreshPendBadge(); buildSummary(); }
+  });
+  pullFromFirebase();
+}
+
 function pushToFirebase(key, value){
   if(!fbDb || !fbConnected) return;
   _ignoringRemoteUpdate = true;
-  fbDb.ref('presenca/'+key).set(value).finally(()=>{
-    setTimeout(()=>{ _ignoringRemoteUpdate = false; }, 500);
-  });
+  const safeKey = key.replace(/[.#$\[\]/\s]/g,'_');
+  fbDb.ref('presenca/'+WEEK_KEY+'/'+safeKey).set(value)
+    .catch(e=>console.warn('Push FB:', e.message))
+    .finally(()=>{ setTimeout(()=>{ _ignoringRemoteUpdate = false; }, 800); });
 }
 
-// Puxa todos os dados do Firebase para o localStorage
 function pullFromFirebase(){
-  if(!fbDb) return;
-  fbDb.ref('presenca').once('value').then(snap=>{
+  if(!fbDb){ openFbConfig(); return; }
+  setSyncStatus('loading','Sincronizando...');
+  fbDb.ref('presenca/'+WEEK_KEY).once('value').then(snap=>{
     const data = snap.val();
-    if(!data) return;
-    Object.entries(data).forEach(([k,v])=>{
-      localStorage.setItem(SK+k, JSON.stringify(v));
-    });
+    if(data) Object.entries(data).forEach(([k,v])=>{ localStorage.setItem(SK+k, JSON.stringify(v)); });
     buildMain(); refreshPendBadge(); buildSummary();
-    showToast('🔄 Dados sincronizados!');
+    setSyncStatus('ok','🔄 Sync em tempo real ativo');
+    showToast('🔄 Sincronizado!');
+  }).catch(e=>{
+    setSyncStatus('err','Erro ao sincronizar');
+    console.warn('Pull FB:', e.message);
   });
 }
-
-// Wrapper: salva localmente E envia ao Firebase
-const saveAndSync = (k, v) => {
-  save(k, v);
-  pushToFirebase(k.replace(/\//g,'_'), v);
-};
 
 // ═══════════════════════════════════════════════════
 // STORAGE

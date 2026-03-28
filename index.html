@@ -611,7 +611,10 @@ const load=(k,def=null)=>{try{const v=localStorage.getItem(SK+k);return v!==null
 // ═══════════════════════════════════════════════════
 // EQUIPE — LISTA COMPLETA CONFORME ESCALA ATUAL
 // ═══════════════════════════════════════════════════
-let EQUIPE=load('equipe',[
+// Versão da equipe — incrementar sempre que atualizar a lista
+const EQUIPE_VERSION = 'v20260328_completa';
+
+const EQUIPE_DEFAULT = [
   // GERENTES
   {id:'g1',nome:'TAIZA RANGEL CARMO',categoria:'GERENTE',turno:'INTERCALADO',horIni:'11:00',horFim:'22:00',folga:'SEG'},
   {id:'g2',nome:'FÁBIO',categoria:'GERENTE',turno:'ABERTURA',horIni:'06:00',horFim:'15:00',folga:'TER'},
@@ -720,7 +723,20 @@ let EQUIPE=load('equipe',[
   {id:'nut1',nome:'VICTORIA',categoria:'TEC. NUTRIÇÃO',turno:'ABERTURA',horIni:'08:00',horFim:'16:20',folga:'SEG'},
   {id:'nut2',nome:'GABRIELA FREITAS SILVA',categoria:'NUTRICIONISTA',turno:'ADMINISTRATIVO',horIni:'10:00',horFim:'18:20',folga:'SAB'},
   {id:'nut3',nome:'DAIANE',categoria:'TEC. NUTRIÇÃO',turno:'FECHAMENTO',horIni:'16:00',horFim:'00:20',folga:'QUA'},
-]);
+];
+
+// Carrega equipe — se versão diferente ou localStorage vazio, usa a lista padrão
+let EQUIPE = (()=>{
+  const savedVersion = load('equipe_version', null);
+  const savedEquipe  = load('equipe', null);
+  // Se versão desatualizada ou lista vazia/pequena, reseta com a lista padrão completa
+  if(!savedEquipe || savedEquipe.length < EQUIPE_DEFAULT.length || savedVersion !== EQUIPE_VERSION){
+    save('equipe', EQUIPE_DEFAULT);
+    save('equipe_version', EQUIPE_VERSION);
+    return EQUIPE_DEFAULT.map(f=>({...f})); // cópia para evitar mutação
+  }
+  return savedEquipe;
+})();
 
 function getTurnos(){
   const t={};

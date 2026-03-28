@@ -219,6 +219,12 @@ body{font-family:"Barlow",sans-serif;background:var(--bg);color:var(--text);min-
   <span id="syncMsg">Conectando ao Firebase...</span>
   <button onclick="pullFromFirebase()" style="margin-left:auto;background:none;border:1px solid var(--border);color:var(--accent);border-radius:6px;padding:3px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:Barlow,sans-serif;transition:all .2s" id="syncBtn">🔄 SYNC</button>
 </div>
+<!-- BARRA GOOGLE SHEETS -->
+<div style="background:var(--s2);padding:5px 16px;font-size:11px;color:var(--sub);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px" id="sheetsBar">
+  <div style="width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0" id="sheetsDot"></div>
+  <span id="sheetsMsg">Planilha Google não conectada</span>
+  <button onclick="gLogin()" id="sheetsBtn" style="margin-left:auto;background:none;border:1px solid var(--border);color:#27ae60;border-radius:6px;padding:3px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:Barlow,sans-serif">📊 CONECTAR PLANILHA</button>
+</div>
 
 <!-- MODAL CONFIGURAÇÃO FIREBASE -->
 <div class="modal-overlay" id="fbConfigModal" onclick="if(event.target===this)closeModal('fbConfigModal')">
@@ -634,7 +640,7 @@ const STATUS=[
 const PROG_FALTA=['Advertência escrita','Suspensão 1 dia','Suspensão 3 dias','Suspensão 5 dias','Justa causa'];
 const PROG_OUTROS=['Advertência verbal','Advertência escrita','Suspensão 1 dia','Suspensão 3 dias','Suspensão 5 dias','Justa causa'];
 const MOTIVOS_FALTA=['Falta sem justificativa'];
-const GCLIENT_ID='497562767891-ri2j7ijd4033d5ubeov91puhgq7ib6ic.apps.googleusercontent.com';
+const GCLIENT_ID='429328314952-7haf0e82uj6vbrk74tklsf8q2asoeken.apps.googleusercontent.com';
 const GSCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
 
 // ═══════════════════════════════════════════════════
@@ -1077,18 +1083,35 @@ function getPendencias(){
 let gToken=null;
 let autoSyncInterval=null;
 
+function setSheetsStatus(type,msg,btnTxt,btnAction){
+  const dot=document.getElementById('sheetsDot');
+  const msgEl=document.getElementById('sheetsMsg');
+  const btn=document.getElementById('sheetsBtn');
+  if(dot){
+    dot.style.background=type==='ok'?'#27ae60':type==='loading'?'#f5c842':type==='err'?'#e74c3c':'var(--muted)';
+  }
+  if(msgEl)msgEl.textContent=msg;
+  if(btn){
+    btn.textContent=btnTxt||'📊 CONECTAR PLANILHA';
+    if(btnAction)btn.onclick=btnAction;
+  }
+}
+
 function gLogin(){
   if(!window.google){showToast('Aguarde o Google carregar...');return;}
+  setSheetsStatus('loading','Aguardando autorização Google...','⏳ AGUARDE...');
   google.accounts.oauth2.initTokenClient({
     client_id:GCLIENT_ID,scope:GSCOPES,
     callback:async(resp)=>{
-      if(resp.error){setSyncStatus('err','Erro no login');return;}
+      if(resp.error){
+        setSheetsStatus('err','Erro no login Google — tente novamente','📊 TENTAR NOVAMENTE',gLogin);
+        showToast('❌ Erro ao conectar Google');
+        return;
+      }
       gToken=resp.access_token;
       save('g_token_ts',Date.now());
-      setSyncStatus('ok','Conectado ao Google');
-      document.getElementById('syncBtn').textContent='✅ CONECTADO';
-      document.getElementById('syncBtn').onclick=()=>syncFrequenciaTotal();
-      showToast('✅ Conectado! Inicializando planilha...');
+      setSheetsStatus('loading','Criando planilha...','⏳ AGUARDE...');
+      showToast('✅ Google conectado! Criando planilha...');
       await ensurePlanilha();
       await syncFrequenciaTotal();
       startAutoSync();
@@ -1285,159 +1308,171 @@ function colToLetter(n){
 // Sync total — reconstrói a aba inteira do mês
 async function syncFrequenciaTotal(){
   if(!gToken||!SHEET_ID){showToast('Conecte o Google primeiro');return;}
-  setSyncStatus('loading','Atualizando planilha completa...');
+  setSyncStatus('loading','Atualizando planilha...');
+  setSheetsStatus('loading','Atualizando planilha...','⏳ AGUARDE...');
 
   const hoje=new Date();
   const ano=hoje.getFullYear();
   const mes=hoje.getMonth()+1;
   const nomeAba=`${String(mes).padStart(2,'0')}-${ano}`;
   const totalDias=diasNoMes(ano,mes);
-  const meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  const nomeMes=meses[mes-1].toUpperCase();
+  const meses=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+  const nomeMes=meses[mes-1];
 
   try{
-    // Garante que a aba existe
     const info=await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}?fields=sheets.properties`);
     if(!info)return;
     let sheetId=null;
     const hasAba=info.sheets?.find(s=>s.properties.title===nomeAba);
     if(!hasAba){
       const r=await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,'POST',{
-        requests:[{addSheet:{properties:{title:nomeAba}}}]
+        requests:[{addSheet:{properties:{title:nomeAba,gridProperties:{rowCount:200,columnCount:40}}}}]
       });
       sheetId=r.replies[0].addSheet.properties.sheetId;
     }else{
       sheetId=hasAba.properties.sheetId;
     }
 
-    // Ordena funcionários
-    const sorted=[...EQUIPE].sort((a,b)=>a.nome.localeCompare(b.nome));
+    // ── Ordena funcionários ──
+    const sorted=[...EQUIPE].sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
 
-    // ─── MONTA LINHAS ───
-    // Linha 1: cabeçalho geral
-    const rowHeader1=['COCO BAMBU RESTAURANTE','','','',`MÊS: ${nomeMes} ${ano}`,...Array(totalDias-1).fill(''),'','Atualizado:',new Date().toLocaleString('pt-BR')];
-    // Linha 2: rótulos colunas + dias da semana
-    const rowDiaSem=['Colaborador:','Função:','Período:','Obs.',...Array.from({length:totalDias},(_,i)=>getDiaSemana(ano,mes,i+1))];
-    // Linha 3: números dos dias
-    const rowDiaNums=['','','','',...Array.from({length:totalDias},(_,i)=>String(i+1))];
+    // ── LINHA 1: Mês / Nome do mês (igual imagem: "Mês:" | "MARCO" grande | dias)
+    const rowMes=['Mês:', nomeMes,'','PERIODO:',...Array.from({length:totalDias},(_,i)=>'dia:')];
 
-    // Linhas de dados
+    // ── LINHA 2: Cabeçalho colunas (amarelo bold na imagem)
+    const rowHeader=['Colaborador:','Função:','','PERIODO:',...Array.from({length:totalDias},(_,i)=>String(i+1))];
+
+    // ── LINHAS DE DADOS ──
     const dataRows=sorted.map(f=>{
-      // Calcula saldo banco de horas do mês
-      let bhSaldo=0;
-      for(let d=1;d<=totalDias;d++){
-        const dk=`${ano}-${String(mes).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const rec=load('drec_'+f.nome+'_'+dk,null);
-        if(rec&&rec.status==='banco-horas'&&rec.extra&&rec.extra.horas){
-          const h=parseFloat(rec.extra.horas)||0;
-          bhSaldo+=(rec.extra.tipo==='DÉBITO'?-h:h);
-        }
-      }
-      const obsGeral=bhSaldo!==0?`BH: ${bhSaldo>0?'+':''}${bhSaldo.toFixed(1)}h`:'';
-      const row=[f.nome, f.categoria, f.turno, obsGeral];
+      const row=[f.nome, f.categoria, f.turno];
       for(let d=1;d<=totalDias;d++){
         const cell=statusToCell(f.nome,d,ano,mes);
-        const detail=statusToCellDetail(f.nome,d,ano,mes);
-        row.push(cell+(detail?' ('+detail+')':''));
+        row.push(cell||'');
       }
       return row;
     });
 
-    // Total de colunas (Nome + Função + Período + Obs + dias)
-    const totalCols=4+totalDias;
+    const totalCols=3+totalDias;
     const lastCol=colToLetter(totalCols);
+    const totalRows=2+sorted.length;
 
-    // Limpa e escreve
-    await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${nomeAba}!A1:${lastCol}${sorted.length+5}:clear`,'POST',{});
-    const allRows=[rowHeader1,rowDiaSem,rowDiaNums,...dataRows];
+    // Limpa e escreve dados
+    await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${nomeAba}!A1:${lastCol}${totalRows+2}:clear`,'POST',{});
+    const allRows=[rowMes, rowHeader, ...dataRows];
     await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${nomeAba}!A1:${lastCol}${allRows.length}?valueInputOption=RAW`,'PUT',{values:allRows});
 
-    // ─── FORMATAÇÃO ───
+    // ── FORMATAÇÃO (igual ao modelo da imagem) ──
     const rgb=(r,g,b)=>({red:r/255,green:g/255,blue:b/255});
-    const white=rgb(255,255,255),black=rgb(0,0,0);
-    const cocoBrown=rgb(101,53,28),cocoGold=rgb(207,160,60);
-    const headerYel=rgb(255,192,0);
-    const rowAlt=rgb(219,229,241);
-    const rowBase=white;
+    const white=rgb(255,255,255);
+    const black=rgb(0,0,0);
+    const amareloCab=rgb(255,255,0);       // cabeçalho amarelo (igual imagem)
+    const azulCab=rgb(0,112,192);          // "MARCO" azul escuro
+    const azulDias=rgb(189,215,238);       // linha de dias azul claro
+    const rowAzul=rgb(221,235,247);        // zebra par — azul claro
+    const rowBranco=white;                 // zebra ímpar — branco
+    const cinzaFonte=rgb(64,64,64);
 
-    const cr=(r1,r2,c1,c2,bg,fg,bold,sz,ha,wrap)=>({repeatCell:{
+    const cr=(r1,r2,c1,c2,bg,fg,bold,sz,ha)=>({repeatCell:{
       range:{sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2},
       cell:{userEnteredFormat:{
         backgroundColor:bg||white,
-        textFormat:{bold:!!bold,foregroundColor:fg||black,fontSize:sz||10},
+        textFormat:{bold:!!bold,foregroundColor:fg||black,fontSize:sz||9},
         horizontalAlignment:ha||'CENTER',
         verticalAlignment:'MIDDLE',
-        wrapStrategy:wrap||'CLIP'
+        wrapStrategy:'CLIP'
       }},
       fields:'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment,wrapStrategy)'
     }});
     const mg=(r1,r2,c1,c2)=>({mergeCells:{range:{sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2},mergeType:'MERGE_ALL'}});
     const cw=(c1,c2,px)=>({updateDimensionProperties:{range:{sheetId,dimension:'COLUMNS',startIndex:c1,endIndex:c2},properties:{pixelSize:px},fields:'pixelSize'}});
     const rh=(r1,r2,px)=>({updateDimensionProperties:{range:{sheetId,dimension:'ROWS',startIndex:r1,endIndex:r2},properties:{pixelSize:px},fields:'pixelSize'}});
-    const bd=(r1,r2,c1,c2)=>({updateBorders:{range:{sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2},
-      top:{style:'SOLID',width:1,color:rgb(160,160,160)},bottom:{style:'SOLID',width:1,color:rgb(160,160,160)},
-      left:{style:'SOLID',width:1,color:rgb(160,160,160)},right:{style:'SOLID',width:1,color:rgb(160,160,160)},
-      innerHorizontal:{style:'SOLID',width:1,color:rgb(190,190,190)},innerVertical:{style:'SOLID',width:1,color:rgb(210,210,210)}
+    const bd=(r1,r2,c1,c2)=>({updateBorders:{
+      range:{sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2},
+      top:{style:'SOLID',width:1,color:rgb(180,180,180)},
+      bottom:{style:'SOLID',width:1,color:rgb(180,180,180)},
+      left:{style:'SOLID',width:1,color:rgb(180,180,180)},
+      right:{style:'SOLID',width:1,color:rgb(180,180,180)},
+      innerHorizontal:{style:'SOLID',width:1,color:rgb(200,200,200)},
+      innerVertical:{style:'SOLID',width:1,color:rgb(210,210,210)}
     }});
-    const cf=(txt,bg,fg)=>({addConditionalFormatRule:{rule:{
-      ranges:[{sheetId,startRowIndex:3,endRowIndex:3+sorted.length,startColumnIndex:3,endColumnIndex:3+totalDias}],
-      booleanRule:{condition:{type:'TEXT_EQ',values:[{userEnteredValue:txt}]},format:{backgroundColor:bg,textFormat:{bold:true,foregroundColor:fg}}}
+    // Formatação condicional — texto CONTÉM (para pegar células com detalhes)
+    const cfContains=(txt,bg,fgColor)=>({addConditionalFormatRule:{rule:{
+      ranges:[{sheetId,startRowIndex:2,endRowIndex:2+sorted.length,startColumnIndex:3,endColumnIndex:3+totalDias}],
+      booleanRule:{
+        condition:{type:'TEXT_CONTAINS',values:[{userEnteredValue:txt}]},
+        format:{backgroundColor:bg,textFormat:{bold:true,foregroundColor:fgColor}}
+      }
     },index:0}});
 
-    // Limpa regras condicionais existentes
-    const clearCF={deleteConditionalFormatRule:{range:{sheetId,startRowIndex:3,endRowIndex:3+sorted.length,startColumnIndex:3,endColumnIndex:3+totalDias},index:0}};
-
     const requests=[
-      // Dimensões
-      cw(0,1,200), cw(1,2,120), cw(2,3,90), cw(3,4,110),
-      cw(4,4+totalDias,42),
-      rh(0,1,36), rh(1,2,22), rh(2,3,22),
-      rh(3,3+sorted.length,20),
-      // Merge cabeçalho
-      mg(0,1,4,4+Math.min(totalDias,15)),
-      // Cores cabeçalho
-      cr(0,1,0,4+totalDias,cocoBrown,white,true,12,'CENTER'),
-      cr(0,1,4,4+totalDias,cocoGold,white,true,11,'CENTER'),
-      cr(1,2,0,4,cocoBrown,white,true,10,'CENTER'),
-      cr(1,2,4,4+totalDias,headerYel,black,true,10,'CENTER'),
-      cr(2,3,0,4,cocoBrown,white,true,11,'CENTER'),
-      cr(2,3,4,4+totalDias,rgb(230,230,230),black,true,11,'CENTER'),
-      // Coluna OBS com cor especial
-      cr(1,3+sorted.length,3,4,rgb(255,250,230),rgb(100,70,0),false,9,'LEFT'),
-      // Zebra nas linhas de dados
-      ...sorted.map((_,i)=>cr(3+i,4+i,0,4+totalDias,i%2===0?rowAlt:rowBase,black,false,9,'CENTER')),
-      // Colunas Nome/Função/Período alinhamento
-      ...sorted.map((_,i)=>cr(3+i,4+i,0,1,i%2===0?rowAlt:rowBase,black,true,9,'LEFT')),
-      ...sorted.map((_,i)=>cr(3+i,4+i,1,4,i%2===0?rowAlt:rowBase,black,false,9,'CENTER')),
-      // Bordas
-      bd(0,3+sorted.length,0,4+totalDias),
-      // Congelar linhas/colunas
-      {updateSheetProperties:{properties:{sheetId,gridProperties:{frozenRowCount:3,frozenColumnCount:4}},fields:'gridProperties.frozenRowCount,gridProperties.frozenColumnCount'}},
-      // Formatação condicional por status (usando labels do planilha)
-      cf('PRESENTE',      rgb(0,176,80),    white),
-      cf('FALTA',         rgb(255,80,80),   white),
-      cf('ATESTADO',      rgb(255,235,156), rgb(120,80,0)),
-      cf('FOLGA',         rgb(200,200,200), rgb(60,60,60)),
-      cf('LICENÇA',       rgb(173,216,230), rgb(0,80,120)),
-      cf('TROCA HOR.',    rgb(189,215,238), rgb(0,70,127)),
-      cf('TROCA FOLGA',   rgb(218,190,255), rgb(80,0,160)),
-      cf('MEDIDA DISC.',  rgb(255,150,180), rgb(120,0,60)),
-      cf('SAÍDA ANTEC.',  rgb(255,220,100), rgb(100,60,0)),
-      cf('BANCO HORAS',   rgb(180,255,220), rgb(0,100,70)),
+      // Larguras de coluna
+      cw(0,1,180),   // Colaborador — mais largo
+      cw(1,2,100),   // Função
+      cw(2,3,80),    // Período
+      cw(3,3+totalDias,45), // dias
+
+      // Alturas de linha
+      rh(0,1,22),   // linha Mês
+      rh(1,2,22),   // linha cabeçalho
+      rh(2,2+sorted.length,18), // dados
+
+      // ── LINHA 1: Mês ──
+      // "Mês:" em cinza
+      cr(0,1,0,1,rgb(242,242,242),cinzaFonte,true,10,'LEFT'),
+      // Nome do mês em azul escuro bold grande (merge das colunas do mês)
+      cr(0,1,1,3+totalDias,azulCab,white,true,12,'CENTER'),
+      mg(0,1,1,3),  // merge Mês colunas 1-2
+      // "dia:" nas colunas de dias
+      cr(0,1,3,3+totalDias,azulDias,azulCab,true,9,'CENTER'),
+
+      // ── LINHA 2: Cabeçalho amarelo ──
+      cr(1,2,0,3+totalDias,amareloCab,black,true,10,'CENTER'),
+      // Colaborador alinhado à esquerda
+      cr(1,2,0,1,amareloCab,black,true,10,'LEFT'),
+
+      // ── LINHAS DE DADOS — zebra ──
+      ...sorted.map((_,i)=>cr(2+i,3+i,0,3+totalDias,i%2===0?rowAzul:rowBranco,black,false,9,'CENTER')),
+      // Nome à esquerda em todas as linhas
+      ...sorted.map((_,i)=>cr(2+i,3+i,0,1,i%2===0?rowAzul:rowBranco,black,true,9,'LEFT')),
+      // Período centralizado
+      ...sorted.map((_,i)=>cr(2+i,3+i,1,3,i%2===0?rowAzul:rowBranco,black,false,9,'CENTER')),
+
+      // Bordas em tudo
+      bd(0,2+sorted.length,0,3+totalDias),
+
+      // Congelar: 2 linhas de cabeçalho + 3 colunas (Nome/Função/Período)
+      {updateSheetProperties:{properties:{sheetId,gridProperties:{frozenRowCount:2,frozenColumnCount:3}},fields:'gridProperties.frozenRowCount,gridProperties.frozenColumnCount'}},
+
+      // ── FORMATAÇÃO CONDICIONAL por status ──
+      cfContains('PRESENTE',    rgb(0,176,80),    white),
+      cfContains('FALTA',       rgb(255,80,80),   white),
+      cfContains('ATESTADO',    rgb(255,235,156), rgb(120,80,0)),
+      cfContains('FOLGA',       rgb(200,200,200), rgb(60,60,60)),
+      cfContains('LICENÇA',     rgb(173,216,230), rgb(0,80,120)),
+      cfContains('TROCA HOR.',  rgb(189,215,238), rgb(0,70,127)),
+      cfContains('TROCA FOLGA', rgb(218,190,255), rgb(80,0,160)),
+      cfContains('MEDIDA DISC.',rgb(255,150,180), rgb(120,0,60)),
+      cfContains('SAÍDA ANTEC.',rgb(255,220,100), rgb(100,60,0)),
+      cfContains('BANCO HORAS', rgb(180,255,220), rgb(0,100,70)),
     ];
 
     await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,'POST',{requests});
 
     lastFullSync=Date.now();
-    setSyncStatus('ok',`Planilha atualizada — ${new Date().toLocaleTimeString('pt-BR')}`);
-    showToast('✅ Planilha Google atualizada!');
-    document.getElementById('syncBtn').textContent='🔄 ATUALIZAR';
-    document.getElementById('syncBtn').style.background='var(--green)';
-    document.getElementById('syncBtn').style.color='#fff';
+    const hora=new Date().toLocaleTimeString('pt-BR');
+    showToast('✅ Planilha atualizada!');
+    setSyncStatus('ok','Planilha atualizada');
+    setSheetsStatus('ok',`✅ Atualizado — ${hora}`,
+      '🔗 Abrir Planilha',
+      ()=>window.open('https://docs.google.com/spreadsheets/d/'+SHEET_ID,'_blank')
+    );
+    const sheetsBtn=document.getElementById('sheetsBtn');
+    if(sheetsBtn){sheetsBtn.style.background='#27ae60';sheetsBtn.style.color='#fff';sheetsBtn.style.borderColor='#27ae60';}
   }catch(e){
     console.error(e);
-    setSyncStatus('err','Erro no sync: '+e.message);
-    showToast('❌ Erro ao atualizar planilha');
+    setSyncStatus('err','Erro: '+e.message);
+    setSheetsStatus('err','Erro ao atualizar planilha','📊 TENTAR NOVAMENTE',gLogin);
+    showToast('❌ Erro: '+e.message);
   }
 }
 
@@ -2256,13 +2291,19 @@ function buildReport(period){
   window._reportText=fullText;
   const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const previewHtml=fullText.split('\n').map(line=>{const l=esc(line);if(/PRESENTES/.test(l))return '<span style="color:#27ae60">'+l+'</span>';if(/FALTAS/.test(l))return '<span style="color:#e74c3c">'+l+'</span>';if(/ATESTADOS/.test(l))return '<span style="color:#2980b9">'+l+'</span>';return '<span style="color:#8891a8">'+l+'</span>';}).join('\n');
-  const gBtn='<button class="export-btn" onclick="copyReport()" style="background:var(--accent);color:#111;font-weight:700;font-size:14px;text-align:center">📋 COPIAR PARA WHATSAPP</button>'
-    +'<div style="font-size:11px;color:var(--sub);text-align:center;margin-top:4px;margin-bottom:6px">🔄 Sync automático ativo — dados compartilhados em tempo real</div>';
+  const sheetsBtn = gToken
+    ? `<button class="export-btn" onclick="syncFrequenciaTotal()" style="background:#1a7340;color:#fff;border-color:#1a7340;font-weight:700;font-size:14px;text-align:center;padding:14px">📊 ATUALIZAR PLANILHA AGORA</button>`
+      + (SHEET_ID ? `<button class="export-btn" onclick="window.open('https://docs.google.com/spreadsheets/d/${SHEET_ID}','_blank')" style="background:var(--s3);border-color:#27ae6066;color:#27ae60;font-size:13px;text-align:center">🔗 Abrir Planilha Google</button>` : '')
+    : `<button class="export-btn" onclick="gLogin()" style="background:#fff;color:#111;font-weight:700;font-size:14px;text-align:center;padding:14px">📊 CONECTAR GOOGLE SHEETS</button>
+       <div style="font-size:11px;color:var(--sub);text-align:center;padding:4px 0 6px">Gera planilha com o modelo completo (colaborador, função, dias 1-31)</div>`;
+
   const periods=[{id:'dia',l:'Hoje'},{id:'semana',l:'Semana'}];
   document.getElementById('reportContent').innerHTML=
     '<div style="display:flex;gap:6px;margin-bottom:12px">'+periods.map(p=>'<button onclick="buildReport(\''+p.id+'\')" style="flex:1;padding:8px;border-radius:9px;border:1.5px solid '+(period===p.id?'var(--accent)':'var(--border)')+';background:'+(period===p.id?'var(--accent)':'var(--s3)')+';color:'+(period===p.id?'#111':'var(--sub)')+';font-weight:700;font-family:Barlow Condensed,sans-serif;font-size:13px;cursor:pointer">'+p.l+'</button>').join('')+'</div>'+
     '<div class="export-card"><h3>📊 RESUMO</h3><div class="grid2"><div class="scard"><div class="scard-num c-green">'+totalCnt.presente+'</div><div class="scard-lbl">Presente</div></div><div class="scard"><div class="scard-num c-red">'+totalCnt.falta+'</div><div class="scard-lbl">Falta</div></div><div class="scard"><div class="scard-num c-blue">'+totalCnt.atestado+'</div><div class="scard-lbl">Atestado</div></div><div class="scard"><div class="scard-num c-orange">'+totalCnt['troca-horario']+'</div><div class="scard-lbl">Troca H.</div></div><div class="scard"><div class="scard-num c-purple">'+totalCnt['troca-folga']+'</div><div class="scard-lbl">Troca F.</div></div><div class="scard"><div class="scard-num c-pink">'+totalCnt.medida+'</div><div class="scard-lbl">Discipl.</div></div></div></div>'+
-    '<div class="export-card"><h3>📤 EXPORTAR</h3><button class="export-btn" onclick="copyReport()" style="background:var(--accent);color:#111;font-weight:700;font-size:14px;text-align:center">📋 COPIAR PARA WHATSAPP</button>'+gBtn+'<button class="export-btn" onclick="clearAll()" style="color:#e74c3c;border-color:#e74c3c44">🗑️ Limpar registros da semana</button></div>'+
+    '<div class="export-card"><h3>📤 EXPORTAR</h3>'+sheetsBtn+
+    '<button class="export-btn" onclick="copyReport()" style="background:var(--accent);color:#111;font-weight:700;font-size:14px;text-align:center">📋 COPIAR PARA WHATSAPP</button>'+
+    '<button class="export-btn" onclick="clearAll()" style="color:#e74c3c;border-color:#e74c3c44">🗑️ Limpar registros da semana</button></div>'+
     '<div class="export-card" style="background:var(--s1)"><h3 style="color:var(--muted)">PRÉVIA</h3><pre style="font-size:10px;white-space:pre-wrap;line-height:1.8;-webkit-user-select:text;user-select:text">'+previewHtml+'</pre></div>';
 }
 function copyReport(){

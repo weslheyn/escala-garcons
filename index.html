@@ -1546,22 +1546,110 @@ async function syncFrequenciaTotal(){
 // ─── AUTO-SYNC a cada 30 segundos + sync imediato ao salvar ───
 function startAutoSync(){
   if(autoSyncInterval)clearInterval(autoSyncInterval);
-  // Sync imediato ao conectar
-  if(gToken&&SHEET_ID) syncFrequenciaTotal().catch(()=>{});
-  // Depois a cada 30 segundos
+  if(gToken&&SHEET_ID){
+    syncFrequenciaTotal().catch(()=>{});
+    syncTrocasSheet().catch(()=>{});
+  }
   autoSyncInterval=setInterval(()=>{
-    if(gToken&&SHEET_ID) syncFrequenciaTotal().catch(()=>{});
+    if(gToken&&SHEET_ID){
+      syncFrequenciaTotal().catch(()=>{});
+      syncTrocasSheet().catch(()=>{});
+    }
   },30000);
 }
 
 // Chamado toda vez que um status é salvo — dispara sync da planilha
 function triggerSheetsSync(){
   if(gToken&&SHEET_ID){
-    // Debounce: aguarda 3s para acumular múltiplos saves
     clearTimeout(window._sheetsSyncTimer);
     window._sheetsSyncTimer=setTimeout(()=>{
       syncFrequenciaTotal().catch(()=>{});
+      syncTrocasSheet().catch(()=>{});
     },3000);
+  }
+}
+
+// ─── Sincroniza aba de Trocas de Folga no Google Sheets ───
+async function syncTrocasSheet(){
+  if(!gToken||!SHEET_ID)return;
+  const nomeAba='Trocas de Folga';
+
+  try{
+    // Garante que a aba existe
+    const info=await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}?fields=sheets.properties`);
+    if(!info)return;
+    let sheetId=null;
+    const hasAba=info.sheets?.find(s=>s.properties.title===nomeAba);
+    if(!hasAba){
+      const r=await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,'POST',{
+        requests:[{addSheet:{properties:{title:nomeAba,gridProperties:{rowCount:500,columnCount:8}}}}]
+      });
+      sheetId=r?.replies?.[0]?.addSheet?.properties?.sheetId;
+    }else{
+      sheetId=hasAba.properties.sheetId;
+    }
+    if(sheetId==null)return;
+
+    // Busca todas as trocas do Firebase
+    if(!fbDb)return;
+    const snap=await fbDb.ref('trocas').once('value');
+    const data=snap.val();
+    const trocas=data?Object.values(data):[];
+    trocas.sort((a,b)=>(a.ts||0)-(b.ts||0));
+
+    // Monta linhas
+    const cabecalho=['Carimbo de data/hora','COLABORADOR:','FUNÇÃO:','TROCA DE FOLGA:','TRABALHA:','FOLGA:','AUTORIZADO:'];
+    const dataRows=trocas.map(t=>{
+      const ts=t.ts?new Date(t.ts).toLocaleString('pt-BR'):'';
+      return [
+        ts,
+        t.nome||'',
+        t.categoria||'',
+        'TROCA DE FOLGA',
+        t.trabalhouFmt||t.trabalhouIso||'',
+        t.folgaFmt||t.folgaIso||'',
+        t.auth||''
+      ];
+    });
+    const allRows=[cabecalho,...dataRows];
+    const lastCol='G';
+    const nomeAbaEnc=encodeURIComponent(nomeAba);
+
+    // Limpa e escreve
+    await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${nomeAbaEnc}!A1:${lastCol}${allRows.length+5}:clear`,'POST',{});
+    await gFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`,
+      'POST',
+      {valueInputOption:'RAW',data:[{range:`${nomeAba}!A1`,majorDimension:'ROWS',values:allRows}]}
+    );
+
+    // Formatação
+    const rgb=(r,g,b)=>({red:r/255,green:g/255,blue:b/255});
+    const white=rgb(255,255,255),black=rgb(0,0,0);
+    const roxo=rgb(103,58,183);
+    const azulZebra=rgb(221,235,247);
+    const cr=(r1,r2,c1,c2,bg,fg,bold,sz,ha)=>({repeatCell:{
+      range:{sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2},
+      cell:{userEnteredFormat:{backgroundColor:bg||white,textFormat:{bold:!!bold,foregroundColor:fg||black,fontSize:sz||9},horizontalAlignment:ha||'LEFT',verticalAlignment:'MIDDLE',wrapStrategy:'CLIP'}},
+      fields:'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment,wrapStrategy)'
+    }});
+    const cw=(c1,c2,px)=>({updateDimensionProperties:{range:{sheetId,dimension:'COLUMNS',startIndex:c1,endIndex:c2},properties:{pixelSize:px},fields:'pixelSize'}});
+    const rh=(r1,r2,px)=>({updateDimensionProperties:{range:{sheetId,dimension:'ROWS',startIndex:r1,endIndex:r2},properties:{pixelSize:px},fields:'pixelSize'}});
+
+    const requests=[
+      cw(0,1,160),cw(1,2,180),cw(2,3,120),cw(3,4,180),cw(4,5,100),cw(5,6,100),cw(6,7,120),
+      rh(0,1,28),rh(1,1+trocas.length,20),
+      // Cabeçalho roxo
+      cr(0,1,0,7,roxo,white,true,10,'CENTER'),
+      // Zebra nas linhas de dados
+      ...trocas.map((_,i)=>cr(1+i,2+i,0,7,i%2===0?azulZebra:white,black,false,9,'LEFT')),
+      // Congela primeira linha
+      {updateSheetProperties:{properties:{sheetId,gridProperties:{frozenRowCount:1}},fields:'gridProperties.frozenRowCount'}},
+    ];
+    await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,'POST',{requests});
+
+  }catch(e){
+    console.warn('syncTrocasSheet erro:',e.message);
   }
 }
 
@@ -2915,7 +3003,11 @@ function saveDomFolga(){
     const trocaKey=fbEncode('troca_'+nome+'_'+trabalhouIso);
     if(fbDb&&fbConnected){
       fbDb.ref('trocas/'+trocaKey).set(trocaRecord)
-        .then(()=>{ if(document.getElementById('trocasPanel').classList.contains('open')) buildTrocasPanel(); });
+        .then(()=>{
+          if(document.getElementById('trocasPanel').classList.contains('open')) buildTrocasPanel();
+          // Atualiza aba de trocas na planilha
+          if(gToken&&SHEET_ID) syncTrocasSheet().catch(()=>{});
+        });
     }
 
     showToast('✅ Hoje: PRESENTE · '+rec.trocaDiaFmt+': FOLGA');

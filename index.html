@@ -958,7 +958,7 @@ const load=(k,def=null)=>{
 // EQUIPE — LISTA COMPLETA CONFORME ESCALA ATUAL
 // ═══════════════════════════════════════════════════
 // Versão da equipe — incrementar sempre que atualizar a lista
-const EQUIPE_VERSION = 'v20260401_v4';
+const EQUIPE_VERSION = 'v20260401_v5';
 
 const EQUIPE_DEFAULT = [
   // GERENTES
@@ -973,7 +973,7 @@ const EQUIPE_DEFAULT = [
   {id:'m4',nome:'EDMAGNA DOS SANTOS SILVA',categoria:'MAÎTRE',turno:'INTERCALADO',horIni:'10:00',horFim:'21:20',folga:'QUI'},
 
   // GARÇOM VASTO (EFETIVO) - ABERTURA
-  {id:'f14',nome:'WILLIAM DE LIMA FRANCO',categoria:'CHEFE DE FILA',turno:'ABERTURA',horIni:'08:00',horFim:'16:20',folga:'QUA'},
+  {id:'f14',nome:'WILLIAM DE LIMA FRANCO',categoria:'CHEFE DE FILA',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'QUA'},
   {id:'f13',nome:'MIGUEL SEBASTIAN JACU',categoria:'GARÇOM',turno:'FECHAMENTO',horIni:'15:00',horFim:'23:20',folga:'TER'},
   {id:'f15',nome:'KAIAN DA SILVA VERISSIMO DOS SANTOS',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'QUI'},
   {id:'f16b',nome:'SARA RAQUEL FERREIRA DE SOUSA',categoria:'CHEFE DE FILA',turno:'FECHAMENTO',horIni:'15:00',horFim:'23:20',folga:'SEG'},
@@ -1051,11 +1051,11 @@ const EQUIPE_DEFAULT = [
   {id:'alm3',nome:'JOSON ALVES',categoria:'AUX. ALMOXARIFADO',turno:'ABERTURA',horIni:'08:00',horFim:'16:20',folga:'QUI'},
 
   // ADMINISTRATIVO
-  {id:'adm1',nome:'DAVID BRUNO CLEMENTE BONFIM',categoria:'LANCADOR',turno:'ADMINISTRATIVO',horIni:'08:00',horFim:'17:00',folga:'SAB'},
-  {id:'adm2',nome:'VALDETE PEREIRA DOS SANTOS',categoria:'ASSISTENTE RH',turno:'ADMINISTRATIVO',horIni:'08:00',horFim:'17:00',folga:'SAB'},
-  {id:'adm3',nome:'OSVALDINA CAPAO DE SOUZA',categoria:'ANALISTA DE RH',turno:'ADMINISTRATIVO',horIni:'08:00',horFim:'17:00',folga:'SAB'},
-  {id:'adm4',nome:'EDUARDO DE CASTRO CANDIDO',categoria:'AUDITOR',turno:'ADMINISTRATIVO',horIni:'08:00',horFim:'17:00',folga:'SAB'},
-  {id:'adm5',nome:'DIEGO DE OLIVEIRA DUARTE',categoria:'COMPRADOR',turno:'ADMINISTRATIVO',horIni:'08:00',horFim:'17:00',folga:'SAB'},
+  {id:'adm1',nome:'DAVID BRUNO CLEMENTE BONFIM',categoria:'LANCADOR',turno:'ADMINISTRATIVO',horIni:'08:00',horFim:'17:00',folga:'SAB',folga2:'DOM'},
+  {id:'adm2',nome:'VALDETE PEREIRA DOS SANTOS',categoria:'ASSISTENTE RH',turno:'ADMINISTRATIVO',horIni:'08:00',horFim:'17:00',folga:'SAB',folga2:'DOM'},
+  {id:'adm3',nome:'OSVALDINA CAPAO DE SOUZA',categoria:'ANALISTA DE RH',turno:'ADMINISTRATIVO',horIni:'08:00',horFim:'17:00',folga:'SAB',folga2:'DOM'},
+  {id:'adm4',nome:'EDUARDO DE CASTRO CANDIDO',categoria:'AUDITOR',turno:'ADMINISTRATIVO',horIni:'08:00',horFim:'17:00',folga:'SAB',folga2:'DOM'},
+  {id:'adm5',nome:'DIEGO DE OLIVEIRA DUARTE',categoria:'COMPRADOR',turno:'ADMINISTRATIVO',horIni:'08:00',horFim:'17:00',folga:'SAB',folga2:'DOM'},
 
   // BRINQUEDOTECA
   {id:'br1',nome:'GABRIELA ALVES DE MOURA',categoria:'ENCANTADORA',turno:'FECHAMENTO',horIni:'15:00',horFim:'23:20',folga:'TER'},
@@ -1066,7 +1066,7 @@ const EQUIPE_DEFAULT = [
   {id:'ca1',nome:'BRUNA DAS GRACAS FIDELIS',categoria:'CONTR. DE ACESSO',turno:'ABERTURA',horIni:'08:00',horFim:'16:20',folga:'TER'},
 
   // MANUTENÇÃO
-  {id:'man1',nome:'MILTON',categoria:'AUX. MANUTENCAO',turno:'ADMINISTRATIVO',horIni:'08:00',horFim:'17:00',folga:'SAB'},
+  {id:'man1',nome:'MILTON',categoria:'AUX. MANUTENCAO',turno:'ADMINISTRATIVO',horIni:'08:00',horFim:'17:00',folga:'SAB',folga2:'DOM'},
 
   // GOVERNANÇA ABERTURA
   {id:'asg1',nome:'DANIEL SOARES DE SOUZA LACERDA',categoria:'AUX. ASG',turno:'ABERTURA',horIni:'07:30',horFim:'15:50',folga:'SEG'},
@@ -1074,7 +1074,7 @@ const EQUIPE_DEFAULT = [
 
   // NUTRIÇÃO
   {id:'nut1',nome:'VICTORIA',categoria:'TEC. NUTRICAO',turno:'ABERTURA',horIni:'08:00',horFim:'16:20',folga:'SEG'},
-  {id:'nut2',nome:'GABRIELA FREITAS SILVA',categoria:'NUTRICIONISTA',turno:'ADMINISTRATIVO',horIni:'10:00',horFim:'18:20',folga:'SAB'},
+  {id:'nut2',nome:'GABRIELA FREITAS SILVA',categoria:'NUTRICIONISTA',turno:'ADMINISTRATIVO',horIni:'10:00',horFim:'18:20',folga:'SAB',folga2:'DOM'},
   {id:'nut3',nome:'DAIANE',categoria:'TEC. NUTRICAO',turno:'FECHAMENTO',horIni:'16:00',horFim:'00:20',folga:'QUA'},
 ];
 
@@ -3339,14 +3339,16 @@ function renderMapaEscala(funcs){
     let contPorDia = [0,0,0,0,0,0,0];
     gr.forEach(f => {
       const folgaIdx = f.folga ? DIAS_IDX[f.folga] : -1;
+      const folga2Idx = f.folga2 ? DIAS_IDX[f.folga2] : -1;
       const cls = _turnoClass(turno);
       html += `<tr class="${cls}">`;
       DIAS_SEMANA.forEach((_,di) => {
+        const isFolga = di === folgaIdx || di === folga2Idx;
         if(turno === 'LICENÇA'){
-          html += di===folgaIdx
+          html += isFolga
             ? `<td class="cell-folga">✕</td>`
             : `<td style="color:#5a6480;font-size:7px">LIC</td>`;
-        } else if(di === folgaIdx) {
+        } else if(isFolga) {
           html += `<td class="cell-folga">✕</td>`;
         } else {
           html += `<td>${_nomeAbrev(f.nome)}</td>`;
@@ -3413,7 +3415,7 @@ function renderMapaDomingo(funcs){
   const fmt = d => d.getDate()+'/'+(d.getMonth()+1);
 
   // Organiza por folga semanal — quem não folga na DOM é candidato a domingo
-  const folgaDom = funcs.filter(f=>f.folga!=='DOM' && f.turno!=='LICENÇA');
+  const folgaDom = funcs.filter(f=>f.folga!=='DOM' && f.folga2!=='DOM' && f.turno!=='LICENÇA');
   const maxPorDom = Math.ceil(folgaDom.length / 5);
 
   let html = '<div class="mapa-dom-block">';
@@ -3438,18 +3440,29 @@ function renderMapaDomingo(funcs){
   }
   html += '</tbody></table></div>';
 
-  // Folgas semanais resumidas
-  html += `<div class="mapa-hor-block" style="margin-top:10px">
-    <div class="mapa-hor-header">Folgas semanais</div>`;
-  const dias = ['SEG','TER','QUA','QUI','SEX','SAB','DOM'];
-  dias.forEach(dia => {
-    const quem = funcs.filter(f=>f.folga===dia).map(f=>_nomeAbrev(f.nome));
-    if(quem.length) html += `<div class="mapa-hor-row">
-      <div class="mapa-hor-time">${dia}</div>
-      <div class="mapa-hor-names">${quem.join(' · ')}</div>
-    </div>`;
-  });
-  html += '</div></div>';
+  // Folgas semanais — tabela com colunas por dia (SEG a QUI + SEX SAB DOM se houver)
+  const DIAS_FOLGA = ['SEG','TER','QUA','QUI','SEX','SAB','DOM'];
+  // Montar colunas: apenas dias que têm alguém folgando
+  const colsDias = DIAS_FOLGA.filter(dia => funcs.some(f=>f.folga===dia||f.folga2===dia));
+  const colunasFolga = colsDias.map(dia =>
+    funcs.filter(f=>f.folga===dia||f.folga2===dia).map(f=>_nomeAbrev(f.nome))
+  );
+  const maxRowsFolga = Math.max(...colunasFolga.map(c=>c.length), 0);
+
+  html += `<div class="mapa-tbl-wrap" style="margin-top:10px">
+    <div style="font-size:9px;color:var(--accent);font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding:0 2px">Folgas semanais</div>
+    <table class="mapa-dom-tbl"><thead><tr>`;
+  colsDias.forEach(dia => { html += `<th>${dia}</th>`; });
+  html += '</tr></thead><tbody>';
+  for(let r=0; r<maxRowsFolga; r++){
+    html += '<tr>';
+    colunasFolga.forEach(col => {
+      html += col[r] ? `<td>${col[r]}</td>` : `<td class="vazio"></td>`;
+    });
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+  html += '</div>';
   return html;
 }
 

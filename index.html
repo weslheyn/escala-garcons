@@ -774,39 +774,37 @@ function startFbListener(){
   if(!fbDb || _fbListenerActive) return;
   _fbListenerActive = true;
 
-  // Limpa localStorage de presença ao conectar — Firebase é a fonte de verdade
-  _limparCacheLocal();
-
   fbDb.ref('presenca/'+WEEK_KEY).on('value', snap => {
     if(_ignoringRemoteUpdate) return;
     const data = snap.val();
 
-    // Limpa cache local e reconstrói com dados do Firebase
-    _limparCacheLocal();
+    // Limpa cache em memória e reconstrói com dados do Firebase
+    Object.keys(_fbCache).forEach(k=>{
+      if(k.startsWith('drec_')||/^\d_/.test(k)||k.startsWith('folga_')){
+        delete _fbCache[k];
+      }
+    });
 
     if(data){
       Object.entries(data).forEach(([fbKey,v])=>{
         const localKey = fbDecode(fbKey);
-        localStorage.setItem(SK+localKey, JSON.stringify(v));
+        _fbCache[localKey] = v;
       });
     }
     buildMain(); refreshPendBadge(); buildSummary();
+    // Atualiza painel de trocas se estiver aberto
+    if(document.getElementById('trocasPanel').classList.contains('open')) buildTrocasPanel();
   });
   pullFromFirebase();
 }
 
-// Limpa APENAS os registros de presença do localStorage (não a equipe/config)
+// Limpa cache local de presença (já não usa mais localStorage para presença)
 function _limparCacheLocal(){
-  const keysToRemove = [];
-  for(let i=0;i<localStorage.length;i++){
-    const k=localStorage.key(i);
-    if(!k) continue;
-    // Remove apenas chaves de registro de presença (drec_ e 0_ a 6_)
-    if(k.startsWith(SK+'drec_') || /^gp5_\d_/.test(k) || k.startsWith(SK+'folga_')){
-      keysToRemove.push(k);
+  Object.keys(_fbCache).forEach(k=>{
+    if(k.startsWith('drec_')||/^\d_/.test(k)||k.startsWith('folga_')){
+      delete _fbCache[k];
     }
-  }
-  keysToRemove.forEach(k=>localStorage.removeItem(k));
+  });
 }
 
 function pushToFirebase(key, value){
@@ -824,14 +822,14 @@ function pushToFirebase(key, value){
 function pullFromFirebase(){
   if(!fbDb){ openFbConfig(); return; }
   setSyncStatus('loading','Sincronizando...');
-  // Limpa cache local antes de puxar do Firebase
+  // Limpa cache em memória antes de puxar
   _limparCacheLocal();
   fbDb.ref('presenca/'+WEEK_KEY).once('value').then(snap=>{
     const data = snap.val();
     if(data){
       Object.entries(data).forEach(([fbKey,v])=>{
         const localKey = fbDecode(fbKey);
-        localStorage.setItem(SK+localKey, JSON.stringify(v));
+        _fbCache[localKey] = v;
       });
     }
     buildMain(); refreshPendBadge(); buildSummary();
@@ -847,8 +845,28 @@ function pullFromFirebase(){
 // STORAGE
 // ═══════════════════════════════════════════════════
 const SK='gp5_';
-const save=(k,v)=>localStorage.setItem(SK+k,JSON.stringify(v));
-const load=(k,def=null)=>{try{const v=localStorage.getItem(SK+k);return v!==null?JSON.parse(v):def}catch{return def}};
+
+// ── CACHE EM MEMÓRIA (fonte de verdade = Firebase) ──
+// Dados de presença ficam APENAS aqui, nunca no localStorage
+const _fbCache = {};
+
+// Salva no cache em memória E envia ao Firebase
+const save=(k,v)=>{
+  // Configurações e equipe ainda vão pro localStorage
+  if(k==='equipe'||k==='equipe_version'||k==='fb_config'||k==='sheet_id_v2'||k==='g_token_ts'){
+    localStorage.setItem(SK+k,JSON.stringify(v));
+  } else {
+    _fbCache[k]=v;
+  }
+};
+
+// Lê do cache em memória ou localStorage (para config)
+const load=(k,def=null)=>{
+  if(k==='equipe'||k==='equipe_version'||k==='fb_config'||k==='sheet_id_v2'||k==='g_token_ts'){
+    try{const v=localStorage.getItem(SK+k);return v!==null?JSON.parse(v):def}catch{return def}
+  }
+  return k in _fbCache ? _fbCache[k] : def;
+};
 
 // ═══════════════════════════════════════════════════
 // EQUIPE — LISTA COMPLETA CONFORME ESCALA ATUAL
@@ -1813,7 +1831,6 @@ function showView(v){
 function openTrocas(){
   document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('navTrocas').classList.add('active');
-  // Define mês/ano atual como padrão
   const hoje=new Date();
   document.getElementById('trocasMesFiltro').value=hoje.getMonth();
   document.getElementById('trocasAnoFiltro').value=hoje.getFullYear();
@@ -1825,40 +1842,93 @@ function buildTrocasPanel(){
   const mes=parseInt(document.getElementById('trocasMesFiltro').value);
   const ano=parseInt(document.getElementById('trocasAnoFiltro').value);
   const mesesNome=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  const totalDias=new Date(ano,mes+1,0).getDate();
+  const el=document.getElementById('trocasContent');
 
-  // Coleta todas as trocas do mês
+  el.innerHTML='<div class="empty" style="color:var(--sub)">🔄 Carregando trocas...</div>';
+
+  if(!fbDb){
+    _buildTrocasFromLocal(mes,ano,mesesNome,el);
+    return;
+  }
+
+  // Busca TODAS as semanas do mês no Firebase
+  const totalDias=new Date(ano,mes+1,0).getDate();
+  const semanas=new Set();
+  for(let dia=1;dia<=totalDias;dia++){
+    const d=new Date(ano,mes,dia);
+    const dow=d.getDay();
+    const diff=dow===0?-6:1-dow;
+    const seg=new Date(d);seg.setDate(d.getDate()+diff);
+    const wk=`semana_${seg.getFullYear()}_${String(seg.getMonth()+1).padStart(2,'0')}_${String(seg.getDate()).padStart(2,'0')}`;
+    semanas.add(wk);
+  }
+
+  // Busca todas as semanas em paralelo
+  const promises=[...semanas].map(wk=>fbDb.ref('presenca/'+wk).once('value'));
+  Promise.all(promises).then(snaps=>{
+    const trocas=[];
+    snaps.forEach(snap=>{
+      const data=snap.val();
+      if(!data)return;
+      Object.entries(data).forEach(([fbKey,v])=>{
+        if(!v||v.status!=='presente'||!v.extra||v.extra.domTipo!=='troca')return;
+        // Decodifica chave para encontrar nome e data
+        const localKey=fbDecode(fbKey); // ex: drec_NOME_2026-04-01
+        const match=localKey.match(/^drec_(.+)_(\d{4}-\d{2}-\d{2})$/);
+        if(!match)return;
+        const nome=match[1];
+        const dateStr=match[2];
+        const [anoD,mesD,diaD]=dateStr.split('-');
+        // Filtra pelo mês/ano selecionado
+        if(parseInt(mesD)-1!==mes||parseInt(anoD)!==ano)return;
+        const f=EQUIPE.find(x=>x.nome===nome);
+        trocas.push({
+          nome,
+          categoria:f?f.categoria:'',
+          trabalhouEm:dateStr,
+          trabalhouFmt:`${diaD}/${mesD}/${anoD}`,
+          folgaEm:v.extra.folgaEm||'—',
+          auth:v.extra.trocaAuth||'',
+          obs:v.extra.obs||''
+        });
+      });
+    });
+
+    _renderTrocas(trocas,mes,ano,mesesNome,el);
+  }).catch(()=>{
+    // Fallback: lê do localStorage se Firebase falhar
+    _buildTrocasFromLocal(mes,ano,mesesNome,el);
+  });
+}
+
+function _buildTrocasFromLocal(mes,ano,mesesNome,el){
+  const totalDias=new Date(ano,mes+1,0).getDate();
   const trocas=[];
   EQUIPE.forEach(f=>{
     for(let dia=1;dia<=totalDias;dia++){
       const dateStr=`${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
-      const drKey='drec_'+f.nome+'_'+dateStr;
-      const rec=load(drKey,null);
+      const rec=load('drec_'+f.nome+'_'+dateStr,null);
       if(rec&&rec.status==='presente'&&rec.extra&&rec.extra.domTipo==='troca'){
         trocas.push({
-          nome:f.nome,
-          categoria:f.categoria,
+          nome:f.nome,categoria:f.categoria,
           trabalhouEm:dateStr,
           trabalhouFmt:String(dia).padStart(2,'0')+'/'+String(mes+1).padStart(2,'0')+'/'+ano,
           folgaEm:rec.extra.folgaEm||'—',
-          auth:rec.extra.trocaAuth||rec.extra.obs||'',
-          dayIdx:rec.extra.dayIdx,
-          rec
+          auth:rec.extra.trocaAuth||'',obs:rec.extra.obs||''
         });
       }
     }
   });
+  _renderTrocas(trocas,mes,ano,mesesNome,el);
+}
 
-  const el=document.getElementById('trocasContent');
+function _renderTrocas(trocas,mes,ano,mesesNome,el){
   if(trocas.length===0){
-    el.innerHTML=`<div class="empty">🔄 Nenhuma troca de folga registrada em ${mesesNome[mes]}/${ano}</div>`;
+    el.innerHTML=`<div class="empty">🔄 Nenhuma troca de folga em ${mesesNome[mes]}/${ano}</div>`;
     return;
   }
-
-  // Ordena por data que trabalhou
   trocas.sort((a,b)=>a.trabalhouEm.localeCompare(b.trabalhouEm));
-
-  const html=trocas.map((t,i)=>`
+  const html=trocas.map(t=>`
     <div style="background:var(--s2);border-radius:14px;padding:13px 15px;border:1px solid #1abc9c33;border-left:3px solid #1abc9c;margin:0 16px 10px;box-shadow:0 2px 8px #00000020">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
         <div>
@@ -1867,7 +1937,7 @@ function buildTrocasPanel(){
         </div>
         <span style="background:#1abc9c22;color:#1abc9c;border:1px solid #1abc9c44;font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;white-space:nowrap">🔄 TROCA</span>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:${t.auth?'8px':'0'}">
         <div style="background:var(--s3);border-radius:9px;padding:8px 10px">
           <div style="font-size:9px;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">📅 Trabalhou em</div>
           <div style="font-size:13px;font-weight:700;color:var(--text)">${t.trabalhouFmt}</div>
@@ -1877,13 +1947,12 @@ function buildTrocasPanel(){
           <div style="font-size:13px;font-weight:700;color:#1abc9c">${t.folgaEm}</div>
         </div>
       </div>
-      ${t.auth?`<div style="font-size:11px;color:var(--sub);margin-bottom:8px">👤 ${t.auth.replace('TROCA FOLGA — folga em '+t.folgaEm,'').replace('|','').trim()}</div>`:''}
-      <div style="text-align:right">
+      ${t.auth?`<div style="font-size:11px;color:var(--sub);margin-top:6px">👤 ${t.auth}</div>`:''}
+      <div style="text-align:right;margin-top:8px">
         <button onclick="editarTroca('${t.nome.replace(/'/g,"\\'")}','${t.trabalhouEm}')" style="font-size:11px;padding:4px 12px;border-radius:8px;border:1px solid #2980b944;background:transparent;color:#2980b9;cursor:pointer;font-family:Barlow,sans-serif;font-weight:600">✏️ Editar</button>
       </div>
     </div>
   `).join('');
-
   el.innerHTML=`
     <div style="padding:0 16px 8px;font-size:11px;color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:1px">
       ${trocas.length} troca${trocas.length!==1?'s':''} em ${mesesNome[mes]}/${ano}
@@ -2055,7 +2124,12 @@ function _clearFolga(id,dayIdx){
   if(!f)return;
   const dateStr=WEEK_DATES[dayIdx].toLocaleDateString('pt-BR');
   const folgaKey='folga_'+f.id+'_'+dayIdx+'_'+dateStr;
-  localStorage.removeItem(SK+folgaKey);
+  // Remove do cache em memória
+  delete _fbCache[folgaKey];
+  // Remove do Firebase
+  if(fbDb&&fbConnected){
+    fbDb.ref('presenca/'+WEEK_KEY+'/'+fbEncode(folgaKey)).remove();
+  }
   setRec(dayIdx,f.nome,'',{});
   buildMain();
   showToast('🗑️ Registro de folga removido');
@@ -2566,13 +2640,12 @@ function copyReport(){
 }
 function clearAll(){
   if(!confirm('Apagar TODOS os registros da semana?\n\nIsso remove os dados do Firebase e de todos os dispositivos.'))return;
-  // Limpa Firebase
   if(fbDb&&fbConnected){
     fbDb.ref('presenca/'+WEEK_KEY).remove()
       .then(()=>showToast('🗑️ Registros apagados de todos os dispositivos!'))
       .catch(()=>showToast('⚠️ Erro ao apagar do Firebase'));
   }
-  // Limpa cache local
+  // Limpa cache em memória
   _limparCacheLocal();
   buildReport(_reportPeriod);buildMain();refreshPendBadge();
 }
@@ -2900,7 +2973,8 @@ function clearFolgaRec(nome,dayIdx){
   const f=EQUIPE.find(x=>x.nome===nome);
   const dateStr=WEEK_DATES[dayIdx].toLocaleDateString('pt-BR');
   const key=f?('folga_'+f.id+'_'+dayIdx+'_'+dateStr):('folga_'+nome+'_'+dayIdx+'_'+dateStr);
-  localStorage.removeItem(SK+key);
+  delete _fbCache[key];
+  if(fbDb&&fbConnected) fbDb.ref('presenca/'+WEEK_KEY+'/'+fbEncode(key)).remove();
   setRec(dayIdx,nome,'',{});
   buildMain();
   showToast('🗑️ Registro removido');

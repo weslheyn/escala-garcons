@@ -779,11 +779,7 @@ function startFbListener(){
     const data = snap.val();
 
     // Limpa cache em memória e reconstrói com dados do Firebase
-    Object.keys(_fbCache).forEach(k=>{
-      if(k.startsWith('drec_')||/^\d_/.test(k)||k.startsWith('folga_')){
-        delete _fbCache[k];
-      }
-    });
+    _limparCacheLocal();
 
     if(data){
       Object.entries(data).forEach(([fbKey,v])=>{
@@ -792,16 +788,21 @@ function startFbListener(){
       });
     }
     buildMain(); refreshPendBadge(); buildSummary();
-    // Atualiza painel de trocas se estiver aberto
     if(document.getElementById('trocasPanel').classList.contains('open')) buildTrocasPanel();
   });
   pullFromFirebase();
 }
 
-// Limpa cache local de presença (já não usa mais localStorage para presença)
+// Limpa cache em memória — todas as chaves de presença/dados operacionais
 function _limparCacheLocal(){
   Object.keys(_fbCache).forEach(k=>{
-    if(k.startsWith('drec_')||/^\d_/.test(k)||k.startsWith('folga_')){
+    if(
+      k.startsWith('drec_')   ||  // registros por data
+      /^\d_/.test(k)          ||  // registros semanais (0_NOME, 1_NOME...)
+      k.startsWith('folga_')  ||  // registros de folga interativa
+      k.startsWith('just_')   ||  // justificativas
+      k.startsWith('bh_extra_')   // banco de horas extra
+    ){
       delete _fbCache[k];
     }
   });
@@ -1050,7 +1051,9 @@ function getJusts(nome){return load('just_'+nome,[])}
 function addJust(nome,just){
   const list=getJusts(nome);
   list.push({...just,id:'j'+Date.now(),ts:Date.now()});
-  save('just_'+nome,list);
+  const key='just_'+nome;
+  save(key,list);
+  pushToFirebase(key,list);
 }
 
 // ═══════════════════════════════════════════════════
@@ -1569,7 +1572,10 @@ function getRecByDate(nome,ano,mes,dia){
 }
 function setRecByDate(nome,ano,mes,dia,status,extra){
   const key=`${ano}-${String(mes).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
-  save('drec_'+nome+'_'+key,{status,extra,ts:Date.now()});
+  const fullKey='drec_'+nome+'_'+key;
+  const val={status,extra,ts:Date.now()};
+  save(fullKey,val);
+  pushToFirebase(fullKey,val);
 }
 
 // ─── Bridge: quando selecionar status na semana atual, salva também por data ───
@@ -2867,7 +2873,10 @@ function saveDomFolga(){
     setRec(dayIdx,nome,'presente',{domTipo:'compra',compTipo:rec.compTipo,compValor:rec.compValor,obs:rec.obs,folgaTrabalhada:true});
     bridgeSaveByDate(nome,dayIdx,'presente',{domTipo:'compra',compTipo:rec.compTipo,compValor:rec.compValor,obs:rec.obs,folgaTrabalhada:true});
     if(rec.compTipo==='Banco de horas'){
-      save('bh_extra_'+nome+'_'+dateStr,{tipo:'CRÉDITO',dataFormatada:fmt(folgaDate.toISOString().split('T')[0]),obs:'Compra de folga ('+dateStr+')',horIni:rec.ini,horFim:rec.fim});
+      const bhKey='bh_extra_'+nome+'_'+dateStr;
+      const bhVal={tipo:'CRÉDITO',dataFormatada:fmt(folgaDate.toISOString().split('T')[0]),obs:'Compra de folga ('+dateStr+')',horIni:rec.ini,horFim:rec.fim};
+      save(bhKey,bhVal);
+      pushToFirebase(bhKey,bhVal);
     }
   } else if(_domTipo==='troca'){
     const trocaDia=v('dom_troca_dia');
@@ -2917,7 +2926,10 @@ function saveDomFolga(){
     bridgeSaveByDate(nome,dayIdx,'falta',{obs:rec.obs,eraNaFolga:true});
   }
 
-  save(folgaKey,rec);
+  // Salva o registro de folga no cache E no Firebase
+  save(folgaKey, rec);
+  pushToFirebase(folgaKey, rec);
+
   closeModal('domFolgaModal');
   buildMain();
   refreshPendBadge();

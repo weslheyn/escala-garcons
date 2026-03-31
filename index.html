@@ -2135,8 +2135,15 @@ function calcBH(id){
 }
 
 function buildSavedInfo(st,ex){
-  if(!st||st==='presente'||!Object.keys(ex).length)return '';
+  if(!st||!Object.keys(ex).length)return '';
   let lines=[];
+  // PRESENTE com troca de folga — mostra info da troca
+  if(st==='presente'&&ex.domTipo==='troca'&&ex.folgaEm){
+    lines.push('🔄 TROCA FOLGA — folga em '+ex.folgaEm);
+    if(ex.obs&&!ex.obs.startsWith('TROCA FOLGA'))lines.push('📝 '+ex.obs);
+  } else if(st==='presente'){
+    return ''; // presente sem info extra → não mostra nada
+  }
   if(st==='falta'&&ex.obs)lines.push('⚠️ '+ex.obs);
   if(st==='atestado'){if(ex.ini||ex.fim)lines.push('📅 '+(ex.ini||'?')+' até '+(ex.fim||'?'));if(ex.dias)lines.push('🔢 '+ex.dias+' dia(s)');if(ex.obs)lines.push('📝 '+ex.obs);}
   if(st==='troca-horario'){if(ex.ini||ex.fim)lines.push('🕐 '+(ex.ini||'?')+' às '+(ex.fim||'?'));if(ex.quem)lines.push('👤 '+ex.quem);}
@@ -2144,6 +2151,7 @@ function buildSavedInfo(st,ex){
     if(ex.trab)lines.push('📅 Trabalhou: '+ex.trab);
     if(ex.folga)lines.push('🏖️ Folga em: '+ex.folga);
     if(ex.quem)lines.push('👤 '+ex.quem);
+    if(ex.obs)lines.push('📝 '+ex.obs);
   }
   if(st==='medida'){if(ex.motivo)lines.push('❌ '+ex.motivo);if(ex.acao)lines.push('⚠️ '+ex.acao);if(ex.resp)lines.push('👤 '+ex.resp);}
   if(st==='saida-antecipada'){

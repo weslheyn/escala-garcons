@@ -1127,7 +1127,11 @@ function setRec(day,name,status,extra){
   const key=day+'_'+name;
   const val={status,extra,ts:Date.now()};
   save(key,val);
-  pushToFirebase(key, val); // pushToFirebase faz fbEncode internamente
+  pushToFirebase(key, val);
+  // Atualiza mapa em tempo real se estiver aberto
+  if(document.getElementById('mapaPanel') && document.getElementById('mapaPanel').classList.contains('open')){
+    renderMapa();
+  }
 }
 
 // ═══════════════════════════════════════════════════

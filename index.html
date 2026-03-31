@@ -565,10 +565,10 @@ body{font-family:"Barlow",sans-serif;background:var(--bg);color:var(--text);min-
 
 <!-- BOTTOM NAV -->
 <div class="bottom-nav">
-  <button class="bnav-btn active" id="navEscala" onclick="showView('escala')"><span class="bnav-icon">📋</span>Escala</button>
-  <button class="bnav-btn" id="navPend" onclick="showView('pendencias')"><span class="bnav-icon">⏳</span>Pendências<span class="bnav-badge" id="pendBadge" style="display:none">0</span></button>
+  <button class="bnav-btn active" id="navEscala" onclick="showView('escala')"><span class="bnav-icon">📋</span>Frequência</button>
+  <button class="bnav-btn" id="navPend" onclick="showView('pendencias')"><span class="bnav-icon">⏳</span>Faltas<span class="bnav-badge" id="pendBadge" style="display:none">0</span></button>
   <button class="bnav-btn" id="navTrocas" onclick="openTrocas()"><span class="bnav-icon">🔄</span>Trocas</button>
-  <button class="bnav-btn" id="navEquipe" onclick="showEquipe()"><span class="bnav-icon">👥</span>Equipe</button>
+  <button class="bnav-btn" id="navEquipe" onclick="showEquipe()"><span class="bnav-icon">👥</span>Funcionários</button>
   <button class="bnav-btn" id="navMais" onclick="showMais()"><span class="bnav-icon">⋯</span>Mais</button>
 </div>
 
@@ -1202,7 +1202,7 @@ function gLogin(){
         showToast('❌ Erro OAuth: use o computador para conectar pela primeira vez');
       }
     });
-    client.requestAccessToken({prompt:''});
+    client.requestAccessToken({prompt:'select_account'});
   }catch(e){
     setSheetsStatus('err','Erro: '+e.message,'📊 TENTAR NOVAMENTE',gLogin);
     showToast('❌ Use o computador para conectar ao Google');

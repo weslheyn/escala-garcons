@@ -3367,20 +3367,7 @@ function renderMapaEscala(funcs){
           html += `<td class="cell-folga">✕</td>`;
           return;
         }
-        // Domingo (di===6): ✕ só para quem tem folga fixa no DOM
-        if(di === 6){
-          const recDom = getRec(6, f.nome);
-          const stDom  = recDom && recDom.status ? recDom.status : '';
-          const cfgDom = STATUS_CFG[stDom];
-          if(cfgDom){
-            html += `<td style="background:${cfgDom.bg};color:${cfgDom.color};font-weight:900;font-size:7px">${cfgDom.txt}</td>`;
-          } else {
-            html += `<td>${_nomeAbrev(f.nome)}</td>`;
-          }
-          contPorDia[di]++;
-          totalPorDia[di]++;
-          return;
-        }
+        // Célula normal: lê status do Firebase
         const rec = getRec(di, f.nome);
         const st  = rec && rec.status ? rec.status : '';
         const cfg = STATUS_CFG[st];

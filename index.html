@@ -1181,14 +1181,17 @@ function gLogin(){
             headers:{Authorization:'Bearer '+resp.access_token}
           });
           const userData=await info.json();
-          emailConta=(userData.email||'').toLowerCase();
+          emailConta=(userData.email||'').toLowerCase().trim();
+          console.log('Email detectado:', emailConta);
+          showToast('📧 Conta: '+emailConta);
         }catch(e){
+          console.warn('Erro userinfo:', e);
           emailConta='';
         }
         if(!CONTAS_PERMITIDAS.includes(emailConta)){
           gToken=null;
-          setSheetsStatus('err','Conta não autorizada','📊 CONECTAR PLANILHA',gLogin);
-          showToast('❌ Conta não autorizada: '+emailConta);
+          setSheetsStatus('err','Conta não autorizada: '+emailConta,'📊 CONECTAR PLANILHA',gLogin);
+          showToast('❌ Não autorizado: '+emailConta);
           return;
         }
         gToken=resp.access_token;

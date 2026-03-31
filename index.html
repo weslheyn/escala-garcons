@@ -874,6 +874,7 @@ function startFbListener(){
     }
     buildMain(); refreshPendBadge(); buildSummary();
     if(document.getElementById('trocasPanel').classList.contains('open')) buildTrocasPanel();
+    if(document.getElementById('mapaPanel').classList.contains('open')) renderMapa();
   });
   pullFromFirebase();
 }
@@ -3316,6 +3317,17 @@ function renderMapaEscala(funcs){
     grupos[t].push(f);
   });
 
+  const STATUS_CFG = {
+    'presente':         {txt:'PRES',  bg:'#27ae6033',color:'#27ae60'},
+    'falta':            {txt:'FALTA', bg:'#e74c3c33',color:'#e74c3c'},
+    'atestado':         {txt:'ATES.', bg:'#2980b933',color:'#2980b9'},
+    'troca-horario':    {txt:'T.HOR',bg:'#d3540033',color:'#d35400'},
+    'troca-folga':      {txt:'T.FOL',bg:'#8e44ad33',color:'#8e44ad'},
+    'medida':           {txt:'DISC.', bg:'#e8439333',color:'#e84393'},
+    'saida-antecipada': {txt:'S.ANT',bg:'#f39c1233',color:'#f39c12'},
+    'banco-horas':      {txt:'B.HOR',bg:'#00b89433',color:'#00b894'},
+  };
+
   let html = '<div class="mapa-tbl-wrap"><table class="mapa-tbl"><thead><tr>';
   DIAS_SEMANA.forEach((d,i) => {
     const dt = dates[i];
@@ -3338,23 +3350,30 @@ function renderMapaEscala(funcs){
 
     let contPorDia = [0,0,0,0,0,0,0];
     gr.forEach(f => {
-      const folgaIdx = f.folga ? DIAS_IDX[f.folga] : -1;
+      const folgaIdx  = f.folga  ? DIAS_IDX[f.folga]  : -1;
       const folga2Idx = f.folga2 ? DIAS_IDX[f.folga2] : -1;
       const cls = _turnoClass(turno);
       html += `<tr class="${cls}">`;
       DIAS_SEMANA.forEach((_,di) => {
         const isFolga = di === folgaIdx || di === folga2Idx;
         if(turno === 'LICENÇA'){
-          html += isFolga
-            ? `<td class="cell-folga">✕</td>`
-            : `<td style="color:#5a6480;font-size:7px">LIC</td>`;
-        } else if(isFolga) {
+          html += `<td style="color:#5a6480;font-size:7px">LIC</td>`;
+          return;
+        }
+        if(isFolga){
           html += `<td class="cell-folga">✕</td>`;
+          return;
+        }
+        const rec = getRec(di, f.nome);
+        const st  = rec && rec.status ? rec.status : '';
+        const cfg = STATUS_CFG[st];
+        if(cfg){
+          html += `<td style="background:${cfg.bg};color:${cfg.color};font-weight:900;font-size:7px">${cfg.txt}</td>`;
         } else {
           html += `<td>${_nomeAbrev(f.nome)}</td>`;
-          contPorDia[di]++;
-          totalPorDia[di]++;
         }
+        contPorDia[di]++;
+        totalPorDia[di]++;
       });
       html += '</tr>';
     });

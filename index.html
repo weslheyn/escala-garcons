@@ -3272,8 +3272,8 @@ function _getFuncsSetor(setor){
   const cats = {
     garcom: f => ['GARÇOM','CHEFE DE FILA'].includes(f.categoria),
     cumim:  f => f.categoria === 'CUMIM',
-    bar:    f => ['BARMAN','AUXILIAR DE BAR'].includes(f.categoria),
-    outros: f => !['GARÇOM','CHEFE DE FILA','CUMIM','BARMAN','AUXILIAR DE BAR'].includes(f.categoria)
+    bar:    f => ['BARMAN','AUXILIAR DE BAR','COPEIRO'].includes(f.categoria),
+    outros: f => !['GARÇOM','CHEFE DE FILA','CUMIM','BARMAN','AUXILIAR DE BAR','COPEIRO'].includes(f.categoria)
   };
   return EQUIPE.filter(cats[setor] || (()=>false));
 }
@@ -3425,69 +3425,104 @@ function renderMapaHorarios(funcs){
 }
 
 function renderMapaDomingo(funcs){
-  // Gera os próximos 5 domingos a partir da semana atual
-  const hoje = new Date();
-  const domingos = [];
-  const d = new Date(hoje);
-  d.setDate(d.getDate() + (7 - d.getDay()) % 7 || 7);
-  for(let i=0;i<5;i++){
-    const dd = new Date(d);
-    dd.setDate(d.getDate() + i*7);
-    domingos.push(dd);
-  }
-  const fmt = d => d.getDate()+'/'+(d.getMonth()+1);
+  // Domingo da semana atual (índice 6 no WEEK_DATES)
+  const domDate = WEEK_DATES[6];
+  const domDia = domDate.getDate()+'/'+(domDate.getMonth()+1);
+  const DI_DOM = 6; // índice domingo no getRec
 
-  // Organiza por folga semanal — quem não folga na DOM é candidato a domingo
-  const folgaDom = funcs.filter(f=>f.folga!=='DOM' && f.folga2!=='DOM' && f.turno!=='LICENÇA');
-  const maxPorDom = Math.ceil(folgaDom.length / 5);
+  const STATUS_CFG = {
+    'falta':            {txt:'FALTA', bg:'#e74c3c33',color:'#e74c3c'},
+    'atestado':         {txt:'ATES.', bg:'#2980b933',color:'#2980b9'},
+    'troca-horario':    {txt:'T.HOR',bg:'#d3540033',color:'#d35400'},
+    'troca-folga':      {txt:'T.FOL',bg:'#8e44ad33',color:'#8e44ad'},
+    'medida':           {txt:'DISC.', bg:'#e8439333',color:'#e84393'},
+    'saida-antecipada': {txt:'S.ANT',bg:'#f39c1233',color:'#f39c12'},
+    'banco-horas':      {txt:'B.HOR',bg:'#00b89433',color:'#00b894'},
+  };
+
+  // Separar: quem folga no dom, quem trabalha, licença
+  const folgam  = funcs.filter(f => f.folga==='DOM' || f.folga2==='DOM');
+  const licenca = funcs.filter(f => f.turno==='LICENÇA');
+  const trabalham = funcs.filter(f => f.folga!=='DOM' && f.folga2!=='DOM' && f.turno!=='LICENÇA');
 
   let html = '<div class="mapa-dom-block">';
-  html += `<div class="mapa-dom-title">Domingo do mês — ${_setorNome(_mapaSetor)}</div>`;
-  html += '<div class="mapa-tbl-wrap"><table class="mapa-dom-tbl"><thead><tr>';
-  domingos.forEach(d => html += `<th>${fmt(d)}</th>`);
+
+  // Título com a data do domingo
+  html += `<div class="mapa-dom-title">Domingo ${domDia} — ${_setorNome(_mapaSetor)}</div>`;
+
+  // TABELA: quem trabalha no domingo
+  html += '<div class="mapa-tbl-wrap"><table class="mapa-tbl"><thead><tr>';
+  html += '<th style="text-align:left;padding-left:6px">NOME</th>';
+  html += '<th>FUNÇÃO</th><th>STATUS</th>';
   html += '</tr></thead><tbody>';
 
-  // Distribui os funcionários igualmente pelos domingos
-  const colunas = [[], [], [], [], []];
-  folgaDom.forEach((f, i) => {
-    colunas[i % 5].push(_nomeAbrev(f.nome));
-  });
-  const maxRows = Math.max(...colunas.map(c=>c.length));
-  for(let r=0;r<maxRows;r++){
-    html += '<tr>';
-    for(let c=0;c<5;c++){
-      const nome = colunas[c][r] || '';
-      html += nome ? `<td>${nome}</td>` : `<td class="vazio">—</td>`;
+  trabalham.forEach(f => {
+    const rec = getRec(DI_DOM, f.nome);
+    const st  = rec && rec.status ? rec.status : '';
+    const cfg = STATUS_CFG[st];
+    const cls = _turnoClass(f.turno);
+    html += `<tr class="${cls}">`;
+    html += `<td style="text-align:left;padding-left:6px;font-size:8px;font-weight:700">${_nomeAbrev(f.nome)}</td>`;
+    html += `<td style="font-size:7px;color:#7a85a3">${f.categoria}</td>`;
+    if(cfg){
+      html += `<td style="background:${cfg.bg};color:${cfg.color};font-weight:900;font-size:7px">${cfg.txt}</td>`;
+    } else if(st === 'presente'){
+      html += `<td style="background:#27ae6033;color:#27ae60;font-weight:900;font-size:7px">PRES.</td>`;
+    } else {
+      html += `<td style="color:#5a6480;font-size:7px">—</td>`;
     }
     html += '</tr>';
-  }
-  html += '</tbody></table></div>';
+  });
 
-  // Folgas semanais — tabela com colunas por dia (SEG a QUI + SEX SAB DOM se houver)
-  const DIAS_FOLGA = ['SEG','TER','QUA','QUI','SEX','SAB','DOM'];
-  // Montar colunas: apenas dias que têm alguém folgando
-  const colsDias = DIAS_FOLGA.filter(dia => funcs.some(f=>f.folga===dia||f.folga2===dia));
-  const colunasFolga = colsDias.map(dia =>
-    funcs.filter(f=>f.folga===dia||f.folga2===dia).map(f=>_nomeAbrev(f.nome))
-  );
-  const maxRowsFolga = Math.max(...colunasFolga.map(c=>c.length), 0);
-
-  html += `<div class="mapa-tbl-wrap" style="margin-top:10px">
-    <div style="font-size:9px;color:var(--accent);font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding:0 2px">Folgas semanais</div>
-    <table class="mapa-dom-tbl"><thead><tr>`;
-  colsDias.forEach(dia => { html += `<th>${dia}</th>`; });
-  html += '</tr></thead><tbody>';
-  for(let r=0; r<maxRowsFolga; r++){
-    html += '<tr>';
-    colunasFolga.forEach(col => {
-      html += col[r] ? `<td>${col[r]}</td>` : `<td class="vazio"></td>`;
+  // Linha de licença se houver
+  if(licenca.length){
+    html += '<tr class="row-sep"><td colspan="3"></td></tr>';
+    licenca.forEach(f => {
+      html += `<tr class="row-lic">`;
+      html += `<td style="text-align:left;padding-left:6px;font-size:8px;font-weight:700;color:#5a6480">${_nomeAbrev(f.nome)}</td>`;
+      html += `<td style="font-size:7px;color:#5a6480">${f.categoria}</td>`;
+      html += `<td style="font-size:7px;color:#5a6480">LIC</td>`;
+      html += '</tr>';
     });
-    html += '</tr>';
   }
+
   html += '</tbody></table></div>';
+
+  // FOLGAS no domingo
+  if(folgam.length){
+    html += `<div style="margin-top:10px;padding:8px 10px;background:var(--s2);border-radius:10px;border:1px solid var(--border)">`;
+    html += `<div style="font-size:9px;color:#e74c3c;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">✕ Folga no domingo</div>`;
+    html += `<div style="font-size:9px;color:var(--sub);font-weight:600;line-height:2">${folgam.map(f=>_nomeAbrev(f.nome)).join(' · ')}</div>`;
+    html += '</div>';
+  }
+
+  // FOLGAS SEMANAIS
+  const DIAS_FOLGA = ['SEG','TER','QUA','QUI','SEX','SAB','DOM'];
+  const colsDias = DIAS_FOLGA.filter(dia => funcs.some(f=>f.folga===dia||f.folga2===dia));
+  if(colsDias.length){
+    const colunasFolga = colsDias.map(dia =>
+      funcs.filter(f=>f.folga===dia||f.folga2===dia).map(f=>_nomeAbrev(f.nome))
+    );
+    const maxRowsFolga = Math.max(...colunasFolga.map(c=>c.length), 0);
+    html += `<div class="mapa-tbl-wrap" style="margin-top:10px">
+      <div style="font-size:9px;color:var(--accent);font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding:0 2px">Folgas semanais</div>
+      <table class="mapa-dom-tbl"><thead><tr>`;
+    colsDias.forEach(dia => { html += `<th>${dia}</th>`; });
+    html += '</tr></thead><tbody>';
+    for(let r=0; r<maxRowsFolga; r++){
+      html += '<tr>';
+      colunasFolga.forEach(col => {
+        html += col[r] ? `<td>${col[r]}</td>` : `<td class="vazio"></td>`;
+      });
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>';
+  }
+
   html += '</div>';
   return html;
 }
+
 
 function _setorNome(s){
   return {garcom:'Garçons',cumim:'Cumins',bar:'Bar',outros:'Outros'}[s]||s;

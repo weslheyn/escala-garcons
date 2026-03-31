@@ -753,30 +753,47 @@ function startFbListener(){
   if(!fbDb || _fbListenerActive) return;
   _fbListenerActive = true;
 
+  // Limpa localStorage de presença ao conectar — Firebase é a fonte de verdade
+  _limparCacheLocal();
+
   fbDb.ref('presenca/'+WEEK_KEY).on('value', snap => {
     if(_ignoringRemoteUpdate) return;
     const data = snap.val();
-    if(!data) return;
-    let changed = false;
-    Object.entries(data).forEach(([fbKey,v])=>{
-      // Decodifica a chave Base64 para obter a chave original
-      const localKey = fbDecode(fbKey);
-      const localRaw = localStorage.getItem(SK+localKey);
-      const local = localRaw ? JSON.parse(localRaw) : null;
-      if(!local || (v && v.ts && (!local.ts || v.ts > local.ts))){
+
+    // Limpa cache local e reconstrói com dados do Firebase
+    _limparCacheLocal();
+
+    if(data){
+      Object.entries(data).forEach(([fbKey,v])=>{
+        const localKey = fbDecode(fbKey);
         localStorage.setItem(SK+localKey, JSON.stringify(v));
-        changed = true;
-      }
-    });
-    if(changed){ buildMain(); refreshPendBadge(); buildSummary(); }
+      });
+    }
+    buildMain(); refreshPendBadge(); buildSummary();
   });
   pullFromFirebase();
 }
 
+// Limpa APENAS os registros de presença do localStorage (não a equipe/config)
+function _limparCacheLocal(){
+  const keysToRemove = [];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(!k) continue;
+    // Remove apenas chaves de registro de presença (drec_ e 0_ a 6_)
+    if(k.startsWith(SK+'drec_') || /^gp5_\d_/.test(k) || k.startsWith(SK+'folga_')){
+      keysToRemove.push(k);
+    }
+  }
+  keysToRemove.forEach(k=>localStorage.removeItem(k));
+}
+
 function pushToFirebase(key, value){
-  if(!fbDb || !fbConnected) return;
+  if(!fbDb || !fbConnected){
+    // Sem Firebase — salva só local como fallback
+    return;
+  }
   _ignoringRemoteUpdate = true;
-  // Codifica a chave em Base64 — funciona com qualquer nome
   const safeKey = fbEncode(key);
   fbDb.ref('presenca/'+WEEK_KEY+'/'+safeKey).set(value)
     .catch(e=>console.warn('Push FB:', e.message))
@@ -786,11 +803,12 @@ function pushToFirebase(key, value){
 function pullFromFirebase(){
   if(!fbDb){ openFbConfig(); return; }
   setSyncStatus('loading','Sincronizando...');
+  // Limpa cache local antes de puxar do Firebase
+  _limparCacheLocal();
   fbDb.ref('presenca/'+WEEK_KEY).once('value').then(snap=>{
     const data = snap.val();
     if(data){
       Object.entries(data).forEach(([fbKey,v])=>{
-        // Decodifica Base64 → chave original → localStorage
         const localKey = fbDecode(fbKey);
         localStorage.setItem(SK+localKey, JSON.stringify(v));
       });
@@ -2422,7 +2440,18 @@ function copyReport(){
   const fb=()=>{const ta=document.createElement('textarea');ta.value=txt;ta.style.cssText='position:fixed;top:0;left:0;opacity:.01;font-size:16px;width:1px;height:1px';document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy');showToast('✅ Copiado!');}catch{showToast('⚠️ Selecione o texto manualmente');}document.body.removeChild(ta);};
   navigator.clipboard?.writeText(txt).then(()=>showToast('✅ Copiado! Cole no WhatsApp')).catch(fb)||fb();
 }
-function clearAll(){if(!confirm('Apagar TODOS os registros da semana?'))return;for(let d=0;d<6;d++)EQUIPE.forEach(f=>localStorage.removeItem(SK+d+'_'+f.nome));showToast('🗑️ Registros apagados');buildReport(_reportPeriod);buildMain();refreshPendBadge();}
+function clearAll(){
+  if(!confirm('Apagar TODOS os registros da semana?\n\nIsso remove os dados do Firebase e de todos os dispositivos.'))return;
+  // Limpa Firebase
+  if(fbDb&&fbConnected){
+    fbDb.ref('presenca/'+WEEK_KEY).remove()
+      .then(()=>showToast('🗑️ Registros apagados de todos os dispositivos!'))
+      .catch(()=>showToast('⚠️ Erro ao apagar do Firebase'));
+  }
+  // Limpa cache local
+  _limparCacheLocal();
+  buildReport(_reportPeriod);buildMain();refreshPendBadge();
+}
 
 // ═══════════════════════════════════════════════════
 // EXPORT TO SHEETS

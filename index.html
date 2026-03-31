@@ -226,6 +226,15 @@ body{font-family:"Barlow",sans-serif;background:var(--bg);color:var(--text);min-
   <div class="day-tabs" id="dayTabs"></div>
 </div>
 
+<!-- BANNER DE INSTALAÇÃO PWA -->
+<div id="installBanner" style="display:none;background:#1abc9c;padding:10px 16px;display:none;align-items:center;gap:10px;justify-content:space-between">
+  <span style="font-size:12px;font-weight:700;color:#fff">📲 Instalar app na tela inicial?</span>
+  <div style="display:flex;gap:8px">
+    <button id="installBtn" style="background:#fff;color:#1abc9c;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:Barlow,sans-serif">INSTALAR</button>
+    <button onclick="document.getElementById('installBanner').style.display='none'" style="background:transparent;color:#fff;border:1px solid #ffffff66;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:Barlow,sans-serif">✕</button>
+  </div>
+</div>
+
 <div class="sync-bar" id="syncBar">
   <div class="sync-dot" id="syncDot"></div>
   <span id="syncMsg">Conectando ao Firebase...</span>
@@ -3120,6 +3129,30 @@ if('serviceWorker' in navigator){
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.warn('SW erro:',e));
 }
+
+// Banner de instalação PWA
+let _installPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  _installPrompt=e;
+  // Mostra banner após 2 segundos
+  setTimeout(()=>{
+    const banner=document.getElementById('installBanner');
+    if(banner) banner.style.display='flex';
+  },2000);
+});
+document.getElementById('installBtn').addEventListener('click',async()=>{
+  if(!_installPrompt)return;
+  _installPrompt.prompt();
+  const result=await _installPrompt.userChoice;
+  _installPrompt=null;
+  document.getElementById('installBanner').style.display='none';
+  if(result.outcome==='accepted') showToast('✅ App instalado!');
+});
+window.addEventListener('appinstalled',()=>{
+  document.getElementById('installBanner').style.display='none';
+  showToast('✅ App instalado com sucesso!');
+});
 </script>
 </body>
 </html>

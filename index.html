@@ -1167,6 +1167,24 @@ function gLogin(){
           showToast('❌ Erro ao conectar: '+resp.error);
           return;
         }
+        // Verifica email da conta conectada
+        const CONTAS_PERMITIDAS=['gerencia.barra@cocobambu.com','liderancacbbarra@gmail.com'];
+        let emailConta='';
+        try{
+          const info=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{
+            headers:{Authorization:'Bearer '+resp.access_token}
+          });
+          const userData=await info.json();
+          emailConta=(userData.email||'').toLowerCase();
+        }catch(e){
+          emailConta='';
+        }
+        if(!CONTAS_PERMITIDAS.includes(emailConta)){
+          gToken=null;
+          setSheetsStatus('err','Conta não autorizada','📊 CONECTAR PLANILHA',gLogin);
+          showToast('❌ Conta não autorizada: '+emailConta);
+          return;
+        }
         gToken=resp.access_token;
         save('g_token_ts',Date.now());
         setSheetsStatus('loading','Criando planilha...','⏳ AGUARDE...');
@@ -1174,7 +1192,7 @@ function gLogin(){
         const ok=await ensurePlanilha();
         if(ok){
           await syncFrequenciaTotal();
-          await syncTrocasSheet(); // ← cria aba de trocas imediatamente
+          await syncTrocasSheet();
           startAutoSync();
         }
       },

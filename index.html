@@ -1834,8 +1834,18 @@ function openTrocas(){
   const hoje=new Date();
   document.getElementById('trocasMesFiltro').value=hoje.getMonth();
   document.getElementById('trocasAnoFiltro').value=hoje.getFullYear();
-  buildTrocasPanel();
   openPanel('trocasPanel');
+  buildTrocasPanel();
+  _startTrocasListener();
+}
+
+let _trocasListenerActive=false;
+function _startTrocasListener(){
+  if(_trocasListenerActive||!fbDb)return;
+  _trocasListenerActive=true;
+  fbDb.ref('trocas').on('value',()=>{
+    if(document.getElementById('trocasPanel').classList.contains('open')) buildTrocasPanel();
+  });
 }
 
 function buildTrocasPanel(){
@@ -1843,123 +1853,54 @@ function buildTrocasPanel(){
   const ano=parseInt(document.getElementById('trocasAnoFiltro').value);
   const mesesNome=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const el=document.getElementById('trocasContent');
-
-  el.innerHTML='<div class="empty" style="color:var(--sub)">🔄 Carregando trocas...</div>';
-
-  if(!fbDb){
-    _buildTrocasFromLocal(mes,ano,mesesNome,el);
+  el.innerHTML='<div class="empty" style="color:var(--sub)">🔄 Carregando...</div>';
+  if(!fbDb||!fbConnected){
+    el.innerHTML='<div class="empty" style="color:var(--red)">⚠️ Sem conexão com Firebase</div>';
     return;
   }
-
-  // Busca TODAS as semanas do mês no Firebase
-  const totalDias=new Date(ano,mes+1,0).getDate();
-  const semanas=new Set();
-  for(let dia=1;dia<=totalDias;dia++){
-    const d=new Date(ano,mes,dia);
-    const dow=d.getDay();
-    const diff=dow===0?-6:1-dow;
-    const seg=new Date(d);seg.setDate(d.getDate()+diff);
-    const wk=`semana_${seg.getFullYear()}_${String(seg.getMonth()+1).padStart(2,'0')}_${String(seg.getDate()).padStart(2,'0')}`;
-    semanas.add(wk);
-  }
-
-  // Busca todas as semanas em paralelo
-  const promises=[...semanas].map(wk=>fbDb.ref('presenca/'+wk).once('value'));
-  Promise.all(promises).then(snaps=>{
+  fbDb.ref('trocas').once('value').then(snap=>{
+    const data=snap.val();
     const trocas=[];
-    snaps.forEach(snap=>{
-      const data=snap.val();
-      if(!data)return;
-      Object.entries(data).forEach(([fbKey,v])=>{
-        if(!v||v.status!=='presente'||!v.extra||v.extra.domTipo!=='troca')return;
-        // Decodifica chave para encontrar nome e data
-        const localKey=fbDecode(fbKey); // ex: drec_NOME_2026-04-01
-        const match=localKey.match(/^drec_(.+)_(\d{4}-\d{2}-\d{2})$/);
-        if(!match)return;
-        const nome=match[1];
-        const dateStr=match[2];
-        const [anoD,mesD,diaD]=dateStr.split('-');
-        // Filtra pelo mês/ano selecionado
-        if(parseInt(mesD)-1!==mes||parseInt(anoD)!==ano)return;
-        const f=EQUIPE.find(x=>x.nome===nome);
-        trocas.push({
-          nome,
-          categoria:f?f.categoria:'',
-          trabalhouEm:dateStr,
-          trabalhouFmt:`${diaD}/${mesD}/${anoD}`,
-          folgaEm:v.extra.folgaEm||'—',
-          auth:v.extra.trocaAuth||'',
-          obs:v.extra.obs||''
-        });
+    if(data){
+      Object.values(data).forEach(t=>{
+        if(!t||!t.trabalhouIso)return;
+        const [anoT,mesT]=t.trabalhouIso.split('-').map(Number);
+        if(anoT===ano&&mesT-1===mes) trocas.push(t);
       });
-    });
-
-    _renderTrocas(trocas,mes,ano,mesesNome,el);
-  }).catch(()=>{
-    // Fallback: lê do localStorage se Firebase falhar
-    _buildTrocasFromLocal(mes,ano,mesesNome,el);
-  });
-}
-
-function _buildTrocasFromLocal(mes,ano,mesesNome,el){
-  const totalDias=new Date(ano,mes+1,0).getDate();
-  const trocas=[];
-  EQUIPE.forEach(f=>{
-    for(let dia=1;dia<=totalDias;dia++){
-      const dateStr=`${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
-      const rec=load('drec_'+f.nome+'_'+dateStr,null);
-      if(rec&&rec.status==='presente'&&rec.extra&&rec.extra.domTipo==='troca'){
-        trocas.push({
-          nome:f.nome,categoria:f.categoria,
-          trabalhouEm:dateStr,
-          trabalhouFmt:String(dia).padStart(2,'0')+'/'+String(mes+1).padStart(2,'0')+'/'+ano,
-          folgaEm:rec.extra.folgaEm||'—',
-          auth:rec.extra.trocaAuth||'',obs:rec.extra.obs||''
-        });
-      }
     }
+    trocas.sort((a,b)=>a.trabalhouIso.localeCompare(b.trabalhouIso));
+    if(trocas.length===0){
+      el.innerHTML='<div class="empty">🔄 Nenhuma troca de folga em '+mesesNome[mes]+'/'+ano+'</div>';
+      return;
+    }
+    el.innerHTML='<div style="padding:0 16px 8px;font-size:11px;color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:1px">'+trocas.length+' troca'+(trocas.length!==1?'s':'')+' em '+mesesNome[mes]+'/'+ano+'</div>'+
+    trocas.map(t=>`
+      <div style="background:var(--s2);border-radius:14px;padding:13px 15px;border:1px solid #1abc9c33;border-left:3px solid #1abc9c;margin:0 16px 10px;box-shadow:0 2px 8px #00000020">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+          <div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--text)">${t.nome}</div>
+            <div style="font-size:10px;color:var(--sub);margin-top:2px">${t.categoria||''}</div>
+          </div>
+          <span style="background:#1abc9c22;color:#1abc9c;border:1px solid #1abc9c44;font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px">🔄 TROCA</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:${t.auth?'8':'0'}px">
+          <div style="background:var(--s3);border-radius:9px;padding:8px 10px">
+            <div style="font-size:9px;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">📅 Trabalhou em</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)">${t.trabalhouFmt||t.trabalhouIso}</div>
+          </div>
+          <div style="background:var(--s3);border-radius:9px;padding:8px 10px">
+            <div style="font-size:9px;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">🏖️ Folga em</div>
+            <div style="font-size:13px;font-weight:700;color:#1abc9c">${t.folgaFmt||t.folgaIso||'—'}</div>
+          </div>
+        </div>
+        ${t.auth?`<div style="font-size:11px;color:var(--sub);margin-top:6px">👤 Autorizado por: <strong>${t.auth}</strong></div>`:''}
+      </div>
+    `).join('');
+  }).catch(e=>{
+    el.innerHTML='<div class="empty" style="color:var(--red)">❌ Erro: '+e.message+'</div>';
   });
-  _renderTrocas(trocas,mes,ano,mesesNome,el);
 }
 
-function _renderTrocas(trocas,mes,ano,mesesNome,el){
-  if(trocas.length===0){
-    el.innerHTML=`<div class="empty">🔄 Nenhuma troca de folga em ${mesesNome[mes]}/${ano}</div>`;
-    return;
-  }
-  trocas.sort((a,b)=>a.trabalhouEm.localeCompare(b.trabalhouEm));
-  const html=trocas.map(t=>`
-    <div style="background:var(--s2);border-radius:14px;padding:13px 15px;border:1px solid #1abc9c33;border-left:3px solid #1abc9c;margin:0 16px 10px;box-shadow:0 2px 8px #00000020">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
-        <div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--text)">${t.nome}</div>
-          <div style="font-size:10px;color:var(--sub);margin-top:2px">${t.categoria}</div>
-        </div>
-        <span style="background:#1abc9c22;color:#1abc9c;border:1px solid #1abc9c44;font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;white-space:nowrap">🔄 TROCA</span>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:${t.auth?'8px':'0'}">
-        <div style="background:var(--s3);border-radius:9px;padding:8px 10px">
-          <div style="font-size:9px;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">📅 Trabalhou em</div>
-          <div style="font-size:13px;font-weight:700;color:var(--text)">${t.trabalhouFmt}</div>
-        </div>
-        <div style="background:var(--s3);border-radius:9px;padding:8px 10px">
-          <div style="font-size:9px;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">🏖️ Folga em</div>
-          <div style="font-size:13px;font-weight:700;color:#1abc9c">${t.folgaEm}</div>
-        </div>
-      </div>
-      ${t.auth?`<div style="font-size:11px;color:var(--sub);margin-top:6px">👤 ${t.auth}</div>`:''}
-      <div style="text-align:right;margin-top:8px">
-        <button onclick="editarTroca('${t.nome.replace(/'/g,"\\'")}','${t.trabalhouEm}')" style="font-size:11px;padding:4px 12px;border-radius:8px;border:1px solid #2980b944;background:transparent;color:#2980b9;cursor:pointer;font-family:Barlow,sans-serif;font-weight:600">✏️ Editar</button>
-      </div>
-    </div>
-  `).join('');
-  el.innerHTML=`
-    <div style="padding:0 16px 8px;font-size:11px;color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:1px">
-      ${trocas.length} troca${trocas.length!==1?'s':''} em ${mesesNome[mes]}/${ano}
-    </div>
-    ${html}
-  `;
-}
 
 function editarTroca(nome,dateStr){
   // Encontra o funcionário e abre o modal de edição
@@ -2929,7 +2870,7 @@ function saveDomFolga(){
       save('bh_extra_'+nome+'_'+dateStr,{tipo:'CRÉDITO',dataFormatada:fmt(folgaDate.toISOString().split('T')[0]),obs:'Compra de folga ('+dateStr+')',horIni:rec.ini,horFim:rec.fim});
     }
   } else if(_domTipo==='troca'){
-    const trocaDia=v('dom_troca_dia'); // data escolhida ex: "2026-04-02"
+    const trocaDia=v('dom_troca_dia');
     if(!trocaDia){showToast('⚠️ Selecione a data da folga');return;}
     const fmt2=d=>{const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];};
     rec.trocaDia=trocaDia;
@@ -2939,17 +2880,34 @@ function saveDomFolga(){
     rec.trocaAuth=v('dom_troca_auth');
     rec.obs=v('dom_troca_obs');
 
-    // 1) DIA ATUAL: funcionário trabalha — marca como PRESENTE com obs TROCA FOLGA
+    // 1) DIA ATUAL: marca PRESENTE com obs TROCA FOLGA
     const obsHoje='TROCA FOLGA — folga em '+rec.trocaDiaFmt+(rec.obs?' | '+rec.obs:'');
     setRec(dayIdx,nome,'presente',{domTipo:'troca',folgaEm:rec.trocaDiaFmt,obs:obsHoje,folgaTrabalhada:true});
     bridgeSaveByDate(nome,dayIdx,'presente',{domTipo:'troca',folgaEm:rec.trocaDiaFmt,obs:obsHoje,folgaTrabalhada:true});
 
-    // 2) DATA ESCOLHIDA: marca como FOLGA com obs TROCA FOLGA
+    // 2) DATA ESCOLHIDA: marca como TROCA-FOLGA
     const obsFolga='TROCA FOLGA — trabalhou em '+dateStr;
     const drKey='drec_'+nome+'_'+trocaDia;
     const drVal={status:'troca-folga',extra:{obs:obsFolga,trocaDe:dateStr},ts:Date.now()};
     save(drKey,drVal);
     pushToFirebase(drKey,drVal);
+
+    // 3) Salva no nó dedicado /trocas/ para o painel de trocas
+    const trabalhouIso=WEEK_DATES[dayIdx].toISOString().split('T')[0];
+    const trocaRecord={
+      nome,
+      categoria:(EQUIPE.find(x=>x.nome===nome)||{}).categoria||'',
+      trabalhouIso, trabalhouFmt:fmt2(trabalhouIso),
+      folgaIso:trocaDia, folgaFmt:rec.trocaDiaFmt,
+      auth:rec.trocaAuth||'',
+      obs:rec.obs||'',
+      ts:Date.now()
+    };
+    const trocaKey=fbEncode('troca_'+nome+'_'+trabalhouIso);
+    if(fbDb&&fbConnected){
+      fbDb.ref('trocas/'+trocaKey).set(trocaRecord)
+        .then(()=>{ if(document.getElementById('trocasPanel').classList.contains('open')) buildTrocasPanel(); });
+    }
 
     showToast('✅ Hoje: PRESENTE · '+rec.trocaDiaFmt+': FOLGA');
     setTimeout(()=>showToast('📅 Troca registrada nos dois dias!'),2200);

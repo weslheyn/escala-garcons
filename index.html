@@ -210,6 +210,34 @@ body{font-family:"Barlow",sans-serif;background:var(--bg);color:var(--text);min-
 .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--accent);color:#111;padding:10px 22px;border-radius:22px;font-size:13px;font-weight:800;font-family:"Barlow Condensed",sans-serif;opacity:0;transition:all .3s;z-index:1000;white-space:nowrap;pointer-events:none;box-shadow:0 4px 16px #f5c84240}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .divider{height:1px;background:var(--border);margin:8px 0}
+/* MAPA DE ESCALA */
+.mapa-tbl-wrap{overflow-x:auto;padding:8px 10px 4px;scrollbar-width:none}
+.mapa-tbl-wrap::-webkit-scrollbar{display:none}
+.mapa-tbl{width:100%;border-collapse:collapse;font-size:8px;min-width:280px}
+.mapa-tbl thead th{background:#191c28;color:#7a85a3;font-weight:800;padding:5px 3px;text-align:center;border:1px solid #252a3d;letter-spacing:.4px;font-size:8px;white-space:nowrap}
+.mapa-tbl tbody td{padding:4px 3px;text-align:center;border:1px solid #1a1d29;font-weight:700;font-size:7.5px;color:#eaecf4;white-space:nowrap}
+.mapa-tbl .row-ab{background:#3d3010}
+.mapa-tbl .row-int{background:#0e2035}
+.mapa-tbl .row-fec{background:#2d1010}
+.mapa-tbl .row-lic{background:#1a2a1a}
+.mapa-tbl .cell-folga{color:#e74c3c !important;font-weight:900;background:rgba(231,76,60,0.12) !important}
+.mapa-tbl .row-sep td{height:4px;background:#0d0f17;border:none}
+.mapa-tbl .row-total td{background:#13151f;color:#f5c842;font-weight:800;font-size:8.5px;text-align:center;border:1px solid #252a3d;padding:4px 3px}
+.mapa-tbl .row-total td:first-child{color:#7a85a3;font-size:7px;font-weight:600}
+.mapa-tbl .row-grand td{background:#191c28;color:#eaecf4;font-weight:900;font-size:9px;text-align:center;border:1px solid #252a3d;padding:5px 3px}
+.mapa-tbl .row-grand td:first-child{color:#f5c842}
+.mapa-hor-block{margin:8px 12px;background:var(--s2);border-radius:12px;border:1px solid var(--border);overflow:hidden}
+.mapa-hor-header{background:#13151f;padding:7px 12px;font-size:10px;font-weight:800;color:var(--accent);letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.mapa-hor-row{display:flex;align-items:flex-start;gap:8px;padding:6px 12px;border-bottom:1px solid var(--border)}
+.mapa-hor-row:last-child{border-bottom:none}
+.mapa-hor-time{font-size:9px;color:#f5c842;font-weight:800;min-width:80px;flex-shrink:0;padding-top:1px}
+.mapa-hor-names{font-size:9px;color:var(--text);font-weight:600;line-height:1.8;flex:1}
+.mapa-dom-block{margin:8px 12px}
+.mapa-dom-title{font-size:9px;color:var(--accent);font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding:0 2px}
+.mapa-dom-tbl{width:100%;border-collapse:collapse;font-size:8px}
+.mapa-dom-tbl th{background:#191c28;color:#7a85a3;font-weight:800;padding:4px 3px;text-align:center;border:1px solid #252a3d;font-size:8px;white-space:nowrap}
+.mapa-dom-tbl td{padding:4px 3px;text-align:center;border:1px solid #1a1d29;font-size:7.5px;color:#eaecf4;font-weight:600}
+.mapa-dom-tbl td.vazio{color:#333}
 </style>
 <!-- Firebase SDK (Realtime Database — sync em tempo real) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -588,10 +616,47 @@ body{font-family:"Barlow",sans-serif;background:var(--bg);color:var(--text);min-
   <button class="bnav-btn" id="navPend" onclick="showView('pendencias')"><span class="bnav-icon">⏳</span>Faltas<span class="bnav-badge" id="pendBadge" style="display:none">0</span></button>
   <button class="bnav-btn" id="navTrocas" onclick="openTrocas()"><span class="bnav-icon">🔄</span>Trocas</button>
   <button class="bnav-btn" id="navEquipe" onclick="showEquipe()"><span class="bnav-icon">👥</span>Funcionários</button>
+  <button class="bnav-btn" id="navMapa" onclick="showMapa()"><span class="bnav-icon">🗺️</span>Mapa</button>
   <button class="bnav-btn" id="navMais" onclick="showMais()"><span class="bnav-icon">⋯</span>Mais</button>
 </div>
 
-<!-- PAINEL TROCAS DE FOLGA -->
+<!-- PAINEL MAPA DE ESCALA -->
+<div class="slide-panel" id="mapaPanel">
+  <div class="panel-header">
+    <button class="panel-back" onclick="closeMapa()">‹</button>
+    <div class="panel-title">🗺️ MAPA DE ESCALA</div>
+    <div id="mapaWeekLabel" style="margin-left:auto;font-size:11px;color:var(--sub);background:var(--s2);padding:3px 10px;border-radius:10px;border:1px solid var(--border)"></div>
+  </div>
+
+  <!-- Abas de setor -->
+  <div style="display:flex;gap:6px;padding:10px 12px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);background:var(--s1)">
+    <button class="fbtn active" id="mapaTab_garcom" onclick="setMapaSetor('garcom')">Garçons</button>
+    <button class="fbtn" id="mapaTab_cumim" onclick="setMapaSetor('cumim')">Cumins</button>
+    <button class="fbtn" id="mapaTab_bar" onclick="setMapaSetor('bar')">Bar</button>
+    <button class="fbtn" id="mapaTab_outros" onclick="setMapaSetor('outros')">Outros</button>
+  </div>
+
+  <!-- Filtros de visualização -->
+  <div style="display:flex;gap:6px;padding:8px 12px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);background:var(--s1)">
+    <button class="fbtn active" id="mapaFil_escala" onclick="setMapaFiltro('escala')">Escala semanal</button>
+    <button class="fbtn" id="mapaFil_horarios" onclick="setMapaFiltro('horarios')">Horários</button>
+    <button class="fbtn" id="mapaFil_domingo" onclick="setMapaFiltro('domingo')">Domingo</button>
+  </div>
+
+  <!-- Legenda -->
+  <div id="mapaLegenda" style="display:flex;gap:10px;padding:6px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:2px;background:#3d3010;border:1px solid #f5c84244"></div><span style="font-size:9px;color:var(--sub);font-weight:700">ABERTURA</span></div>
+    <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:2px;background:#0e2035;border:1px solid #3498db44"></div><span style="font-size:9px;color:var(--sub);font-weight:700">INTERCALADO</span></div>
+    <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:2px;background:#2d1010;border:1px solid #e74c3c44"></div><span style="font-size:9px;color:var(--sub);font-weight:700">FECHAMENTO</span></div>
+    <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:2px;background:#1a2a1a;border:1px solid #27ae6044"></div><span style="font-size:9px;color:var(--sub);font-weight:700">LICENÇA</span></div>
+    <div style="display:flex;align-items:center;gap:5px;margin-left:auto"><span style="font-size:9px;color:#e74c3c;font-weight:800">✕ = folga</span></div>
+  </div>
+
+  <!-- Conteúdo dinâmico -->
+  <div id="mapaConteudo" style="overflow-y:auto;padding-bottom:20px"></div>
+</div>
+
+
 <div class="slide-panel" id="trocasPanel">
   <div class="panel-header">
     <button class="panel-back" onclick="closePanel('trocasPanel')">←</button>
@@ -3153,6 +3218,245 @@ window.addEventListener('appinstalled',()=>{
   document.getElementById('installBanner').style.display='none';
   showToast('✅ App instalado com sucesso!');
 });
+
+/* ===================== MAPA DE ESCALA ===================== */
+let _mapaSetor = 'garcom';
+let _mapaFiltro = 'escala';
+const DIAS_SEMANA = ['SEG','TER','QUA','QUI','SEX','SAB','DOM'];
+const DIAS_IDX = {SEG:0,TER:1,QUA:2,QUI:3,SEX:4,SAB:5,DOM:6};
+
+function showMapa(){
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('navMapa').classList.add('active');
+  const panel = document.getElementById('mapaPanel');
+  panel.classList.add('open');
+  // Label da semana
+  const dates = getWeekDates();
+  const fmt = d => d.getDate()+'/'+(d.getMonth()+1);
+  document.getElementById('mapaWeekLabel').textContent = fmt(dates[0])+' – '+fmt(dates[6]);
+  renderMapa();
+}
+
+function closeMapa(){
+  document.getElementById('mapaPanel').classList.remove('open');
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('navEscala').classList.add('active');
+}
+
+function setMapaSetor(s){
+  _mapaSetor=s;
+  ['garcom','cumim','bar','outros'].forEach(x=>{
+    const el=document.getElementById('mapaTab_'+x);
+    if(el) el.classList.toggle('active',x===s);
+  });
+  renderMapa();
+}
+
+function setMapaFiltro(f){
+  _mapaFiltro=f;
+  ['escala','horarios','domingo'].forEach(x=>{
+    const el=document.getElementById('mapaFil_'+x);
+    if(el) el.classList.toggle('active',x===f);
+  });
+  // Legenda só aparece na escala semanal
+  document.getElementById('mapaLegenda').style.display = f==='escala'?'flex':'none';
+  renderMapa();
+}
+
+function _getFuncsSetor(setor){
+  const cats = {
+    garcom: f => ['GARÇOM','CHEFE DE FILA'].includes(f.categoria),
+    cumim:  f => f.categoria === 'CUMIM',
+    bar:    f => ['BARMAN','AUXILIAR DE BAR'].includes(f.categoria),
+    outros: f => !['GARÇOM','CHEFE DE FILA','CUMIM','BARMAN','AUXILIAR DE BAR'].includes(f.categoria)
+  };
+  return EQUIPE.filter(cats[setor] || (()=>false));
+}
+
+function _turnoClass(turno){
+  if(turno==='ABERTURA') return 'row-ab';
+  if(turno==='INTERCALADO') return 'row-int';
+  if(turno==='FECHAMENTO') return 'row-fec';
+  if(turno==='LICENÇA') return 'row-lic';
+  return 'row-int';
+}
+
+function _nomeAbrev(nome){
+  // Pega primeiro nome + inicial sobrenome se muito longo
+  const parts = nome.trim().split(' ');
+  if(parts[0].length <= 9) return parts[0];
+  return parts[0].substring(0,8)+'…';
+}
+
+function renderMapa(){
+  const cont = document.getElementById('mapaConteudo');
+  const funcs = _getFuncsSetor(_mapaSetor);
+  if(!funcs.length){
+    cont.innerHTML = '<div class="empty">Nenhum funcionário neste setor</div>';
+    return;
+  }
+
+  if(_mapaFiltro === 'escala') {
+    cont.innerHTML = renderMapaEscala(funcs);
+  } else if(_mapaFiltro === 'horarios') {
+    cont.innerHTML = renderMapaHorarios(funcs);
+  } else {
+    cont.innerHTML = renderMapaDomingo(funcs);
+  }
+}
+
+function renderMapaEscala(funcs){
+  const dates = getWeekDates();
+  const ordemTurno = ['ABERTURA','INTERCALADO','FECHAMENTO','LICENÇA','ADMINISTRATIVO'];
+  const grupos = {};
+  ordemTurno.forEach(t => grupos[t]=[]);
+  funcs.forEach(f=>{
+    const t = f.turno || 'INTERCALADO';
+    if(!grupos[t]) grupos[t]=[];
+    grupos[t].push(f);
+  });
+
+  let html = '<div class="mapa-tbl-wrap"><table class="mapa-tbl"><thead><tr>';
+  DIAS_SEMANA.forEach((d,i) => {
+    const dt = dates[i];
+    const num = dt ? dt.getDate() : '';
+    html += `<th>${d}<br><span style="font-weight:400;color:#5a6480">${num}</span></th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  let totalPorDia = [0,0,0,0,0,0,0];
+  let primeiroGrupo = true;
+
+  ordemTurno.forEach(turno => {
+    const gr = grupos[turno] || [];
+    if(!gr.length) return;
+
+    if(!primeiroGrupo){
+      html += '<tr class="row-sep"><td colspan="7"></td></tr>';
+    }
+    primeiroGrupo = false;
+
+    let contPorDia = [0,0,0,0,0,0,0];
+    gr.forEach(f => {
+      const folgaIdx = f.folga ? DIAS_IDX[f.folga] : -1;
+      const cls = _turnoClass(turno);
+      html += `<tr class="${cls}">`;
+      DIAS_SEMANA.forEach((_,di) => {
+        if(turno === 'LICENÇA'){
+          html += di===folgaIdx
+            ? `<td class="cell-folga">✕</td>`
+            : `<td style="color:#5a6480;font-size:7px">LIC</td>`;
+        } else if(di === folgaIdx) {
+          html += `<td class="cell-folga">✕</td>`;
+        } else {
+          html += `<td>${_nomeAbrev(f.nome)}</td>`;
+          contPorDia[di]++;
+          totalPorDia[di]++;
+        }
+      });
+      html += '</tr>';
+    });
+
+    if(turno !== 'LICENÇA'){
+      html += '<tr class="row-total"><td>'+turno.substring(0,4)+'.</td>';
+      contPorDia.forEach(c => html += `<td>${c}</td>`);
+      html += '</tr>';
+    }
+  });
+
+  html += '<tr class="row-sep"><td colspan="7"></td></tr>';
+  html += '<tr class="row-grand"><td>TOTAL</td>';
+  totalPorDia.forEach(c => html += `<td>${c}</td>`);
+  html += '</tr>';
+  html += '</tbody></table></div>';
+  html += `<div style="display:flex;justify-content:flex-end;padding:8px 12px;border-top:1px solid var(--border)">
+    <button class="mapa-edit-btn" onclick="showToast('Em breve: edição da escala')">✏️ Editar escala</button>
+  </div>`;
+  return html;
+}
+
+function renderMapaHorarios(funcs){
+  const grupos = {};
+  funcs.forEach(f=>{
+    if(!f.horIni) return;
+    const key = f.horIni+' às '+f.horFim;
+    if(!grupos[key]) grupos[key]=[];
+    grupos[key].push(_nomeAbrev(f.nome));
+  });
+
+  if(!Object.keys(grupos).length) return '<div class="empty">Sem horários cadastrados</div>';
+
+  const sorted = Object.entries(grupos).sort((a,b)=>a[0].localeCompare(b[0]));
+  let html = '<div class="mapa-hor-block">';
+  html += `<div class="mapa-hor-header">Horários — ${_setorNome(_mapaSetor)}</div>`;
+  sorted.forEach(([time, names])=>{
+    html += `<div class="mapa-hor-row">
+      <div class="mapa-hor-time">${time}</div>
+      <div class="mapa-hor-names">${names.join(' · ')}</div>
+    </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function renderMapaDomingo(funcs){
+  // Gera os próximos 5 domingos a partir da semana atual
+  const hoje = new Date();
+  const domingos = [];
+  const d = new Date(hoje);
+  d.setDate(d.getDate() + (7 - d.getDay()) % 7 || 7);
+  for(let i=0;i<5;i++){
+    const dd = new Date(d);
+    dd.setDate(d.getDate() + i*7);
+    domingos.push(dd);
+  }
+  const fmt = d => d.getDate()+'/'+(d.getMonth()+1);
+
+  // Organiza por folga semanal — quem não folga na DOM é candidato a domingo
+  const folgaDom = funcs.filter(f=>f.folga!=='DOM' && f.turno!=='LICENÇA');
+  const maxPorDom = Math.ceil(folgaDom.length / 5);
+
+  let html = '<div class="mapa-dom-block">';
+  html += `<div class="mapa-dom-title">Domingo do mês — ${_setorNome(_mapaSetor)}</div>`;
+  html += '<div class="mapa-tbl-wrap"><table class="mapa-dom-tbl"><thead><tr>';
+  domingos.forEach(d => html += `<th>${fmt(d)}</th>`);
+  html += '</tr></thead><tbody>';
+
+  // Distribui os funcionários igualmente pelos domingos
+  const colunas = [[], [], [], [], []];
+  folgaDom.forEach((f, i) => {
+    colunas[i % 5].push(_nomeAbrev(f.nome));
+  });
+  const maxRows = Math.max(...colunas.map(c=>c.length));
+  for(let r=0;r<maxRows;r++){
+    html += '<tr>';
+    for(let c=0;c<5;c++){
+      const nome = colunas[c][r] || '';
+      html += nome ? `<td>${nome}</td>` : `<td class="vazio">—</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+
+  // Folgas semanais resumidas
+  html += `<div class="mapa-hor-block" style="margin-top:10px">
+    <div class="mapa-hor-header">Folgas semanais</div>`;
+  const dias = ['SEG','TER','QUA','QUI','SEX','SAB','DOM'];
+  dias.forEach(dia => {
+    const quem = funcs.filter(f=>f.folga===dia).map(f=>_nomeAbrev(f.nome));
+    if(quem.length) html += `<div class="mapa-hor-row">
+      <div class="mapa-hor-time">${dia}</div>
+      <div class="mapa-hor-names">${quem.join(' · ')}</div>
+    </div>`;
+  });
+  html += '</div></div>';
+  return html;
+}
+
+function _setorNome(s){
+  return {garcom:'Garçons',cumim:'Cumins',bar:'Bar',outros:'Outros'}[s]||s;
+}
+
 </script>
 </body>
 </html>

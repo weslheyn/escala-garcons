@@ -2662,7 +2662,8 @@ function buildReport(period){
     '<div class="export-card"><h3>📊 RESUMO</h3><div class="grid2"><div class="scard"><div class="scard-num c-green">'+totalCnt.presente+'</div><div class="scard-lbl">Presente</div></div><div class="scard"><div class="scard-num c-red">'+totalCnt.falta+'</div><div class="scard-lbl">Falta</div></div><div class="scard"><div class="scard-num c-blue">'+totalCnt.atestado+'</div><div class="scard-lbl">Atestado</div></div><div class="scard"><div class="scard-num c-orange">'+totalCnt['troca-horario']+'</div><div class="scard-lbl">Troca H.</div></div><div class="scard"><div class="scard-num c-purple">'+totalCnt['troca-folga']+'</div><div class="scard-lbl">Troca F.</div></div><div class="scard"><div class="scard-num c-pink">'+totalCnt.medida+'</div><div class="scard-lbl">Discipl.</div></div></div></div>'+
     '<div class="export-card"><h3>📤 EXPORTAR</h3>'+sheetsBtn+
     '<button class="export-btn" onclick="copyReport()" style="background:var(--accent);color:#111;font-weight:700;font-size:14px;text-align:center">📋 COPIAR PARA WHATSAPP</button>'+
-    '<button class="export-btn" onclick="clearAll()" style="color:#e74c3c;border-color:#e74c3c44">🗑️ Limpar registros da semana</button></div>'+
+    '<button class="export-btn" onclick="clearAll()" style="color:#e74c3c;border-color:#e74c3c44">🗑️ Limpar registros da semana</button>'+
+    '<button class="export-btn" onclick="resetTotal()" style="color:#fff;background:#c0392b;border-color:#c0392b;font-weight:800;font-size:13px;margin-top:6px">🔐 RESET TOTAL — Apagar tudo</button></div>'+
     '<div class="export-card" style="background:var(--s1)"><h3 style="color:var(--muted)">PRÉVIA</h3><pre style="font-size:10px;white-space:pre-wrap;line-height:1.8;-webkit-user-select:text;user-select:text">'+previewHtml+'</pre></div>';
 }
 function copyReport(){
@@ -2677,9 +2678,42 @@ function clearAll(){
       .then(()=>showToast('🗑️ Registros apagados de todos os dispositivos!'))
       .catch(()=>showToast('⚠️ Erro ao apagar do Firebase'));
   }
-  // Limpa cache em memória
   _limparCacheLocal();
   buildReport(_reportPeriod);buildMain();refreshPendBadge();
+}
+
+function resetTotal(){
+  // Pede senha
+  const senha=prompt('🔐 Digite a senha para apagar TODOS os dados:');
+  if(senha===null)return; // cancelou
+  if(senha!=='2504'){
+    showToast('❌ Senha incorreta!');
+    return;
+  }
+  if(!confirm('⚠️ ATENÇÃO!\n\nIsso vai apagar PERMANENTEMENTE:\n• Todos os registros de presença\n• Todas as trocas de folga\n• Todas as justificativas\n• Todos os atestados\n\nEssa ação não pode ser desfeita!\n\nConfirma o reset completo?'))return;
+
+  setSyncStatus('loading','Apagando todos os dados...');
+  const ops=[];
+
+  if(fbDb&&fbConnected){
+    // Apaga TUDO do Firebase
+    ops.push(fbDb.ref('presenca').remove());
+    ops.push(fbDb.ref('trocas').remove());
+  }
+
+  Promise.all(ops).then(()=>{
+    // Limpa cache em memória completamente
+    Object.keys(_fbCache).forEach(k=>delete _fbCache[k]);
+    setSyncStatus('ok','🔄 Sync em tempo real ativo');
+    showToast('✅ Reset completo! Todos os dados foram apagados.');
+    buildMain();
+    refreshPendBadge();
+    buildSummary();
+    if(document.getElementById('trocasPanel').classList.contains('open')) buildTrocasPanel();
+  }).catch(e=>{
+    setSyncStatus('err','Erro no reset');
+    showToast('❌ Erro ao apagar: '+e.message);
+  });
 }
 
 // ═══════════════════════════════════════════════════

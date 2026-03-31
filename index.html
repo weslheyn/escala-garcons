@@ -3367,27 +3367,18 @@ function renderMapaEscala(funcs){
           html += `<td class="cell-folga">✕</td>`;
           return;
         }
-        // Domingo (di===6): mostra ✕ por padrão a não ser que haja registro de presença
+        // Domingo (di===6): ✕ só para quem tem folga fixa no DOM
         if(di === 6){
           const recDom = getRec(6, f.nome);
           const stDom  = recDom && recDom.status ? recDom.status : '';
-          if(!stDom || stDom === ''){
-            // Sem registro → folga no domingo
-            html += `<td class="cell-folga">✕</td>`;
-          } else if(stDom === 'presente'){
-            html += `<td>${_nomeAbrev(f.nome)}</td>`;
-            contPorDia[di]++;
-            totalPorDia[di]++;
+          const cfgDom = STATUS_CFG[stDom];
+          if(cfgDom){
+            html += `<td style="background:${cfgDom.bg};color:${cfgDom.color};font-weight:900;font-size:7px">${cfgDom.txt}</td>`;
           } else {
-            const cfg = STATUS_CFG[stDom];
-            if(cfg){
-              html += `<td style="background:${cfg.bg};color:${cfg.color};font-weight:900;font-size:7px">${cfg.txt}</td>`;
-            } else {
-              html += `<td>${_nomeAbrev(f.nome)}</td>`;
-            }
-            contPorDia[di]++;
-            totalPorDia[di]++;
+            html += `<td>${_nomeAbrev(f.nome)}</td>`;
           }
+          contPorDia[di]++;
+          totalPorDia[di]++;
           return;
         }
         const rec = getRec(di, f.nome);

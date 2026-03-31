@@ -3113,6 +3113,13 @@ document.getElementById('totalPill').textContent=EQUIPE.length+' TOTAL';
 buildTabs();buildMain();refreshPendBadge();
 // Inicia Firebase para sync em tempo real
 setTimeout(initFirebase, 500);
+
+// Registra Service Worker para PWA (instalar como app)
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/escala-garcons/sw.js')
+    .then(()=>console.log('SW registrado'))
+    .catch(e=>console.warn('SW erro:',e));
+}
 </script>
 </body>
 </html>

@@ -3318,7 +3318,6 @@ function renderMapaEscala(funcs){
   });
 
   const STATUS_CFG = {
-    'presente':         {txt:'PRES',  bg:'#27ae6033',color:'#27ae60'},
     'falta':            {txt:'FALTA', bg:'#e74c3c33',color:'#e74c3c'},
     'atestado':         {txt:'ATES.', bg:'#2980b933',color:'#2980b9'},
     'troca-horario':    {txt:'T.HOR',bg:'#d3540033',color:'#d35400'},
@@ -3362,6 +3361,29 @@ function renderMapaEscala(funcs){
         }
         if(isFolga){
           html += `<td class="cell-folga">✕</td>`;
+          return;
+        }
+        // Domingo (di===6): mostra ✕ por padrão a não ser que haja registro de presença
+        if(di === 6){
+          const recDom = getRec(6, f.nome);
+          const stDom  = recDom && recDom.status ? recDom.status : '';
+          if(!stDom || stDom === ''){
+            // Sem registro → folga no domingo
+            html += `<td class="cell-folga">✕</td>`;
+          } else if(stDom === 'presente'){
+            html += `<td>${_nomeAbrev(f.nome)}</td>`;
+            contPorDia[di]++;
+            totalPorDia[di]++;
+          } else {
+            const cfg = STATUS_CFG[stDom];
+            if(cfg){
+              html += `<td style="background:${cfg.bg};color:${cfg.color};font-weight:900;font-size:7px">${cfg.txt}</td>`;
+            } else {
+              html += `<td>${_nomeAbrev(f.nome)}</td>`;
+            }
+            contPorDia[di]++;
+            totalPorDia[di]++;
+          }
           return;
         }
         const rec = getRec(di, f.nome);

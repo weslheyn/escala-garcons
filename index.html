@@ -959,7 +959,7 @@ const load=(k,def=null)=>{
 // EQUIPE — LISTA COMPLETA CONFORME ESCALA ATUAL
 // ═══════════════════════════════════════════════════
 // Versão da equipe — incrementar sempre que atualizar a lista
-const EQUIPE_VERSION = 'v20260401_v5';
+const EQUIPE_VERSION = 'v20260401_v7';
 
 const EQUIPE_DEFAULT = [
   // GERENTES
@@ -974,27 +974,27 @@ const EQUIPE_DEFAULT = [
   {id:'m4',nome:'EDMAGNA DOS SANTOS SILVA',categoria:'MAÎTRE',turno:'INTERCALADO',horIni:'10:00',horFim:'21:20',folga:'QUI'},
 
   // GARÇOM VASTO (EFETIVO) - ABERTURA
-  {id:'f14',nome:'WILLIAM DE LIMA FRANCO',categoria:'CHEFE DE FILA',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'QUA'},
-  {id:'f13',nome:'MIGUEL SEBASTIAN JACU',categoria:'GARÇOM',turno:'FECHAMENTO',horIni:'15:00',horFim:'23:20',folga:'TER'},
-  {id:'f15',nome:'KAIAN DA SILVA VERISSIMO DOS SANTOS',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'QUI'},
-  {id:'f16b',nome:'SARA RAQUEL FERREIRA DE SOUSA',categoria:'CHEFE DE FILA',turno:'FECHAMENTO',horIni:'15:00',horFim:'23:20',folga:'SEG'},
-  {id:'f17',nome:'KLEBER SILVA DA CONCEICAO',categoria:'GARÇOM',turno:'FECHAMENTO',horIni:'15:00',horFim:'23:20',folga:'QUI'},
+  {id:'f14',nome:'WILLIAM DE LIMA FRANCO',categoria:'CHEFE DE FILA',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'QUA',folgaDom:['19/04/2026']},
+  {id:'f13',nome:'MIGUEL SEBASTIAN JACU',categoria:'GARÇOM',turno:'FECHAMENTO',horIni:'15:00',horFim:'23:20',folga:'TER',folgaDom:['12/04/2026']},
+  {id:'f15',nome:'KAIAN DA SILVA VERISSIMO DOS SANTOS',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'QUI',folgaDom:['05/04/2026']},
+  {id:'f16b',nome:'SARA RAQUEL FERREIRA DE SOUSA',categoria:'CHEFE DE FILA',turno:'FECHAMENTO',horIni:'15:00',horFim:'23:20',folga:'SEG',folgaDom:['22/03/2026']},
+  {id:'f17',nome:'KLEBER SILVA DA CONCEICAO',categoria:'GARÇOM',turno:'FECHAMENTO',horIni:'15:00',horFim:'23:20',folga:'QUI',folgaDom:['05/04/2026']},
 
   // GARÇOM ABERTURA
-  {id:'f1',nome:'SAMUEL OLIVEIRA',categoria:'GARÇOM',turno:'ABERTURA',horIni:'08:00',horFim:'16:20',folga:'QUA'},
-  {id:'f2',nome:'RICKSON KALANY MIRANDA',categoria:'CHEFE DE FILA',turno:'ABERTURA',horIni:'07:30',horFim:'15:50',folga:'SEG'},
+  {id:'f1',nome:'SAMUEL OLIVEIRA',categoria:'GARÇOM',turno:'ABERTURA',horIni:'08:00',horFim:'16:20',folga:'QUA',folgaDom:['19/04/2026']},
+  {id:'f2',nome:'RICKSON KALANY MIRANDA',categoria:'CHEFE DE FILA',turno:'ABERTURA',horIni:'07:30',horFim:'15:50',folga:'SEG',folgaDom:['29/03/2026']},
 
   // GARÇOM INTERCALADO
-  {id:'f3',nome:'CAMILA',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'SEG'},
-  {id:'f4',nome:'PATRICIA ARAUJO MOURA',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'SEG'},
-  {id:'f5',nome:'MARINA EDUARDA PIMENTA',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'SEG'},
-  {id:'f6',nome:'FABIELLY RAIANNY CANDIDO DA SILVA RODRIGUES',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'TER'},
-  {id:'f7',nome:'ANA LUCIA GONSALVES',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'TER'},
-  {id:'f8',nome:'FABRICIA SOUSA SANTOS',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'TER'},
-  {id:'f9',nome:'ALEXANDRE ALVES DA MOTA',categoria:'CHEFE DE FILA',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'TER'},
-  {id:'f10',nome:'ANDRE PAULO CUNHA PEREIRA',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'QUA'},
+  {id:'f3',nome:'CAMILA',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'SEG',folgaDom:['12/04/2026']},
+  {id:'f4',nome:'PATRICIA ARAUJO MOURA',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'SEG',folgaDom:['12/04/2026']},
+  {id:'f5',nome:'MARINA EDUARDA PIMENTA',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'SEG',folgaDom:['22/03/2026','19/04/2026']},
+  {id:'f6',nome:'FABIELLY RAIANNY CANDIDO DA SILVA RODRIGUES',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'TER',folgaDom:['05/04/2026']},
+  {id:'f7',nome:'ANA LUCIA GONSALVES',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'TER',folgaDom:['12/04/2026']},
+  {id:'f8',nome:'FABRICIA SOUSA SANTOS',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'TER',folgaDom:['22/03/2026','12/04/2026']},
+  {id:'f9',nome:'ALEXANDRE ALVES DA MOTA',categoria:'CHEFE DE FILA',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'TER',folgaDom:['05/04/2026']},
+  {id:'f10',nome:'ANDRE PAULO CUNHA PEREIRA',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'QUA',folgaDom:['19/04/2026']},
   {id:'f11',nome:'JOSE FABRICIO PEREIRA SOARES',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'QUI'},
-  {id:'f12',nome:'ROSEANE FRANKLIN DO NASCIMENTO',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'QUI'},
+  {id:'f12',nome:'ROSEANE FRANKLIN DO NASCIMENTO',categoria:'GARÇOM',turno:'INTERCALADO',horIni:'11:00',horFim:'22:20',folga:'QUI',folgaDom:['19/04/2026']},
   {id:'f18',nome:'LEYREAN MARIA GONSAVES M. DE ABREL',categoria:'GARÇOM',turno:'LICENÇA',horIni:'',horFim:'',folga:''},
 
   // CUMIM ABERTURA
@@ -2773,7 +2773,6 @@ function buildReport(period){
     '<div class="export-card"><h3>📊 RESUMO</h3><div class="grid2"><div class="scard"><div class="scard-num c-green">'+totalCnt.presente+'</div><div class="scard-lbl">Presente</div></div><div class="scard"><div class="scard-num c-red">'+totalCnt.falta+'</div><div class="scard-lbl">Falta</div></div><div class="scard"><div class="scard-num c-blue">'+totalCnt.atestado+'</div><div class="scard-lbl">Atestado</div></div><div class="scard"><div class="scard-num c-orange">'+totalCnt['troca-horario']+'</div><div class="scard-lbl">Troca H.</div></div><div class="scard"><div class="scard-num c-purple">'+totalCnt['troca-folga']+'</div><div class="scard-lbl">Troca F.</div></div><div class="scard"><div class="scard-num c-pink">'+totalCnt.medida+'</div><div class="scard-lbl">Discipl.</div></div></div></div>'+
     '<div class="export-card"><h3>📤 EXPORTAR</h3>'+sheetsBtn+
     '<button class="export-btn" onclick="copyReport()" style="background:var(--accent);color:#111;font-weight:700;font-size:14px;text-align:center">📋 COPIAR PARA WHATSAPP</button>'+
-    '<button class="export-btn" onclick="clearAll()" style="color:#e74c3c;border-color:#e74c3c44">🗑️ Limpar registros da semana</button>'+
     '<button class="export-btn" onclick="resetTotal()" style="color:#fff;background:#c0392b;border-color:#c0392b;font-weight:800;font-size:13px;margin-top:6px">🔐 RESET TOTAL — Apagar tudo</button></div>'+
     '<div class="export-card" style="background:var(--s1)"><h3 style="color:var(--muted)">PRÉVIA</h3><pre style="font-size:10px;white-space:pre-wrap;line-height:1.8;-webkit-user-select:text;user-select:text">'+previewHtml+'</pre></div>';
 }
@@ -3287,7 +3286,8 @@ function _turnoClass(turno){
 }
 
 function _nomeAbrev(nome){
-  // Pega primeiro nome + inicial sobrenome se muito longo
+  // Exceção: JOSE FABRICIO deve aparecer como FABRICIO
+  if(nome.startsWith('JOSE FABRICIO')) return 'FABRICIO';
   const parts = nome.trim().split(' ');
   if(parts[0].length <= 9) return parts[0];
   return parts[0].substring(0,8)+'…';
@@ -3435,27 +3435,41 @@ function renderMapaDomingo(funcs){
     dd.setDate(d.getDate() + i*7);
     domingos.push(dd);
   }
-  const fmt = d => d.getDate()+'/'+(d.getMonth()+1);
+  const fmt = dt => String(dt.getDate()).padStart(2,'0')+'/'+String(dt.getMonth()+1).padStart(2,'0')+'/'+dt.getFullYear();
+  const fmtLabel = dt => dt.getDate()+'/'+(dt.getMonth()+1);
 
-  // Quem não folga na DOM é candidato a trabalhar no domingo
-  const folgaDom = funcs.filter(f=>f.folga!=='DOM' && f.folga2!=='DOM' && f.turno!=='LICENÇA');
+  // Quem não tem folga DOM fixa e não está em licença
+  const candidatos = funcs.filter(f=>f.folga!=='DOM' && f.folga2!=='DOM' && f.turno!=='LICENÇA');
 
   let html = '<div class="mapa-dom-block">';
   html += `<div class="mapa-dom-title">Domingo do mês — ${_setorNome(_mapaSetor)}</div>`;
   html += '<div class="mapa-tbl-wrap"><table class="mapa-dom-tbl"><thead><tr>';
-  domingos.forEach(d => html += `<th>${fmt(d)}</th>`);
+  domingos.forEach(dt => html += `<th>${fmtLabel(dt)}</th>`);
   html += '</tr></thead><tbody>';
 
-  // Distribui os funcionários igualmente pelos domingos
-  const colunas = [[],[],[],[],[]];
-  folgaDom.forEach((f,i) => { colunas[i%5].push(_nomeAbrev(f.nome)); });
-  const maxRows = Math.max(...colunas.map(c=>c.length));
-  for(let r=0;r<maxRows;r++){
+  // Montar colunas: para cada domingo, quem trabalha (sem ✕) e quem folga (✕)
+  // Primeiro calcular max linhas
+  const colsData = domingos.map(dt => {
+    const dataStr = fmt(dt);
+    return candidatos.map(f => {
+      const folgaDom = f.folgaDom || [];
+      const folga = folgaDom.includes(dataStr);
+      return { nome: _nomeAbrev(f.nome), folga };
+    });
+  });
+  const maxRows = Math.max(...colsData.map(c=>c.length), 0);
+
+  for(let r=0; r<maxRows; r++){
     html += '<tr>';
-    for(let c=0;c<5;c++){
-      const nome = colunas[c][r] || '';
-      html += nome ? `<td>${nome}</td>` : `<td class="vazio">—</td>`;
-    }
+    colsData.forEach(col => {
+      const item = col[r];
+      if(!item){ html += `<td class="vazio">—</td>`; return; }
+      if(item.folga){
+        html += `<td style="color:#e74c3c;font-weight:900">✕</td>`;
+      } else {
+        html += `<td>${item.nome}</td>`;
+      }
+    });
     html += '</tr>';
   }
   html += '</tbody></table></div>';

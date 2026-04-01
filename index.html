@@ -3457,28 +3457,19 @@ function renderMapaDomingo(funcs){
   domingos.forEach(dt => html += `<th>${fmtLabel(dt)}</th>`);
   html += '</tr></thead><tbody>';
 
-  // Montar colunas: para cada domingo, quem trabalha (sem ✕) e quem folga (✕)
-  // Primeiro calcular max linhas
-  const colsData = domingos.map(dt => {
+  // Colunas: apenas quem FOLGA naquele domingo
+  const colunas = domingos.map(dt => {
     const dataStr = fmt(dt);
-    return candidatos.map(f => {
-      const folgaDom = f.folgaDom || [];
-      const folga = folgaDom.includes(dataStr);
-      return { nome: _nomeAbrev(f.nome), folga };
-    });
+    return candidatos
+      .filter(f => (f.folgaDom||[]).includes(dataStr))
+      .map(f => _nomeAbrev(f.nome));
   });
-  const maxRows = Math.max(...colsData.map(c=>c.length), 0);
+  const maxRows = Math.max(...colunas.map(c=>c.length), 0);
 
   for(let r=0; r<maxRows; r++){
     html += '<tr>';
-    colsData.forEach(col => {
-      const item = col[r];
-      if(!item){ html += `<td class="vazio">—</td>`; return; }
-      if(item.folga){
-        html += `<td style="color:#e74c3c;font-weight:900">✕</td>`;
-      } else {
-        html += `<td>${item.nome}</td>`;
-      }
+    colunas.forEach(col => {
+      html += col[r] ? `<td>${col[r]}</td>` : `<td class="vazio">—</td>`;
     });
     html += '</tr>';
   }

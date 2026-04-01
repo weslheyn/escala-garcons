@@ -3367,6 +3367,16 @@ function renderMapaEscala(funcs){
           html += `<td class="cell-folga">✕</td>`;
           return;
         }
+        // Domingo (di===6): verificar folgaDom da semana atual
+        if(di === 6){
+          const domDate = WEEK_DATES[6];
+          const domStr = String(domDate.getDate()).padStart(2,'0')+'/'+String(domDate.getMonth()+1).padStart(2,'0')+'/'+domDate.getFullYear();
+          const folgaDomArr = f.folgaDom || [];
+          if(folgaDomArr.includes(domStr)){
+            html += `<td class="cell-folga">✕</td>`;
+            return;
+          }
+        }
         // Célula normal: lê status do Firebase
         const rec = getRec(di, f.nome);
         const st  = rec && rec.status ? rec.status : '';

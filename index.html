@@ -2357,7 +2357,7 @@ function buildCard(f){
   // Atestado, falta ou troca-folga já salvos → card compacto sem botões e sem destaque
   const atestadoSalvo   = st==='atestado'    && r.extra && (r.extra.ini || r.extra.obs);
   const faltaSalva      = st==='falta'       && r.extra && r.extra._saved;
-  const trocaFolgaSalva = st==='troca-folga' && r.extra && Object.keys(r.extra).length > 0;
+  const trocaFolgaSalva = st==='troca-folga' && r.extra && Object.keys(r.extra).filter(k=>k!=='_saved').length > 0;
 
   if(atestadoSalvo || faltaSalva || trocaFolgaSalva){
     const corBorda  = st==='atestado'?'#2980b9':st==='troca-folga'?'#8e44ad':'#e74c3c';
@@ -2600,6 +2600,14 @@ function selectStatus(name,newSt){
   const r=getRec(curDay,name);
   const status=r.status===newSt?'':newSt;
   const extra=status===''||status==='presente'?{}:r.extra||{};
+
+  // Falta, atestado e troca-folga precisam de campos extras — só marca e abre campos
+  if(status==='falta'||status==='atestado'||status==='troca-folga'){
+    setRec(curDay,name,status,{});
+    buildMain();refreshPendBadge();
+    return;
+  }
+
   setRec(curDay,name,status,extra);
   bridgeSaveByDate(name,curDay,status,extra);
   if(status==='presente')showToast('✅ Presente registrado!');

@@ -2329,7 +2329,16 @@ function contarFaltasConsecutivas(nome){
 }
 
 function buildCard(f){
-  const r=getRec(curDay,f.nome);
+  let r=getRec(curDay,f.nome);
+  // Fallback: buscar pelo drec_ (salvo pelo sistema de domingo)
+  if(!r.status || (r.status==='troca-folga' && !r.extra || !Object.keys(r.extra||{}).length)){
+    const wd=WEEK_DATES[curDay];
+    const dk=wd.getFullYear()+'-'+String(wd.getMonth()+1).padStart(2,'0')+'-'+String(wd.getDate()).padStart(2,'0');
+    const drRec=load('drec_'+f.nome+'_'+dk,null);
+    if(drRec && drRec.status){
+      r={status:drRec.status,extra:drRec.extra||{}};
+    }
+  }
   const st=r.status;
   const stObj=STATUS.find(s=>s.id===st);
   const pend=getPendencias().find(p=>p.func.nome===f.nome);

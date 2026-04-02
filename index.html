@@ -2330,13 +2330,16 @@ function contarFaltasConsecutivas(nome){
 
 function buildCard(f){
   let r=getRec(curDay,f.nome);
-  // Fallback: buscar pelo drec_ quando extra está vazio
-  if(r.status==='troca-folga' && Object.keys(r.extra||{}).length===0){
-    const wd=WEEK_DATES[curDay];
-    const dk=wd.getFullYear()+'-'+String(wd.getMonth()+1).padStart(2,'0')+'-'+String(wd.getDate()).padStart(2,'0');
-    const drRec=load('drec_'+f.nome+'_'+dk,null);
-    if(drRec && drRec.extra && Object.keys(drRec.extra).length>0){
-      r={status:'troca-folga',extra:drRec.extra};
+  // Sempre buscar também no drec_ do dia atual e usar o mais completo
+  const wd=WEEK_DATES[curDay];
+  const dk=wd.getFullYear()+'-'+String(wd.getMonth()+1).padStart(2,'0')+'-'+String(wd.getDate()).padStart(2,'0');
+  const drRec=load('drec_'+f.nome+'_'+dk,null);
+  if(drRec && drRec.status){
+    // Preferir drec_ se tem status e extra com mais dados
+    const drExtraLen = Object.keys(drRec.extra||{}).length;
+    const rExtraLen  = Object.keys(r.extra||{}).length;
+    if(!r.status || drExtraLen > rExtraLen){
+      r={status:drRec.status, extra:drRec.extra||{}};
     }
   }
   const st=r.status;

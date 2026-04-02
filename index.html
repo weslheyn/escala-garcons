@@ -1901,12 +1901,13 @@ function saveJustificativa(){
     setRec(day,nome,'atestado',{ini:just.ini,fim:just.fim,dias:just.dias,obs:just.obs});
     // Marcar automaticamente todos os dias da semana dentro do período
     if(just.ini && just.fim){
-      const parseDate = s => { const [d,m,y]=s.split('/'); return new Date(y,m-1,d); };
+      const parseDate = s => { if(!s) return null; const [y,m,d]=s.split('-'); return new Date(y,m-1,d); };
       const iniDate = parseDate(just.ini);
       const fimDate = parseDate(just.fim);
       WEEK_DATES.forEach((wd, di) => {
         if(di === day) return; // já foi salvo acima
-        if(wd >= iniDate && wd <= fimDate){
+        const wdN = new Date(wd.getFullYear(), wd.getMonth(), wd.getDate());
+        if(iniDate && fimDate && wdN >= iniDate && wdN <= fimDate){
           setRec(di, nome, 'atestado', {ini:just.ini, fim:just.fim, dias:just.dias, obs:just.obs});
           bridgeSaveByDate(nome, di, 'atestado', {ini:just.ini, fim:just.fim, dias:just.dias, obs:just.obs});
         }
@@ -2591,12 +2592,13 @@ function saveRec(name,st){
   bridgeSaveByDate(name,curDay,st,ex);
   // Se atestado com período, marcar todos os dias da semana dentro do intervalo
   if(st==='atestado' && ex.ini && ex.fim){
-    const parseDate = s => { const [d,m,y]=s.split('/'); return new Date(y,m-1,d); };
+    const parseDate = s => { if(!s) return null; const [y,m,d]=s.split('-'); return new Date(y,m-1,d); };
     const iniDate = parseDate(ex.ini);
     const fimDate = parseDate(ex.fim);
     WEEK_DATES.forEach((wd, di) => {
       if(di === curDay) return;
-      if(wd >= iniDate && wd <= fimDate){
+      const wdN = new Date(wd.getFullYear(), wd.getMonth(), wd.getDate());
+      if(iniDate && fimDate && wdN >= iniDate && wdN <= fimDate){
         setRec(di, name, 'atestado', ex);
         bridgeSaveByDate(name, di, 'atestado', ex);
       }

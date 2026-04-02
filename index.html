@@ -2369,7 +2369,7 @@ function buildCard(f){
   // Atestado, falta ou troca-folga já salvos → card compacto sem botões e sem destaque
   const atestadoSalvo   = st==='atestado'    && r.extra && (r.extra.ini || r.extra.obs);
   const faltaSalva      = st==='falta'       && r.extra && r.extra._saved;
-  const trocaFolgaSalva = st==='troca-folga';
+  const trocaFolgaSalva = false; // troca-folga usa card normal
 
   if(atestadoSalvo || faltaSalva || trocaFolgaSalva){
     const corBorda  = st==='atestado'?'#2980b9':st==='troca-folga'?'#8e44ad':'#e74c3c';

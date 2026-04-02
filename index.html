@@ -2374,14 +2374,51 @@ function buildCard(f){
   if(atestadoSalvo || faltaSalva || trocaFolgaSalva){
     const corBorda  = st==='atestado'?'#2980b9':st==='troca-folga'?'#8e44ad':'#e74c3c';
     const badgeCls2 = st==='atestado'?'badge-atestado':st==='troca-folga'?'badge-troca-folga':'badge-falta';
-    const extraContent = buildExtra(f.nome,st,r.extra||{});
+    const ex2 = r.extra||{};
+    const nomeSafe = f.nome.replace(/'/g,"\\'");
+    const rawId = f.nome.replace(/ /g,'_').replace(/[^a-zA-Z0-9_]/g,'');
+    const saveBtn2 = '<button class="save-btn" onclick="saveRec(\''+nomeSafe+'\',\''+st+'\')">💾 SALVAR</button>';
+    const editBtn2 = '<button onclick="selectStatus(\''+nomeSafe+'\',\''+st+'\')" style="background:none;border:1.5px solid var(--border);color:var(--sub);border-radius:9px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;margin-top:6px;width:100%">✏️ Editar</button>';
+
+    let extraHtml = '';
+    if(st==='troca-folga'){
+      const fmt=d=>{if(!d)return'';const p=d.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:d;};
+      const temDados2 = ex2.trabData||ex2.folgaData||ex2.trab||ex2.folga||ex2.trocaDe||(ex2.obs&&ex2.obs.length>0);
+      if(temDados2){
+        let info='🔄 Troca de folga';
+        if(ex2.trabData) info+='<br>💼 Trabalhou: '+fmt(ex2.trabData);
+        else if(ex2.trab) info+='<br>💼 Trabalhou: '+ex2.trab;
+        else if(ex2.trocaDe) info+='<br>📅 Trabalhou em: '+ex2.trocaDe;
+        if(ex2.folgaData) info+='<br>🏖️ Folga em: '+fmt(ex2.folgaData);
+        else if(ex2.folga) info+='<br>🏖️ Folga em: '+ex2.folga;
+        else if(ex2.folgaEm) info+='<br>🏖️ Folga em: '+ex2.folgaEm;
+        if(ex2.quem) info+='<br>👤 '+ex2.quem;
+        extraHtml='<div class="saved-info">'+info+editBtn2+'</div>';
+      } else {
+        const ano=new Date().getFullYear();
+        const min=ano+'-01-01',max=ano+'-12-31';
+        extraHtml='<div class="extra-fields">'+
+          '<div class="field-row">'+
+            '<div class="field-wrap"><span class="field-label">💼 Dia que VAI TRABALHAR</span>'+
+            '<input class="field-input" type="date" id="f_tf_trab_'+rawId+'" min="'+min+'" max="'+max+'"></div>'+
+            '<div class="field-wrap"><span class="field-label">🏖️ Dia que VAI FOLGAR</span>'+
+            '<input class="field-input" type="date" id="f_tf_folga_'+rawId+'" min="'+min+'" max="'+max+'"></div>'+
+          '</div>'+
+          '<div class="field-wrap"><span class="field-label">👤 Autorizado por</span>'+
+          '<input class="field-input" id="f_tf_quem_'+rawId+'" placeholder="Nome do gestor..."></div>'+
+          saveBtn2+'</div>';
+      }
+    } else {
+      extraHtml = buildExtra(f.nome,st,ex2);
+    }
+
     return '<div class="emp-card" id="card_'+f.nome.replace(/ /g,'_')+'" style="opacity:.75;border-left:3px solid '+corBorda+'">'+
       '<div class="emp-top">'+
-        '<div><button class="emp-name-btn" onclick="openFicha(\''+f.nome.replace(/'/g,"\\'")+'\')" ><div class="emp-name">'+f.nome+'</div></button>'+
+        '<div><button class="emp-name-btn" onclick="openFicha(\''+nomeSafe+'\')"><div class="emp-name">'+f.nome+'</div></button>'+
         '<div class="emp-meta">'+f.categoria+' · '+(f.horIni||'')+(f.horFim?' às '+f.horFim:'')+'</div></div>'+
         '<div class="emp-badges">'+faltasBadge+'<span class="badge '+badgeCls2+'">'+badgeTxt+'</span>'+extraBadges+'</div>'+
       '</div>'+
-      (extraContent||'<div style="padding:8px 0;font-size:11px;color:var(--sub)">Preencha os campos abaixo:</div>')+
+      extraHtml+
     '</div>';
   }
 
@@ -2423,7 +2460,7 @@ function buildExtra(name,st,ex){
   }
   if(st==='troca-horario')return '<div class="extra-fields"><div class="field-row"><div class="field-wrap"><span class="field-label">🕐 Novo início</span><input class="field-input" type="time" id="f_thi_'+id+'" value="'+(ex.ini||'')+'"></div><div class="field-wrap"><span class="field-label">🕐 Novo fim</span><input class="field-input" type="time" id="f_thf_'+id+'" value="'+(ex.fim||'')+'"></div></div><div class="field-wrap"><span class="field-label">👤 Com quem</span><input class="field-input" id="f_th_quem_'+id+'" value="'+(ex.quem||'')+'"></div><div class="field-wrap"><span class="field-label">📝 Motivo</span><input class="field-input" id="f_th_obs_'+id+'" value="'+(ex.obs||'')+'"></div>'+saveBtn+'</div>';
   if(st==='troca-folga'){
-    const temDados = ex && (ex.trabData||ex.folgaData||ex.trab||ex.folga||ex.trocaDe||ex.obs);
+    const temDados = ex && (ex.trabData||ex.folgaData||ex.trab||ex.folga||ex.trocaDe||(ex.obs&&ex.obs.length>0)||ex._saved);
     if(temDados){
       // Resumo compacto com editBtn
       const fmt=d=>{if(!d)return'';const p=d.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:d;};

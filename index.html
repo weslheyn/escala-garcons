@@ -2354,13 +2354,14 @@ function buildCard(f){
   if(temJusta)extraBadges+='<span class="badge badge-justa">🚨</span>';
   const btns=STATUS.map(s=>'<button class="sbtn'+(st===s.id?' sel-'+s.id:'')+'" onclick="selectStatus(\''+f.nome.replace(/'/g,"\\'")+'\''+',\''+s.id+'\')">'+s.emoji+'<br><span style="font-size:10px">'+s.label+'</span></button>').join('');
 
-  // Atestado ou falta já salvos → card compacto sem botões e sem destaque
-  const atestadoSalvo = st==='atestado' && r.extra && (r.extra.ini || r.extra.obs);
-  const faltaSalva    = st==='falta'    && r.extra && r.extra._saved;
+  // Atestado, falta ou troca-folga já salvos → card compacto sem botões e sem destaque
+  const atestadoSalvo   = st==='atestado'    && r.extra && (r.extra.ini || r.extra.obs);
+  const faltaSalva      = st==='falta'       && r.extra && r.extra._saved;
+  const trocaFolgaSalva = st==='troca-folga' && r.extra && Object.keys(r.extra).length > 0;
 
-  if(atestadoSalvo || faltaSalva){
-    const corBorda = st==='atestado' ? '#2980b9' : '#e74c3c';
-    const badgeCls2 = st==='atestado' ? 'badge-atestado' : 'badge-falta';
+  if(atestadoSalvo || faltaSalva || trocaFolgaSalva){
+    const corBorda  = st==='atestado'?'#2980b9':st==='troca-folga'?'#8e44ad':'#e74c3c';
+    const badgeCls2 = st==='atestado'?'badge-atestado':st==='troca-folga'?'badge-troca-folga':'badge-falta';
     return '<div class="emp-card" id="card_'+f.nome.replace(/ /g,'_')+'" style="opacity:.75;border-left:3px solid '+corBorda+'">'+
       '<div class="emp-top">'+
         '<div><button class="emp-name-btn" onclick="openFicha(\''+f.nome.replace(/'/g,"\\'")+'\')" ><div class="emp-name">'+f.nome+'</div></button>'+

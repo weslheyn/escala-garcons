@@ -2412,18 +2412,19 @@ function buildExtra(name,st,ex){
   if(st==='troca-horario')return '<div class="extra-fields"><div class="field-row"><div class="field-wrap"><span class="field-label">🕐 Novo início</span><input class="field-input" type="time" id="f_thi_'+id+'" value="'+(ex.ini||'')+'"></div><div class="field-wrap"><span class="field-label">🕐 Novo fim</span><input class="field-input" type="time" id="f_thf_'+id+'" value="'+(ex.fim||'')+'"></div></div><div class="field-wrap"><span class="field-label">👤 Com quem</span><input class="field-input" id="f_th_quem_'+id+'" value="'+(ex.quem||'')+'"></div><div class="field-wrap"><span class="field-label">📝 Motivo</span><input class="field-input" id="f_th_obs_'+id+'" value="'+(ex.obs||'')+'"></div>'+saveBtn+'</div>';
   if(st==='troca-folga'){
     // Se já salvo com datas → mostrar resumo compacto
-    if(ex && (ex.trabData || ex.folgaData || ex.trab || ex.folga)){
+    if(ex && (ex.trabData || ex.folgaData || ex.trab || ex.folga || ex.obs || ex.trocaDe)){
       const fmt=d=>{if(!d)return '';const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];};
       let info='🔄 Troca de folga';
       if(ex.trabData) info+='<br>💼 Trabalhou: '+fmt(ex.trabData);
       else if(ex.trab) info+='<br>💼 Trabalhou: '+ex.trab;
       if(ex.folgaData) info+='<br>🏖️ Folga em: '+fmt(ex.folgaData);
       else if(ex.folga) info+='<br>🏖️ Folga em: '+ex.folga;
+      if(ex.trocaDe) info+='<br>📅 Trabalhou em: '+ex.trocaDe;
       if(ex.quem) info+='<br>👤 '+ex.quem;
-      if(ex.obs) info+='<br>📝 '+ex.obs;
+      if(ex.obs && !ex.obs.startsWith('TROCA FOLGA')) info+='<br>📝 '+ex.obs;
       return '<div class="saved-info">'+info+editBtn+'</div>';
     }
-    // Sem datas → mostrar campos abertos para preencher
+    // Sem dados → mostrar campos abertos para preencher
     const hoje=new Date();
     const ano=hoje.getFullYear();
     const mes=String(hoje.getMonth()+1).padStart(2,'0');

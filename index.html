@@ -2362,13 +2362,14 @@ function buildCard(f){
   if(atestadoSalvo || faltaSalva || trocaFolgaSalva){
     const corBorda  = st==='atestado'?'#2980b9':st==='troca-folga'?'#8e44ad':'#e74c3c';
     const badgeCls2 = st==='atestado'?'badge-atestado':st==='troca-folga'?'badge-troca-folga':'badge-falta';
+    const extraContent = buildExtra(f.nome,st,r.extra||{});
     return '<div class="emp-card" id="card_'+f.nome.replace(/ /g,'_')+'" style="opacity:.75;border-left:3px solid '+corBorda+'">'+
       '<div class="emp-top">'+
         '<div><button class="emp-name-btn" onclick="openFicha(\''+f.nome.replace(/'/g,"\\'")+'\')" ><div class="emp-name">'+f.nome+'</div></button>'+
         '<div class="emp-meta">'+f.categoria+' · '+(f.horIni||'')+(f.horFim?' às '+f.horFim:'')+'</div></div>'+
         '<div class="emp-badges">'+faltasBadge+'<span class="badge '+badgeCls2+'">'+badgeTxt+'</span>'+extraBadges+'</div>'+
       '</div>'+
-      buildExtra(f.nome,st,r.extra||{})+
+      (extraContent||'<div style="padding:8px 0;font-size:11px;color:var(--sub)">Preencha os campos abaixo:</div>')+
     '</div>';
   }
 

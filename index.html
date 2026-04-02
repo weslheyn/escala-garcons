@@ -2409,26 +2409,36 @@ function buildExtra(name,st,ex){
   }
   if(st==='troca-horario')return '<div class="extra-fields"><div class="field-row"><div class="field-wrap"><span class="field-label">🕐 Novo início</span><input class="field-input" type="time" id="f_thi_'+id+'" value="'+(ex.ini||'')+'"></div><div class="field-wrap"><span class="field-label">🕐 Novo fim</span><input class="field-input" type="time" id="f_thf_'+id+'" value="'+(ex.fim||'')+'"></div></div><div class="field-wrap"><span class="field-label">👤 Com quem</span><input class="field-input" id="f_th_quem_'+id+'" value="'+(ex.quem||'')+'"></div><div class="field-wrap"><span class="field-label">📝 Motivo</span><input class="field-input" id="f_th_obs_'+id+'" value="'+(ex.obs||'')+'"></div>'+saveBtn+'</div>';
   if(st==='troca-folga'){
-    // Monta mini calendário inline para selecionar datas
+    // Se já salvo com dados → mostrar resumo compacto
+    if(ex && ex.trabData && ex.folgaData){
+      const fmt=d=>{if(!d)return '';const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];};
+      let info='🔄 Troca de folga';
+      info+='<br>💼 Trabalhou: '+fmt(ex.trabData);
+      info+='<br>🏖️ Folga em: '+fmt(ex.folgaData);
+      if(ex.quem) info+='<br>👤 '+ex.quem;
+      if(ex.obs) info+='<br>📝 '+ex.obs;
+      return '<div class="saved-info">'+info+editBtn+'</div>';
+    }
+    // Monta campos para preenchimento
     const hoje=new Date();
     const ano=hoje.getFullYear();
     const mes=String(hoje.getMonth()+1).padStart(2,'0');
     const min=`${ano}-${mes}-01`;
-    const max=`${ano}-${mes}-${new Date(ano,hoje.getMonth()+1,0).getDate()}`;
+    const max=`${ano}-12-31`;
     return `<div class="extra-fields">
       <div class="field-row">
         <div class="field-wrap">
-          <span class="field-label">📅 Trabalhou no dia</span>
+          <span class="field-label">💼 Vai trabalhar no dia</span>
           <input class="field-input" type="date" id="f_tf_trab_${id}" min="${min}" max="${max}" value="${ex.trabData||''}"
             style="font-size:14px;padding:10px 12px;cursor:pointer">
         </div>
         <div class="field-wrap">
-          <span class="field-label">📅 Folga no dia</span>
+          <span class="field-label">🏖️ Vai folgar no dia</span>
           <input class="field-input" type="date" id="f_tf_folga_${id}" min="${min}" max="${max}" value="${ex.folgaData||''}"
             style="font-size:14px;padding:10px 12px;cursor:pointer">
         </div>
       </div>
-      <div class="field-wrap"><span class="field-label">👤 Com quem / autorizado por</span><input class="field-input" id="f_tf_quem_${id}" value="${ex.quem||''}" placeholder="Nome do gestor..."></div>
+      <div class="field-wrap"><span class="field-label">👤 Autorizado por</span><input class="field-input" id="f_tf_quem_${id}" value="${ex.quem||''}" placeholder="Nome do gestor..."></div>
       <div class="field-wrap"><span class="field-label">📝 Observação</span><input class="field-input" id="f_tf_obs_${id}" value="${ex.obs||''}" placeholder="Detalhe..."></div>
       ${saveBtn}
     </div>`;
@@ -2603,7 +2613,6 @@ function saveRec(name,st){
   if(st==='troca-folga'){
     const trabData=v('f_tf_trab_'+rawId);
     const folgaData=v('f_tf_folga_'+rawId);
-    // Formata datas para exibição
     const fmt=d=>{if(!d)return '';const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];};
     ex={trabData,folgaData,trab:fmt(trabData),folga:fmt(folgaData),quem:v('f_tf_quem_'+rawId),obs:v('f_tf_obs_'+rawId)};
   }
@@ -2640,6 +2649,23 @@ function saveRec(name,st){
         bridgeSaveByDate(name, di, 'atestado', ex);
       }
     });
+  }
+  // Se troca-folga, marcar o dia da folga automaticamente na semana atual
+  if(st==='troca-folga' && ex.folgaData){
+    const parseDate = s => { if(!s) return null; const [y,m,d]=s.split('-'); return new Date(y,m-1,d); };
+    const folgaDate = parseDate(ex.folgaData);
+    if(folgaDate){
+      WEEK_DATES.forEach((wd, di) => {
+        if(di === curDay) return;
+        const wdN = new Date(wd.getFullYear(), wd.getMonth(), wd.getDate());
+        if(folgaDate.getTime() === wdN.getTime()){
+          // Marcar o dia de folga como troca-folga (folga compensatória)
+          const exFolga = {...ex, tipo:'folga-compensatoria'};
+          setRec(di, name, 'troca-folga', exFolga);
+          bridgeSaveByDate(name, di, 'troca-folga', exFolga);
+        }
+      });
+    }
   }
   showToast('💾 Salvo!');buildMain();refreshPendBadge();
 }

@@ -2330,13 +2330,13 @@ function contarFaltasConsecutivas(nome){
 
 function buildCard(f){
   let r=getRec(curDay,f.nome);
-  // Fallback: buscar pelo drec_ (salvo pelo sistema de domingo)
-  if(!r.status || (r.status==='troca-folga' && !r.extra || !Object.keys(r.extra||{}).length)){
+  // Fallback: buscar pelo drec_ quando extra está vazio
+  if(r.status==='troca-folga' && Object.keys(r.extra||{}).length===0){
     const wd=WEEK_DATES[curDay];
     const dk=wd.getFullYear()+'-'+String(wd.getMonth()+1).padStart(2,'0')+'-'+String(wd.getDate()).padStart(2,'0');
     const drRec=load('drec_'+f.nome+'_'+dk,null);
-    if(drRec && drRec.status){
-      r={status:drRec.status,extra:drRec.extra||{}};
+    if(drRec && drRec.extra && Object.keys(drRec.extra).length>0){
+      r={status:'troca-folga',extra:drRec.extra};
     }
   }
   const st=r.status;
@@ -2420,40 +2420,35 @@ function buildExtra(name,st,ex){
   }
   if(st==='troca-horario')return '<div class="extra-fields"><div class="field-row"><div class="field-wrap"><span class="field-label">🕐 Novo início</span><input class="field-input" type="time" id="f_thi_'+id+'" value="'+(ex.ini||'')+'"></div><div class="field-wrap"><span class="field-label">🕐 Novo fim</span><input class="field-input" type="time" id="f_thf_'+id+'" value="'+(ex.fim||'')+'"></div></div><div class="field-wrap"><span class="field-label">👤 Com quem</span><input class="field-input" id="f_th_quem_'+id+'" value="'+(ex.quem||'')+'"></div><div class="field-wrap"><span class="field-label">📝 Motivo</span><input class="field-input" id="f_th_obs_'+id+'" value="'+(ex.obs||'')+'"></div>'+saveBtn+'</div>';
   if(st==='troca-folga'){
-    // Se já salvo com datas → mostrar resumo compacto
-    if(ex && (ex.trabData || ex.folgaData || ex.trab || ex.folga || ex.obs || ex.trocaDe)){
-      const fmt=d=>{if(!d)return '';const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];};
+    const temDados = ex && (ex.trabData||ex.folgaData||ex.trab||ex.folga||ex.trocaDe||ex.obs);
+    if(temDados){
+      // Resumo compacto com editBtn
+      const fmt=d=>{if(!d)return'';const p=d.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:d;};
       let info='🔄 Troca de folga';
       if(ex.trabData) info+='<br>💼 Trabalhou: '+fmt(ex.trabData);
       else if(ex.trab) info+='<br>💼 Trabalhou: '+ex.trab;
+      else if(ex.trocaDe) info+='<br>💼 Trabalhou: '+ex.trocaDe;
       if(ex.folgaData) info+='<br>🏖️ Folga em: '+fmt(ex.folgaData);
       else if(ex.folga) info+='<br>🏖️ Folga em: '+ex.folga;
-      if(ex.trocaDe) info+='<br>📅 Trabalhou em: '+ex.trocaDe;
+      if(ex.folgaEm) info+='<br>🏖️ Folga em: '+ex.folgaEm;
       if(ex.quem) info+='<br>👤 '+ex.quem;
-      if(ex.obs && !ex.obs.startsWith('TROCA FOLGA')) info+='<br>📝 '+ex.obs;
       return '<div class="saved-info">'+info+editBtn+'</div>';
     }
-    // Sem dados → mostrar campos abertos para preencher
-    const hoje=new Date();
-    const ano=hoje.getFullYear();
-    const mes=String(hoje.getMonth()+1).padStart(2,'0');
-    const min=`${ano}-${mes}-01`;
-    const max=`${ano}-12-31`;
+    // Sem dados: campos para preencher
+    const hoje=new Date(),ano=hoje.getFullYear();
+    const min=ano+'-01-01', max=ano+'-12-31';
     return `<div class="extra-fields">
       <div class="field-row">
-        <div class="field-wrap">
-          <span class="field-label">💼 Vai trabalhar no dia</span>
-          <input class="field-input" type="date" id="f_tf_trab_${id}" min="${min}" max="${max}" value="${ex.trabData||''}"
-            style="font-size:14px;padding:10px 12px;cursor:pointer">
+        <div class="field-wrap"><span class="field-label">💼 Dia que VAI TRABALHAR</span>
+          <input class="field-input" type="date" id="f_tf_trab_${id}" min="${min}" max="${max}" value="${ex.trabData||''}">
         </div>
-        <div class="field-wrap">
-          <span class="field-label">🏖️ Vai folgar no dia</span>
-          <input class="field-input" type="date" id="f_tf_folga_${id}" min="${min}" max="${max}" value="${ex.folgaData||''}"
-            style="font-size:14px;padding:10px 12px;cursor:pointer">
+        <div class="field-wrap"><span class="field-label">🏖️ Dia que VAI FOLGAR</span>
+          <input class="field-input" type="date" id="f_tf_folga_${id}" min="${min}" max="${max}" value="${ex.folgaData||''}">
         </div>
       </div>
-      <div class="field-wrap"><span class="field-label">👤 Autorizado por</span><input class="field-input" id="f_tf_quem_${id}" value="${ex.quem||''}" placeholder="Nome do gestor..."></div>
-      <div class="field-wrap"><span class="field-label">📝 Observação</span><input class="field-input" id="f_tf_obs_${id}" value="${ex.obs||''}" placeholder="Detalhe..."></div>
+      <div class="field-wrap"><span class="field-label">👤 Autorizado por</span>
+        <input class="field-input" id="f_tf_quem_${id}" value="${ex.quem||''}" placeholder="Nome do gestor...">
+      </div>
       ${saveBtn}
     </div>`;
   }
@@ -2642,8 +2637,8 @@ function saveRec(name,st){
   if(st==='troca-folga'){
     const trabData=v('f_tf_trab_'+rawId);
     const folgaData=v('f_tf_folga_'+rawId);
-    const fmt=d=>{if(!d)return '';const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];};
-    ex={trabData,folgaData,trab:fmt(trabData),folga:fmt(folgaData),quem:v('f_tf_quem_'+rawId),obs:v('f_tf_obs_'+rawId)};
+    const fmt=d=>{if(!d)return'';const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];};
+    ex={trabData,folgaData,trab:fmt(trabData),folga:fmt(folgaData),quem:v('f_tf_quem_'+rawId),_saved:true};
   }
   if(st==='medida')           ex={motivo:v('f_med_mot_'+rawId),acao:v('f_med_acao_'+rawId),resp:v('f_med_resp_'+rawId)};
   if(st==='saida-antecipada') ex={horSaida:v('f_sa_hor_'+rawId),horPrev:v('f_sa_prev_'+rawId),justificativa:v('f_sa_just_'+rawId),autorizadoPor:v('f_sa_auth_'+rawId)};

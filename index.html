@@ -2357,7 +2357,7 @@ function buildCard(f){
   // Atestado, falta ou troca-folga já salvos → card compacto sem botões e sem destaque
   const atestadoSalvo   = st==='atestado'    && r.extra && (r.extra.ini || r.extra.obs);
   const faltaSalva      = st==='falta'       && r.extra && r.extra._saved;
-  const trocaFolgaSalva = st==='troca-folga' && r.extra && Object.keys(r.extra).filter(k=>k!=='_saved').length > 0;
+  const trocaFolgaSalva = st==='troca-folga';
 
   if(atestadoSalvo || faltaSalva || trocaFolgaSalva){
     const corBorda  = st==='atestado'?'#2980b9':st==='troca-folga'?'#8e44ad':'#e74c3c';
@@ -2410,19 +2410,19 @@ function buildExtra(name,st,ex){
   }
   if(st==='troca-horario')return '<div class="extra-fields"><div class="field-row"><div class="field-wrap"><span class="field-label">🕐 Novo início</span><input class="field-input" type="time" id="f_thi_'+id+'" value="'+(ex.ini||'')+'"></div><div class="field-wrap"><span class="field-label">🕐 Novo fim</span><input class="field-input" type="time" id="f_thf_'+id+'" value="'+(ex.fim||'')+'"></div></div><div class="field-wrap"><span class="field-label">👤 Com quem</span><input class="field-input" id="f_th_quem_'+id+'" value="'+(ex.quem||'')+'"></div><div class="field-wrap"><span class="field-label">📝 Motivo</span><input class="field-input" id="f_th_obs_'+id+'" value="'+(ex.obs||'')+'"></div>'+saveBtn+'</div>';
   if(st==='troca-folga'){
-    // Se já salvo com dados → mostrar resumo compacto
-    if(ex && (ex.trabData || ex.trab || ex.obs)){
+    // Se já salvo com datas → mostrar resumo compacto
+    if(ex && (ex.trabData || ex.folgaData || ex.trab || ex.folga)){
       const fmt=d=>{if(!d)return '';const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];};
       let info='🔄 Troca de folga';
       if(ex.trabData) info+='<br>💼 Trabalhou: '+fmt(ex.trabData);
+      else if(ex.trab) info+='<br>💼 Trabalhou: '+ex.trab;
       if(ex.folgaData) info+='<br>🏖️ Folga em: '+fmt(ex.folgaData);
-      if(ex.trab && !ex.trabData) info+='<br>💼 Trabalhou: '+ex.trab;
-      if(ex.folga && !ex.folgaData) info+='<br>🏖️ Folga em: '+ex.folga;
+      else if(ex.folga) info+='<br>🏖️ Folga em: '+ex.folga;
       if(ex.quem) info+='<br>👤 '+ex.quem;
       if(ex.obs) info+='<br>📝 '+ex.obs;
       return '<div class="saved-info">'+info+editBtn+'</div>';
     }
-    // Sem dados → mostrar campos + botão editar
+    // Sem datas → mostrar campos abertos para preencher
     const hoje=new Date();
     const ano=hoje.getFullYear();
     const mes=String(hoje.getMonth()+1).padStart(2,'0');
@@ -2601,10 +2601,17 @@ function selectStatus(name,newSt){
   const status=r.status===newSt?'':newSt;
   const extra=status===''||status==='presente'?{}:r.extra||{};
 
-  // Falta, atestado e troca-folga precisam de campos extras — só marca e abre campos
+  // Falta, atestado e troca-folga precisam de campos extras
+  // Se já tem dados extras, mantém. Se não tem, salva só o status e mostra campos
   if(status==='falta'||status==='atestado'||status==='troca-folga'){
-    setRec(curDay,name,status,{});
+    const dadosExistentes = r.status===status ? r.extra||{} : {};
+    setRec(curDay,name,status,dadosExistentes);
     buildMain();refreshPendBadge();
+    // Scroll para o card para ver os campos
+    setTimeout(()=>{
+      const card=document.getElementById('card_'+name.replace(/ /g,'_'));
+      if(card) card.scrollIntoView({behavior:'smooth',block:'center'});
+    },100);
     return;
   }
 

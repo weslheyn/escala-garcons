@@ -2385,30 +2385,36 @@ function buildCard(f){
     let extraHtml = '';
     if(st==='troca-folga'){
       const fmt=d=>{if(!d)return'';const p=d.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:d;};
-      const temDados2 = ex2.trabData||ex2.folgaData||ex2.trab||ex2.folga||ex2.trocaDe||(ex2.obs&&ex2.obs.length>0);
+      const temDados2 = ex2.trabData||ex2.folgaData||ex2.trab||ex2.folga||ex2.trocaDe||(ex2.obs&&ex2.obs.length>0)||ex2._saved;
+      const botoes2 = '<div style="display:flex;gap:8px;margin-top:8px">'+
+        '<button onclick="editTrocaFolga(\''+nomeSafe+'\')" style="flex:1;background:none;border:1.5px solid #8e44ad;color:#8e44ad;border-radius:9px;padding:8px;font-size:11px;font-weight:700;cursor:pointer">✏️ Editar</button>'+
+        '<button onclick="cancelarTrocaFolga(\''+nomeSafe+'\')" style="flex:1;background:none;border:1.5px solid #e74c3c;color:#e74c3c;border-radius:9px;padding:8px;font-size:11px;font-weight:700;cursor:pointer">❌ Cancelar</button>'+
+        '</div>';
       if(temDados2){
         let info='🔄 Troca de folga';
         if(ex2.trabData) info+='<br>💼 Trabalhou: '+fmt(ex2.trabData);
         else if(ex2.trab) info+='<br>💼 Trabalhou: '+ex2.trab;
-        else if(ex2.trocaDe) info+='<br>📅 Trabalhou em: '+ex2.trocaDe;
+        else if(ex2.trocaDe) info+='<br>📅 Trab. em: '+ex2.trocaDe;
         if(ex2.folgaData) info+='<br>🏖️ Folga em: '+fmt(ex2.folgaData);
         else if(ex2.folga) info+='<br>🏖️ Folga em: '+ex2.folga;
         else if(ex2.folgaEm) info+='<br>🏖️ Folga em: '+ex2.folgaEm;
         if(ex2.quem) info+='<br>👤 '+ex2.quem;
-        extraHtml='<div class="saved-info">'+info+editBtn2+'</div>';
+        extraHtml='<div class="saved-info">'+info+botoes2+'</div>';
       } else {
         const ano=new Date().getFullYear();
         const min=ano+'-01-01',max=ano+'-12-31';
         extraHtml='<div class="extra-fields">'+
           '<div class="field-row">'+
-            '<div class="field-wrap"><span class="field-label">💼 Dia que VAI TRABALHAR</span>'+
+            '<div class="field-wrap"><span class="field-label">💼 Vai TRABALHAR no dia</span>'+
             '<input class="field-input" type="date" id="f_tf_trab_'+rawId+'" min="'+min+'" max="'+max+'"></div>'+
-            '<div class="field-wrap"><span class="field-label">🏖️ Dia que VAI FOLGAR</span>'+
+            '<div class="field-wrap"><span class="field-label">🏖️ Vai FOLGAR no dia</span>'+
             '<input class="field-input" type="date" id="f_tf_folga_'+rawId+'" min="'+min+'" max="'+max+'"></div>'+
           '</div>'+
           '<div class="field-wrap"><span class="field-label">👤 Autorizado por</span>'+
           '<input class="field-input" id="f_tf_quem_'+rawId+'" placeholder="Nome do gestor..."></div>'+
-          saveBtn2+'</div>';
+          saveBtn2+
+          '<button onclick="cancelarTrocaFolga(\''+nomeSafe+'\')" style="width:100%;margin-top:6px;background:none;border:1.5px solid #e74c3c;color:#e74c3c;border-radius:9px;padding:8px;font-size:11px;font-weight:700;cursor:pointer">❌ Cancelar troca</button>'+
+          '</div>';
       }
     } else {
       extraHtml = buildExtra(f.nome,st,ex2);
@@ -2669,6 +2675,14 @@ function selectStatus(name,newSt){
   else if(!status)showToast('Registro removido');
   buildMain();refreshPendBadge();
 }
+function cancelarTrocaFolga(name){
+  if(!confirm('Cancelar troca de folga de '+name+'?')) return;
+  setRec(curDay, name, '', {});
+  bridgeSaveByDate(name, curDay, '', {});
+  buildMain(); refreshPendBadge();
+  showToast('Troca de folga cancelada');
+}
+
 function editTrocaFolga(name){
   // Limpa extra para mostrar campos abertos
   const r = getRec(curDay,name);

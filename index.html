@@ -2371,16 +2371,16 @@ function buildCard(f){
   // Atestado, falta ou troca-folga já salvos → card compacto sem botões e sem destaque
   const atestadoSalvo   = st==='atestado'    && r.extra && (r.extra.ini || r.extra.obs);
   const faltaSalva      = st==='falta'       && r.extra && r.extra._saved;
-  const trocaFolgaSalva = false; // troca-folga usa card normal
+  const trocaFolgaSalva = st==='troca-folga';
 
   if(atestadoSalvo || faltaSalva || trocaFolgaSalva){
     const corBorda  = st==='atestado'?'#2980b9':st==='troca-folga'?'#8e44ad':'#e74c3c';
     const badgeCls2 = st==='atestado'?'badge-atestado':st==='troca-folga'?'badge-troca-folga':'badge-falta';
-    const ex2 = r.extra ? (typeof r.extra==='object' ? r.extra : {}) : {};
+    const ex2 = (r.extra && typeof r.extra==='object') ? r.extra : {};
     const nomeSafe = f.nome.replace(/'/g,"\\'");
     const rawId = f.nome.replace(/ /g,'_').replace(/[^a-zA-Z0-9_]/g,'');
     const saveBtn2 = '<button class="save-btn" onclick="saveRec(\''+nomeSafe+'\',\''+st+'\')">💾 SALVAR</button>';
-    const editBtn2 = '<button onclick="selectStatus(\''+nomeSafe+'\',\''+st+'\')" style="background:none;border:1.5px solid var(--border);color:var(--sub);border-radius:9px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;margin-top:6px;width:100%">✏️ Editar</button>';
+    const editBtn2 = '<button onclick="editTrocaFolga(\''+nomeSafe+'\'" style="background:none;border:1.5px solid var(--border);color:var(--sub);border-radius:9px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;margin-top:6px;width:100%">✏️ Editar</button>';
 
     let extraHtml = '';
     if(st==='troca-folga'){
@@ -2669,6 +2669,18 @@ function selectStatus(name,newSt){
   else if(!status)showToast('Registro removido');
   buildMain();refreshPendBadge();
 }
+function editTrocaFolga(name){
+  // Limpa extra para mostrar campos abertos
+  const r = getRec(curDay,name);
+  setRec(curDay, name, 'troca-folga', {});
+  buildMain(); refreshPendBadge();
+  // Scroll para o card
+  setTimeout(()=>{
+    const card=document.getElementById('card_'+name.replace(/ /g,'_'));
+    if(card) card.scrollIntoView({behavior:'smooth',block:'center'});
+  },100);
+}
+
 function saveRec(name,st){
   const rawId=name.replace(/ /g,'_').replace(/[^a-zA-Z0-9_]/g,'');
   const v=sel=>(document.getElementById(sel)||{}).value||'';

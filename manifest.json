@@ -1,19 +1,25 @@
 {
-  "name": "Coco Bambu Gestão",
-  "short_name": "CB Gestão",
-  "description": "Controle de Frequência do Salão — Coco Bambu",
+  "name": "Frequência Salão - Coco Bambu",
+  "short_name": "Frequência",
   "start_url": "./",
   "scope": "./",
-  "display": "standalone",
+  "display": "fullscreen",
   "orientation": "portrait",
-  "background_color": "#3d0c0c",
-  "theme_color": "#3d0c0c",
+  "background_color": "#0d0f17",
+  "theme_color": "#0d0f17",
+  "lang": "pt-BR",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }

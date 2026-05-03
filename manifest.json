@@ -1,0 +1,30 @@
+{
+  "name": "Coco Bambu — Frequência Salão",
+  "short_name": "CB Frequência",
+  "description": "Controle de Frequência do Salão — Coco Bambu Barra da Tijuca",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#0d0f17",
+  "theme_color": "#0d0f17",
+  "lang": "pt-BR",
+  "categories": ["productivity", "business"],
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Frequência de Hoje",
+      "short_name": "Frequência",
+      "description": "Abrir controle de frequência",
+      "url": "./",
+      "icons": [{ "src": "icon.png", "sizes": "512x512" }]
+    }
+  ]
+}

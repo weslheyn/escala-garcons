@@ -84,7 +84,7 @@
     .pracas-list{background:#0d1320;border:1px solid #22304a;border-radius:16px;overflow:hidden}.pracas-person,.pracas-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:11px 12px;border-bottom:1px solid #ffffff10}.pracas-person:last-child,.pracas-row:last-child{border-bottom:0}.pracas-check{width:24px;height:24px;border-radius:7px;background:#f5c842;color:#111;display:flex;align-items:center;justify-content:center;font-weight:900}.pracas-check.off{background:#1b2434;color:#58637a}.pracas-name{font-weight:900;color:#fff}.pracas-sub{font-size:11px;color:#93a1c2;margin-top:2px}.pracas-pill{border:1px solid #33415e;background:#172033;color:#bfc8df;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900;text-transform:uppercase}.pracas-pill.cf{border-color:#8e44ad88;color:#d49bff;background:#8e44ad22}.pracas-pill.f{border-color:#2980b988;color:#77c7ff;background:#2980b922}.pracas-pill.lock{border-color:#f5c84288;color:#f5c842;background:#f5c84218}
     .pracas-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}.pracas-btn{border:0;border-radius:16px;padding:14px;font-weight:900;text-transform:uppercase;background:#17283b;color:#d7e7ff}.pracas-btn.primary{grid-column:span 2;background:linear-gradient(135deg,#f5c842,#f7b816);color:#111;font-size:16px;box-shadow:0 10px 25px #f5c84230}.pracas-btn.green{background:#11351f;color:#38e27a}.pracas-btn.red{background:#35191c;color:#ff6868}.pracas-btn.purple{background:#25193a;color:#d5a8ff}
     .pracas-success{display:none;background:linear-gradient(90deg,#092f19,#102716);border:1px solid #28d66f88;border-radius:18px;padding:13px;margin:12px 0;color:#4af086;font-weight:900}.pracas-success.show{display:flex;align-items:center;justify-content:space-between;gap:10px}.pracas-result-card{background:#0d1320;border:1px solid #28364f;border-radius:16px;margin-bottom:8px;padding:11px;display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center}.pracas-num{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#23642e;color:#fff;font-weight:900}.pracas-assigned{font-size:15px;font-weight:900;color:#fff;text-align:right}.pracas-empty{border:1px dashed #33415e;background:#101828;border-radius:16px;padding:18px;text-align:center;color:#93a1c2;font-size:12px}.pracas-bottom{position:fixed;left:0;right:0;bottom:0;z-index:25;background:#070b13ee;backdrop-filter:blur(10px);border-top:1px solid #25324a;padding:10px 12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.pracas-bottom button{border:0;border-radius:13px;padding:12px 8px;font-weight:900;color:#fff;background:#111827}.pracas-bottom .zap{background:#11351f;color:#35e477}.pracas-bottom .save{background:#132d46;color:#79c8ff}.pracas-bottom .share{background:#f5c842;color:#111}
-    .pracas-mini-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0 4px}.pracas-mini-nav button{background:#111827;border:1px solid #263149;color:#9ca9c7;border-radius:14px;padding:10px 6px;font-weight:900;font-size:11px}.pracas-mini-nav button.active{background:#f5c842;color:#111;border-color:#f5c842}.pracas-hidden{display:none!important}
+    .pracas-mini-nav{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:10px 0 4px}.pracas-mini-nav button{background:#111827;border:1px solid #263149;color:#9ca9c7;border-radius:14px;padding:10px 6px;font-weight:900;font-size:11px}.pracas-mini-nav button.active{background:#f5c842;color:#111;border-color:#f5c842}.pracas-hidden{display:none!important}
 
     .pracas-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.pracas-config-option{border:1px solid #28364f;background:#0d1320;color:#dbe7ff;border-radius:16px;padding:14px;text-align:left;font-weight:900}.pracas-config-option.active{background:linear-gradient(135deg,#f5c842,#f7b816);color:#111;border-color:#f5c842}.pracas-print-box{background:#fff;color:#111;border-radius:12px;margin:14px 0;padding:10px;overflow:auto}.pracas-print-title{background:#202020;color:#fff;text-align:center;font-weight:900;padding:6px;font-size:15px;letter-spacing:.5px}.pracas-meta-table,.pracas-escala-table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px}.pracas-meta-table td{border:1px solid #cfcfcf;padding:5px}.pracas-escala-table th,.pracas-escala-table td{border:1px solid #111;padding:4px;text-align:center;vertical-align:middle}.pracas-escala-table th{background:#f4f4f4}.pracas-area-row td{background:#242424!important;color:#fff!important;font-weight:900;text-align:center}.pracas-flag{background:#202020;color:#fff;font-weight:900;width:34px}.pracas-prnum{font-weight:900;width:40px}.pracas-mesas{font-weight:900}.pracas-print-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.pracas-spinner-card{background:linear-gradient(145deg,#151b29,#0b101a);border:1px solid #f5c84277;border-radius:18px;padding:16px;text-align:center;margin:12px 0}.pracas-spinner-num{font-size:58px;font-weight:900;color:#f5c842;text-shadow:0 0 18px #f5c84255}.pracas-ind-person{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border-bottom:1px solid #ffffff10;padding:10px 0}.pracas-ind-person:last-child{border-bottom:0}.pracas-small-btn{border:0;border-radius:12px;padding:10px 12px;font-weight:900;background:#f5c842;color:#111}.pracas-small-btn:disabled{opacity:.45;background:#344056;color:#94a3b8}
     @media print{body>*:not(#pracasPrintArea){display:none!important}#pracasPrintArea{display:block!important;position:static!important;background:#fff!important;color:#000!important}.no-print{display:none!important}.pracas-print-box{border-radius:0;margin:0;padding:0}.pracas-print-title{font-size:16px}.pracas-meta-table,.pracas-escala-table{font-size:11px}}
@@ -118,20 +118,22 @@
         </div>
         <div class="pracas-mini-nav">
           <button id="prNavEquipe" onclick="setPracasView('equipe')">Equipe</button>
+          <button id="prNavSorteio" onclick="setPracasView('sorteio')">Sorteio</button>
           <button id="prNavResultado" onclick="setPracasView('resultado')">Resultado</button>
           <button id="prNavHistorico" onclick="setPracasView('historico')">Histórico</button>
           <button id="prNavConfig" onclick="setPracasView('config')">Config.</button>
         </div>
         <div id="pracasViewEquipe"></div>
         <div id="pracasViewPracas" class="pracas-hidden"></div>
+        <div id="pracasViewSorteio" class="pracas-hidden"></div>
         <div id="pracasViewResultado" class="pracas-hidden"></div>
         <div id="pracasViewHistorico" class="pracas-hidden"></div>
         <div id="pracasViewConfig" class="pracas-hidden"></div>
       </div>
       <div class="pracas-bottom">
-        <button class="zap" onclick="abrirCompartilharPracas()">📤 Compartilhar</button>
+        <button class="zap" onclick="sortearPracasDiarias()">🎲 Sortear</button>
         <button class="save" onclick="salvarPracasSorteio()">💾 Salvar sorteio</button>
-        <button class="share" onclick="sortearPracasDiarias()">🔄 Sortear/Refazer</button>
+        <button class="share" onclick="refazerPracasDiarias()">🔄 Refazer sorteio</button>
       </div>`;
     document.body.appendChild(panel);
     return panel;
@@ -325,7 +327,11 @@
     if(st.tipoSorteio==='individual'){
       st.resultado={id:'pr_'+Date.now(), data:st.data, turno:st.turno, criadoEm:new Date().toISOString(), normal:[], cf:[], fechamento:[], sobraram:{}, resumo:{modo:'individual'}};
       st.resultadosTurnos[st.turno]=st.resultado;
-      renderResultado(); setPracasView('resultado'); toast('🎲 Sorteio individual iniciado'); return;
+      renderSorteio();
+      renderResultado();
+      setPracasView('sorteio');
+      toast('🎲 Sorteio individual iniciado');
+      return;
     }
     const prs=getPracas().filter(isPracaDisponivelTurno);
     const normalPracas=prs.filter(p=>p.tipo==='NORMAL');
@@ -341,21 +347,35 @@
       resumo:{garcons:selectedList('garcons').length, cf:selectedList('cf').length, fechamento:selectedList('fechamento').length, modo:'geral'}
     };
     st.resultadosTurnos[st.turno]=st.resultado;
+    renderSorteio();
     renderResultado();
-    setPracasView('resultado');
+    setPracasView('sorteio');
     const suc=document.getElementById('pracasSuccess'); if(suc) suc.classList.add('show');
     toast('🎲 Sorteio realizado com sucesso');
   }
 
+  function refazerSorteio(){
+    if(!st.resultado){ fazerSorteio(); return; }
+    if(confirm('Refazer o sorteio deste turno? O resultado atual será substituído.')) fazerSorteio();
+  }
+
   function renderResultado(){
     const el=document.getElementById('pracasViewResultado'); if(!el) return;
+    el.innerHTML=`
+      <div class="pracas-section-title"><span>Escala de praças dos garçons</span><span class="pracas-count">atualiza conforme as configurações</span></div>
+      ${renderEscalaPracas(true)}
+    `;
+  }
+
+  function renderSorteio(){
+    const el=document.getElementById('pracasViewSorteio'); if(!el) return;
     if(!st.resultado){
-      el.innerHTML='<div class="pracas-empty">Nenhum sorteio realizado ainda. Selecione a equipe e toque em Sortear.</div>'+renderEscalaPracas(false);
+      el.innerHTML='<div class="pracas-empty">Nenhum sorteio realizado ainda. Selecione a equipe e toque em Sortear.</div>';
       return;
     }
     const r=st.resultado;
     el.innerHTML=`
-      <div id="pracasSuccess" class="pracas-success show"><span>✅ Sorteio realizado com sucesso!<br><small>${fmtBR(r.data)} • ${st.turno==='almoco'?'Almoço':'Jantar'}</small></span><button class="pracas-pill" onclick="sortearPracasDiarias()">Refazer</button></div>
+      <div id="pracasSuccess" class="pracas-success show"><span>✅ Sorteio realizado com sucesso!<br><small>${fmtBR(r.data)} • ${st.turno==='almoco'?'Almoço':'Jantar'}</small></span><button class="pracas-pill" onclick="refazerPracasDiarias()">Refazer</button></div>
       <div class="pracas-section-title"><span>Resultado do sorteio</span><span class="pracas-count">${(r.normal||[]).length} praças</span></div>
       ${(r.normal||[]).map(x=>resultCard(x,'garcons')).join('') || '<div class="pracas-empty">Nenhuma praça normal atribuída.</div>'}
       <div class="pracas-section-title" style="color:#d49bff"><span>👑 Chefe de fila (CF)</span><span class="pracas-count">${(r.cf||[]).length}</span></div>
@@ -364,9 +384,9 @@
       ${(r.fechamento||[]).map(x=>resultCard(x,'fechamento')).join('') || '<div class="pracas-empty">Sem praças F/ neste turno.</div>'}
       ${renderSobraram(r)}
       ${st.tipoSorteio==='individual' ? renderSorteioIndividual() : ''}
-      ${renderEscalaPracas(true)}
     `;
   }
+
   function resultCard(x,grupo){
     const p=x.praca, pessoa=x.pessoa||{};
     return `<div class="pracas-result-card">
@@ -479,17 +499,31 @@
   }
   function fallbackCopy(txt,cb){ const ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');cb&&cb();}catch(e){alert(txt);}document.body.removeChild(ta); }
 
+  function estatisticasPracasConfig(){
+    const todas=getPracas();
+    const saloes=[...new Set([...todas.map(p=>p.area), ...Object.keys(st.saloesAtivos||{}).filter(a=>!(st.saloesRemovidos||{})[a])])];
+    const ativas=todas.filter(p=>isSalaoAtivo(p.area) && !st.pracasBloqueadas[p.id]);
+    const normais=ativas.filter(p=>p.tipo==='NORMAL').length;
+    const cf=ativas.filter(p=>p.tipo==='CF').length;
+    const f=ativas.filter(p=>p.tipo==='F').length;
+    const turnoDisponiveis=todas.filter(isPracaDisponivelTurno).length;
+    return {total:todas.length, disponiveis:ativas.length, turnoDisponiveis, normais, cf, f, saloes:saloes.length, saloesAtivos:saloes.filter(a=>isSalaoAtivo(a)).length};
+  }
 
   function renderConfig(){
     const el=document.getElementById('pracasViewConfig'); if(!el) return;
     const totalBloq=Object.keys(st.pracasBloqueadas||{}).length;
+    const stats=estatisticasPracasConfig();
     const areas=[...new Set([...getPracas().map(p=>p.area), ...Object.keys(st.saloesAtivos||{}).filter(a=>!(st.saloesRemovidos||{})[a])])].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
     const totalSaloesAtivos=areas.filter(a=>isSalaoAtivo(a)).length;
     el.innerHTML=`
-      <div class="pracas-section-title"><span>Configuração do sorteio</span><span class="pracas-count">${st.tipoSorteio==='geral'?'automático geral':'individual'}</span></div>
+      <div class="pracas-section-title"><span>Configuração do sorteio</span><span class="pracas-count">${stats.turnoDisponiveis} disponíveis no turno • ${stats.disponiveis}/${stats.total} ativas</span></div>
       <div class="pracas-config-grid">
         <button class="pracas-config-option ${st.tipoSorteio==='geral'?'active':''}" onclick="setTipoSorteioPracas('geral')">🎲 Sorteio automático geral<br><small>Sorteia todos ao mesmo tempo.</small></button>
         <button class="pracas-config-option ${st.tipoSorteio==='individual'?'active':''}" onclick="setTipoSorteioPracas('individual')">👆 Sorteio individual<br><small>Cada garçom toca em sortear.</small></button>
+      </div>
+      <div class="pracas-list">
+        <div class="pracas-row"><div class="pracas-num">${stats.turnoDisponiveis}</div><div><div class="pracas-name">Praças disponíveis agora</div><div class="pracas-sub">Normal: ${stats.normais} • CF: ${stats.cf} • F/: ${stats.f}</div></div><span class="pracas-pill lock">Atualizado</span></div>
       </div>
 
       <div class="pracas-section-title"><span>Regra de final de semana</span><span class="pracas-count">F/ no almoço</span></div>
@@ -575,16 +609,16 @@
     return linhas.join('\n').trim();
   }
 
-  function renderAll(){ renderEquipe(); renderPracas(); renderResultado(); renderHistorico(); renderConfig(); updateTop(); }
+  function renderAll(){ renderEquipe(); renderPracas(); renderSorteio(); renderResultado(); renderHistorico(); renderConfig(); updateTop(); }
   function updateTop(){
     const a=document.getElementById('prTurnoAlmoco'), j=document.getElementById('prTurnoJantar'); if(a) a.classList.toggle('active',st.turno==='almoco'); if(j) j.classList.toggle('active',st.turno==='jantar');
     const d=document.getElementById('pracasData'); if(d && d.value!==st.data) d.value=st.data;
   }
   function setView(v){
-    ['Equipe','Resultado','Historico','Config'].forEach(name=>{const el=document.getElementById('pracasView'+name); if(el) el.classList.add('pracas-hidden');});
-    const map={equipe:'Equipe',resultado:'Resultado',historico:'Historico',config:'Config'};
+    ['Equipe','Sorteio','Resultado','Historico','Config'].forEach(name=>{const el=document.getElementById('pracasView'+name); if(el) el.classList.add('pracas-hidden');});
+    const map={equipe:'Equipe',sorteio:'Sorteio',resultado:'Resultado',historico:'Historico',config:'Config'};
     const el=document.getElementById('pracasView'+map[v]); if(el) el.classList.remove('pracas-hidden');
-    [['equipe','prNavEquipe'],['resultado','prNavResultado'],['historico','prNavHistorico'],['config','prNavConfig']].forEach(([x,id])=>{const b=document.getElementById(id); if(b) b.classList.toggle('active',x===v);});
+    [['equipe','prNavEquipe'],['sorteio','prNavSorteio'],['resultado','prNavResultado'],['historico','prNavHistorico'],['config','prNavConfig']].forEach(([x,id])=>{const b=document.getElementById(id); if(b) b.classList.toggle('active',x===v);});
     if(v==='historico') carregarHistorico();
     if(v==='config') renderConfig();
   }
@@ -607,6 +641,7 @@
   window.setPracasFiltro = function(f){ st.pracaFiltro=f; renderPracas(); };
   window.setPracasView = setView;
   window.sortearPracasDiarias = fazerSorteio;
+  window.refazerPracasDiarias = refazerSorteio;
   window.salvarPracasSorteio = salvar;
   window.copiarPracasWhatsApp = copiar;
   window.limparTravasPracas = function(){ if(confirm('Limpar todas as travas manuais?')){st.pracaLocks={}; renderPracas(); toast('🔓 Travas removidas');} };
@@ -619,7 +654,7 @@
     const id=decodeURIComponent(encodedId); const pessoa=selectedList(grupo).find(p=>p.id===id); if(!pessoa) return toast('Pessoa não encontrada');
     const disponiveis=pracaElegivelIndividual(grupo); if(!disponiveis.length) return toast('Não há praça disponível para este grupo');
     const sp=document.getElementById('pracasSpinner'), num=document.getElementById('pracasSpinnerNum'); if(sp) sp.classList.remove('pracas-hidden');
-    let ticks=0; const timer=setInterval(()=>{ const p=disponiveis[Math.floor(Math.random()*disponiveis.length)]; if(num) num.textContent=p.numero; ticks++; if(ticks>18){ clearInterval(timer); const escolhida=disponiveis[Math.floor(Math.random()*disponiveis.length)]; if(num) num.textContent=escolhida.numero; pushResultadoIndividual(grupo,pessoa,escolhida); setTimeout(()=>{if(sp) sp.classList.add('pracas-hidden'); renderResultado(); toast(`🎲 ${pessoa.nome} caiu na Praça ${escolhida.numero}`);},500); } },80);
+    let ticks=0; const timer=setInterval(()=>{ const p=disponiveis[Math.floor(Math.random()*disponiveis.length)]; if(num) num.textContent=p.numero; ticks++; if(ticks>18){ clearInterval(timer); const escolhida=disponiveis[Math.floor(Math.random()*disponiveis.length)]; if(num) num.textContent=escolhida.numero; pushResultadoIndividual(grupo,pessoa,escolhida); setTimeout(()=>{if(sp) sp.classList.add('pracas-hidden'); renderSorteio(); renderResultado(); toast(`🎲 ${pessoa.nome} caiu na Praça ${escolhida.numero}`);},500); } },80);
   };
 
   function modalPracas(html){
@@ -766,7 +801,7 @@
     if(st.saloesAtivos) delete st.saloesAtivos[area];
     salvarConfigLocal(); renderAll(); toast('🗑️ Salão excluído');
   };
-  window.restaurarPracasPadrao=function(){ if(confirm('Restaurar numeração, salões e tipos CF/F para o padrão original?')){ st.pracasCustom={}; st.pracasExtras=[]; st.pracasRemovidas={}; st.saloesRemovidos={}; salvarConfigLocal(); renderAll(); toast('↩️ Praças restauradas'); } };
+  window.restaurarPracasPadrao=function(){ if(confirm('Restaurar TODAS as praças, salões, bloqueios e configurações para o padrão original?')){ st.pracasCustom={}; st.pracasExtras=[]; st.pracasRemovidas={}; st.saloesRemovidos={}; st.pracasBloqueadas={}; st.pracaLocks={}; st.saloesAtivos={'SALÃO BARRA':true,'LATERAL MÚSICO':true,'BEIRA MAR':true,'ÁREA PET':true,'VARANDA':true}; st.tipoSorteio='geral'; st.incluirFechamentoNoAlmoco=false; try{ ['pracas_config_custom','pracas_config_extras','pracas_config_removidas','pracas_config_saloes_removidos','pracas_config_saloes','pracas_config_bloqueadas','pracas_config_tipo','pracas_config_f_almoco'].forEach(k=>localStorage.removeItem(k)); }catch(e){} salvarConfigLocal(); renderAll(); toast('↩️ Padrão original restaurado'); } };
   window.salvarConfigPracas=async function(){
     salvarConfigLocal();
     if(window.fbDb){ try{ await window.fbDb.ref('pracas_diarias/configuracoes').set({pracasCustom:st.pracasCustom||{}, pracasExtras:st.pracasExtras||[], pracasRemovidas:st.pracasRemovidas||{}, saloesRemovidos:st.saloesRemovidos||{}, saloesAtivos:st.saloesAtivos||{}, pracasBloqueadas:st.pracasBloqueadas||{}, tipoSorteio:st.tipoSorteio, incluirFechamentoNoAlmoco:!!st.incluirFechamentoNoAlmoco, atualizadoEm:new Date().toISOString()}); toast('💾 Configurações salvas'); return; }catch(e){} }

@@ -14,10 +14,35 @@ const STATUS=[...PIPELINE_STATUS,...RECOVERY_STATUS];
 const TABS=[['dashboard','Dashboard'],['funil','Funil'],['calendario','Calendário'],['vendas','Vendas'],['recuperacao','Recuperação'],['clientes','Clientes'],['pacotes','Pacotes'],['agenda','Agenda'],['sheets','Relatórios']];
 let state={tab:'dashboard',eventos:[],pacotes:window.EVENTOS_PACOTES||[],agenda:[],agendaResponsaveis:[],agendaFiltros:{criador:'',visibilidade:'',tipo:'',status:''},clientesView:'historico',clientesCadastros:[],meta:{metaMensal:150000},cal:{year:new Date().getFullYear(),month:new Date().getMonth()+1}};
 function brl(n){return (Number(n)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
-function dt(s){ if(!s) return ''; const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`;}
-function dow(s){ if(!s) return ''; const d=new Date(s+'T12:00:00'); return ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'][d.getDay()]||'';}
-function shortDate(s){ if(!s)return ''; const [y,m,d]=String(s).split('-'); return `${d}/${m}`;}
-function horario(e){ if(e.horario) return e.horario; const txt=String(e.observacoes||''); const m=txt.match(/(?:\b|^)([01]?\d|2[0-3])[:hH]([0-5]\d)?(?:\b|$)/); return m?(m[2]?`${m[1].padStart(2,'0')}:${m[2]}`:`${m[1].padStart(2,'0')}:00`):'Horário não definido';}
+function dt(s){ const iso=parseDateAny(s); if(!iso) return ''; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`;}
+function dow(s){ const iso=parseDateAny(s); if(!iso) return ''; const d=new Date(iso+'T12:00:00'); return ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'][d.getDay()]||'';}
+function shortDate(s){ if(!s)return ''; const iso=parseDateAny(s); if(!iso)return ''; const [y,m,d]=String(iso).split('-'); return `${d}/${m}`;}
+function parseDateAny(v){
+  if(!v)return '';
+  if(Object.prototype.toString.call(v)==='[object Date]'&&!isNaN(v)) return v.toISOString().slice(0,10);
+  const s=String(v).trim();
+  if(!s)return '';
+  const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(iso)return `${iso[1]}-${iso[2].padStart(2,'0')}-${iso[3].padStart(2,'0')}`;
+  const br=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(br){const yy=br[3].length===2?'20'+br[3]:br[3];return `${yy}-${br[2].padStart(2,'0')}-${br[1].padStart(2,'0')}`;}
+  return '';
+}
+function eventoRecency(e){
+  const candidates=[e.atualizadoEm,e.criadoEm,e.createdAt,e.timestamp,e.dataCriacao,e.id&&String(e.id).startsWith('form_')?e.id.replace(/^form_/,''):null].filter(Boolean);
+  for(const c of candidates){const t=Date.parse(c); if(Number.isFinite(t))return t;}
+  const t=Date.parse((e.data||e.dataEvento||'')+'T00:00:00');
+  return Number.isFinite(t)?t:0;
+}
+function sortEventosRecentes(arr){return [...(arr||[])].sort((a,b)=>eventoRecency(b)-eventoRecency(a)||String(b.id||'').localeCompare(String(a.id||'')));}
+function horario(e){
+  if(e.horario) return e.horario;
+  const origem=norm(e.origem||e.origemPlanilha||'');
+  if(origem.includes('google forms')) return 'Horário não definido';
+  const txt=String(e.observacoes||'').replace(/Enviado em:.*/gi,'');
+  const m=txt.match(/(?:\b|^)([01]?\d|2[0-3])[:hH]([0-5]\d)?(?:\b|$)/);
+  return m?(m[2]?`${m[1].padStart(2,'0')}:${m[2]}`:`${m[1].padStart(2,'0')}:00`):'Horário não definido';
+}
 function salao(e){return e.salao||e.unidade||'Salão não definido';}
 function monthName(m){return ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][m-1]||'';}
 function norm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
@@ -99,10 +124,14 @@ function eventoDedupeKey(e){
 function normalizaEvento(e={}){
   const out=Object.assign({},e);
   out.cliente=e.cliente||e.nome||e.nomeCompleto||e.clienteNome||'';
+  out.data=parseDateAny(e.data||e.dataEvento||e.data_evento||e['DATA EVENTO']||e['DATA EVENTO:'])||'';
+  out.ano=out.data?Number(out.data.slice(0,4)):(Number(e.ano)||new Date().getFullYear());
   out.tipo=e.tipo||e.tipoEvento||'Evento';
   out.status=normalizeStatus(e.status,e.observacoes);
   out.valorEstimado=Number(e.valorEstimado??e.valorTotal)||0;
   out.valorTotal=Number(e.valorTotal??e.valorEstimado)||0;
+  out.criadoEm=e.criadoEm||e.createdAt||e.dataCriacao||'';
+  out.atualizadoEm=e.atualizadoEm||e.updatedAt||'';
   return out;
 }
 function dedupeEventos(arr){
@@ -117,7 +146,7 @@ function dedupeEventos(arr){
     if(isGenericClienteNome(merged.cliente)&&!isGenericClienteNome(e.cliente)) merged.cliente=e.cliente;
     map.set(k,merged);
   });
-  return [...map.values()];
+  return sortEventosRecentes([...map.values()]);
 }
 function setupFilters(){
   $('status').innerHTML='<option value="">Todos status</option>'+STATUS.map(s=>`<option>${s}</option>`).join('');
@@ -179,13 +208,13 @@ $('dashboard').innerHTML=`
 renderWeekEvents();
 }
 function card(e){return `<div class="event-card"><b>${e.cliente||'Cliente'}</b><p>${dow(e.data)} • ${shortDate(e.data)} • ${horario(e)}<br>${e.turno||'A definir'} · ${e.pessoas||'-'} pessoas · ${e.pacote||'A definir'}<br>📍 ${esc(salao(e))} · ${brl(e.valorEstimado)}</p><span class="status ${statusClass(e.status)}">${e.status||'Em negociação'}</span><div class="actions"><button onclick="EVENTOS.view('${e.id}')">Ver</button><button onclick="EVENTOS.edit('${e.id}')">Editar</button></div></div>`}
-function renderFunil(){const list=filtered().filter(e=>!isRecuperacaoStatus(e.status));$('funil').innerHTML=`<div class="kanban pipeline-kanban">${PIPELINE_STATUS.map(st=>`<div class="col"><h3>${st} · ${list.filter(e=>e.status===st).length}</h3>${list.filter(e=>e.status===st).map(card).join('')||'<p class="muted">Sem eventos</p>'}</div>`).join('')}</div>`;}
+function renderFunil(){const list=sortEventosRecentes(filtered().filter(e=>!isRecuperacaoStatus(e.status)));$('funil').innerHTML=`<div class="kanban pipeline-kanban">${PIPELINE_STATUS.map(st=>{const col=sortEventosRecentes(list.filter(e=>e.status===st));return `<div class="col"><h3>${st} · ${col.length}</h3>${col.map(card).join('')||'<p class="muted">Sem eventos</p>'}</div>`}).join('')}</div>`;}
 function renderVendas(){const list=filtered().sort((a,b)=>String(a.data).localeCompare(String(b.data)));$('vendas').innerHTML=`<div class="table-wrap"><table><thead><tr><th>Data</th><th>Horário</th><th>Cliente</th><th>Status</th><th>Turno</th><th>Pessoas</th><th>Pacote</th><th>Valor total</th><th>Gorjeta</th><th>Ações</th></tr></thead><tbody>${list.map(e=>`<tr><td>${dt(e.data)}</td><td>${horario(e)}</td><td><b>${e.cliente}</b><br><span class="muted">${e.telefone||''}</span></td><td><span class="status ${statusClass(e.status)}">${e.status}</span></td><td>${e.turno}</td><td>${e.pessoas||''}</td><td>${e.pacote}</td><td>${brl(e.valorEstimado)}</td><td>${brl(e.gorjeta)}</td><td><button class="btn alt" onclick="EVENTOS.view('${e.id}')">Abrir</button></td></tr>`).join('')}</tbody></table></div>`;}
 function recoveryCard(e){
   return `<div class="event-card recovery-card"><b>${e.cliente||'Cliente'}</b><p>${dow(e.data)} • ${shortDate(e.data)} • ${horario(e)}<br>${e.turno||'A definir'} · ${e.pessoas||'-'} pessoas · ${e.pacote||'A definir'}<br>📍 ${esc(salao(e))} · ${brl(e.valorEstimado)}</p><span class="status ${statusClass(e.status)}">${e.status||'Em recuperação'}</span><div class="actions recovery-actions"><button onclick="EVENTOS.view('${e.id}')">Ver</button><button onclick="EVENTOS.edit('${e.id}')">Editar</button><button onclick="EVENTOS.whats('${e.id}')">WhatsApp</button><button onclick="EVENTOS.markRecuperado('${e.id}')">Recuperado</button></div></div>`;
 }
 function renderRecuperacao(){
-  const list=filtered().filter(e=>isRecuperacaoStatus(e.status));
+  const list=sortEventosRecentes(filtered().filter(e=>isRecuperacaoStatus(e.status)));
   const cols=RECOVERY_STATUS;
   $('recuperacao').innerHTML=`<div class="kanban recuperacao-kanban">${cols.map(st=>`<div class="col"><h3>${st} · ${list.filter(e=>e.status===st).length}</h3>${list.filter(e=>e.status===st).map(recoveryCard).join('')||'<p class="muted">Sem clientes</p>'}</div>`).join('')}</div>`;
 }

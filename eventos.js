@@ -99,18 +99,10 @@ function saveAgenda(){localStorage.setItem(AGENDA_STORE,JSON.stringify(state.age
 function save(){localStorage.setItem(STORE,JSON.stringify(state.eventos));localStorage.setItem(META,JSON.stringify(state.meta)); if(window.EventosFirebase&&EventosFirebase.enabled) EventosFirebase.saveAll(state.eventos).catch(()=>{});}
 function saveClientes(){localStorage.setItem(CLIENTES_STORE,JSON.stringify(state.clientesCadastros||[]));}
 function load(){
-  const seed=dedupeEventos((window.EVENTOS_SEED||[]).map(e=>({...e,importado:true})));
   const saved=localStorage.getItem(STORE);
-  if(saved){
-    try{
-      const parsed=dedupeEventos(JSON.parse(saved)||[]);
-      state.eventos=parsed.length?parsed:seed;
-    }catch(e){state.eventos=seed}
-  }
+  if(saved){try{state.eventos=dedupeEventos(JSON.parse(saved)||[])}catch(e){state.eventos=[]}}
   else{
-    state.eventos=seed;
-  }
-  if(!(JSON.parse(localStorage.getItem(STORE)||'[]')||[]).length && state.eventos.length){
+    state.eventos=dedupeEventos((window.EVENTOS_SEED||[]).map(e=>({...e,importado:true})));
     localStorage.setItem(STORE,JSON.stringify(state.eventos));
   }
   try{state.meta=Object.assign(state.meta,JSON.parse(localStorage.getItem(META)||'{}'))}catch(e){}
@@ -283,38 +275,6 @@ function setupFunilDragDrop(){
       if(id) EVENTOS.movePipeline(id,zone.dataset.status);
     });
   });
-
-  // Mobile: toque normal rola o funil; toque longo ativa movimentação do card.
-  if(window.matchMedia&&window.matchMedia('(max-width: 900px)').matches){
-    let holdTimer=null,dragId='',ghost=null,source=null,startX=0,startY=0;
-    const kanban=root.querySelector('.pipeline-kanban');
-    const clear=()=>root.querySelectorAll('.pipeline-drop-zone').forEach(z=>z.classList.remove('drag-over','drag-blocked'));
-    const cleanup=()=>{clearTimeout(holdTimer);holdTimer=null;dragId='';if(ghost){ghost.remove();ghost=null;}if(source)source.classList.remove('touch-dragging-source');source=null;document.body.classList.remove('kanban-touch-dragging');clear();};
-    const zoneAt=(x,y)=>{const el=document.elementFromPoint(x,y);return el&&el.closest?el.closest('.pipeline-drop-zone'):null;};
-    const moveGhost=(x,y)=>{if(ghost){ghost.style.left=(x+12)+'px';ghost.style.top=(y+12)+'px';}};
-    root.querySelectorAll('.draggable-card').forEach(c=>{
-      c.draggable=false;
-      c.addEventListener('touchstart',ev=>{
-        if(ev.target.closest('button'))return;
-        const t=ev.touches[0]; startX=t.clientX; startY=t.clientY; source=c;
-        holdTimer=setTimeout(()=>{
-          dragId=c.dataset.eventId||'';
-          document.body.classList.add('kanban-touch-dragging');
-          c.classList.add('touch-dragging-source');
-          ghost=c.cloneNode(true);ghost.classList.add('touch-drag-ghost');ghost.style.width=Math.min(c.offsetWidth,280)+'px';document.body.appendChild(ghost);moveGhost(startX,startY);
-          if(navigator.vibrate)navigator.vibrate(35);
-        },520);
-      },{passive:true});
-      c.addEventListener('touchmove',ev=>{
-        const t=ev.touches[0];
-        if(!dragId){if(Math.abs(t.clientX-startX)>12||Math.abs(t.clientY-startY)>12){clearTimeout(holdTimer);holdTimer=null;}return;}
-        ev.preventDefault();moveGhost(t.clientX,t.clientY);clear();const z=zoneAt(t.clientX,t.clientY);if(z){const e=state.eventos.find(x=>x.id===dragId);z.classList.add(e&&canMovePipeline(e.status,z.dataset.status)?'drag-over':'drag-blocked');}
-        if(kanban){const r=kanban.getBoundingClientRect(); if(t.clientX<r.left+55)kanban.scrollLeft-=18; else if(t.clientX>r.right-55)kanban.scrollLeft+=18;}
-      },{passive:false});
-      c.addEventListener('touchend',ev=>{if(dragId){ev.preventDefault();const touch=ev.changedTouches[0];const z=zoneAt(touch.clientX,touch.clientY);const id=dragId;cleanup(); if(z)EVENTOS.movePipeline(id,z.dataset.status);}else cleanup();},{passive:false});
-      c.addEventListener('touchcancel',cleanup,{passive:true});
-    });
-  }
 }
 function canMovePipeline(from,to){
   if(!to||!PIPELINE_STATUS.includes(to))return false;
@@ -557,20 +517,6 @@ window.EVENTOS={
   exportCSV(){const cols=['data','horario','cliente','telefone','unidade','tipo','turno','pessoas','pacote','status','valorPessoa','taxaServicoPct','valorEstimado','gorjeta','origemPlanilha','observacoes'];const csv=[cols.join(';')].concat(state.eventos.map(e=>cols.map(c=>'"'+String(e[c]??'').replace(/"/g,'""').replace(/\n/g,' | ')+'"').join(';'))).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='eventos_premium_export.csv';a.click();URL.revokeObjectURL(a.href);},
   async firebaseSync(){if(!window.EventosFirebase)return toast('Firebase não carregado'); const ok=await EventosFirebase.init(); if(!ok)return toast('Firebase indisponível nesta abertura'); await EventosFirebase.saveAll(state.eventos); toast('Eventos enviados para /eventos_premium');},
 };
-
-function setupMobileMenuClose(){
-  document.addEventListener('click',ev=>{
-    if(!document.body.classList.contains('menu-open'))return;
-    const side=document.querySelector('.desktop-sidebar');
-    const btn=ev.target.closest&&ev.target.closest('.mobile-menu');
-    if(btn)return;
-    if(side&&side.contains(ev.target))return;
-    document.body.classList.remove('menu-open');
-  },true);
-  document.addEventListener('keydown',ev=>{if(ev.key==='Escape')document.body.classList.remove('menu-open')});
-  document.querySelectorAll('.desktop-sidebar [data-tab]').forEach(el=>el.addEventListener('click',()=>document.body.classList.remove('menu-open')));
-}
-
 function boot(){
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;if(!localStorage.getItem('gestao_cb_install_dismissed')){const b=$('installBanner');if(b)setTimeout(()=>b.classList.add('show'),1200);}});
   const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;

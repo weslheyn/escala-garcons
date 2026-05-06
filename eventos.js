@@ -21,6 +21,23 @@ function horario(e){ if(e.horario) return e.horario; const txt=String(e.observac
 function salao(e){return e.salao||e.unidade||'Salão não definido';}
 function monthName(m){return ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][m-1]||'';}
 function norm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+function digitsOnly(s){return String(s||'').replace(/\D/g,'');}
+function isGenericClienteNome(v){const n=norm(v).trim();return !n||n==='cliente nao identificado'||n==='cliente nao informado'||n==='cliente sem nome'||n==='cliente';}
+function pickFilled(a,b){return (b!==undefined&&b!==null&&String(b).trim()!=='')?b:a;}
+function mergePreferido(base={},novo={}){
+  const out=Object.assign({},base);
+  Object.keys(novo||{}).forEach(k=>{out[k]=pickFilled(out[k],novo[k]);});
+  const nb=base.cliente||base.nome, nn=novo.cliente||novo.nome;
+  if(isGenericClienteNome(out.cliente||out.nome)){
+    const melhor=!isGenericClienteNome(nn)?nn:(!isGenericClienteNome(nb)?nb:(out.cliente||out.nome));
+    if('cliente' in out) out.cliente=melhor;
+    if('nome' in out) out.nome=melhor;
+  }else if(!isGenericClienteNome(nb)&&isGenericClienteNome(nn)){
+    if('cliente' in out) out.cliente=nb;
+    if('nome' in out) out.nome=nb;
+  }
+  return out;
+}
 function toast(t){const el=$('toast'); el.textContent=t; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2500);}
 function uid(){return 'ev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)}
 function agendaUid(){return 'ag_evt_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)}
@@ -71,16 +88,36 @@ function normalizeStatus(s, obs=''){
   if(PIPELINE_STATUS.includes(s) || RECOVERY_STATUS.includes(s)) return s;
   return 'Lead';
 }
+function eventoDedupeKey(e){
+  const origem=norm(e.origem||e.origemPlanilha||'');
+  const phone=digitsOnly(e.telefone);
+  const email=norm(e.email||'');
+  const isForm=origem.includes('google forms')||String(e.id||'').startsWith('form_');
+  if(isForm&&(phone||email)) return ['forms',phone,email,e.data||'',norm(e.tipo||e.tipoEvento||'')].join('|');
+  return [e.data,e.cliente,e.telefone,e.pacote,e.turno,String(e.observacoes||'').slice(0,80)].map(x=>norm(x)).join('|');
+}
+function normalizaEvento(e={}){
+  const out=Object.assign({},e);
+  out.cliente=e.cliente||e.nome||e.nomeCompleto||e.clienteNome||'';
+  out.tipo=e.tipo||e.tipoEvento||'Evento';
+  out.status=normalizeStatus(e.status,e.observacoes);
+  out.valorEstimado=Number(e.valorEstimado??e.valorTotal)||0;
+  out.valorTotal=Number(e.valorTotal??e.valorEstimado)||0;
+  return out;
+}
 function dedupeEventos(arr){
-  const seen=new Set();
-  return (arr||[]).filter(e=>{
-    if(!e)return false;
-    e.status=normalizeStatus(e.status,e.observacoes);
-    const key=[e.data,e.cliente,e.telefone,e.pacote,e.turno,String(e.observacoes||'').slice(0,80)].map(x=>norm(x)).join('|');
-    if(seen.has(key)) return false;
-    seen.add(key);
-    return true;
+  const map=new Map();
+  (arr||[]).forEach(raw=>{
+    if(!raw)return;
+    const e=normalizaEvento(raw);
+    const k=eventoDedupeKey(e)||e.id;
+    const old=map.get(k);
+    let merged=old?mergePreferido(old,e):e;
+    if(isGenericClienteNome(merged.cliente)&&old&&!isGenericClienteNome(old.cliente)) merged.cliente=old.cliente;
+    if(isGenericClienteNome(merged.cliente)&&!isGenericClienteNome(e.cliente)) merged.cliente=e.cliente;
+    map.set(k,merged);
   });
+  return [...map.values()];
 }
 function setupFilters(){
   $('status').innerHTML='<option value="">Todos status</option>'+STATUS.map(s=>`<option>${s}</option>`).join('');
@@ -152,14 +189,28 @@ function renderRecuperacao(){
   const cols=RECOVERY_STATUS;
   $('recuperacao').innerHTML=`<div class="kanban recuperacao-kanban">${cols.map(st=>`<div class="col"><h3>${st} · ${list.filter(e=>e.status===st).length}</h3>${list.filter(e=>e.status===st).map(recoveryCard).join('')||'<p class="muted">Sem clientes</p>'}</div>`).join('')}</div>`;
 }
-function clienteKey(c){return norm([c.nome||c.cliente,c.telefone,c.email].join('|'));}
+function clienteKey(c){
+  const origem=norm(c.origem||'');
+  const phone=digitsOnly(c.telefone);
+  const email=norm(c.email||'');
+  if(phone||email) return ['contato',phone,email].join('|');
+  return norm([c.nome||c.cliente,c.razaoSocial,c.cpfCnpj].join('|'));
+}
 function normalizaClienteCadastro(c={},id){
-  return {id:c.id||id||('cli_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)),nome:c.nome||c.cliente||'',telefone:c.telefone||'',email:c.email||'',cpfCnpj:c.cpfCnpj||c.cpf_cnpj||'',razaoSocial:c.razaoSocial||c.razao_social||'',instagram:c.instagram||'',origem:c.origem||'Manual',tipoEvento:c.tipoEvento||c.tipo||'',dataEvento:c.dataEvento||c.data||'',horario:c.horario||c.turno||'',pessoas:c.pessoas||c.convidados||'',tags:Array.isArray(c.tags)?c.tags:(c.tags?String(c.tags).split(',').map(x=>x.trim()).filter(Boolean):[]),observacoes:c.observacoes||c.observacao||'',eventoId:c.eventoId||'',criadoEm:c.criadoEm||c.createdAt||new Date().toISOString(),atualizadoEm:c.atualizadoEm||new Date().toISOString()};
+  return {id:c.id||id||('cli_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)),nome:c.nome||c.nomeCompleto||c.clienteNome||c.cliente||'',telefone:c.telefone||'',email:c.email||'',cpfCnpj:c.cpfCnpj||c.cpf_cnpj||'',razaoSocial:c.razaoSocial||c.razao_social||'',instagram:c.instagram||'',origem:c.origem||'Manual',tipoEvento:c.tipoEvento||c.tipo||'',dataEvento:c.dataEvento||c.data||'',horario:c.horario||c.turno||'',pessoas:c.pessoas||c.convidados||'',tags:Array.isArray(c.tags)?c.tags:(c.tags?String(c.tags).split(',').map(x=>x.trim()).filter(Boolean):[]),observacoes:c.observacoes||c.observacao||'',eventoId:c.eventoId||'',criadoEm:c.criadoEm||c.createdAt||new Date().toISOString(),atualizadoEm:c.atualizadoEm||new Date().toISOString()};
 }
 function dedupeClientesCadastro(arr){
   const map=new Map();
-  (arr||[]).forEach(raw=>{const c=normalizaClienteCadastro(raw,raw&&raw.id); const k=clienteKey(c)||c.id; const old=map.get(k); map.set(k,Object.assign({},old||{},c));});
-  return [...map.values()].sort((a,b)=>String(b.criadoEm||'').localeCompare(String(a.criadoEm||'')));
+  (arr||[]).forEach(raw=>{
+    const c=normalizaClienteCadastro(raw,raw&&raw.id);
+    const k=clienteKey(c)||c.id;
+    const old=map.get(k);
+    const merged=old?mergePreferido(old,c):c;
+    if(isGenericClienteNome(merged.nome)&&old&&!isGenericClienteNome(old.nome)) merged.nome=old.nome;
+    if(isGenericClienteNome(merged.nome)&&!isGenericClienteNome(c.nome)) merged.nome=c.nome;
+    map.set(k,merged);
+  });
+  return [...map.values()].sort((a,b)=>String(b.criadoEm||b.atualizadoEm||'').localeCompare(String(a.criadoEm||a.atualizadoEm||'')));
 }
 function renderClientes(){
   if(state.clientesView==='cadastro') return renderClientesCadastro();

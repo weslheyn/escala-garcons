@@ -28,11 +28,37 @@ function parseDateAny(v){
   if(br){const yy=br[3].length===2?'20'+br[3]:br[3];return `${yy}-${br[2].padStart(2,'0')}-${br[1].padStart(2,'0')}`;}
   return '';
 }
+function parseDataFlex(v){
+  if(!v) return 0;
+  if(typeof v==='number') return v;
+  const s=String(v).trim();
+  let t=Date.parse(s);
+  if(Number.isFinite(t)) return t;
+  const br=s.match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?/);
+  if(br){
+    const [,d,m,y,h='00',mi='00',se='00']=br;
+    t=new Date(`${y}-${m}-${d}T${h}:${mi}:${se}`).getTime();
+    if(Number.isFinite(t)) return t;
+  }
+  return 0;
+}
 function eventoRecency(e){
-  const candidates=[e.atualizadoEm,e.criadoEm,e.createdAt,e.timestamp,e.dataCriacao,e.id&&String(e.id).startsWith('form_')?e.id.replace(/^form_/,''):null].filter(Boolean);
-  for(const c of candidates){const t=Date.parse(c); if(Number.isFinite(t))return t;}
-  const t=Date.parse((e.data||e.dataEvento||'')+'T00:00:00');
-  return Number.isFinite(t)?t:0;
+  const candidates=[
+    e.atualizadoEm,
+    e.criadoEm,
+    e.createdAt,
+    e.timestamp,
+    e.dataCriacao,
+    e.carimbo,
+    e.carimboDataHora,
+    e['Carimbo de data/hora'],
+    e.id&&String(e.id).startsWith('form_')?e.id.replace(/^form_/,''):null
+  ].filter(Boolean);
+  for(const c of candidates){
+    const t=parseDataFlex(c);
+    if(Number.isFinite(t) && t>0)return t;
+  }
+  return parseDataFlex((e.data||e.dataEvento||'')+' 00:00:00');
 }
 function sortEventosRecentes(arr){return [...(arr||[])].sort((a,b)=>eventoRecency(b)-eventoRecency(a)||String(b.id||'').localeCompare(String(a.id||'')));}
 function horario(e){

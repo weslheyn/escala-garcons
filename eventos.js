@@ -243,7 +243,10 @@ function renderFunil(){const list=sortEventosRecentes(filtered().filter(e=>!isRe
 function setupFunilDragDrop(){
   const root=$('funil');
   if(!root)return;
+  const isTouch=window.matchMedia&&window.matchMedia('(pointer: coarse)').matches;
   root.querySelectorAll('.draggable-card').forEach(card=>{
+    card.setAttribute('draggable',isTouch?'false':'true');
+    if(isTouch){setupTouchPipelineCard(card,root);return;}
     card.addEventListener('dragstart',ev=>{
       ev.dataTransfer.setData('text/plain',card.dataset.eventId||'');
       ev.dataTransfer.effectAllowed='move';
@@ -275,6 +278,90 @@ function setupFunilDragDrop(){
       if(id) EVENTOS.movePipeline(id,zone.dataset.status);
     });
   });
+}
+function setupTouchPipelineCard(card,root){
+  let timer=null,startX=0,startY=0,active=false,lastZone=null,ghost=null,scrollTimer=null;
+  const clear=()=>{
+    if(timer){clearTimeout(timer);timer=null;}
+    if(scrollTimer){clearInterval(scrollTimer);scrollTimer=null;}
+  };
+  const cleanup=()=>{
+    clear();active=false;card.classList.remove('touch-dragging');document.body.classList.remove('kanban-dragging','touch-drag-active');
+    root.querySelectorAll('.pipeline-drop-zone').forEach(z=>z.classList.remove('drag-over','drag-blocked'));
+    if(ghost){ghost.remove();ghost=null;}
+    lastZone=null;
+  };
+  const zoneAt=(x,y)=>{
+    const el=document.elementFromPoint(x,y);
+    return el?el.closest('.pipeline-drop-zone'):null;
+  };
+  const setZone=(zone)=>{
+    if(zone===lastZone)return;
+    if(lastZone)lastZone.classList.remove('drag-over','drag-blocked');
+    lastZone=zone;
+    if(!zone)return;
+    const e=state.eventos.find(x=>x.id===card.dataset.eventId);
+    const ok=e?canMovePipeline(e.status,zone.dataset.status):true;
+    zone.classList.toggle('drag-over',ok);
+    zone.classList.toggle('drag-blocked',!ok);
+  };
+  const moveGhost=(x,y)=>{
+    if(!ghost)return;
+    ghost.style.transform=`translate3d(${x+12}px,${y+12}px,0)`;
+  };
+  const startAutoScroll=(x)=>{
+    const kanban=root.querySelector('.kanban'); if(!kanban)return;
+    const r=kanban.getBoundingClientRect();
+    let dir=0;
+    if(x<r.left+45)dir=-1; else if(x>r.right-45)dir=1;
+    if(!dir){if(scrollTimer){clearInterval(scrollTimer);scrollTimer=null;}return;}
+    if(scrollTimer)return;
+    scrollTimer=setInterval(()=>{
+      const t=window.__touchDragX||0;
+      const rr=kanban.getBoundingClientRect();
+      const d=t<rr.left+45?-1:(t>rr.right-45?1:0);
+      if(!d){clearInterval(scrollTimer);scrollTimer=null;return;}
+      kanban.scrollLeft+=d*14;
+    },16);
+  };
+  card.addEventListener('touchstart',ev=>{
+    if(ev.touches.length!==1)return;
+    const t=ev.touches[0]; startX=t.clientX; startY=t.clientY;
+    clear();
+    timer=setTimeout(()=>{
+      active=true;
+      card.classList.add('touch-dragging');
+      document.body.classList.add('kanban-dragging','touch-drag-active');
+      if(navigator.vibrate)try{navigator.vibrate(25)}catch(e){}
+      ghost=card.cloneNode(true);
+      ghost.className='event-card drag-ghost';
+      ghost.style.width=Math.min(card.offsetWidth,260)+'px';
+      document.body.appendChild(ghost);
+      moveGhost(startX,startY);
+      setZone(zoneAt(startX,startY));
+    },520);
+  },{passive:true});
+  card.addEventListener('touchmove',ev=>{
+    const t=ev.touches[0]; if(!t)return;
+    window.__touchDragX=t.clientX;
+    if(!active){
+      if(Math.abs(t.clientX-startX)>8||Math.abs(t.clientY-startY)>8)clear();
+      return;
+    }
+    ev.preventDefault();
+    moveGhost(t.clientX,t.clientY);
+    setZone(zoneAt(t.clientX,t.clientY));
+    startAutoScroll(t.clientX);
+  },{passive:false});
+  card.addEventListener('touchend',ev=>{
+    if(!active){cleanup();return;}
+    const t=ev.changedTouches[0];
+    const zone=t?zoneAt(t.clientX,t.clientY):lastZone;
+    const id=card.dataset.eventId; const status=zone?.dataset?.status;
+    cleanup();
+    if(id&&status)EVENTOS.movePipeline(id,status);
+  },{passive:true});
+  card.addEventListener('touchcancel',cleanup,{passive:true});
 }
 function canMovePipeline(from,to){
   if(!to||!PIPELINE_STATUS.includes(to))return false;
@@ -473,7 +560,7 @@ function formHtml(e={}){const packs=['A definir',...new Set(state.pacotes.map(p=
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function collect(id){const data=$('f_data').value;calcEventFinancialsFromFields();const pessoas=parseNum($('f_pessoas').value)||null;const valorPessoa=parseNum($('f_valorPessoa').value);const taxaServicoPct=parseNum($('f_taxa').value);const gorjeta=parseNum($('f_gorjeta').value);const valorTotal=parseNum($('f_valorEstimado').value);return{id:id||uid(),ano:data?Number(data.slice(0,4)):new Date().getFullYear(),data:data||new Date().toISOString().slice(0,10),horario:$('f_horario')?$('f_horario').value:'',cliente:$('f_cliente').value.trim()||'Cliente não informado',telefone:$('f_telefone').value.trim(),origem:$('f_origem').value,unidade:$('f_unidade').value,tipo:$('f_tipo').value,turno:$('f_turno').value,pessoas,pacote:$('f_pacote').value,status:$('f_status').value,valorPessoa,taxaServicoPct,gorjeta,valorEstimado:valorTotal,valorTotal,observacoes:$('f_obs').value.trim(),diretores:[0,1,2].map(i=>({nome:($('f_dir_nome_'+i)?.value||'').trim(),assinado:!!$('f_dir_ok_'+i)?.checked})).filter(d=>d.nome),atualizadoEm:new Date().toISOString()};}
 window.EVENTOS={
-  tab(id){state.tab=id;render()},
+  tab(id){state.tab=id;document.body.classList.remove('menu-open');render()},
   clientesTab(v){state.clientesView=v;renderClientes();},
   renderClientesCadastroFiltrado(){renderClientesCadastroFiltrado();},
   openClienteForm(){ $('modalTitle').textContent='Novo cliente'; $('modalBody').innerHTML=clienteFormHtml(); $('modal').classList.add('open');},
@@ -521,6 +608,11 @@ function boot(){
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;if(!localStorage.getItem('gestao_cb_install_dismissed')){const b=$('installBanner');if(b)setTimeout(()=>b.classList.add('show'),1200);}});
   const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;
   if(!standalone&&!localStorage.getItem('gestao_cb_install_dismissed')){const b=$('installBanner');if(b)setTimeout(()=>b.classList.add('show'),2200);}
-  load();setupTabs();setupFilters();render(); if(window.EventosFirebase){EventosFirebase.init().then(ok=>{if(ok){EventosFirebase.listen(arr=>{if(Array.isArray(arr)&&arr.length){const map=new Map((state.eventos||[]).map(e=>[e.id,e]));arr.forEach(e=>{if(e&&e.id)map.set(e.id,Object.assign({},map.get(e.id)||{},e));});state.eventos=dedupeEventos([...map.values()]);localStorage.setItem(STORE,JSON.stringify(state.eventos));setupFilters();render();}}); if(EventosFirebase.listenClientes) EventosFirebase.listenClientes(arr=>{state.clientesCadastros=dedupeClientesCadastro([...(state.clientesCadastros||[]),...(arr||[])]);saveClientes(); if(state.tab==='clientes')renderClientes();});}});}}
+  document.addEventListener('click',ev=>{
+  if(!document.body.classList.contains('menu-open'))return;
+  if(ev.target.closest('.desktop-sidebar')||ev.target.closest('.mobile-menu'))return;
+  document.body.classList.remove('menu-open');
+});
+load();setupTabs();setupFilters();render(); if(window.EventosFirebase){EventosFirebase.init().then(ok=>{if(ok){EventosFirebase.listen(arr=>{if(Array.isArray(arr)&&arr.length){const map=new Map((state.eventos||[]).map(e=>[e.id,e]));arr.forEach(e=>{if(e&&e.id)map.set(e.id,Object.assign({},map.get(e.id)||{},e));});state.eventos=dedupeEventos([...map.values()]);localStorage.setItem(STORE,JSON.stringify(state.eventos));setupFilters();render();}}); if(EventosFirebase.listenClientes) EventosFirebase.listenClientes(arr=>{state.clientesCadastros=dedupeClientesCadastro([...(state.clientesCadastros||[]),...(arr||[])]);saveClientes(); if(state.tab==='clientes')renderClientes();});}});}}
 document.addEventListener('DOMContentLoaded',boot);
 })();

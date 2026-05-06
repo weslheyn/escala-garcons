@@ -355,3 +355,17 @@ body:not([data-tab="dashboard"]) .dashboard-only{display:none!important;}
 .kanban-dragging .pipeline-drop-zone.drag-blocked .drop-hint::after{content:' — etapa anterior bloqueada'}
 .empty-col{padding:8px 6px}
 @media(max-width:900px){.draggable-card{touch-action:none}.drop-hint{font-size:10px;padding:8px}}
+
+
+/* ===== v71 seguro: mobile sem menu inferior + touch longo no funil ===== */
+@media (max-width:900px){
+  .bottom-nav{display:none!important;visibility:hidden!important;pointer-events:none!important;height:0!important}
+  .app{padding-bottom:18px!important}
+  .kanban{overflow-x:auto!important;overflow-y:visible!important;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;scroll-snap-type:none!important}
+  .event-card.draggable-card{touch-action:pan-x pan-y;-webkit-user-select:none;user-select:none}
+  body.touch-drag-active,body.touch-drag-active *{touch-action:none!important}
+}
+.event-card.touch-dragging{opacity:.35;transform:scale(.98)}
+.drag-ghost{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;opacity:.96;box-shadow:0 18px 55px #000a;transform:translate3d(-999px,-999px,0)}
+.pipeline-drop-zone.drag-over{outline:2px solid rgba(242,199,91,.75);outline-offset:-3px;background:rgba(242,199,91,.08)!important}
+.pipeline-drop-zone.drag-blocked{outline:2px solid rgba(231,76,60,.70);outline-offset:-3px;background:rgba(231,76,60,.08)!important}

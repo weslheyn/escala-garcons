@@ -44,6 +44,9 @@
     pracasBloqueadas:{},
     historico:[],
     pracasCustom:null,
+    pracasExtras:[],
+    pracasRemovidas:{},
+    saloesRemovidos:{},
     carregou:false
   };
 
@@ -81,7 +84,7 @@
     .pracas-list{background:#0d1320;border:1px solid #22304a;border-radius:16px;overflow:hidden}.pracas-person,.pracas-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:11px 12px;border-bottom:1px solid #ffffff10}.pracas-person:last-child,.pracas-row:last-child{border-bottom:0}.pracas-check{width:24px;height:24px;border-radius:7px;background:#f5c842;color:#111;display:flex;align-items:center;justify-content:center;font-weight:900}.pracas-check.off{background:#1b2434;color:#58637a}.pracas-name{font-weight:900;color:#fff}.pracas-sub{font-size:11px;color:#93a1c2;margin-top:2px}.pracas-pill{border:1px solid #33415e;background:#172033;color:#bfc8df;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900;text-transform:uppercase}.pracas-pill.cf{border-color:#8e44ad88;color:#d49bff;background:#8e44ad22}.pracas-pill.f{border-color:#2980b988;color:#77c7ff;background:#2980b922}.pracas-pill.lock{border-color:#f5c84288;color:#f5c842;background:#f5c84218}
     .pracas-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}.pracas-btn{border:0;border-radius:16px;padding:14px;font-weight:900;text-transform:uppercase;background:#17283b;color:#d7e7ff}.pracas-btn.primary{grid-column:span 2;background:linear-gradient(135deg,#f5c842,#f7b816);color:#111;font-size:16px;box-shadow:0 10px 25px #f5c84230}.pracas-btn.green{background:#11351f;color:#38e27a}.pracas-btn.red{background:#35191c;color:#ff6868}.pracas-btn.purple{background:#25193a;color:#d5a8ff}
     .pracas-success{display:none;background:linear-gradient(90deg,#092f19,#102716);border:1px solid #28d66f88;border-radius:18px;padding:13px;margin:12px 0;color:#4af086;font-weight:900}.pracas-success.show{display:flex;align-items:center;justify-content:space-between;gap:10px}.pracas-result-card{background:#0d1320;border:1px solid #28364f;border-radius:16px;margin-bottom:8px;padding:11px;display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center}.pracas-num{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#23642e;color:#fff;font-weight:900}.pracas-assigned{font-size:15px;font-weight:900;color:#fff;text-align:right}.pracas-empty{border:1px dashed #33415e;background:#101828;border-radius:16px;padding:18px;text-align:center;color:#93a1c2;font-size:12px}.pracas-bottom{position:fixed;left:0;right:0;bottom:0;z-index:25;background:#070b13ee;backdrop-filter:blur(10px);border-top:1px solid #25324a;padding:10px 12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.pracas-bottom button{border:0;border-radius:13px;padding:12px 8px;font-weight:900;color:#fff;background:#111827}.pracas-bottom .zap{background:#11351f;color:#35e477}.pracas-bottom .save{background:#132d46;color:#79c8ff}.pracas-bottom .share{background:#f5c842;color:#111}
-    .pracas-mini-nav{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:10px 0 4px}.pracas-mini-nav button{background:#111827;border:1px solid #263149;color:#9ca9c7;border-radius:14px;padding:10px 6px;font-weight:900;font-size:11px}.pracas-mini-nav button.active{background:#f5c842;color:#111;border-color:#f5c842}.pracas-hidden{display:none!important}
+    .pracas-mini-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0 4px}.pracas-mini-nav button{background:#111827;border:1px solid #263149;color:#9ca9c7;border-radius:14px;padding:10px 6px;font-weight:900;font-size:11px}.pracas-mini-nav button.active{background:#f5c842;color:#111;border-color:#f5c842}.pracas-hidden{display:none!important}
 
     .pracas-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.pracas-config-option{border:1px solid #28364f;background:#0d1320;color:#dbe7ff;border-radius:16px;padding:14px;text-align:left;font-weight:900}.pracas-config-option.active{background:linear-gradient(135deg,#f5c842,#f7b816);color:#111;border-color:#f5c842}.pracas-print-box{background:#fff;color:#111;border-radius:12px;margin:14px 0;padding:10px;overflow:auto}.pracas-print-title{background:#202020;color:#fff;text-align:center;font-weight:900;padding:6px;font-size:15px;letter-spacing:.5px}.pracas-meta-table,.pracas-escala-table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px}.pracas-meta-table td{border:1px solid #cfcfcf;padding:5px}.pracas-escala-table th,.pracas-escala-table td{border:1px solid #111;padding:4px;text-align:center;vertical-align:middle}.pracas-escala-table th{background:#f4f4f4}.pracas-area-row td{background:#242424!important;color:#fff!important;font-weight:900;text-align:center}.pracas-flag{background:#202020;color:#fff;font-weight:900;width:34px}.pracas-prnum{font-weight:900;width:40px}.pracas-mesas{font-weight:900}.pracas-print-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.pracas-spinner-card{background:linear-gradient(145deg,#151b29,#0b101a);border:1px solid #f5c84277;border-radius:18px;padding:16px;text-align:center;margin:12px 0}.pracas-spinner-num{font-size:58px;font-weight:900;color:#f5c842;text-shadow:0 0 18px #f5c84255}.pracas-ind-person{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border-bottom:1px solid #ffffff10;padding:10px 0}.pracas-ind-person:last-child{border-bottom:0}.pracas-small-btn{border:0;border-radius:12px;padding:10px 12px;font-weight:900;background:#f5c842;color:#111}.pracas-small-btn:disabled{opacity:.45;background:#344056;color:#94a3b8}
     @media print{body>*:not(#pracasPrintArea){display:none!important}#pracasPrintArea{display:block!important;position:static!important;background:#fff!important;color:#000!important}.no-print{display:none!important}.pracas-print-box{border-radius:0;margin:0;padding:0}.pracas-print-title{font-size:16px}.pracas-meta-table,.pracas-escala-table{font-size:11px}}
@@ -115,7 +118,6 @@
         </div>
         <div class="pracas-mini-nav">
           <button id="prNavEquipe" onclick="setPracasView('equipe')">Equipe</button>
-          <button id="prNavPracas" onclick="setPracasView('pracas')">Praças</button>
           <button id="prNavResultado" onclick="setPracasView('resultado')">Resultado</button>
           <button id="prNavHistorico" onclick="setPracasView('historico')">Histórico</button>
           <button id="prNavConfig" onclick="setPracasView('config')">Config.</button>
@@ -176,11 +178,21 @@
 
   function getPracas(){
     const custom = st.pracasCustom || JSON.parse(localStorage.getItem('pracas_config_custom')||'null') || {};
-    return PRACAS_PADRAO.map(p=>Object.assign({}, p, custom[p.id]||{})).sort((a,b)=>a.numero-b.numero);
+    const removidas = st.pracasRemovidas || {};
+    const saloesRemovidos = st.saloesRemovidos || {};
+    const extras = Array.isArray(st.pracasExtras) ? st.pracasExtras : [];
+    return [...PRACAS_PADRAO, ...extras]
+      .filter(p=>p && !removidas[p.id] && !saloesRemovidos[p.area])
+      .map(p=>Object.assign({}, p, custom[p.id]||{}))
+      .filter(p=>!saloesRemovidos[p.area])
+      .sort((a,b)=>(Number(a.numero)||0)-(Number(b.numero)||0));
   }
   function salvarConfigLocal(){
     try{
       localStorage.setItem('pracas_config_custom', JSON.stringify(st.pracasCustom||{}));
+      localStorage.setItem('pracas_config_extras', JSON.stringify(st.pracasExtras||[]));
+      localStorage.setItem('pracas_config_removidas', JSON.stringify(st.pracasRemovidas||{}));
+      localStorage.setItem('pracas_config_saloes_removidos', JSON.stringify(st.saloesRemovidos||{}));
       localStorage.setItem('pracas_config_saloes', JSON.stringify(st.saloesAtivos||{}));
       localStorage.setItem('pracas_config_bloqueadas', JSON.stringify(st.pracasBloqueadas||{}));
       localStorage.setItem('pracas_config_tipo', st.tipoSorteio||'geral');
@@ -190,6 +202,9 @@
   function carregarConfigLocal(){
     try{
       st.pracasCustom = JSON.parse(localStorage.getItem('pracas_config_custom')||'{}') || {};
+      st.pracasExtras = JSON.parse(localStorage.getItem('pracas_config_extras')||'[]') || [];
+      st.pracasRemovidas = JSON.parse(localStorage.getItem('pracas_config_removidas')||'{}') || {};
+      st.saloesRemovidos = JSON.parse(localStorage.getItem('pracas_config_saloes_removidos')||'{}') || {};
       st.saloesAtivos = Object.assign(st.saloesAtivos||{}, JSON.parse(localStorage.getItem('pracas_config_saloes')||'{}')||{});
       st.pracasBloqueadas = Object.assign(st.pracasBloqueadas||{}, JSON.parse(localStorage.getItem('pracas_config_bloqueadas')||'{}')||{});
       st.tipoSorteio = localStorage.getItem('pracas_config_tipo') || st.tipoSorteio || 'geral';
@@ -198,6 +213,7 @@
   }
   function isSalaoAtivo(area){
     if(!st.saloesAtivos) st.saloesAtivos={};
+    if(st.saloesRemovidos && st.saloesRemovidos[area]) return false;
     return st.saloesAtivos[area] !== false;
   }
   function isPracaDisponivelTurno(p){
@@ -212,28 +228,37 @@
     return arr;
   }
 
+  function equipeUnificada(eq){
+    const ordemTurno = v => {
+      const n=norm(v);
+      if(n.includes('ABERTURA')) return 1;
+      if(n.includes('INTERCALADO')) return 2;
+      if(n.includes('FECHAMENTO')) return 3;
+      return 4;
+    };
+    return [
+      ...(eq.garcons||[]).map(p=>Object.assign({},p,{grupoPracas:'garcons'})),
+      ...(eq.cf||[]).map(p=>Object.assign({},p,{grupoPracas:'cf'})),
+      ...(eq.fechamento||[]).map(p=>Object.assign({},p,{grupoPracas:'fechamento'}))
+    ].sort((a,b)=>ordemTurno(a.turno)-ordemTurno(b.turno) || String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
+  }
+
   function renderEquipe(){
     ensureSelected();
     const eq=equipeDoMapa();
-    const total = eq.garcons.length + eq.cf.length + eq.fechamento.length;
+    const lista=equipeUnificada(eq);
+    const total = lista.length;
     const el=document.getElementById('pracasViewEquipe'); if(!el) return;
     el.innerHTML = `
       <div class="pracas-section-title"><span>Equipe presente <small style="color:#9ca9c7">(mapa do dia)</small></span><span class="pracas-count">${total} pessoas</span></div>
-      <div class="pracas-tabs">
-        <button id="prGrupoGarcons" onclick="setPracasGrupo('garcons')">Garçons (${eq.garcons.length})</button>
-        <button id="prGrupoCf" onclick="setPracasGrupo('cf')">CF (${eq.cf.length})</button>
-        <button id="prGrupoFechamento" onclick="setPracasGrupo('fechamento')">Fechamento (${eq.fechamento.length})</button>
-      </div>
-      <div class="pracas-list">${renderPessoasLista(eq[st.grupo]||[], st.grupo)}</div>
-      <div class="pracas-section-title"><span>Removidos automaticamente</span><span class="pracas-count">folga/falta/atestado</span></div>
-      <div class="pracas-list">${eq.removidos.slice(0,8).map(p=>`<div class="pracas-person"><div class="pracas-check off">×</div><div><div class="pracas-name">${p.nome}</div><div class="pracas-sub">${p.funcao||p.setor||''}</div></div><span class="pracas-pill">Fora</span></div>`).join('') || '<div class="pracas-empty">Nenhum colaborador removido pelo mapa.</div>'}</div>
+      <div class="pracas-list">${renderPessoasLista(lista)}</div>
     `;
-    setActiveGrupo();
   }
-  function renderPessoasLista(lista, grupo){
-    if(!lista.length) return '<div class="pracas-empty">Nenhuma pessoa elegível neste grupo.</div>';
+  function renderPessoasLista(lista){
+    if(!lista.length) return '<div class="pracas-empty">Nenhuma pessoa elegível para o sorteio.</div>';
     return lista.map(p=>{
-      const on = !!st.selected[grupo][p.id];
+      const grupo = p.grupoPracas || 'garcons';
+      const on = !!(st.selected[grupo] && st.selected[grupo][p.id]);
       return `<div class="pracas-person" onclick="togglePracasPessoa('${grupo}','${encodeURIComponent(p.id)}')">
         <div class="pracas-check ${on?'':'off'}">${on?'✓':'+'}</div>
         <div><div class="pracas-name">${p.nome}</div><div class="pracas-sub">${p.funcao||p.setor||''} • ${p.turno||''}</div></div>
@@ -241,9 +266,7 @@
       </div>`;
     }).join('');
   }
-  function setActiveGrupo(){
-    [['garcons','prGrupoGarcons'],['cf','prGrupoCf'],['fechamento','prGrupoFechamento']].forEach(([g,id])=>{const el=document.getElementById(id); if(el) el.classList.toggle('active',st.grupo===g);});
-  }
+  function setActiveGrupo(){}
 
   function renderPracas(){
     const el=document.getElementById('pracasViewPracas'); if(!el) return;
@@ -460,7 +483,7 @@
   function renderConfig(){
     const el=document.getElementById('pracasViewConfig'); if(!el) return;
     const totalBloq=Object.keys(st.pracasBloqueadas||{}).length;
-    const areas=[...new Set(getPracas().map(p=>p.area))];
+    const areas=[...new Set([...getPracas().map(p=>p.area), ...Object.keys(st.saloesAtivos||{}).filter(a=>!(st.saloesRemovidos||{})[a])])].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
     const totalSaloesAtivos=areas.filter(a=>isSalaoAtivo(a)).length;
     el.innerHTML=`
       <div class="pracas-section-title"><span>Configuração do sorteio</span><span class="pracas-count">${st.tipoSorteio==='geral'?'automático geral':'individual'}</span></div>
@@ -478,13 +501,14 @@
         </div>
       </div>
 
-      <div class="pracas-section-title"><span>Salões que entram no sorteio</span><span class="pracas-count">${totalSaloesAtivos}/${areas.length} ativos</span></div>
+      <div class="pracas-section-title"><span>Salões cadastrados</span><span class="pracas-count">${totalSaloesAtivos}/${areas.length} ativos</span></div>
       <div class="pracas-list">
-        ${areas.map(area=>`<div class="pracas-row"><div class="pracas-num">${isSalaoAtivo(area)?'✓':'×'}</div><div><div class="pracas-name">${area}</div><div class="pracas-sub">${getPracas().filter(p=>p.area===area).length} praças cadastradas</div></div><button class="pracas-pill ${isSalaoAtivo(area)?'lock':''}" onclick="toggleSalaoPracas('${encodeURIComponent(area)}')">${isSalaoAtivo(area)?'Sorteia':'Fora'}</button></div>`).join('')}
+        ${areas.map(area=>`<div class="pracas-row"><div class="pracas-num">${isSalaoAtivo(area)?'✓':'×'}</div><div><div class="pracas-name">${area}</div><div class="pracas-sub">${getPracas().filter(p=>p.area===area).length} praças cadastradas</div></div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="pracas-pill" onclick="editarSalaoPracas('${encodeURIComponent(area)}')">✏️ Editar</button><button class="pracas-pill ${isSalaoAtivo(area)?'lock':''}" onclick="toggleSalaoPracas('${encodeURIComponent(area)}')">${isSalaoAtivo(area)?'Sorteia':'Fora'}</button><button class="pracas-pill pracas-danger" onclick="excluirSalaoPracas('${encodeURIComponent(area)}')">Excluir</button></div></div>`).join('') || '<div class="pracas-empty">Nenhum salão cadastrado.</div>'}
       </div>
+      <div class="pracas-actions"><button class="pracas-btn green" onclick="novoSalaoPracas()">+ Novo salão</button><button class="pracas-btn" onclick="novaPracaConfig()">+ Nova praça</button></div>
 
       <div class="pracas-section-title"><span>Editar praças, mesas, CF e F/</span><span class="pracas-count">${totalBloq} bloqueadas</span></div>
-      <div class="pracas-list">${getPracas().map(p=>`<div class="pracas-row"><div class="pracas-num">${p.numero}</div><div><div class="pracas-name">Praça ${p.numero} <span class="pracas-pill ${tipoClass(p.tipo)}">${tipoLabel(p.tipo)}</span></div><div class="pracas-sub">${p.area} • Mesas: ${p.mesas}</div></div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="pracas-pill" onclick="editarConfigPraca('${p.id}')">✏️ Editar</button><button class="pracas-pill ${st.pracasBloqueadas[p.id]?'lock':''}" onclick="toggleBloqueioPraca('${p.id}')">${st.pracasBloqueadas[p.id]?'🚫 Bloqueada':'Disponível'}</button></div></div>`).join('')}</div>
+      <div class="pracas-list">${getPracas().map(p=>`<div class="pracas-row"><div class="pracas-num">${p.numero}</div><div><div class="pracas-name">Praça ${p.numero} <span class="pracas-pill ${tipoClass(p.tipo)}">${tipoLabel(p.tipo)}</span></div><div class="pracas-sub">${p.area} • Mesas: ${p.mesas}</div></div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="pracas-pill" onclick="editarConfigPraca('${p.id}')">✏️ Editar</button><button class="pracas-pill ${st.pracasBloqueadas[p.id]?'lock':''}" onclick="toggleBloqueioPraca('${p.id}')">${st.pracasBloqueadas[p.id]?'🚫 Bloqueada':'Disponível'}</button><button class="pracas-pill pracas-danger" onclick="excluirPracaConfig('${p.id}')">Excluir</button></div></div>`).join('') || '<div class="pracas-empty">Nenhuma praça cadastrada.</div>'}</div>
       <div class="pracas-actions"><button class="pracas-btn red" onclick="limparBloqueiosPracas()">🚫 Limpar bloqueios</button><button class="pracas-btn" onclick="restaurarPracasPadrao()">↩️ Restaurar padrão</button></div>
       <div class="pracas-actions"><button class="pracas-btn green" onclick="salvarConfigPracas()">💾 Salvar configurações</button><button class="pracas-btn" onclick="setPracasView('resultado')">📋 Ver escala</button></div>
     `;
@@ -557,10 +581,10 @@
     const d=document.getElementById('pracasData'); if(d && d.value!==st.data) d.value=st.data;
   }
   function setView(v){
-    ['Equipe','Pracas','Resultado','Historico','Config'].forEach(name=>{const el=document.getElementById('pracasView'+name); if(el) el.classList.add('pracas-hidden');});
-    const map={equipe:'Equipe',pracas:'Pracas',resultado:'Resultado',historico:'Historico',config:'Config'};
+    ['Equipe','Resultado','Historico','Config'].forEach(name=>{const el=document.getElementById('pracasView'+name); if(el) el.classList.add('pracas-hidden');});
+    const map={equipe:'Equipe',resultado:'Resultado',historico:'Historico',config:'Config'};
     const el=document.getElementById('pracasView'+map[v]); if(el) el.classList.remove('pracas-hidden');
-    [['equipe','prNavEquipe'],['pracas','prNavPracas'],['resultado','prNavResultado'],['historico','prNavHistorico'],['config','prNavConfig']].forEach(([x,id])=>{const b=document.getElementById(id); if(b) b.classList.toggle('active',x===v);});
+    [['equipe','prNavEquipe'],['resultado','prNavResultado'],['historico','prNavHistorico'],['config','prNavConfig']].forEach(([x,id])=>{const b=document.getElementById(id); if(b) b.classList.toggle('active',x===v);});
     if(v==='historico') carregarHistorico();
     if(v==='config') renderConfig();
   }
@@ -654,23 +678,98 @@
   window.editarConfigPraca=function(pracaId){
     const p=getPracas().find(x=>x.id===pracaId); if(!p) return;
     modalPracas(`<h3>✏️ Editar praça ${p.numero}</h3>
+      <label class="pracas-label">Número da praça</label><input id="editPracaNumero" type="number" class="pracas-text" value="${Number(p.numero)||''}">
       <label class="pracas-label">Salão / área</label><input id="editPracaArea" class="pracas-text" value="${String(p.area).replace(/"/g,'&quot;')}">
       <label class="pracas-label">Numeração das mesas</label><textarea id="editPracaMesas" class="pracas-text pracas-textarea">${String(p.mesas)}</textarea>
       <label class="pracas-label">Tipo da praça</label><select id="editPracaTipo" class="pracas-select"><option value="NORMAL" ${p.tipo==='NORMAL'?'selected':''}>Normal</option><option value="CF" ${p.tipo==='CF'?'selected':''}>CF — Chefe de fila</option><option value="F" ${p.tipo==='F'?'selected':''}>F/ — Fechamento</option></select>
       <div class="pracas-modal-actions"><button class="pracas-btn red" onclick="fecharModalPracas()">Cancelar</button><button class="pracas-btn green" onclick="salvarEdicaoPraca('${pracaId}')">Salvar</button></div>`);
   };
   window.salvarEdicaoPraca=function(pracaId){
+    const numero=Number(document.getElementById('editPracaNumero')?.value||0);
     const area=document.getElementById('editPracaArea')?.value?.trim()||'';
     const mesas=document.getElementById('editPracaMesas')?.value?.trim()||'';
     const tipo=document.getElementById('editPracaTipo')?.value||'NORMAL';
-    if(!area || !mesas) return toast('Preencha salão e mesas.');
-    st.pracasCustom=st.pracasCustom||{}; st.pracasCustom[pracaId]=Object.assign({}, st.pracasCustom[pracaId]||{}, {area,mesas,tipo});
+    if(!numero || !area || !mesas) return toast('Preencha número, salão e mesas.');
+    st.pracasCustom=st.pracasCustom||{}; st.pracasCustom[pracaId]=Object.assign({}, st.pracasCustom[pracaId]||{}, {numero,area,mesas,tipo});
+    if(st.saloesRemovidos && st.saloesRemovidos[area]) delete st.saloesRemovidos[area];
+    if(st.saloesAtivos && st.saloesAtivos[area]===undefined) st.saloesAtivos[area]=true;
     salvarConfigLocal(); fecharModalPracas(); renderAll(); toast('✅ Praça atualizada');
   };
-  window.restaurarPracasPadrao=function(){ if(confirm('Restaurar numeração, salões e tipos CF/F para o padrão original?')){ st.pracasCustom={}; salvarConfigLocal(); renderAll(); toast('↩️ Praças restauradas'); } };
+  window.novaPracaConfig=function(areaPadrao){
+    const areas=[...new Set(getPracas().map(p=>p.area))].sort();
+    const prox=(getPracas().reduce((m,p)=>Math.max(m,Number(p.numero)||0),0)||0)+1;
+    modalPracas(`<h3>+ Nova praça</h3>
+      <label class="pracas-label">Número da praça</label><input id="novaPracaNumero" type="number" class="pracas-text" value="${prox}">
+      <label class="pracas-label">Salão / área</label><input id="novaPracaArea" class="pracas-text" value="${String(areaPadrao||areas[0]||'').replace(/"/g,'&quot;')}" placeholder="Ex.: Salão Barra">
+      <label class="pracas-label">Mesas</label><textarea id="novaPracaMesas" class="pracas-text pracas-textarea" placeholder="Ex.: 01, 02 e 03"></textarea>
+      <label class="pracas-label">Tipo da praça</label><select id="novaPracaTipo" class="pracas-select"><option value="NORMAL">Normal</option><option value="CF">CF — Chefe de fila</option><option value="F">F/ — Fechamento</option></select>
+      <div class="pracas-modal-actions"><button class="pracas-btn red" onclick="fecharModalPracas()">Cancelar</button><button class="pracas-btn green" onclick="salvarNovaPracaConfig()">Salvar</button></div>`);
+  };
+  window.salvarNovaPracaConfig=function(){
+    const numero=Number(document.getElementById('novaPracaNumero')?.value||0);
+    const area=document.getElementById('novaPracaArea')?.value?.trim()||'';
+    const mesas=document.getElementById('novaPracaMesas')?.value?.trim()||'';
+    const tipo=document.getElementById('novaPracaTipo')?.value||'NORMAL';
+    if(!numero || !area || !mesas) return toast('Preencha número, salão e mesas.');
+    const id='pc_'+Date.now();
+    st.pracasExtras=Array.isArray(st.pracasExtras)?st.pracasExtras:[];
+    st.pracasExtras.push({id,numero,area,mesas,tipo});
+    st.saloesAtivos=st.saloesAtivos||{}; st.saloesAtivos[area]=true;
+    if(st.saloesRemovidos && st.saloesRemovidos[area]) delete st.saloesRemovidos[area];
+    salvarConfigLocal(); fecharModalPracas(); renderAll(); toast('✅ Nova praça cadastrada');
+  };
+  window.excluirPracaConfig=function(pracaId){
+    const p=getPracas().find(x=>x.id===pracaId); if(!p) return;
+    if(!confirm(`Excluir a Praça ${p.numero}?`)) return;
+    st.pracasExtras=(st.pracasExtras||[]).filter(x=>x.id!==pracaId);
+    st.pracasRemovidas=st.pracasRemovidas||{}; st.pracasRemovidas[pracaId]=true;
+    if(st.pracasCustom) delete st.pracasCustom[pracaId];
+    if(st.pracasBloqueadas) delete st.pracasBloqueadas[pracaId];
+    if(st.pracaLocks) delete st.pracaLocks[pracaId];
+    salvarConfigLocal(); renderAll(); toast('🗑️ Praça excluída');
+  };
+  window.novoSalaoPracas=function(){
+    modalPracas(`<h3>+ Novo salão</h3>
+      <label class="pracas-label">Nome do salão</label><input id="novoSalaoNome" class="pracas-text" placeholder="Ex.: Salão Vasto">
+      <p class="pracas-sub">Depois de criar o salão, cadastre as praças dele no botão “Nova praça”.</p>
+      <div class="pracas-modal-actions"><button class="pracas-btn red" onclick="fecharModalPracas()">Cancelar</button><button class="pracas-btn green" onclick="salvarNovoSalaoPracas()">Salvar</button></div>`);
+  };
+  window.salvarNovoSalaoPracas=function(){
+    const nome=document.getElementById('novoSalaoNome')?.value?.trim();
+    if(!nome) return toast('Informe o nome do salão.');
+    st.saloesAtivos=st.saloesAtivos||{}; st.saloesAtivos[nome]=true;
+    if(st.saloesRemovidos && st.saloesRemovidos[nome]) delete st.saloesRemovidos[nome];
+    salvarConfigLocal(); fecharModalPracas(); renderAll(); toast('✅ Salão cadastrado');
+  };
+  window.editarSalaoPracas=function(encodedArea){
+    const area=decodeURIComponent(encodedArea);
+    modalPracas(`<h3>✏️ Editar salão</h3>
+      <label class="pracas-label">Nome do salão</label><input id="editSalaoNome" class="pracas-text" value="${String(area).replace(/"/g,'&quot;')}">
+      <div class="pracas-modal-actions"><button class="pracas-btn red" onclick="fecharModalPracas()">Cancelar</button><button class="pracas-btn green" onclick="salvarEdicaoSalaoPracas('${encodeURIComponent(area)}')">Salvar</button></div>`);
+  };
+  window.salvarEdicaoSalaoPracas=function(encodedArea){
+    const antigo=decodeURIComponent(encodedArea);
+    const novo=document.getElementById('editSalaoNome')?.value?.trim();
+    if(!novo) return toast('Informe o nome do salão.');
+    st.pracasCustom=st.pracasCustom||{};
+    getPracas().filter(p=>p.area===antigo).forEach(p=>{ st.pracasCustom[p.id]=Object.assign({}, st.pracasCustom[p.id]||{}, {area:novo}); });
+    st.saloesAtivos=st.saloesAtivos||{}; st.saloesAtivos[novo]=st.saloesAtivos[antigo]!==false; delete st.saloesAtivos[antigo];
+    if(st.saloesRemovidos){ delete st.saloesRemovidos[antigo]; delete st.saloesRemovidos[novo]; }
+    salvarConfigLocal(); fecharModalPracas(); renderAll(); toast('✅ Salão atualizado');
+  };
+  window.excluirSalaoPracas=function(encodedArea){
+    const area=decodeURIComponent(encodedArea);
+    if(!confirm(`Excluir o salão "${area}" e todas as praças dele?`)) return;
+    st.saloesRemovidos=st.saloesRemovidos||{}; st.saloesRemovidos[area]=true;
+    st.pracasExtras=(st.pracasExtras||[]).filter(p=>p.area!==area);
+    getPracas().filter(p=>p.area===area).forEach(p=>{ st.pracasRemovidas=st.pracasRemovidas||{}; st.pracasRemovidas[p.id]=true; });
+    if(st.saloesAtivos) delete st.saloesAtivos[area];
+    salvarConfigLocal(); renderAll(); toast('🗑️ Salão excluído');
+  };
+  window.restaurarPracasPadrao=function(){ if(confirm('Restaurar numeração, salões e tipos CF/F para o padrão original?')){ st.pracasCustom={}; st.pracasExtras=[]; st.pracasRemovidas={}; st.saloesRemovidos={}; salvarConfigLocal(); renderAll(); toast('↩️ Praças restauradas'); } };
   window.salvarConfigPracas=async function(){
     salvarConfigLocal();
-    if(window.fbDb){ try{ await window.fbDb.ref('pracas_diarias/configuracoes').set({pracasCustom:st.pracasCustom||{}, saloesAtivos:st.saloesAtivos||{}, pracasBloqueadas:st.pracasBloqueadas||{}, tipoSorteio:st.tipoSorteio, incluirFechamentoNoAlmoco:!!st.incluirFechamentoNoAlmoco, atualizadoEm:new Date().toISOString()}); toast('💾 Configurações salvas'); return; }catch(e){} }
+    if(window.fbDb){ try{ await window.fbDb.ref('pracas_diarias/configuracoes').set({pracasCustom:st.pracasCustom||{}, pracasExtras:st.pracasExtras||[], pracasRemovidas:st.pracasRemovidas||{}, saloesRemovidos:st.saloesRemovidos||{}, saloesAtivos:st.saloesAtivos||{}, pracasBloqueadas:st.pracasBloqueadas||{}, tipoSorteio:st.tipoSorteio, incluirFechamentoNoAlmoco:!!st.incluirFechamentoNoAlmoco, atualizadoEm:new Date().toISOString()}); toast('💾 Configurações salvas'); return; }catch(e){} }
     toast('💾 Configurações salvas neste aparelho');
   };
 

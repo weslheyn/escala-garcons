@@ -389,7 +389,7 @@ body.home-active #premiumDashboard{display:block}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
-<body>
+<body class="home-active">
 <div class="toast" id="toast"></div>
 
 <!-- DASHBOARD PREMIUM COMPACTO -->
@@ -7698,7 +7698,7 @@ setInterval(()=>{try{if(fbDb&&fbConnected)__iniciarSyncGlobalEscalaOficial();}ca
   try{ isFolgaEscala = window.isFolgaEscala; }catch(e){}
 })();
 
-document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{showHomeDashboard();updateDashboardPremium();},500);setInterval(_dashFmtDate,30000);});
+document.addEventListener('DOMContentLoaded',()=>{try{showHomeDashboard();updateDashboardPremium();}catch(e){}setInterval(_dashFmtDate,30000);});
 
 </script>
 <script src="calendario-eventos.js?v=32.0"></script>

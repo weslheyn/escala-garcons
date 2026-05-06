@@ -51,7 +51,7 @@ function isGoogleFormsEvento(e){
   return origem.includes('google forms')||String(e.id||'').startsWith('form_')||String(e.eventoId||'').startsWith('form_');
 }
 function eventoRecency(e){
-  const criado=parseTimestampBR(e.movidoEm||e.movimentadoEm||e.statusAtualizadoEm||e.criadoEm||e.createdAt||e.dataCriacao||e.dataCadastro||e.formTimestamp||e.carimbo||e['Carimbo de data/hora']||e['CARIMBO DE DATA/HORA']);
+  const criado=parseTimestampBR(e.criadoEm||e.createdAt||e.dataCriacao||e.dataCadastro||e.formTimestamp||e.carimbo||e['Carimbo de data/hora']||e['CARIMBO DE DATA/HORA']);
   const atualizado=parseTimestampBR(e.atualizadoEm||e.updatedAt);
   const form=isGoogleFormsEvento(e);
   if(form){
@@ -159,7 +159,6 @@ function normalizaEvento(e={}){
   out.valorEstimado=Number(e.valorEstimado??e.valorTotal)||0;
   out.valorTotal=Number(e.valorTotal??e.valorEstimado)||0;
   out.criadoEm=e.criadoEm||e.createdAt||e.dataCriacao||e.dataCadastro||e.formTimestamp||e.carimbo||e['Carimbo de data/hora']||e['CARIMBO DE DATA/HORA']||'';
-  out.movidoEm=e.movidoEm||e.movimentadoEm||e.statusAtualizadoEm||'';
   out.atualizadoEm=e.atualizadoEm||e.updatedAt||'';
   out._recency=eventoRecency(out);
   return out;
@@ -237,53 +236,62 @@ $('dashboard').innerHTML=`
 </div>`;
 renderWeekEvents();
 }
-function card(e){return `<div class="event-card draggable-card" draggable="true" data-event-id="${e.id}" data-status="${esc(e.status||'Lead')}"><b>${e.cliente||'Cliente'}</b><p>${dow(e.data)} • ${shortDate(e.data)} • ${horario(e)}<br>${e.turno||'A definir'} · ${e.pessoas||'-'} pessoas · ${e.pacote||'A definir'}<br>📍 ${esc(salao(e))} · ${brl(e.valorEstimado)}</p><span class="status ${statusClass(e.status)}">${e.status||'Em negociação'}</span><div class="actions"><button onclick="EVENTOS.view('${e.id}')">Ver</button><button onclick="EVENTOS.edit('${e.id}')">Editar</button></div></div>`}
+function card(e){return `<div class="event-card draggable-card" draggable="true" data-event-id="${esc(e.id)}" data-status="${esc(e.status||'Lead')}" data-pipeline-card="1"><b>${e.cliente||'Cliente'}</b><p>${dow(e.data)} • ${shortDate(e.data)} • ${horario(e)}<br>${e.turno||'A definir'} · ${e.pessoas||'-'} pessoas · ${e.pacote||'A definir'}<br>📍 ${esc(salao(e))} · ${brl(e.valorEstimado)}</p><span class="status ${statusClass(e.status)}">${e.status||'Em negociação'}</span><div class="actions"><button onclick="EVENTOS.view('${e.id}')">Ver</button><button onclick="EVENTOS.edit('${e.id}')">Editar</button></div></div>`}
 function renderFunil(){const list=sortEventosRecentes(filtered().filter(e=>!isRecuperacaoStatus(e.status)));$('funil').innerHTML=`<div class="kanban pipeline-kanban">${PIPELINE_STATUS.map((st,idx)=>{const col=sortEventosRecentes(list.filter(e=>e.status===st));return `<div class="col pipeline-drop-zone" data-status="${esc(st)}" data-index="${idx}"><h3>${st} · ${col.length}</h3><div class="drop-hint">Solte aqui para mover</div>${col.map(card).join('')||'<p class="muted empty-col">Sem eventos</p>'}</div>`}).join('')}</div>`;setupFunilDragDrop();}
-
 function setupFunilDragDrop(){
-  const root=$('funil');
-  if(!root)return;
+  const root=$('funil'); if(!root)return;
+  const isMobile=window.matchMedia&&window.matchMedia('(max-width: 900px)').matches;
+  let draggingId='',draggingCard=null,ghost=null,longPressTimer=null,startX=0,startY=0,activeTouch=false;
+  const clearZones=()=>root.querySelectorAll('.pipeline-drop-zone').forEach(z=>z.classList.remove('drag-over','drag-blocked','drag-touch-over'));
+  const statusIndex=st=>PIPELINE_STATUS.indexOf(st);
+  const canMove=(id,toStatus)=>{const e=state.eventos.find(x=>x.id===id); if(!e)return false; const from=statusIndex(e.status||'Lead'),to=statusIndex(toStatus); return from>=0&&to>=0&&to>=from&&toStatus!==(e.status||'Lead');};
+  const moveCard=(id,toStatus)=>{const e=state.eventos.find(x=>x.id===id); if(!e)return; if(!canMove(id,toStatus)){toast(toStatus===(e.status||'Lead')?'Card já está nesta etapa':'Movimento permitido apenas para próxima etapa do funil'); return;} e.status=toStatus; e.atualizadoEm=new Date().toISOString(); e.movidoEm=e.atualizadoEm; e.ultimaMovimentacaoEm=e.atualizadoEm; save(); toast('Movido para '+toStatus); render();};
   root.querySelectorAll('.draggable-card').forEach(card=>{
+    if(isMobile){card.setAttribute('draggable','false');} else {card.setAttribute('draggable','true');}
     card.addEventListener('dragstart',ev=>{
-      ev.dataTransfer.setData('text/plain',card.dataset.eventId||'');
-      ev.dataTransfer.effectAllowed='move';
-      card.classList.add('dragging');
-      document.body.classList.add('kanban-dragging');
+      if(isMobile){ev.preventDefault();return;}
+      draggingId=card.dataset.eventId; ev.dataTransfer.setData('text/plain',draggingId); ev.dataTransfer.effectAllowed='move'; card.classList.add('dragging'); document.body.classList.add('kanban-dragging');
     });
-    card.addEventListener('dragend',()=>{
-      card.classList.remove('dragging');
-      document.body.classList.remove('kanban-dragging');
-      root.querySelectorAll('.pipeline-drop-zone').forEach(z=>z.classList.remove('drag-over','drag-blocked'));
-    });
+    card.addEventListener('dragend',()=>{card.classList.remove('dragging');document.body.classList.remove('kanban-dragging');clearZones();draggingId='';});
+    card.addEventListener('pointerdown',ev=>{
+      if(!isMobile||ev.pointerType==='mouse'||ev.target.closest('button'))return;
+      activeTouch=true; draggingCard=card; startX=ev.clientX; startY=ev.clientY;
+      clearTimeout(longPressTimer);
+      longPressTimer=setTimeout(()=>{
+        if(!activeTouch||!draggingCard)return;
+        draggingId=draggingCard.dataset.eventId;
+        document.body.classList.add('kanban-touch-dragging');
+        draggingCard.classList.add('touch-dragging-source');
+        ghost=draggingCard.cloneNode(true); ghost.classList.add('touch-drag-ghost'); ghost.style.width=Math.min(draggingCard.offsetWidth,280)+'px'; document.body.appendChild(ghost);
+        if(navigator.vibrate)navigator.vibrate(35);
+        updateGhost(ev.clientX,ev.clientY);
+      },520);
+    },{passive:true});
+    card.addEventListener('pointermove',ev=>{
+      if(!isMobile)return;
+      const dx=Math.abs(ev.clientX-startX),dy=Math.abs(ev.clientY-startY);
+      if(!draggingId&&longPressTimer&&(dx>12||dy>12)){clearTimeout(longPressTimer);longPressTimer=null;}
+      if(draggingId){ev.preventDefault(); updateGhost(ev.clientX,ev.clientY); highlightZone(ev.clientX,ev.clientY); autoScrollKanban(ev.clientX);}
+    },{passive:false});
+    card.addEventListener('pointerup',ev=>finishTouchDrag(ev),{passive:false});
+    card.addEventListener('pointercancel',ev=>finishTouchDrag(ev),{passive:false});
   });
   root.querySelectorAll('.pipeline-drop-zone').forEach(zone=>{
-    zone.addEventListener('dragover',ev=>{
-      const id=ev.dataTransfer.getData('text/plain')||document.querySelector('.draggable-card.dragging')?.dataset.eventId||'';
-      if(!id)return;
-      const e=state.eventos.find(x=>x.id===id);
-      const ok=e?canMovePipeline(e.status,zone.dataset.status):true;
-      ev.preventDefault();
-      ev.dataTransfer.dropEffect=ok?'move':'none';
-      zone.classList.toggle('drag-over',ok);
-      zone.classList.toggle('drag-blocked',!ok);
-    });
+    zone.addEventListener('dragover',ev=>{if(isMobile)return; const id=ev.dataTransfer.getData('text/plain')||document.querySelector('.draggable-card.dragging')?.dataset.eventId||''; const ok=canMove(id,zone.dataset.status); ev.preventDefault(); ev.dataTransfer.dropEffect=ok?'move':'none'; zone.classList.toggle('drag-over',ok); zone.classList.toggle('drag-blocked',!ok);});
     zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over','drag-blocked'));
-    zone.addEventListener('drop',ev=>{
-      ev.preventDefault();
-      const id=ev.dataTransfer.getData('text/plain')||'';
-      zone.classList.remove('drag-over','drag-blocked');
-      if(id) EVENTOS.movePipeline(id,zone.dataset.status);
-    });
+    zone.addEventListener('drop',ev=>{if(isMobile)return; ev.preventDefault(); const id=ev.dataTransfer.getData('text/plain')||document.querySelector('.draggable-card.dragging')?.dataset.eventId||''; const st=zone.dataset.status; clearZones(); moveCard(id,st);});
   });
+  function updateGhost(x,y){if(!ghost)return; ghost.style.left=(x+12)+'px'; ghost.style.top=(y+12)+'px';}
+  function zoneAt(x,y){const el=document.elementFromPoint(x,y); return el&&el.closest?el.closest('.pipeline-drop-zone'):null;}
+  function highlightZone(x,y){clearZones(); const z=zoneAt(x,y); if(z){z.classList.add(canMove(draggingId,z.dataset.status)?'drag-touch-over':'drag-blocked');}}
+  function autoScrollKanban(x){const kanban=root.querySelector('.pipeline-kanban'); if(!kanban)return; const r=kanban.getBoundingClientRect(); const edge=58; if(x<r.left+edge)kanban.scrollLeft-=18; else if(x>r.right-edge)kanban.scrollLeft+=18;}
+  function finishTouchDrag(ev){
+    if(!isMobile)return; activeTouch=false; clearTimeout(longPressTimer); longPressTimer=null;
+    if(draggingId){ev.preventDefault(); const z=zoneAt(ev.clientX,ev.clientY); const id=draggingId; cleanupTouch(); if(z)moveCard(id,z.dataset.status); else toast('Movimento cancelado');}
+    else cleanupTouch();
+  }
+  function cleanupTouch(){if(ghost){ghost.remove();ghost=null;} if(draggingCard)draggingCard.classList.remove('touch-dragging-source'); draggingCard=null; draggingId=''; document.body.classList.remove('kanban-touch-dragging'); clearZones();}
 }
-function canMovePipeline(from,to){
-  if(!to||!PIPELINE_STATUS.includes(to))return false;
-  if(from===to)return true;
-  const a=PIPELINE_STATUS.indexOf(from), b=PIPELINE_STATUS.indexOf(to);
-  if(a<0||b<0)return true;
-  return b>=a;
-}
-
 function renderVendas(){const list=filtered().sort((a,b)=>String(a.data).localeCompare(String(b.data)));$('vendas').innerHTML=`<div class="table-wrap"><table><thead><tr><th>Data</th><th>Horário</th><th>Cliente</th><th>Status</th><th>Turno</th><th>Pessoas</th><th>Pacote</th><th>Valor total</th><th>Gorjeta</th><th>Ações</th></tr></thead><tbody>${list.map(e=>`<tr><td>${dt(e.data)}</td><td>${horario(e)}</td><td><b>${e.cliente}</b><br><span class="muted">${e.telefone||''}</span></td><td><span class="status ${statusClass(e.status)}">${e.status}</span></td><td>${e.turno}</td><td>${e.pessoas||''}</td><td>${e.pacote}</td><td>${brl(e.valorEstimado)}</td><td>${brl(e.gorjeta)}</td><td><button class="btn alt" onclick="EVENTOS.view('${e.id}')">Abrir</button></td></tr>`).join('')}</tbody></table></div>`;}
 function recoveryCard(e){
   return `<div class="event-card recovery-card"><b>${e.cliente||'Cliente'}</b><p>${dow(e.data)} • ${shortDate(e.data)} • ${horario(e)}<br>${e.turno||'A definir'} · ${e.pessoas||'-'} pessoas · ${e.pacote||'A definir'}<br>📍 ${esc(salao(e))} · ${brl(e.valorEstimado)}</p><span class="status ${statusClass(e.status)}">${e.status||'Em recuperação'}</span><div class="actions recovery-actions"><button onclick="EVENTOS.view('${e.id}')">Ver</button><button onclick="EVENTOS.edit('${e.id}')">Editar</button><button onclick="EVENTOS.whats('${e.id}')">WhatsApp</button><button onclick="EVENTOS.markRecuperado('${e.id}')">Recuperado</button></div></div>`;
@@ -473,7 +481,7 @@ function formHtml(e={}){const packs=['A definir',...new Set(state.pacotes.map(p=
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function collect(id){const data=$('f_data').value;calcEventFinancialsFromFields();const pessoas=parseNum($('f_pessoas').value)||null;const valorPessoa=parseNum($('f_valorPessoa').value);const taxaServicoPct=parseNum($('f_taxa').value);const gorjeta=parseNum($('f_gorjeta').value);const valorTotal=parseNum($('f_valorEstimado').value);return{id:id||uid(),ano:data?Number(data.slice(0,4)):new Date().getFullYear(),data:data||new Date().toISOString().slice(0,10),horario:$('f_horario')?$('f_horario').value:'',cliente:$('f_cliente').value.trim()||'Cliente não informado',telefone:$('f_telefone').value.trim(),origem:$('f_origem').value,unidade:$('f_unidade').value,tipo:$('f_tipo').value,turno:$('f_turno').value,pessoas,pacote:$('f_pacote').value,status:$('f_status').value,valorPessoa,taxaServicoPct,gorjeta,valorEstimado:valorTotal,valorTotal,observacoes:$('f_obs').value.trim(),diretores:[0,1,2].map(i=>({nome:($('f_dir_nome_'+i)?.value||'').trim(),assinado:!!$('f_dir_ok_'+i)?.checked})).filter(d=>d.nome),atualizadoEm:new Date().toISOString()};}
 window.EVENTOS={
-  tab(id){state.tab=id;render()},
+  tab(id){state.tab=id;document.body.classList.remove('menu-open');render()},
   clientesTab(v){state.clientesView=v;renderClientes();},
   renderClientesCadastroFiltrado(){renderClientesCadastroFiltrado();},
   openClienteForm(){ $('modalTitle').textContent='Novo cliente'; $('modalBody').innerHTML=clienteFormHtml(); $('modal').classList.add('open');},
@@ -510,8 +518,7 @@ window.EVENTOS={
   saveForm(id){const e=collect(id); const idx=state.eventos.findIndex(x=>x.id===e.id); if(idx>=0)state.eventos[idx]=Object.assign({},state.eventos[idx],e); else state.eventos.unshift(e); save(); $('modal').classList.remove('open'); toast('Evento salvo'); render();},
   view(id){const e=state.eventos.find(x=>x.id===id); if(!e)return; const wa=e.telefone?`<a class="whats" target="_blank" href="https://wa.me/${String(e.telefone).replace(/\D/g,'')}">Abrir WhatsApp</a>`:''; $('modalTitle').textContent=e.cliente; $('modalBody').innerHTML=`<div class="kpi-grid"><div class="kpi"><div class="label">Data</div><div class="value">${dow(e.data)} ${shortDate(e.data)}<br><span style="font-size:16px;color:var(--sub)">${horario(e)}</span></div></div><div class="kpi"><div class="label">Valor total</div><div class="value">${brl(e.valorEstimado)}</div></div><div class="kpi"><div class="label">Pessoas</div><div class="value">${e.pessoas||'-'}</div></div><div class="kpi"><div class="label">Status</div><div class="value" style="font-size:20px">${e.status}</div></div></div><div class="panel" style="margin-top:14px"><p><b>Telefone:</b> ${e.telefone||'-'} ${wa}</p><p><b>Tipo:</b> ${e.tipo} · <b>Turno:</b> ${e.turno} · <b>Pacote:</b> ${e.pacote}</p><p><b>Unidade/Salão:</b> ${e.unidade||'-'}</p><p><b>Origem:</b> ${e.origem||e.origemPlanilha||'-'}</p><p><b>Diretoria:</b> ${(e.diretores&&e.diretores.length)?e.diretores.map(d=>`${esc(d.nome)} ${d.assinado?'✅':'⏳'}`).join(' · '):'Não cadastrada'}</p><div class="divider"></div><p style="white-space:pre-wrap">${esc(e.observacoes||'')}</p></div><br><button class="btn" onclick="EVENTOS.edit('${e.id}')">Editar</button>`; $('modal').classList.add('open');},
   closeModal(){ $('modal').classList.remove('open');},
-  movePipeline(id,status){const e=state.eventos.find(x=>x.id===id); if(!e)return toast('Evento não encontrado'); if(!canMovePipeline(e.status,status))return toast('Movimento permitido apenas para a próxima etapa do funil'); const antigo=e.status; const agora=new Date().toISOString(); e.status=status; e.movidoEm=agora; e.statusAtualizadoEm=agora; e.atualizadoEm=agora; e.observacoes=(e.observacoes||'')+`\n\n[FUNIL] Movido de ${antigo||'Sem status'} para ${status} em ${new Date().toLocaleString('pt-BR')}`; save(); toast(`Movido para ${status}`); render();},
-  markRecuperado(id){const e=state.eventos.find(x=>x.id===id); if(e){e.status='Proposta enviada';e.movidoEm=new Date().toISOString();e.statusAtualizadoEm=e.movidoEm;e.observacoes=(e.observacoes||'')+'\n\n[RECUPERAÇÃO] Cliente reativado em '+new Date().toLocaleDateString('pt-BR');save();toast('Cliente movido para proposta');render();}},
+  markRecuperado(id){const e=state.eventos.find(x=>x.id===id); if(e){e.status='Proposta enviada';e.observacoes=(e.observacoes||'')+'\n\n[RECUPERAÇÃO] Cliente reativado em '+new Date().toLocaleDateString('pt-BR');save();toast('Cliente movido para proposta');render();}},
   whats(id){const e=state.eventos.find(x=>x.id===id); if(!e||!e.telefone)return toast('Telefone não cadastrado'); window.open(`https://wa.me/${String(e.telefone).replace(/\D/g,'')}?text=${encodeURIComponent('Olá, tudo bem? Estou entrando em contato sobre sua proposta de evento no Coco Bambu.')}`,'_blank');},
   seedReset(){if(confirm('Recarregar a base importada da planilha? Eventos cadastrados manualmente serão mantidos.')){const manual=state.eventos.filter(e=>!e.importado);state.eventos=dedupeEventos([...(window.EVENTOS_SEED||[]).map(e=>({...e,importado:true})),...manual]);save();toast('Base 2026/2027 recarregada');setupFilters();render();}},
   exportCSV(){const cols=['data','horario','cliente','telefone','unidade','tipo','turno','pessoas','pacote','status','valorPessoa','taxaServicoPct','valorEstimado','gorjeta','origemPlanilha','observacoes'];const csv=[cols.join(';')].concat(state.eventos.map(e=>cols.map(c=>'"'+String(e[c]??'').replace(/"/g,'""').replace(/\n/g,' | ')+'"').join(';'))).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='eventos_premium_export.csv';a.click();URL.revokeObjectURL(a.href);},
@@ -521,6 +528,6 @@ function boot(){
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;if(!localStorage.getItem('gestao_cb_install_dismissed')){const b=$('installBanner');if(b)setTimeout(()=>b.classList.add('show'),1200);}});
   const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;
   if(!standalone&&!localStorage.getItem('gestao_cb_install_dismissed')){const b=$('installBanner');if(b)setTimeout(()=>b.classList.add('show'),2200);}
-  load();setupTabs();setupFilters();render(); if(window.EventosFirebase){EventosFirebase.init().then(ok=>{if(ok){EventosFirebase.listen(arr=>{if(Array.isArray(arr)&&arr.length){const map=new Map((state.eventos||[]).map(e=>[e.id,e]));arr.forEach(e=>{if(e&&e.id)map.set(e.id,Object.assign({},map.get(e.id)||{},e));});state.eventos=dedupeEventos([...map.values()]);localStorage.setItem(STORE,JSON.stringify(state.eventos));setupFilters();render();}}); if(EventosFirebase.listenClientes) EventosFirebase.listenClientes(arr=>{state.clientesCadastros=dedupeClientesCadastro([...(state.clientesCadastros||[]),...(arr||[])]);saveClientes(); if(state.tab==='clientes')renderClientes();});}});}}
+  setupMobileMenuClose();load();setupTabs();setupFilters();render(); if(window.EventosFirebase){EventosFirebase.init().then(ok=>{if(ok){EventosFirebase.listen(arr=>{if(Array.isArray(arr)&&arr.length){const map=new Map((state.eventos||[]).map(e=>[e.id,e]));arr.forEach(e=>{if(e&&e.id)map.set(e.id,Object.assign({},map.get(e.id)||{},e));});state.eventos=dedupeEventos([...map.values()]);localStorage.setItem(STORE,JSON.stringify(state.eventos));setupFilters();render();}}); if(EventosFirebase.listenClientes) EventosFirebase.listenClientes(arr=>{state.clientesCadastros=dedupeClientesCadastro([...(state.clientesCadastros||[]),...(arr||[])]);saveClientes(); if(state.tab==='clientes')renderClientes();});}});}}
 document.addEventListener('DOMContentLoaded',boot);
 })();

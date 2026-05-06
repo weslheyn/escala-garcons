@@ -342,16 +342,30 @@ body:not([data-tab="dashboard"]) .dashboard-only{display:none!important;}
 .clientes-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}.clientes-tabs{display:flex;gap:8px;flex-wrap:wrap}.clientes-toolbar{display:grid;grid-template-columns:1fr 220px;gap:10px;margin-bottom:12px}.clientes-cadastro-table table{min-width:1040px}.client-tag{display:inline-flex;align-items:center;border:1px solid rgba(232,189,85,.36);background:rgba(232,189,85,.10);color:var(--gold);border-radius:999px;padding:4px 7px;margin:2px;font-size:10px;font-weight:900}.muted{color:var(--sub)}
 @media(max-width:620px){.clientes-top{align-items:stretch}.clientes-tabs,.clientes-top>.btn{width:100%}.clientes-tabs .chip{flex:1;justify-content:center}.clientes-toolbar{grid-template-columns:1fr}.clientes-cadastro-table table{min-width:960px}}
 
-/* Drag & Drop profissional do Funil */
-.draggable-card{cursor:grab;transition:transform .18s ease,opacity .18s ease,box-shadow .18s ease,border-color .18s ease}
-.draggable-card:active{cursor:grabbing}
-.draggable-card.dragging{opacity:.58;transform:scale(.985);box-shadow:0 18px 44px rgba(0,0,0,.55);border-color:rgba(242,199,91,.75)}
-.pipeline-drop-zone{position:relative;transition:border-color .18s ease,background .18s ease,box-shadow .18s ease}
-.pipeline-drop-zone.drag-over{border-color:rgba(242,199,91,.92);background:linear-gradient(180deg,rgba(242,199,91,.12),rgba(15,19,32,.96));box-shadow:inset 0 0 0 1px rgba(242,199,91,.28),0 16px 40px rgba(0,0,0,.35)}
-.pipeline-drop-zone.drag-blocked{border-color:rgba(231,76,60,.62);background:linear-gradient(180deg,rgba(231,76,60,.10),rgba(15,19,32,.96))}
-.drop-hint{display:none;margin:0 4px 10px;border:1px dashed rgba(242,199,91,.48);border-radius:14px;padding:10px;text-align:center;color:var(--gold);font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.4px;background:rgba(242,199,91,.07)}
-.kanban-dragging .pipeline-drop-zone .drop-hint{display:block}
-.kanban-dragging .pipeline-drop-zone.drag-blocked .drop-hint{color:#ff9c9c;border-color:rgba(231,76,60,.55);background:rgba(231,76,60,.08)}
-.kanban-dragging .pipeline-drop-zone.drag-blocked .drop-hint::after{content:' — etapa anterior bloqueada'}
-.empty-col{padding:8px 6px}
-@media(max-width:900px){.draggable-card{touch-action:none}.drop-hint{font-size:10px;padding:8px}}
+
+/* ===== v71 - Mobile: sem menu inferior + funil com scroll normal e mover por toque longo ===== */
+.bottom-nav{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+@media(max-width:900px){
+  .app{padding-bottom:18px!important;}
+  .pipeline-kanban{display:flex!important;grid-template-columns:none!important;overflow-x:auto!important;overflow-y:hidden!important;gap:12px!important;padding:0 4px 14px!important;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;}
+  .pipeline-kanban .pipeline-drop-zone{flex:0 0 min(82vw,280px)!important;min-width:min(82vw,280px)!important;touch-action:pan-x pan-y;}
+  .pipeline-kanban .draggable-card{touch-action:pan-x pan-y;-webkit-user-select:none;user-select:none;}
+  .kanban-touch-dragging,.kanban-touch-dragging *{cursor:grabbing!important;}
+  .kanban-touch-dragging .pipeline-kanban{touch-action:none!important;}
+  .touch-dragging-source{opacity:.42;transform:scale(.985);}
+  .touch-drag-ghost{position:fixed;z-index:9999;pointer-events:none;opacity:.96;transform:scale(.98) rotate(.6deg);box-shadow:0 24px 70px rgba(0,0,0,.65);}
+  .pipeline-drop-zone.drag-touch-over,.pipeline-drop-zone.drag-over{border-color:rgba(242,199,91,.85)!important;background:linear-gradient(180deg,rgba(242,199,91,.16),rgba(15,19,32,.92))!important;box-shadow:inset 0 0 0 1px rgba(242,199,91,.25),0 0 28px rgba(242,199,91,.12);}
+  .pipeline-drop-zone.drag-blocked{border-color:rgba(230,76,92,.75)!important;background:linear-gradient(180deg,rgba(230,76,92,.10),rgba(15,19,32,.92))!important;}
+  .drop-hint{display:none;color:var(--gold);font-size:11px;font-weight:900;margin:0 5px 9px;}
+  .pipeline-drop-zone.drag-touch-over .drop-hint,.pipeline-drop-zone.drag-over .drop-hint,.pipeline-drop-zone.drag-blocked .drop-hint{display:block;}
+  .menu-open .desktop-sidebar{box-shadow:28px 0 80px rgba(0,0,0,.58);}
+  .menu-open:before{cursor:pointer;}
+}
+@media(min-width:901px){
+  .draggable-card{cursor:grab;}
+  .draggable-card.dragging{opacity:.45;}
+  .pipeline-drop-zone.drag-over{border-color:rgba(242,199,91,.85)!important;background:linear-gradient(180deg,rgba(242,199,91,.12),rgba(15,19,32,.9))!important;}
+  .pipeline-drop-zone.drag-blocked{border-color:rgba(230,76,92,.75)!important;}
+  .drop-hint{display:none;color:var(--gold);font-size:11px;font-weight:900;margin:0 5px 9px;}
+  .pipeline-drop-zone.drag-over .drop-hint,.pipeline-drop-zone.drag-blocked .drop-hint{display:block;}
+}

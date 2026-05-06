@@ -28,39 +28,41 @@ function parseDateAny(v){
   if(br){const yy=br[3].length===2?'20'+br[3]:br[3];return `${yy}-${br[2].padStart(2,'0')}-${br[1].padStart(2,'0')}`;}
   return '';
 }
-function parseDataFlex(v){
-  if(!v) return 0;
-  if(typeof v==='number') return v;
+function parseTimestampBR(v){
+  if(!v)return 0;
+  if(Object.prototype.toString.call(v)==='[object Date]'&&!isNaN(v)) return v.getTime();
+  if(typeof v==='number'&&Number.isFinite(v)) return v;
   const s=String(v).trim();
-  let t=Date.parse(s);
-  if(Number.isFinite(t)) return t;
-  const br=s.match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?/);
+  if(!s)return 0;
+  const iso=Date.parse(s);
+  if(Number.isFinite(iso)) return iso;
+  const br=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:[\s,]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
   if(br){
-    const [,d,m,y,h='00',mi='00',se='00']=br;
-    t=new Date(`${y}-${m}-${d}T${h}:${mi}:${se}`).getTime();
-    if(Number.isFinite(t)) return t;
+    const y=Number(br[3].length===2?'20'+br[3]:br[3]);
+    const mo=Number(br[2])-1, d=Number(br[1]);
+    const h=Number(br[4]||0), mi=Number(br[5]||0), se=Number(br[6]||0);
+    const t=new Date(y,mo,d,h,mi,se).getTime();
+    return Number.isFinite(t)?t:0;
   }
   return 0;
 }
-function eventoRecency(e){
-  const candidates=[
-    e.atualizadoEm,
-    e.criadoEm,
-    e.createdAt,
-    e.timestamp,
-    e.dataCriacao,
-    e.carimbo,
-    e.carimboDataHora,
-    e['Carimbo de data/hora'],
-    e.id&&String(e.id).startsWith('form_')?e.id.replace(/^form_/,''):null
-  ].filter(Boolean);
-  for(const c of candidates){
-    const t=parseDataFlex(c);
-    if(Number.isFinite(t) && t>0)return t;
-  }
-  return parseDataFlex((e.data||e.dataEvento||'')+' 00:00:00');
+function isGoogleFormsEvento(e){
+  const origem=norm([e.origem,e.origemPlanilha,e.fonte].join(' '));
+  return origem.includes('google forms')||String(e.id||'').startsWith('form_')||String(e.eventoId||'').startsWith('form_');
 }
-function sortEventosRecentes(arr){return [...(arr||[])].sort((a,b)=>eventoRecency(b)-eventoRecency(a)||String(b.id||'').localeCompare(String(a.id||'')));}
+function eventoRecency(e){
+  const criado=parseTimestampBR(e.criadoEm||e.createdAt||e.dataCriacao||e.dataCadastro||e.formTimestamp||e.carimbo||e['Carimbo de data/hora']||e['CARIMBO DE DATA/HORA']);
+  const atualizado=parseTimestampBR(e.atualizadoEm||e.updatedAt);
+  const form=isGoogleFormsEvento(e);
+  if(form){
+    // Leads vindos do Google Forms devem ficar sempre acima dos eventos importados da planilha.
+    return Math.max(criado,atualizado,0)+9000000000000000;
+  }
+  if(criado||atualizado) return Math.max(criado,atualizado);
+  // Eventos antigos/importados sem data de criação não devem superar leads novos apenas pela data futura do evento.
+  return 0;
+}
+function sortEventosRecentes(arr){return [...(arr||[])].sort((a,b)=>eventoRecency(b)-eventoRecency(a)||String(b.criadoEm||b.atualizadoEm||b.id||'').localeCompare(String(a.criadoEm||a.atualizadoEm||a.id||'')));}
 function horario(e){
   if(e.horario) return e.horario;
   const origem=norm(e.origem||e.origemPlanilha||'');
@@ -156,8 +158,9 @@ function normalizaEvento(e={}){
   out.status=normalizeStatus(e.status,e.observacoes);
   out.valorEstimado=Number(e.valorEstimado??e.valorTotal)||0;
   out.valorTotal=Number(e.valorTotal??e.valorEstimado)||0;
-  out.criadoEm=e.criadoEm||e.createdAt||e.dataCriacao||'';
+  out.criadoEm=e.criadoEm||e.createdAt||e.dataCriacao||e.dataCadastro||e.formTimestamp||e.carimbo||e['Carimbo de data/hora']||e['CARIMBO DE DATA/HORA']||'';
   out.atualizadoEm=e.atualizadoEm||e.updatedAt||'';
+  out._recency=eventoRecency(out);
   return out;
 }
 function dedupeEventos(arr){

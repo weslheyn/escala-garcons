@@ -255,9 +255,72 @@ function setupFunilDragDrop(){
     requestAnimationFrame(()=>{kanban.scrollLeft=__pipelineScrollLeft||0;});
   }
 
+  // Desktop usa Drag & Drop nativo do navegador. É mais estável para funil horizontal
+  // e permite mover para esquerda e direita sem descalibrar o ponto de soltar.
   root.querySelectorAll('.draggable-card').forEach(card=>{
-    card.setAttribute('draggable','false');
-    setupPipelinePointerDrag(card,root);
+    card.setAttribute('draggable','true');
+    setupPipelineNativeDrag(card,root);
+    setupPipelinePointerDrag(card,root); // usado só em touch/pen com toque longo
+  });
+
+  root.querySelectorAll('.pipeline-drop-zone').forEach(zone=>{
+    if(zone.dataset.nativeDropReady==='1')return;
+    zone.dataset.nativeDropReady='1';
+    zone.addEventListener('dragenter',ev=>{
+      if(!__pipelineDraggedId)return;
+      ev.preventDefault();
+      clearPipelineHighlights(root);
+      zone.classList.add('drag-over');
+    });
+    zone.addEventListener('dragover',ev=>{
+      if(!__pipelineDraggedId)return;
+      ev.preventDefault();
+      if(ev.dataTransfer)ev.dataTransfer.dropEffect='move';
+      clearPipelineHighlights(root);
+      zone.classList.add('drag-over');
+      const k=root.querySelector('.pipeline-kanban');
+      if(k)__pipelineScrollLeft=k.scrollLeft;
+    });
+    zone.addEventListener('drop',ev=>{
+      if(!__pipelineDraggedId)return;
+      ev.preventDefault();
+      const id=(ev.dataTransfer&&ev.dataTransfer.getData('text/plain'))||__pipelineDraggedId;
+      const status=zone.dataset.status||'';
+      const k=root.querySelector('.pipeline-kanban');
+      if(k)__pipelineScrollLeft=k.scrollLeft;
+      clearPipelineHighlights(root);
+      document.body.classList.remove('kanban-dragging');
+      root.querySelectorAll('.draggable-card.dragging').forEach(c=>c.classList.remove('dragging'));
+      __pipelineDraggedId=null;
+      if(id&&status)EVENTOS.movePipeline(id,status);
+    });
+  });
+}
+
+function setupPipelineNativeDrag(card,root){
+  if(card.dataset.nativeDragReady==='1')return;
+  card.dataset.nativeDragReady='1';
+  card.addEventListener('dragstart',ev=>{
+    // Mouse/trackpad: arraste nativo. Touch é tratado no pointer/long press.
+    const id=card.dataset.eventId||'';
+    __pipelineDraggedId=id;
+    const k=root.querySelector('.pipeline-kanban');
+    if(k)__pipelineScrollLeft=k.scrollLeft;
+    card.classList.add('dragging');
+    document.body.classList.add('kanban-dragging');
+    if(ev.dataTransfer){
+      ev.dataTransfer.effectAllowed='move';
+      ev.dataTransfer.setData('text/plain',id);
+      try{ev.dataTransfer.setDragImage(card, Math.min(40,card.offsetWidth/2), 24);}catch(_){ }
+    }
+  });
+  card.addEventListener('dragend',()=>{
+    card.classList.remove('dragging');
+    document.body.classList.remove('kanban-dragging');
+    clearPipelineHighlights(root);
+    __pipelineDraggedId=null;
+    const k=root.querySelector('.pipeline-kanban');
+    if(k)__pipelineScrollLeft=k.scrollLeft;
   });
 }
 
@@ -376,18 +439,15 @@ function setupPipelinePointerDrag(card,root){
     if(!scrollTimer)scrollTimer=setInterval(autoScroll,24);
   };
 
-  card.addEventListener('dragstart',ev=>ev.preventDefault());
-
   card.addEventListener('pointerdown',ev=>{
     if(ev.target.closest('button,a,input,select,textarea'))return;
-    // Botão direito não deve iniciar arraste.
-    if(ev.pointerType==='mouse' && ev.button!==0)return;
+    // Desktop usa Drag & Drop nativo. Pointer drag fica reservado ao mobile/tablet.
+    if(!isTouchLike(ev))return;
     startX=lastX=ev.clientX; startY=lastY=ev.clientY; pointerId=ev.pointerId; armed=true; active=false; sourceCard=card;
-    sourceCard.dataset.pointerType=ev.pointerType||'mouse';
+    sourceCard.dataset.pointerType=ev.pointerType||'touch';
     clearTimers();
     try{card.setPointerCapture(ev.pointerId);}catch(_){ }
-    // No desktop começa com pequeno movimento. No mobile, só com toque longo para preservar a rolagem.
-    if(isTouchLike(ev)) timer=setTimeout(begin,430);
+    timer=setTimeout(begin,430);
   },{passive:true});
 
   window.addEventListener('pointermove',ev=>{

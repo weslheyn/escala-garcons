@@ -737,32 +737,173 @@ function parseNum(v){
   const n=Number(t);
   return Number.isFinite(n)?n:0;
 }
-function calcEventFinancialsFromFields(){
+function fmtMoney(n){
+  const v=Number(n)||0;
+  return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+}
+function moneyInputValue(n){
+  const v=Number(n)||0;
+  return v ? String(v).replace('.',',') : '';
+}
+function eventFinancialValuesFromFields(){
   const pessoas=parseNum($('f_pessoas')?.value);
   const valorPessoa=parseNum($('f_valorPessoa')?.value);
   const taxa=parseNum($('f_taxa')?.value);
-  const extras=parseNum($('f_extras')?.value);
-  const base=(pessoas*valorPessoa)+extras;
-  const gorjeta=base*(taxa/100);
-  const total=base+gorjeta;
-  if($('f_gorjeta')) $('f_gorjeta').value=gorjeta?gorjeta.toFixed(2):'0.00';
-  if($('f_valorEstimado')) $('f_valorEstimado').value=total?total.toFixed(2):'0.00';
+  const baseA=pessoas*valorPessoa;
+  const servicoA=baseA*(taxa/100);
+  const totalA=baseA+servicoA;
+
+  const extra1=parseNum($('f_extra1')?.value);
+  const extra2=parseNum($('f_extra2')?.value);
+  const extra3=parseNum($('f_extra3')?.value);
+  const totalB=extra1+extra2+extra3;
+
+  const pessoasExcedentes=parseNum($('f_pessoasExcedentes')?.value);
+  const valorPessoaExcedente=parseNum($('f_valorPessoaExcedente')?.value);
+  const taxaExcedente=parseNum($('f_taxaExcedente')?.value || $('f_taxa')?.value);
+  const baseC=pessoasExcedentes*valorPessoaExcedente;
+  const servicoC=baseC*(taxaExcedente/100);
+  const totalC=baseC+servicoC;
+
+  const gorjeta=servicoA+servicoC;
+  const valorTotal=totalA+totalB+totalC;
+  return {pessoas,valorPessoa,taxa,baseA,servicoA,totalA,extra1,extra2,extra3,totalB,pessoasExcedentes,valorPessoaExcedente,taxaExcedente,baseC,servicoC,totalC,gorjeta,valorTotal};
+}
+function setText(id,value){const el=$(id); if(el)el.textContent=value;}
+function setVal(id,value){const el=$(id); if(el)el.value=value;}
+function calcEventFinancialsFromFields(){
+  const f=eventFinancialValuesFromFields();
+  setText('fin_baseA',fmtMoney(f.baseA));
+  setText('fin_servicoA',fmtMoney(f.servicoA));
+  setText('fin_totalA',fmtMoney(f.totalA));
+  setText('fin_extra1',fmtMoney(f.extra1));
+  setText('fin_extra2',fmtMoney(f.extra2));
+  setText('fin_extra3',fmtMoney(f.extra3));
+  setText('fin_totalB',fmtMoney(f.totalB));
+  setText('fin_baseC',fmtMoney(f.baseC));
+  setText('fin_servicoC',fmtMoney(f.servicoC));
+  setText('fin_totalC',fmtMoney(f.totalC));
+  setText('fin_grand',fmtMoney(f.valorTotal));
+  setText('fin_resumo_totalA',fmtMoney(f.totalA));
+  setText('fin_resumo_totalB',fmtMoney(f.totalB));
+  setText('fin_resumo_totalC',fmtMoney(f.totalC));
+  setText('fin_resumo_servicoA',fmtMoney(f.servicoA));
+  setText('fin_resumo_servicoC',fmtMoney(f.servicoC));
+  setVal('f_gorjeta',f.gorjeta?f.gorjeta.toFixed(2):'0.00');
+  setVal('f_valorEstimado',f.valorTotal?f.valorTotal.toFixed(2):'0.00');
 }
 function setupEventFinancials(){
-  ['f_pessoas','f_valorPessoa','f_extras','f_taxa'].forEach(id=>{
+  ['f_pessoas','f_valorPessoa','f_taxa','f_extra1','f_extra2','f_extra3','f_pessoasExcedentes','f_valorPessoaExcedente','f_taxaExcedente'].forEach(id=>{
     const el=$(id); if(!el)return;
     el.addEventListener('input',calcEventFinancialsFromFields);
     el.addEventListener('change',calcEventFinancialsFromFields);
   });
   calcEventFinancialsFromFields();
 }
+function financialHtml(e={}){
+  const ex1=e.extra1??e.consumoExtra1??e.extras1??e.extras??0;
+  const ex2=e.extra2??e.consumoExtra2??e.extras2??0;
+  const ex3=e.extra3??e.consumoExtra3??e.extras3??0;
+  const qtdExc=e.pessoasExcedentes??e.qtdExcedente??e.quantidadeExcedente??0;
+  const valExc=e.valorPessoaExcedente??e.valorExcedente??0;
+  const taxaExc=e.taxaExcedentePct??e.taxaExcedente??e.taxaServicoPct??13;
+  return `<div class="finance-layout span4">
+    <div class="finance-left">
+      <section class="finance-card">
+        <h3><span class="finance-badge">A</span> CONTRATO (VALORES BASE)</h3>
+        <div class="finance-table">
+          <label>Quantidade de pessoas</label><input class="field" type="number" id="f_pessoas" value="${e.pessoas||''}">
+          <label>Valor por pessoa - sem taxa</label><input class="field" type="text" inputmode="decimal" id="f_valorPessoa" value="${moneyInputValue(e.valorPessoa||0)}">
+          <label>Taxa de serviço (%)</label><input class="field" type="text" inputmode="decimal" id="f_taxa" value="${String(e.taxaServicoPct??13).replace('.',',')}">
+          <label>Total contrato (A)</label><strong id="fin_totalA">R$ 0,00</strong>
+        </div>
+        <p class="finance-note">Fórmula: (valor por pessoa × quantidade de pessoas) + taxa de serviço.</p>
+      </section>
+      <section class="finance-card">
+        <h3><span class="finance-badge">B</span> MESA EXTRA / CONSUMOS (SEM TAXA)</h3>
+        <div class="finance-table">
+          <label>Consumo extra 1</label><input class="field" type="text" inputmode="decimal" id="f_extra1" value="${moneyInputValue(ex1)}">
+          <label>Consumo extra 2</label><input class="field" type="text" inputmode="decimal" id="f_extra2" value="${moneyInputValue(ex2)}">
+          <label>Consumo extra 3</label><input class="field" type="text" inputmode="decimal" id="f_extra3" value="${moneyInputValue(ex3)}">
+          <label>Total extras (B)</label><strong id="fin_totalB">R$ 0,00</strong>
+        </div>
+        <p class="finance-note">Valores informados aqui não recebem taxa de serviço.</p>
+      </section>
+      <section class="finance-card">
+        <h3><span class="finance-badge">C</span> PESSOAS EXCEDENTES</h3>
+        <div class="finance-table">
+          <label>Quantidade de pessoas excedentes</label><input class="field" type="number" id="f_pessoasExcedentes" value="${qtdExc||''}">
+          <label>Valor por pessoa excedente - sem taxa</label><input class="field" type="text" inputmode="decimal" id="f_valorPessoaExcedente" value="${moneyInputValue(valExc)}">
+          <label>Taxa de serviço (%)</label><input class="field" type="text" inputmode="decimal" id="f_taxaExcedente" value="${String(taxaExc).replace('.',',')}">
+          <label>Total excedentes (C)</label><strong id="fin_totalC">R$ 0,00</strong>
+        </div>
+        <p class="finance-note">Fórmula: (valor por pessoa excedente × quantidade excedente) + taxa de serviço.</p>
+      </section>
+    </div>
+    <aside class="finance-summary">
+      <h3>RESUMO FINANCEIRO</h3>
+      <div class="finance-summary-block"><h4><span class="finance-badge">A</span> CONTRATO</h4><p><span>Total sem taxa</span><strong id="fin_baseA">R$ 0,00</strong></p><p><span>Taxa de serviço</span><strong id="fin_resumo_servicoA">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total contrato (A)</span><strong id="fin_resumo_totalA">R$ 0,00</strong></p></div>
+      <div class="finance-summary-block"><h4><span class="finance-badge">B</span> EXTRAS (SEM TAXA)</h4><p><span>Consumo extra 1</span><strong id="fin_extra1">R$ 0,00</strong></p><p><span>Consumo extra 2</span><strong id="fin_extra2">R$ 0,00</strong></p><p><span>Consumo extra 3</span><strong id="fin_extra3">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total extras (B)</span><strong id="fin_resumo_totalB">R$ 0,00</strong></p></div>
+      <div class="finance-summary-block"><h4><span class="finance-badge">C</span> EXCEDENTES</h4><p><span>Total sem taxa</span><strong id="fin_baseC">R$ 0,00</strong></p><p><span>Taxa de serviço</span><strong id="fin_resumo_servicoC">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total excedentes (C)</span><strong id="fin_resumo_totalC">R$ 0,00</strong></p></div>
+      <div class="finance-grand"><span>TOTAL GERAL (A + B + C)</span><strong id="fin_grand">R$ 0,00</strong></div>
+      <input type="hidden" id="f_gorjeta" value="${e.gorjeta||0}">
+      <input type="hidden" id="f_valorEstimado" value="${e.valorTotal||e.valorEstimado||0}">
+    </aside>
+  </div>`;
+}
 function formHtml(e={}){
   const packs=['A definir',...new Set(state.pacotes.map(p=>p.nome.replace('Menu ','')))];
   const clienteOptions=clientesDatalistHtml();
-  return `${clienteOptions}<div class="form-grid"><div><label>Cliente</label><input class="field" id="f_cliente" list="clientesCadastroOptions" value="${esc(e.cliente||'')}" oninput="EVENTOS.applyClienteLookup()" onchange="EVENTOS.applyClienteLookup()"><small class="muted">Digite e selecione um cliente já cadastrado.</small></div><div><label>Telefone</label><input class="field" id="f_telefone" value="${esc(e.telefone||'')}" onchange="EVENTOS.applyClienteLookup()"></div><div><label>Data</label><input class="field" type="date" id="f_data" value="${e.data||''}"></div><div><label>Horário</label><input class="field" type="time" id="f_horario" value="${e.horario||''}"></div><div><label>Status</label><select class="field" id="f_status">${STATUS.map(st=>`<option ${st===(e.status||'Lead')?'selected':''}>${st}</option>`).join('')}</select></div><div><label>Origem</label><select class="field" id="f_origem"><option>${e.origem||'WhatsApp'}</option><option>Instagram</option><option>Telefone</option><option>Anúncio</option><option>Indicação</option><option>Presencial</option><option>Google Forms</option></select></div><div><label>Tipo</label><input class="field" id="f_tipo" value="${esc(e.tipo||'Evento')}"></div><div><label>Turno</label><select class="field" id="f_turno">${['Almoço','Jantar','Ambos','A definir'].map(st=>`<option ${st===(e.turno||'A definir')?'selected':''}>${st}</option>`).join('')}</select></div><div><label>Pessoas</label><input class="field" type="number" id="f_pessoas" value="${e.pessoas||''}"></div><div><label>Pacote</label><select class="field" id="f_pacote">${packs.map(p=>`<option ${p===(e.pacote||'A definir')?'selected':''}>${p}</option>`).join('')}</select></div><div><label>Valor por pessoa</label><input class="field" type="text" inputmode="decimal" id="f_valorPessoa" value="${String(e.valorPessoa||0).replace('.',',')}"></div><div><label>Extras</label><input class="field" type="text" inputmode="decimal" id="f_extras" value="${String(e.extras||0).replace('.',',')}"><small class="muted">Valor extra do evento.</small></div><div><label>Taxa serviço %</label><input class="field" type="text" inputmode="decimal" id="f_taxa" value="${String(e.taxaServicoPct??13).replace('.',',')}"></div><div><label>Gorjeta</label><input class="field" type="text" inputmode="decimal" id="f_gorjeta" value="${e.gorjeta||0}" readonly></div><div class="span2"><label>Salão</label><select class="field" id="f_unidade">${['Salão Vasto','Salão Barra','Salão Beira Mar','Varanda','Salão Barra + Beira Mar + Varanda','A definir'].map(st=>`<option ${st===(e.unidade||'A definir')?'selected':''}>${st}</option>`).join('')}</select></div><div class="span2"><label>Valor total</label><input class="field" type="text" inputmode="decimal" id="f_valorEstimado" value="${e.valorTotal||e.valorEstimado||0}" readonly></div><div class="span4"><label>Observações / andamento</label><textarea class="field" id="f_obs">${esc(e.observacoes||'')}</textarea></div><div class="span4 directors-box"><label>Assinatura da diretoria</label>${[0,1,2].map(i=>{const d=(e.diretores||[])[i]||{};return `<div class="director-row"><input class="field" id="f_dir_nome_${i}" placeholder="Nome do diretor" value="${esc(d.nome||'')}"><span>Assinou?</span><input type="checkbox" id="f_dir_ok_${i}" ${d.assinado?'checked':''}></div>`}).join('')}<p class="muted" style="margin:8px 0 0;font-size:11px">Marque cada diretor que assinou. Quando todos estiverem OK, o evento pode avançar para Fechado.</p></div></div><div class="divider"></div><button class="btn" onclick="EVENTOS.saveForm('${e.id||''}')">Salvar evento</button>`
+  return `${clienteOptions}<div class="form-grid event-form-premium"><div><label>Cliente</label><input class="field" id="f_cliente" list="clientesCadastroOptions" value="${esc(e.cliente||'')}" oninput="EVENTOS.applyClienteLookup()" onchange="EVENTOS.applyClienteLookup()"><small class="muted">Digite e selecione um cliente já cadastrado.</small></div><div><label>Telefone</label><input class="field" id="f_telefone" value="${esc(e.telefone||'')}" onchange="EVENTOS.applyClienteLookup()"></div><div><label>Data</label><input class="field" type="date" id="f_data" value="${e.data||''}"></div><div><label>Horário</label><input class="field" type="time" id="f_horario" value="${e.horario||''}"></div><div><label>Status</label><select class="field" id="f_status">${STATUS.map(st=>`<option ${st===(e.status||'Lead')?'selected':''}>${st}</option>`).join('')}</select></div><div><label>Origem</label><select class="field" id="f_origem"><option>${e.origem||'WhatsApp'}</option><option>Instagram</option><option>Telefone</option><option>Anúncio</option><option>Indicação</option><option>Presencial</option><option>Google Forms</option></select></div><div><label>Tipo</label><input class="field" id="f_tipo" value="${esc(e.tipo||'Evento')}"></div><div><label>Turno</label><select class="field" id="f_turno">${['Almoço','Jantar','Ambos','A definir'].map(st=>`<option ${st===(e.turno||'A definir')?'selected':''}>${st}</option>`).join('')}</select></div><div><label>Pacote</label><select class="field" id="f_pacote">${packs.map(p=>`<option ${p===(e.pacote||'A definir')?'selected':''}>${p}</option>`).join('')}</select></div><div class="span2"><label>Salão</label><select class="field" id="f_unidade">${['Salão Vasto','Salão Barra','Salão Beira Mar','Varanda','Salão Barra + Beira Mar + Varanda','A definir'].map(st=>`<option ${st===(e.unidade||'A definir')?'selected':''}>${st}</option>`).join('')}</select></div><div class="span4"><label>Observações / andamento</label><textarea class="field" id="f_obs">${esc(e.observacoes||'')}</textarea></div>${financialHtml(e)}<div class="span4 directors-box"><label>Assinatura da diretoria</label>${[0,1,2].map(i=>{const d=(e.diretores||[])[i]||{};return `<div class="director-row"><input class="field" id="f_dir_nome_${i}" placeholder="Nome do diretor" value="${esc(d.nome||'')}"><span>Assinou?</span><input type="checkbox" id="f_dir_ok_${i}" ${d.assinado?'checked':''}></div>`}).join('')}<p class="muted" style="margin:8px 0 0;font-size:11px">Marque cada diretor que assinou. Quando todos estiverem OK, o evento pode avançar para Fechado.</p></div></div><div class="divider"></div><div class="modal-actions"><button class="btn alt" onclick="EVENTOS.closeModal&&EVENTOS.closeModal()">Cancelar</button><button class="btn" onclick="EVENTOS.saveForm('${e.id||''}')">Salvar alterações</button></div>`
 }
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-function collect(id){const data=$('f_data').value;calcEventFinancialsFromFields();const pessoas=parseNum($('f_pessoas').value)||null;const valorPessoa=parseNum($('f_valorPessoa').value);const taxaServicoPct=parseNum($('f_taxa').value);const extras=parseNum($('f_extras')?.value);const gorjeta=parseNum($('f_gorjeta').value);const valorTotal=parseNum($('f_valorEstimado').value);return{id:id||uid(),ano:data?Number(data.slice(0,4)):new Date().getFullYear(),data:data||new Date().toISOString().slice(0,10),horario:$('f_horario')?$('f_horario').value:'',cliente:$('f_cliente').value.trim()||'Cliente não informado',telefone:$('f_telefone').value.trim(),origem:$('f_origem').value,unidade:$('f_unidade').value,tipo:$('f_tipo').value,turno:$('f_turno').value,pessoas,pacote:$('f_pacote').value,status:$('f_status').value,valorPessoa,taxaServicoPct,extras,gorjeta,valorEstimado:valorTotal,valorTotal,observacoes:$('f_obs').value.trim(),diretores:[0,1,2].map(i=>({nome:($('f_dir_nome_'+i)?.value||'').trim(),assinado:!!$('f_dir_ok_'+i)?.checked})).filter(d=>d.nome),atualizadoEm:new Date().toISOString()};}
+function collect(id){
+  const data=$('f_data').value;
+  calcEventFinancialsFromFields();
+  const f=eventFinancialValuesFromFields();
+  const pessoas=f.pessoas||null;
+  const valorTotal=f.valorTotal;
+  return{
+    id:id||uid(),
+    ano:data?Number(data.slice(0,4)):new Date().getFullYear(),
+    data:data||new Date().toISOString().slice(0,10),
+    horario:$('f_horario')?$('f_horario').value:'',
+    cliente:$('f_cliente').value.trim()||'Cliente não informado',
+    telefone:$('f_telefone').value.trim(),
+    origem:$('f_origem').value,
+    unidade:$('f_unidade').value,
+    tipo:$('f_tipo').value,
+    turno:$('f_turno').value,
+    pessoas,
+    pacote:$('f_pacote').value,
+    status:$('f_status').value,
+    valorPessoa:f.valorPessoa,
+    taxaServicoPct:f.taxa,
+    contratoBase:f.baseA,
+    contratoServico:f.servicoA,
+    contratoTotal:f.totalA,
+    extra1:f.extra1,
+    extra2:f.extra2,
+    extra3:f.extra3,
+    consumoExtra1:f.extra1,
+    consumoExtra2:f.extra2,
+    consumoExtra3:f.extra3,
+    extras:f.totalB,
+    totalExtras:f.totalB,
+    pessoasExcedentes:f.pessoasExcedentes,
+    valorPessoaExcedente:f.valorPessoaExcedente,
+    taxaExcedentePct:f.taxaExcedente,
+    excedenteBase:f.baseC,
+    excedenteServico:f.servicoC,
+    excedenteTotal:f.totalC,
+    gorjeta:f.gorjeta,
+    valorEstimado:valorTotal,
+    valorTotal,
+    observacoes:$('f_obs').value.trim(),
+    diretores:[0,1,2].map(i=>({nome:($('f_dir_nome_'+i)?.value||'').trim(),assinado:!!$('f_dir_ok_'+i)?.checked})).filter(d=>d.nome),
+    atualizadoEm:new Date().toISOString()
+  };
+}
 
 function eventoFreshMs(e){return Math.max(parseTimestampBR(e&&e.atualizadoEm),parseTimestampBR(e&&e.movidoEm),parseTimestampBR(e&&e.statusAtualizadoEm),parseTimestampBR(e&&e.criadoEm));}
 function markPendingEvento(e){
@@ -802,6 +943,7 @@ function mergeRemoteEventos(arr){
 }
 
 window.EVENTOS={
+  closeModal(){ $('modal').classList.remove('open'); },
   tab(id){state.tab=id;document.body.classList.remove('menu-open');render()},
   clientesTab(v){state.clientesView=v;renderClientes();},
   renderClientesCadastroFiltrado(){renderClientesCadastroFiltrado();},

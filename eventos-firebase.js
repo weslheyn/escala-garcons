@@ -51,5 +51,10 @@ window.EventosFirebase = {
     const id=cliente.id || ('cli_'+Date.now().toString(36));
     await this.db.ref('clientes_cadastro/'+id).set(Object.assign({},cliente,{id,atualizadoEm:new Date().toISOString()}));
     return true;
+  },
+  async deleteClienteCadastro(id){
+    if(!this.enabled||!this.db||!id) return false;
+    await this.db.ref('clientes_cadastro/'+id).remove();
+    return true;
   }
 };

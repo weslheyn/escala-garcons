@@ -832,3 +832,35 @@ function boot(){
 load();setupTabs();setupFilters();render(); if(window.EventosFirebase){EventosFirebase.init().then(ok=>{if(ok){EventosFirebase.listen(arr=>{if(Array.isArray(arr)&&arr.length){mergeRemoteEventos(arr);setupFilters();render();}}); if(EventosFirebase.listenClientes) EventosFirebase.listenClientes(arr=>{state.clientesCadastros=dedupeClientesCadastro([...(state.clientesCadastros||[]),...(arr||[])]);saveClientes(); if(state.tab==='clientes')renderClientes();});}});}}
 document.addEventListener('DOMContentLoaded',boot);
 })();
+
+/* ===== v91 - Controles mobile premium seguros ===== */
+(function(){
+  function ensureMobileControls(){
+    if(!document.getElementById('mobileMenuFab')){
+      const btn=document.createElement('button');
+      btn.id='mobileMenuFab';
+      btn.className='mobile-menu-fab';
+      btn.type='button';
+      btn.setAttribute('aria-label','Abrir menu');
+      btn.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();document.body.classList.toggle('menu-open');});
+      document.body.appendChild(btn);
+    }
+    if(!document.getElementById('mobileNewEventFab')){
+      const btn=document.createElement('button');
+      btn.id='mobileNewEventFab';
+      btn.className='mobile-new-event-fab';
+      btn.type='button';
+      btn.textContent='+';
+      btn.setAttribute('aria-label','Novo evento');
+      btn.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();if(window.EVENTOS&&EVENTOS.openForm)EVENTOS.openForm();});
+      document.body.appendChild(btn);
+    }
+  }
+  document.addEventListener('click',function(ev){
+    if(!document.body.classList.contains('menu-open'))return;
+    if(ev.target.closest('.desktop-sidebar')||ev.target.closest('#mobileMenuFab'))return;
+    document.body.classList.remove('menu-open');
+  },true);
+  document.addEventListener('keydown',function(ev){if(ev.key==='Escape')document.body.classList.remove('menu-open');});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensureMobileControls);else ensureMobileControls();
+})();

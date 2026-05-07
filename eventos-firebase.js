@@ -35,7 +35,8 @@ window.EventosFirebase = {
   listen(cb){
     if(!this.enabled||!this.db) return false;
     this.db.ref('eventos_premium/eventos').on('value',snap=>{
-      const v=snap.val(); if(v) cb(Object.values(v));
+      const v=snap.val();
+      cb(v?Object.values(v):[]);
     });
     return true;
   },

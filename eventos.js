@@ -122,9 +122,12 @@ function applyClienteCadastroToEvento(){
 }
 function load(){
   const saved=localStorage.getItem(STORE);
-  if(saved){try{state.eventos=dedupeEventos(JSON.parse(saved)||[])}catch(e){state.eventos=[]}}
-  else{
-    state.eventos=dedupeEventos((window.EVENTOS_SEED||[]).map(e=>({...e,importado:true})));
+  if(saved){
+    try{state.eventos=dedupeEventos(JSON.parse(saved)||[])}catch(e){state.eventos=[]}
+  }else{
+    // v97: não carrega mais a base demonstrativa automaticamente.
+    // Isso permite começar o CRM do zero sem o eventos-seed.js repovoar a tela.
+    state.eventos=[];
     localStorage.setItem(STORE,JSON.stringify(state.eventos));
   }
   try{state.meta=Object.assign(state.meta,JSON.parse(localStorage.getItem(META)||'{}'))}catch(e){}
@@ -1001,6 +1004,6 @@ function boot(){
   if(ev.target.closest('.desktop-sidebar')||ev.target.closest('.mobile-menu'))return;
   document.body.classList.remove('menu-open');
 });
-load();setupTabs();setupFilters();render(); if(window.EventosFirebase){EventosFirebase.init().then(ok=>{if(ok){EventosFirebase.listen(arr=>{if(Array.isArray(arr)&&arr.length){mergeRemoteEventos(arr);setupFilters();render();}}); if(EventosFirebase.listenClientes) EventosFirebase.listenClientes(arr=>{state.clientesCadastros=dedupeClientesCadastro([...(state.clientesCadastros||[]),...(arr||[])]);saveClientes(); if(state.tab==='clientes')renderClientes();});}});}}
+load();setupTabs();setupFilters();render(); if(window.EventosFirebase){EventosFirebase.init().then(ok=>{if(ok){EventosFirebase.listen(arr=>{if(Array.isArray(arr)){if(arr.length){mergeRemoteEventos(arr);}else{state.eventos=[];localStorage.setItem(STORE,JSON.stringify(state.eventos));}setupFilters();render();}}); if(EventosFirebase.listenClientes) EventosFirebase.listenClientes(arr=>{state.clientesCadastros=dedupeClientesCadastro(arr||[]);saveClientes(); if(state.tab==='clientes')renderClientes();});}});}}
 document.addEventListener('DOMContentLoaded',boot);
 })();

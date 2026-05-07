@@ -458,7 +458,7 @@ function setupPipelinePointerDrag(card,root){
     if(lastX<r.left+edge)dir=-1;
     else if(lastX>r.right-edge)dir=1;
     if(!dir)return;
-    kanban.scrollLeft+=dir*20;
+    kanban.scrollLeft+=dir*34;
     __pipelineScrollLeft=kanban.scrollLeft;
     setZone(pipelineZoneFromPoint(root,lastX,lastY));
   };
@@ -496,7 +496,7 @@ function setupPipelinePointerDrag(card,root){
     sourceCard.dataset.pointerType=ev.pointerType||'touch';
     clearTimers();
     try{card.setPointerCapture(ev.pointerId);}catch(_){ }
-    timer=setTimeout(begin,260);
+    timer=setTimeout(begin,430);
   },{passive:true});
 
   window.addEventListener('pointermove',ev=>{
@@ -506,14 +506,12 @@ function setupPipelinePointerDrag(card,root){
 
     if(!active){
       if(isTouchLike(ev)){
-        // Mobile estilo Trello: arraste horizontal inicia o mover; rolagem vertical continua normal.
-        if(dy>22 && dy>dx*1.2){clearState();return;}
-        if(dx>14){clearTimers(); begin();}
-        else return;
-      }else{
-        if(dx<4&&dy<4)return;
-        begin();
+        // Se o usuário só está rolando no celular, cancela o modo mover.
+        if(dx>28||dy>28)clearState();
+        return;
       }
+      if(dx<4&&dy<4)return;
+      begin();
     }
     if(!active)return;
     ev.preventDefault();
@@ -677,7 +675,7 @@ function renderCalendar(){
   const actions=`<select class="field compact" onchange="EVENTOS.setCalendar(this.value,null)">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${month===i+1?'selected':''}>${monthName(i+1)}</option>`).join('')}</select><select class="field compact" onchange="EVENTOS.setCalendar(null,this.value)">${years.map(y=>`<option ${year===y?'selected':''}>${y}</option>`).join('')}</select><button class="btn alt" onclick="EVENTOS.setCalendar(new Date().getMonth()+1,new Date().getFullYear(),new Date().getDate())">Hoje</button><button class="btn alt" onclick="EVENTOS.toggleFilters()">▽ Filtros</button><button class="btn primary" onclick="EVENTOS.openForm()">+ Novo Evento</button>`;
   const legend=`<div class="cal-legend"><span class="evc-yellow">Orçamento/Lead</span><span class="evc-green">Fechado</span><span class="evc-red">Atenção</span><span class="evc-blue">Corporativo</span><span class="evc-purple">Contrato/Alinhamento</span></div>`;
   const pills=`<div class="view-pills"><button class="${view==='mes'?'active':''}" onclick="EVENTOS.setCalendarView('mes')">Mês</button><button class="${view==='semana'?'active':''}" onclick="EVENTOS.setCalendarView('semana')">Semana</button><button class="${view==='dia'?'active':''}" onclick="EVENTOS.setCalendarView('dia')">Dia</button></div>`;
-  function evHtml(e){return `<div class="ev ${statusClass(e.status)} ${eventColorClass(e)}" onclick="EVENTOS.view('${e.id}')"><span class="ev-dot"></span><strong>${esc(e.cliente||'Cliente')}</strong><small>${horario(e)} · ${esc(e.turno||'A definir')} · ${e.pessoas||'-'}p<br>📍 ${esc(salao(e)||'A definir')}</small></div>`;}
+  function evHtml(e){return `<div class="ev ${statusClass(e.status)} ${eventColorClass(e)}" onclick="EVENTOS.view('${e.id}')"><span class="ev-dot"></span><strong>${esc(e.cliente||'Cliente')}</strong><small>${horario(e)} · ${esc(e.turno||'A definir')} · ${e.pessoas||'-'}p<br>📍 ${esc(salao(e)||'Salão a definir')}</small></div>`;}
   function dayBox(date,empty=false){
     const iso=date.toISOString().slice(0,10);
     const evs=list.filter(e=>parseDateAny(e.data)===iso);

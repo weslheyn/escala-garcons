@@ -122,6 +122,9 @@ function filtered(){
   });
 }
 function statusClass(s){const n=norm(s); if(n.includes('fechado'))return's-fechado'; if(n.includes('perdido'))return's-perdido'; if(n.includes('cancel'))return's-cancelado'; if(n.includes('sem resposta')||n.includes('recupera'))return's-semresposta'; if(n.includes('contrato')||n.includes('assinatura'))return's-contrato'; if(n.includes('proposta')||n.includes('visita'))return's-proposta'; if(n.includes('reuniao'))return's-reuniao'; if(n.includes('realizado'))return's-fechado'; return's-neg';}
+function eventColorClass(e){const n=norm([e.status,e.tipo,e.pacote,e.origem].join(' ')); if(n.includes('fechado')||n.includes('realizado'))return'evc-green'; if(n.includes('cancel')||n.includes('perdido'))return'evc-red'; if(n.includes('corporativo')||n.includes('empresa'))return'evc-blue'; if(n.includes('reuniao')||n.includes('alinhamento')||n.includes('contrato')||n.includes('assinatura'))return'evc-purple'; if(n.includes('proposta')||n.includes('visita')||n.includes('lead'))return'evc-yellow'; return'evc-gray';}
+function moduleMeta(){const map={dashboard:['Dashboard','Visão geral comercial dos eventos.','▦'],funil:['Funil de Eventos','Acompanhe oportunidades e mova cards entre etapas.','▽'],calendario:['Calendário de Eventos','Visualize e gerencie os eventos do mês.','▣'],vendas:['Vendas','Controle de vendas, valores e orçamentos.','↗'],recuperacao:['Recuperação','Recupere clientes inativos e oportunidades perdidas.','↻'],clientes:['Clientes','Histórico e cadastro de clientes do CRM.','◌'],pacotes:['Pacotes','Pacotes, serviços e valores cadastrados.','▤'],agenda:['Agenda','Tarefas, compromissos e atividades da equipe.','☷'],sheets:['Relatórios','Exportações, integrações e indicadores.','▥']};return map[state.tab]||map.dashboard;}
+function moduleHeader(extra=''){const [title,subtitle,icon]=moduleMeta();return `<div class="module-head premium-panel"><div><span class="eyebrow">${icon} ${esc(title.split(' ')[0])}</span><h2>${esc(title)}</h2><p>${esc(subtitle)}</p></div>${extra?`<div class="module-actions">${extra}</div>`:''}</div>`;}
 function isRecuperacaoStatus(s){return ['Recuperação','Sem resposta','Cancelado','Perdido','Perdido/Cancelado'].includes(s);}
 function normalizeStatus(s, obs=''){
   const n=norm([s,obs].join(' '));
@@ -237,9 +240,11 @@ $('dashboard').innerHTML=`
 </div>`;
 renderWeekEvents();
 }
-function card(e){return `<div class="event-card draggable-card" draggable="true" data-event-id="${e.id}" data-status="${esc(e.status||'Lead')}"><b>${e.cliente||'Cliente'}</b><p>${dow(e.data)} • ${shortDate(e.data)} • ${horario(e)}<br>${e.turno||'A definir'} · ${e.pessoas||'-'} pessoas · ${e.pacote||'A definir'}<br>📍 ${esc(salao(e))} · ${brl(e.valorEstimado)}</p><span class="status ${statusClass(e.status)}">${e.status||'Em negociação'}</span><div class="actions"><button onclick="EVENTOS.view('${e.id}')">Ver</button><button onclick="EVENTOS.edit('${e.id}')">Editar</button></div></div>`}
-function renderFunil(){const list=sortEventosRecentes(filtered().filter(e=>!isRecuperacaoStatus(e.status)));$('funil').innerHTML=`<div class="kanban pipeline-kanban">${PIPELINE_STATUS.map((st,idx)=>{const col=sortEventosRecentes(list.filter(e=>e.status===st));return `<div class="col pipeline-drop-zone" data-status="${esc(st)}" data-index="${idx}"><h3>${st} · ${col.length}</h3><div class="drop-hint">Solte aqui para mover</div>${col.map(card).join('')||'<p class="muted empty-col">Sem eventos</p>'}</div>`}).join('')}</div>`;setupFunilDragDrop();}
+function initials(name){return String(name||'CB').trim().split(/\s+/).slice(0,2).map(p=>p[0]||'').join('').toUpperCase()||'CB';}
+function card(e){return `<div class="event-card draggable-card ${eventColorClass(e)}" draggable="true" data-event-id="${e.id}" data-status="${esc(e.status||'Lead')}"><div class="card-row"><span class="client-avatar">${esc(initials(e.cliente))}</span><div class="card-main"><b>${e.cliente||'Cliente'}</b><p>${dow(e.data)} • ${shortDate(e.data)} • ${horario(e)}<br>${e.turno||'A definir'} · ${e.pessoas||'-'} pessoas · ${e.pacote||'A definir'}<br>📍 ${esc(salao(e))} · ${brl(e.valorEstimado)}</p></div></div><span class="status ${statusClass(e.status)}">${e.status||'Em negociação'}</span><div class="actions"><button onclick="EVENTOS.view('${e.id}')">Ver</button><button onclick="EVENTOS.edit('${e.id}')">Editar</button></div></div>`}
+function renderFunil(){const list=sortEventosRecentes(filtered().filter(e=>!isRecuperacaoStatus(e.status)));const total=list.length;const actions=`<button class="btn alt" onclick="EVENTOS.toggleFilters()">▽ Filtros</button><button class="btn primary" onclick="EVENTOS.openForm()">+ Novo evento</button>`;$('funil').innerHTML=moduleHeader(actions)+`<div class="funil-title-line"><h3>Pipeline comercial</h3><span>${total} eventos</span></div><div class="kanban pipeline-kanban">${PIPELINE_STATUS.map((st,idx)=>{const col=sortEventosRecentes(list.filter(e=>e.status===st));return `<div class="col pipeline-drop-zone ${eventColorClass({status:st})}" data-status="${esc(st)}" data-index="${idx}"><h3>${st} <span>${col.length}</span></h3><div class="drop-hint">Solte aqui para mover</div>${col.map(card).join('')||'<p class="muted empty-col">Sem eventos</p>'}</div>`}).join('')}</div>`;setupFunilDragDrop();}
 
+let __pipelineDraggedId=null;
 function setupFunilDragDrop(){
   const root=$('funil');
   if(!root)return;
@@ -248,12 +253,14 @@ function setupFunilDragDrop(){
     card.setAttribute('draggable',isTouch?'false':'true');
     if(isTouch){setupTouchPipelineCard(card,root);return;}
     card.addEventListener('dragstart',ev=>{
-      ev.dataTransfer.setData('text/plain',card.dataset.eventId||'');
+      __pipelineDraggedId=card.dataset.eventId||'';
+      ev.dataTransfer.setData('text/plain',__pipelineDraggedId);
       ev.dataTransfer.effectAllowed='move';
       card.classList.add('dragging');
       document.body.classList.add('kanban-dragging');
     });
     card.addEventListener('dragend',()=>{
+      __pipelineDraggedId=null;
       card.classList.remove('dragging');
       document.body.classList.remove('kanban-dragging');
       root.querySelectorAll('.pipeline-drop-zone').forEach(z=>z.classList.remove('drag-over','drag-blocked'));
@@ -261,7 +268,7 @@ function setupFunilDragDrop(){
   });
   root.querySelectorAll('.pipeline-drop-zone').forEach(zone=>{
     zone.addEventListener('dragover',ev=>{
-      const id=ev.dataTransfer.getData('text/plain')||document.querySelector('.draggable-card.dragging')?.dataset.eventId||'';
+      const id=__pipelineDraggedId||ev.dataTransfer.getData('text/plain')||document.querySelector('.draggable-card.dragging')?.dataset.eventId||'';
       if(!id)return;
       const e=state.eventos.find(x=>x.id===id);
       const ok=e?canMovePipeline(e.status,zone.dataset.status):true;
@@ -273,7 +280,7 @@ function setupFunilDragDrop(){
     zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over','drag-blocked'));
     zone.addEventListener('drop',ev=>{
       ev.preventDefault();
-      const id=ev.dataTransfer.getData('text/plain')||'';
+      const id=__pipelineDraggedId||ev.dataTransfer.getData('text/plain')||document.querySelector('.draggable-card.dragging')?.dataset.eventId||'';
       zone.classList.remove('drag-over','drag-blocked');
       if(id) EVENTOS.movePipeline(id,zone.dataset.status);
     });
@@ -364,20 +371,19 @@ function setupTouchPipelineCard(card,root){
   card.addEventListener('touchcancel',cleanup,{passive:true});
 }
 function canMovePipeline(from,to){
-  // v80: movimentação livre no funil.
-  // Permite voltar e avançar entre qualquer etapa oficial do pipeline.
-  const destino=String(to||'').trim();
-  return PIPELINE_STATUS.includes(destino);
+  // v77: permite movimentar o card livremente no funil, tanto para frente quanto para trás.
+  // A validação permanece apenas para impedir soltar fora das etapas oficiais.
+  return !!to && PIPELINE_STATUS.includes(to);
 }
 
-function renderVendas(){const list=filtered().sort((a,b)=>String(a.data).localeCompare(String(b.data)));$('vendas').innerHTML=`<div class="table-wrap"><table><thead><tr><th>Data</th><th>Horário</th><th>Cliente</th><th>Status</th><th>Turno</th><th>Pessoas</th><th>Pacote</th><th>Valor total</th><th>Gorjeta</th><th>Ações</th></tr></thead><tbody>${list.map(e=>`<tr><td>${dt(e.data)}</td><td>${horario(e)}</td><td><b>${e.cliente}</b><br><span class="muted">${e.telefone||''}</span></td><td><span class="status ${statusClass(e.status)}">${e.status}</span></td><td>${e.turno}</td><td>${e.pessoas||''}</td><td>${e.pacote}</td><td>${brl(e.valorEstimado)}</td><td>${brl(e.gorjeta)}</td><td><button class="btn alt" onclick="EVENTOS.view('${e.id}')">Abrir</button></td></tr>`).join('')}</tbody></table></div>`;}
+function renderVendas(){const list=filtered().sort((a,b)=>String(a.data).localeCompare(String(b.data)));$('vendas').innerHTML=moduleHeader(`<button class="btn alt" onclick="EVENTOS.toggleFilters()">▽ Filtros</button><button class="btn primary" onclick="EVENTOS.openForm()">+ Novo evento</button>`)+`<div class="table-wrap"><table><thead><tr><th>Data</th><th>Horário</th><th>Cliente</th><th>Status</th><th>Turno</th><th>Pessoas</th><th>Pacote</th><th>Valor total</th><th>Gorjeta</th><th>Ações</th></tr></thead><tbody>${list.map(e=>`<tr><td>${dt(e.data)}</td><td>${horario(e)}</td><td><b>${e.cliente}</b><br><span class="muted">${e.telefone||''}</span></td><td><span class="status ${statusClass(e.status)}">${e.status}</span></td><td>${e.turno}</td><td>${e.pessoas||''}</td><td>${e.pacote}</td><td>${brl(e.valorEstimado)}</td><td>${brl(e.gorjeta)}</td><td><button class="btn alt" onclick="EVENTOS.view('${e.id}')">Abrir</button></td></tr>`).join('')}</tbody></table></div>`;}
 function recoveryCard(e){
   return `<div class="event-card recovery-card"><b>${e.cliente||'Cliente'}</b><p>${dow(e.data)} • ${shortDate(e.data)} • ${horario(e)}<br>${e.turno||'A definir'} · ${e.pessoas||'-'} pessoas · ${e.pacote||'A definir'}<br>📍 ${esc(salao(e))} · ${brl(e.valorEstimado)}</p><span class="status ${statusClass(e.status)}">${e.status||'Em recuperação'}</span><div class="actions recovery-actions"><button onclick="EVENTOS.view('${e.id}')">Ver</button><button onclick="EVENTOS.edit('${e.id}')">Editar</button><button onclick="EVENTOS.whats('${e.id}')">WhatsApp</button><button onclick="EVENTOS.markRecuperado('${e.id}')">Recuperado</button></div></div>`;
 }
 function renderRecuperacao(){
   const list=sortEventosRecentes(filtered().filter(e=>isRecuperacaoStatus(e.status)));
   const cols=RECOVERY_STATUS;
-  $('recuperacao').innerHTML=`<div class="kanban recuperacao-kanban">${cols.map(st=>`<div class="col"><h3>${st} · ${list.filter(e=>e.status===st).length}</h3>${list.filter(e=>e.status===st).map(recoveryCard).join('')||'<p class="muted">Sem clientes</p>'}</div>`).join('')}</div>`;
+  $('recuperacao').innerHTML=moduleHeader(`<button class="btn alt" onclick="EVENTOS.toggleFilters()">▽ Filtros</button>`)+`<div class="kanban recuperacao-kanban">${cols.map(st=>`<div class="col"><h3>${st} · ${list.filter(e=>e.status===st).length}</h3>${list.filter(e=>e.status===st).map(recoveryCard).join('')||'<p class="muted">Sem clientes</p>'}</div>`).join('')}</div>`;
 }
 function clienteKey(c){
   const origem=norm(c.origem||'');
@@ -406,12 +412,12 @@ function renderClientes(){
   if(state.clientesView==='cadastro') return renderClientesCadastro();
   const map={}; filtered().forEach(e=>{const k=e.cliente||'Cliente'; if(!map[k])map[k]={q:0,total:0,last:e.data,tel:e.telefone}; map[k].q++; map[k].total+=Number(e.valorEstimado)||0; if(e.data>map[k].last)map[k].last=e.data; if(e.telefone)map[k].tel=e.telefone;});
   const arr=Object.entries(map).sort((a,b)=>b[1].total-a[1].total);
-  $('clientes').innerHTML=`${clientesTabs()}<div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Telefone</th><th>Eventos</th><th>Total estimado</th><th>Último evento</th></tr></thead><tbody>${arr.map(([k,v])=>`<tr><td><b>${esc(k)}</b></td><td>${esc(v.tel||'')}</td><td>${v.q}</td><td>${brl(v.total)}</td><td>${dt(v.last)}</td></tr>`).join('')}</tbody></table></div>`;
+  $('clientes').innerHTML=moduleHeader(`<button class="btn primary" onclick="EVENTOS.openClienteForm()">+ Novo cliente</button>`)+`${clientesTabs()}<div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Telefone</th><th>Eventos</th><th>Total estimado</th><th>Último evento</th></tr></thead><tbody>${arr.map(([k,v])=>`<tr><td><b>${esc(k)}</b></td><td>${esc(v.tel||'')}</td><td>${v.q}</td><td>${brl(v.total)}</td><td>${dt(v.last)}</td></tr>`).join('')}</tbody></table></div>`;
 }
 function clientesTabs(){return `<div class="clientes-top"><div class="clientes-tabs"><button class="chip ${state.clientesView!=='cadastro'?'active':''}" onclick="EVENTOS.clientesTab('historico')">Histórico de Clientes</button><button class="chip ${state.clientesView==='cadastro'?'active':''}" onclick="EVENTOS.clientesTab('cadastro')">Cadastro de Clientes</button></div>${state.clientesView==='cadastro'?`<button class="btn primary" onclick="EVENTOS.openClienteForm()">+ Novo cliente</button>`:''}</div>`;}
 function renderClientesCadastro(){
   const arr=dedupeClientesCadastro(state.clientesCadastros||[]); state.clientesCadastros=arr; saveClientes();
-  $('clientes').innerHTML=`${clientesTabs()}<div class="clientes-toolbar premium-block"><input class="field" id="cliBusca" placeholder="Buscar nome, telefone, e-mail, CPF/CNPJ, origem ou tag..." oninput="EVENTOS.renderClientesCadastroFiltrado()"><select class="field" id="cliOrigem" onchange="EVENTOS.renderClientesCadastroFiltrado()"><option value="">Todas as origens</option>${[...new Set(arr.map(c=>c.origem).filter(Boolean))].sort().map(o=>`<option>${esc(o)}</option>`).join('')}</select></div><div id="clientesCadastroLista"></div>`;
+  $('clientes').innerHTML=moduleHeader(`<button class="btn primary" onclick="EVENTOS.openClienteForm()">+ Novo cliente</button>`)+`${clientesTabs()}<div class="clientes-toolbar premium-block"><input class="field" id="cliBusca" placeholder="Buscar nome, telefone, e-mail, CPF/CNPJ, origem ou tag..." oninput="EVENTOS.renderClientesCadastroFiltrado()"><select class="field" id="cliOrigem" onchange="EVENTOS.renderClientesCadastroFiltrado()"><option value="">Todas as origens</option>${[...new Set(arr.map(c=>c.origem).filter(Boolean))].sort().map(o=>`<option>${esc(o)}</option>`).join('')}</select></div><div id="clientesCadastroLista"></div>`;
   renderClientesCadastroFiltrado();
 }
 function renderClientesCadastroFiltrado(){
@@ -432,8 +438,8 @@ function collectClienteCadastro(id){
   return normalizaClienteCadastro({id:id||('cli_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)),nome:($('cli_nome')?.value||'').trim(),telefone:($('cli_telefone')?.value||'').trim(),email:($('cli_email')?.value||'').trim(),origem:$('cli_origem')?.value||'Manual',cpfCnpj:($('cli_cpf')?.value||'').trim(),razaoSocial:($('cli_razao')?.value||'').trim(),instagram:($('cli_instagram')?.value||'').trim(),tags:($('cli_tags')?.value||'').split(',').map(x=>x.trim()).filter(Boolean),dataEvento:$('cli_data')?.value||'',horario:($('cli_horario')?.value||'').trim(),tipoEvento:($('cli_tipo')?.value||'').trim(),pessoas:($('cli_pessoas')?.value||'').trim(),observacoes:($('cli_obs')?.value||'').trim(),eventoId:atual.eventoId||'',criadoEm:atual.criadoEm||new Date().toISOString(),atualizadoEm:new Date().toISOString()});
 }
 
-function renderPacotes(){$('pacotes').innerHTML=`<div class="package-grid">${state.pacotes.map(p=>`<div class="package"><h3>${p.nome}</h3><div class="price">${brl(p.valorSemana)} / ${brl(p.valorFimSemana)}</div><p><b>${p.categoria}</b> · ${p.servico} · ${p.duracao}<br>Mínimo: ${p.minPessoas} pessoas · Taxa: ${p.taxaServicoPct}%</p><p>${p.resumo}</p></div>`).join('')}</div>`;}
-function renderSheets(){ $('sheets').innerHTML=`<div class="grid-2"><div class="panel"><h3>Integração Google Sheets</h3><p class="muted">Esta versão inclui o arquivo <b>AppsScript_Eventos_Isolado.gs</b>. Cole esse script na planilha para receber os dados exportados do módulo Eventos.</p><button class="btn" onclick="EVENTOS.exportCSV()">Baixar CSV agora</button><div class="divider"></div><p class="muted">Abas sugeridas: Eventos, Clientes, Pacotes, Vendas, Recuperação, Dashboard e Configurações.</p></div><div class="panel"><h3>Segurança da integração</h3><p class="muted">O módulo salva no caminho isolado <b>/eventos_premium</b> no Firebase e usa localStorage como fallback. Nenhum caminho antigo de frequência, escala, mapa ou freelance é alterado.</p><button class="btn alt" onclick="EVENTOS.firebaseSync()">Tentar sincronizar Firebase</button></div></div>`; }
+function renderPacotes(){$('pacotes').innerHTML=moduleHeader()+`<div class="package-grid">${state.pacotes.map(p=>`<div class="package"><h3>${p.nome}</h3><div class="price">${brl(p.valorSemana)} / ${brl(p.valorFimSemana)}</div><p><b>${p.categoria}</b> · ${p.servico} · ${p.duracao}<br>Mínimo: ${p.minPessoas} pessoas · Taxa: ${p.taxaServicoPct}%</p><p>${p.resumo}</p></div>`).join('')}</div>`;}
+function renderSheets(){ $('sheets').innerHTML=moduleHeader()+`<div class="grid-2"><div class="panel"><h3>Integração Google Sheets</h3><p class="muted">Esta versão inclui o arquivo <b>AppsScript_Eventos_Isolado.gs</b>. Cole esse script na planilha para receber os dados exportados do módulo Eventos.</p><button class="btn" onclick="EVENTOS.exportCSV()">Baixar CSV agora</button><div class="divider"></div><p class="muted">Abas sugeridas: Eventos, Clientes, Pacotes, Vendas, Recuperação, Dashboard e Configurações.</p></div><div class="panel"><h3>Segurança da integração</h3><p class="muted">O módulo salva no caminho isolado <b>/eventos_premium</b> no Firebase e usa localStorage como fallback. Nenhum caminho antigo de frequência, escala, mapa ou freelance é alterado.</p><button class="btn alt" onclick="EVENTOS.firebaseSync()">Tentar sincronizar Firebase</button></div></div>`; }
 
 function agendaVisibleItems(){
   const f=state.agendaFiltros||{}; const dev=deviceId();
@@ -505,26 +511,20 @@ function renderCalendar(){
   const year=Number(state.cal.year)||Number($('ano').value)||now.getFullYear();
   const month=Number(state.cal.month)||Number($('mes').value)||now.getMonth()+1;
   state.cal={year,month};
-  const list=filtered().filter(e=>String(e.data||'').slice(0,7)===`${year}-${String(month).padStart(2,'0')}`).sort((a,b)=>String(a.data).localeCompare(String(b.data)));
+  const ym=`${year}-${String(month).padStart(2,'0')}`;
+  const list=filtered().filter(e=>parseDateAny(e.data).slice(0,7)===ym).sort((a,b)=>String(a.data).localeCompare(String(b.data))||String(horario(a)).localeCompare(String(horario(b))));
   const first=new Date(year,month-1,1);const last=new Date(year,month,0);
   const blanks=(first.getDay()+6)%7;
   const days=[];
-  for(let b=0;b<blanks;b++)days.push(`<div class="day empty"></div>`);
+  for(let b=0;b<blanks;b++)days.push(`<div class="day empty"><span></span></div>`);
   for(let i=1;i<=last.getDate();i++){
     const iso=`${year}-${String(month).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-    const evs=list.filter(e=>e.data===iso);
-    days.push(`<div class="day ${evs.length?'has-events':''}"><b>${i} <span>${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][new Date(iso+'T12:00').getDay()]}</span></b>${evs.map(e=>`<div class="ev ${statusClass(e.status)}" onclick="EVENTOS.view('${e.id}')">${e.cliente}<br>${horario(e)} · ${e.turno} · ${e.pessoas||'-'}p</div>`).join('')}</div>`);
+    const evs=list.filter(e=>parseDateAny(e.data)===iso);
+    days.push(`<div class="day ${evs.length?'has-events':''}"><b>${i} <span>${['DOM','SEG','TER','QUA','QUI','SEX','SÁB'][new Date(iso+'T12:00').getDay()]}</span></b>${evs.map(e=>`<div class="ev ${statusClass(e.status)} ${eventColorClass(e)}" onclick="EVENTOS.view('${e.id}')"><span class="ev-dot"></span><strong>${esc(e.cliente||'Cliente')}</strong><small>${horario(e)} · ${esc(e.turno||'A definir')} · ${e.pessoas||'-'}p</small></div>`).join('')}</div>`);
   }
   const years=[...new Set([...state.eventos.map(e=>Number(e.ano||String(e.data).slice(0,4))).filter(Boolean),2026,2027,new Date().getFullYear()])].sort();
-  $('calendario').innerHTML=`<div class="calendar-head premium-panel">
-    <div><span class="eyebrow">Agenda visual</span><h3>Calendário de eventos</h3></div>
-    <div class="calendar-controls">
-      <select class="field" onchange="EVENTOS.setCalendar(this.value,null)">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${month===i+1?'selected':''}>${monthName(i+1)}</option>`).join('')}</select>
-      <select class="field" onchange="EVENTOS.setCalendar(null,this.value)">${years.map(y=>`<option ${year===y?'selected':''}>${y}</option>`).join('')}</select>
-    </div>
-  </div>
-  <div class="calendar-weekdays"><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span></div>
-  <div class="calendar-grid visual-calendar">${days.join('')}</div>`;
+  const actions=`<select class="field compact" onchange="EVENTOS.setCalendar(this.value,null)">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${month===i+1?'selected':''}>${monthName(i+1)}</option>`).join('')}</select><select class="field compact" onchange="EVENTOS.setCalendar(null,this.value)">${years.map(y=>`<option ${year===y?'selected':''}>${y}</option>`).join('')}</select><button class="btn alt" onclick="EVENTOS.setCalendar(new Date().getMonth()+1,new Date().getFullYear())">Hoje</button><button class="btn alt" onclick="EVENTOS.toggleFilters()">▽ Filtros</button><button class="btn primary" onclick="EVENTOS.openForm()">+ Novo Evento</button>`;
+  $('calendario').innerHTML=moduleHeader(actions)+`<div class="calendar-toolbar"><div class="view-pills"><button class="active">Mês</button><button>Semana</button><button>Dia</button></div><div class="cal-legend"><span class="evc-yellow">Orçamento/Lead</span><span class="evc-green">Fechado</span><span class="evc-red">Atenção</span><span class="evc-blue">Corporativo</span><span class="evc-purple">Contrato/Alinhamento</span></div></div><div class="calendar-weekdays"><span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span><span>DOM</span></div><div class="calendar-grid visual-calendar">${days.join('')}</div>`;
 }
 function render(){document.body.dataset.tab=state.tab;setupTabs();document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));$(state.tab).classList.add('active');document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===state.tab));renderHero();({dashboard:renderDashboard,funil:renderFunil,calendario:renderCalendar,vendas:renderVendas,recuperacao:renderRecuperacao,clientes:renderClientes,pacotes:renderPacotes,agenda:renderAgenda,sheets:renderSheets}[state.tab]||renderDashboard)();}
 
@@ -596,7 +596,7 @@ window.EVENTOS={
   saveForm(id){const e=collect(id); const idx=state.eventos.findIndex(x=>x.id===e.id); if(idx>=0)state.eventos[idx]=Object.assign({},state.eventos[idx],e); else state.eventos.unshift(e); save(); $('modal').classList.remove('open'); toast('Evento salvo'); render();},
   view(id){const e=state.eventos.find(x=>x.id===id); if(!e)return; const wa=e.telefone?`<a class="whats" target="_blank" href="https://wa.me/${String(e.telefone).replace(/\D/g,'')}">Abrir WhatsApp</a>`:''; $('modalTitle').textContent=e.cliente; $('modalBody').innerHTML=`<div class="kpi-grid"><div class="kpi"><div class="label">Data</div><div class="value">${dow(e.data)} ${shortDate(e.data)}<br><span style="font-size:16px;color:var(--sub)">${horario(e)}</span></div></div><div class="kpi"><div class="label">Valor total</div><div class="value">${brl(e.valorEstimado)}</div></div><div class="kpi"><div class="label">Pessoas</div><div class="value">${e.pessoas||'-'}</div></div><div class="kpi"><div class="label">Status</div><div class="value" style="font-size:20px">${e.status}</div></div></div><div class="panel" style="margin-top:14px"><p><b>Telefone:</b> ${e.telefone||'-'} ${wa}</p><p><b>Tipo:</b> ${e.tipo} · <b>Turno:</b> ${e.turno} · <b>Pacote:</b> ${e.pacote}</p><p><b>Unidade/Salão:</b> ${e.unidade||'-'}</p><p><b>Origem:</b> ${e.origem||e.origemPlanilha||'-'}</p><p><b>Diretoria:</b> ${(e.diretores&&e.diretores.length)?e.diretores.map(d=>`${esc(d.nome)} ${d.assinado?'✅':'⏳'}`).join(' · '):'Não cadastrada'}</p><div class="divider"></div><p style="white-space:pre-wrap">${esc(e.observacoes||'')}</p></div><br><button class="btn" onclick="EVENTOS.edit('${e.id}')">Editar</button>`; $('modal').classList.add('open');},
   closeModal(){ $('modal').classList.remove('open');},
-  movePipeline(id,status){const e=state.eventos.find(x=>x.id===id); const destino=String(status||'').trim(); if(!e)return toast('Evento não encontrado'); if(!canMovePipeline(e.status,destino))return toast('Etapa inválida'); if(e.status===destino)return toast('Card já está nesta etapa'); const antigo=e.status; const agora=new Date().toISOString(); e.status=destino; e.movidoEm=agora; e.statusAtualizadoEm=agora; e.atualizadoEm=agora; e.ultimoMovimento={de:antigo||'',para:destino,em:agora}; e.historicoFunil=Array.isArray(e.historicoFunil)?e.historicoFunil:[]; e.historicoFunil.push({de:antigo||'',para:destino,em:agora}); e.observacoes=(e.observacoes||'')+`\n\n[FUNIL] Movido de ${antigo||'Sem status'} para ${destino} em ${new Date().toLocaleString('pt-BR')}`; save(); toast(`Movido para ${destino}`); render();},
+  movePipeline(id,status){const e=state.eventos.find(x=>x.id===id); if(!e)return toast('Evento não encontrado'); if(!canMovePipeline(e.status,status))return toast('Etapa inválida'); if(e.status===status)return toast('Card já está nesta etapa'); const antigo=e.status; const agora=new Date().toISOString(); e.status=status; e.movidoEm=agora; e.statusAtualizadoEm=agora; e.atualizadoEm=agora; e.observacoes=(e.observacoes||'')+`\n\n[FUNIL] Movido de ${antigo||'Sem status'} para ${status} em ${new Date().toLocaleString('pt-BR')}`; save(); toast(`Movido para ${status}`); render();},
   markRecuperado(id){const e=state.eventos.find(x=>x.id===id); if(e){e.status='Proposta enviada';e.movidoEm=new Date().toISOString();e.statusAtualizadoEm=e.movidoEm;e.observacoes=(e.observacoes||'')+'\n\n[RECUPERAÇÃO] Cliente reativado em '+new Date().toLocaleDateString('pt-BR');save();toast('Cliente movido para proposta');render();}},
   whats(id){const e=state.eventos.find(x=>x.id===id); if(!e||!e.telefone)return toast('Telefone não cadastrado'); window.open(`https://wa.me/${String(e.telefone).replace(/\D/g,'')}?text=${encodeURIComponent('Olá, tudo bem? Estou entrando em contato sobre sua proposta de evento no Coco Bambu.')}`,'_blank');},
   seedReset(){if(confirm('Recarregar a base importada da planilha? Eventos cadastrados manualmente serão mantidos.')){const manual=state.eventos.filter(e=>!e.importado);state.eventos=dedupeEventos([...(window.EVENTOS_SEED||[]).map(e=>({...e,importado:true})),...manual]);save();toast('Base 2026/2027 recarregada');setupFilters();render();}},

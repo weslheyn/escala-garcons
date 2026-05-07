@@ -496,7 +496,7 @@ function setupPipelinePointerDrag(card,root){
     sourceCard.dataset.pointerType=ev.pointerType||'touch';
     clearTimers();
     try{card.setPointerCapture(ev.pointerId);}catch(_){ }
-    timer=setTimeout(begin,430);
+    timer=setTimeout(begin,260);
   },{passive:true});
 
   window.addEventListener('pointermove',ev=>{
@@ -506,12 +506,14 @@ function setupPipelinePointerDrag(card,root){
 
     if(!active){
       if(isTouchLike(ev)){
-        // Se o usuário só está rolando no celular, cancela o modo mover.
-        if(dx>12||dy>12)clearState();
-        return;
+        // Mobile estilo Trello: arraste horizontal inicia o mover; rolagem vertical continua normal.
+        if(dy>22 && dy>dx*1.2){clearState();return;}
+        if(dx>14){clearTimers(); begin();}
+        else return;
+      }else{
+        if(dx<4&&dy<4)return;
+        begin();
       }
-      if(dx<4&&dy<4)return;
-      begin();
     }
     if(!active)return;
     ev.preventDefault();
@@ -675,7 +677,7 @@ function renderCalendar(){
   const actions=`<select class="field compact" onchange="EVENTOS.setCalendar(this.value,null)">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${month===i+1?'selected':''}>${monthName(i+1)}</option>`).join('')}</select><select class="field compact" onchange="EVENTOS.setCalendar(null,this.value)">${years.map(y=>`<option ${year===y?'selected':''}>${y}</option>`).join('')}</select><button class="btn alt" onclick="EVENTOS.setCalendar(new Date().getMonth()+1,new Date().getFullYear(),new Date().getDate())">Hoje</button><button class="btn alt" onclick="EVENTOS.toggleFilters()">▽ Filtros</button><button class="btn primary" onclick="EVENTOS.openForm()">+ Novo Evento</button>`;
   const legend=`<div class="cal-legend"><span class="evc-yellow">Orçamento/Lead</span><span class="evc-green">Fechado</span><span class="evc-red">Atenção</span><span class="evc-blue">Corporativo</span><span class="evc-purple">Contrato/Alinhamento</span></div>`;
   const pills=`<div class="view-pills"><button class="${view==='mes'?'active':''}" onclick="EVENTOS.setCalendarView('mes')">Mês</button><button class="${view==='semana'?'active':''}" onclick="EVENTOS.setCalendarView('semana')">Semana</button><button class="${view==='dia'?'active':''}" onclick="EVENTOS.setCalendarView('dia')">Dia</button></div>`;
-  function evHtml(e){return `<div class="ev ${statusClass(e.status)} ${eventColorClass(e)}" onclick="EVENTOS.view('${e.id}')"><span class="ev-dot"></span><strong>${esc(e.cliente||'Cliente')}</strong><small>${horario(e)} · ${esc(e.turno||'A definir')} · ${e.pessoas||'-'}p</small></div>`;}
+  function evHtml(e){return `<div class="ev ${statusClass(e.status)} ${eventColorClass(e)}" onclick="EVENTOS.view('${e.id}')"><span class="ev-dot"></span><strong>${esc(e.cliente||'Cliente')}</strong><small>${horario(e)} · ${esc(e.turno||'A definir')} · ${e.pessoas||'-'}p<br>📍 ${esc(salao(e)||'A definir')}</small></div>`;}
   function dayBox(date,empty=false){
     const iso=date.toISOString().slice(0,10);
     const evs=list.filter(e=>parseDateAny(e.data)===iso);
@@ -831,36 +833,4 @@ function boot(){
 });
 load();setupTabs();setupFilters();render(); if(window.EventosFirebase){EventosFirebase.init().then(ok=>{if(ok){EventosFirebase.listen(arr=>{if(Array.isArray(arr)&&arr.length){mergeRemoteEventos(arr);setupFilters();render();}}); if(EventosFirebase.listenClientes) EventosFirebase.listenClientes(arr=>{state.clientesCadastros=dedupeClientesCadastro([...(state.clientesCadastros||[]),...(arr||[])]);saveClientes(); if(state.tab==='clientes')renderClientes();});}});}}
 document.addEventListener('DOMContentLoaded',boot);
-})();
-
-/* ===== v91 - Controles mobile premium seguros ===== */
-(function(){
-  function ensureMobileControls(){
-    if(!document.getElementById('mobileMenuFab')){
-      const btn=document.createElement('button');
-      btn.id='mobileMenuFab';
-      btn.className='mobile-menu-fab';
-      btn.type='button';
-      btn.setAttribute('aria-label','Abrir menu');
-      btn.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();document.body.classList.toggle('menu-open');});
-      document.body.appendChild(btn);
-    }
-    if(!document.getElementById('mobileNewEventFab')){
-      const btn=document.createElement('button');
-      btn.id='mobileNewEventFab';
-      btn.className='mobile-new-event-fab';
-      btn.type='button';
-      btn.textContent='+';
-      btn.setAttribute('aria-label','Novo evento');
-      btn.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();if(window.EVENTOS&&EVENTOS.openForm)EVENTOS.openForm();});
-      document.body.appendChild(btn);
-    }
-  }
-  document.addEventListener('click',function(ev){
-    if(!document.body.classList.contains('menu-open'))return;
-    if(ev.target.closest('.desktop-sidebar')||ev.target.closest('#mobileMenuFab'))return;
-    document.body.classList.remove('menu-open');
-  },true);
-  document.addEventListener('keydown',function(ev){if(ev.key==='Escape')document.body.classList.remove('menu-open');});
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensureMobileControls);else ensureMobileControls();
 })();

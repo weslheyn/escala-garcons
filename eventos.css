@@ -524,3 +524,9 @@ body:not([data-tab="dashboard"]) .app{padding-top:0!important}
 
 /* v83: remove título intermediário do funil */
 .funil-title-line{display:none!important}
+
+/* Correção definitiva do drag livre no funil */
+.drag-ghost-visible{box-shadow:0 28px 70px rgba(0,0,0,.75),0 0 0 1px rgba(244,199,86,.55),0 0 34px rgba(244,199,86,.22)!important;filter:brightness(1.08);}
+.event-card.dragging{opacity:.42!important;outline:1px dashed rgba(244,199,86,.65);}
+.pipeline-drop-zone.drag-over{border-color:rgba(244,199,86,.85)!important;box-shadow:inset 0 0 0 1px rgba(244,199,86,.55),0 0 28px rgba(244,199,86,.15)!important;background:linear-gradient(180deg,rgba(244,199,86,.08),rgba(15,20,34,.96))!important;}
+body.kanban-dragging{user-select:none;cursor:grabbing;}

@@ -246,6 +246,7 @@ function renderFunil(){const list=sortEventosRecentes(filtered().filter(e=>!isRe
 
 let __pipelineDraggedId=null;
 let __pipelineScrollLeft=0;
+
 function setupFunilDragDrop(){
   const root=$('funil');
   if(!root)return;
@@ -255,113 +256,162 @@ function setupFunilDragDrop(){
   }
   root.querySelectorAll('.draggable-card').forEach(card=>{
     card.setAttribute('draggable','false');
-    setupPointerPipelineCard(card,root);
-  });
-  root.querySelectorAll('.pipeline-drop-zone').forEach(zone=>{
-    zone.addEventListener('dragover',ev=>ev.preventDefault());
-    zone.addEventListener('drop',ev=>ev.preventDefault());
+    setupPipelineFreeDrag(card,root);
   });
 }
-function setupPointerPipelineCard(card,root){
-  let startX=0,startY=0,lastX=0,lastY=0,startTime=0,active=false,armed=false,timer=null,ghost=null,lastZone=null,scrollTimer=null,pointerId=null;
-  const isTouchLike=(ev)=>ev.pointerType==='touch'||ev.pointerType==='pen';
-  const clear=()=>{if(timer){clearTimeout(timer);timer=null;} if(scrollTimer){clearInterval(scrollTimer);scrollTimer=null;}};
+
+function pipelineZones(root){
+  return [...root.querySelectorAll('.pipeline-drop-zone')];
+}
+
+function pipelineZoneFromPoint(root,x,y){
+  const zones=pipelineZones(root);
+  if(!zones.length)return null;
+
+  // 1) tentativa direta pelo elemento sob o dedo/mouse
+  const el=document.elementFromPoint(x,y);
+  const direct=el&&el.closest?el.closest('.pipeline-drop-zone'):null;
+  if(direct)return direct;
+
+  // 2) fallback robusto: pega a coluna visível mais próxima no eixo X
+  let best=null, bestDist=Infinity;
+  zones.forEach(z=>{
+    const r=z.getBoundingClientRect();
+    const visible=r.right>=0&&r.left<=window.innerWidth&&r.bottom>=0&&r.top<=window.innerHeight;
+    if(!visible)return;
+    const cx=Math.max(r.left,Math.min(x,r.right));
+    const cy=Math.max(r.top,Math.min(y,r.bottom));
+    const dx=x-cx, dy=y-cy;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<bestDist){bestDist=dist;best=z;}
+  });
+  return best;
+}
+
+function clearPipelineHighlights(root){
+  root.querySelectorAll('.pipeline-drop-zone').forEach(z=>z.classList.remove('drag-over','drag-blocked'));
+}
+
+function setupPipelineFreeDrag(card,root){
+  let startX=0,startY=0,lastX=0,lastY=0,active=false,armed=false,timer=null,ghost=null,lastZone=null,pointerId=null,scrollTimer=null;
+  const isTouchLike=ev=>ev.pointerType==='touch'||ev.pointerType==='pen';
+
+  const clearTimers=()=>{
+    if(timer){clearTimeout(timer);timer=null;}
+    if(scrollTimer){clearInterval(scrollTimer);scrollTimer=null;}
+  };
+
   const cleanup=()=>{
-    clear(); active=false; armed=false; pointerId=null; __pipelineDraggedId=null;
+    clearTimers();
+    active=false; armed=false; pointerId=null; __pipelineDraggedId=null;
     card.classList.remove('dragging','touch-dragging');
     document.body.classList.remove('kanban-dragging','touch-drag-active');
-    root.querySelectorAll('.pipeline-drop-zone').forEach(z=>z.classList.remove('drag-over','drag-blocked'));
+    clearPipelineHighlights(root);
     if(ghost){ghost.remove();ghost=null;}
     lastZone=null;
   };
-  const zoneAt=(x,y)=>{
-    const prev=ghost?ghost.style.display:null;
-    if(ghost)ghost.style.display='none';
-    const el=document.elementFromPoint(x,y);
-    if(ghost)ghost.style.display=prev||'';
-    return el?el.closest('.pipeline-drop-zone'):null;
-  };
-  const setZone=(zone)=>{
+
+  const setZone=zone=>{
     if(zone===lastZone)return;
-    if(lastZone)lastZone.classList.remove('drag-over','drag-blocked');
+    clearPipelineHighlights(root);
     lastZone=zone;
-    if(!zone)return;
-    const e=state.eventos.find(x=>String(x.id)===String(card.dataset.eventId));
-    const ok=e?canMovePipeline(e.status,zone.dataset.status):true;
-    zone.classList.toggle('drag-over',ok);
-    zone.classList.toggle('drag-blocked',!ok);
+    if(zone)zone.classList.add('drag-over');
   };
+
   const moveGhost=(x,y)=>{
     if(!ghost)return;
-    ghost.style.transform=`translate3d(${x+12}px,${y+12}px,0)`;
+    ghost.style.left=(x+14)+'px';
+    ghost.style.top=(y+14)+'px';
   };
-  const startAutoScroll=(x)=>{
-    const kanban=root.querySelector('.pipeline-kanban'); if(!kanban)return;
+
+  const autoScroll=()=>{
+    const kanban=root.querySelector('.pipeline-kanban');
+    if(!kanban)return;
     const r=kanban.getBoundingClientRect();
-    const dir=x<r.left+55?-1:(x>r.right-55?1:0);
-    if(!dir){if(scrollTimer){clearInterval(scrollTimer);scrollTimer=null;}return;}
-    if(scrollTimer)return;
-    scrollTimer=setInterval(()=>{
-      const k=root.querySelector('.pipeline-kanban'); if(!k)return;
-      const rr=k.getBoundingClientRect();
-      const d=lastX<rr.left+55?-1:(lastX>rr.right-55?1:0);
-      if(!d){clearInterval(scrollTimer);scrollTimer=null;return;}
-      k.scrollLeft+=d*18;
-      __pipelineScrollLeft=k.scrollLeft;
-      setZone(zoneAt(lastX,lastY));
-    },16);
+    const edge=82;
+    let dir=0;
+    if(lastX<r.left+edge)dir=-1;
+    else if(lastX>r.right-edge)dir=1;
+    if(!dir)return;
+    kanban.scrollLeft+=dir*28;
+    __pipelineScrollLeft=kanban.scrollLeft;
+    const z=pipelineZoneFromPoint(root,lastX,lastY);
+    setZone(z);
   };
+
+  const startScrollLoop=()=>{
+    if(scrollTimer)return;
+    scrollTimer=setInterval(autoScroll,16);
+  };
+
   const begin=()=>{
     if(active||!armed)return;
     active=true;
     __pipelineDraggedId=card.dataset.eventId||'';
-    const kanban=root.querySelector('.pipeline-kanban'); if(kanban)__pipelineScrollLeft=kanban.scrollLeft;
+    const kanban=root.querySelector('.pipeline-kanban');
+    if(kanban)__pipelineScrollLeft=kanban.scrollLeft;
     card.classList.add('dragging','touch-dragging');
     document.body.classList.add('kanban-dragging','touch-drag-active');
     if(navigator.vibrate)try{navigator.vibrate(18)}catch(_){ }
     ghost=card.cloneNode(true);
-    ghost.className='event-card drag-ghost';
-    ghost.style.width=Math.min(card.offsetWidth,280)+'px';
+    ghost.className='event-card drag-ghost drag-ghost-visible';
+    ghost.style.position='fixed';
+    ghost.style.zIndex='999999';
+    ghost.style.width=Math.min(card.getBoundingClientRect().width||260,300)+'px';
     ghost.style.pointerEvents='none';
+    ghost.style.margin='0';
+    ghost.style.opacity='.96';
+    ghost.style.transform='rotate(1deg) scale(1.02)';
     document.body.appendChild(ghost);
     moveGhost(lastX,lastY);
-    setZone(zoneAt(lastX,lastY));
+    setZone(pipelineZoneFromPoint(root,lastX,lastY));
+    startScrollLoop();
   };
+
   card.addEventListener('pointerdown',ev=>{
     if(ev.button!==undefined&&ev.button!==0)return;
     if(ev.target.closest('button,a,input,select,textarea'))return;
-    startX=lastX=ev.clientX; startY=lastY=ev.clientY; startTime=Date.now(); pointerId=ev.pointerId; armed=true;
-    clear();
-    if(isTouchLike(ev)) timer=setTimeout(begin,460);
-    else timer=setTimeout(()=>{},0);
+    startX=lastX=ev.clientX; startY=lastY=ev.clientY; pointerId=ev.pointerId; armed=true;
+    clearTimers();
+    if(isTouchLike(ev)){
+      timer=setTimeout(begin,430);
+    }else{
+      timer=setTimeout(()=>{},0);
+    }
   });
+
   window.addEventListener('pointermove',ev=>{
     if(!armed||pointerId!==ev.pointerId)return;
     lastX=ev.clientX; lastY=ev.clientY;
-    const dx=Math.abs(lastX-startX), dy=Math.abs(lastY-startY);
+    const dx=Math.abs(lastX-startX),dy=Math.abs(lastY-startY);
     if(!active){
       if(isTouchLike(ev)){
+        // no mobile: rolar normalmente; só ativa drag se segurar parado
         if(dx>12||dy>12)cleanup();
         return;
       }
-      if(dx>5||dy>5)begin();
+      if(dx>4||dy>4)begin();
     }
     if(!active)return;
     ev.preventDefault();
     moveGhost(lastX,lastY);
-    setZone(zoneAt(lastX,lastY));
-    startAutoScroll(lastX);
+    setZone(pipelineZoneFromPoint(root,lastX,lastY));
   },{passive:false});
+
   window.addEventListener('pointerup',ev=>{
     if(!armed||pointerId!==ev.pointerId)return;
-    const zone=active?zoneAt(ev.clientX,ev.clientY):null;
-    const id=card.dataset.eventId; const status=zone?.dataset?.status;
-    const kanban=root.querySelector('.pipeline-kanban'); if(kanban)__pipelineScrollLeft=kanban.scrollLeft;
+    const id=card.dataset.eventId;
+    const zone=active?pipelineZoneFromPoint(root,ev.clientX,ev.clientY):null;
+    const status=zone&&zone.dataset?zone.dataset.status:'';
+    const kanban=root.querySelector('.pipeline-kanban');
+    if(kanban)__pipelineScrollLeft=kanban.scrollLeft;
     cleanup();
     if(id&&status)EVENTOS.movePipeline(id,status);
   });
+
   window.addEventListener('pointercancel',ev=>{if(armed&&pointerId===ev.pointerId)cleanup();});
 }
+
 function canMovePipeline(from,to){
   return !!to && PIPELINE_STATUS.includes(to);
 }

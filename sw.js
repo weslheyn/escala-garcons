@@ -1,4 +1,4 @@
-const CACHE='gestao-coco-bambu-v83-funil-livre-scroll-fix';
+const CACHE='gestao-coco-bambu-v84-funil-drag-livre-definitivo';
 self.addEventListener('install', e => {
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./manifest.json','./icon.png','./index.html','./eventos.html','./eventos.css','./eventos.js','./eventos-seed.js','./eventos-firebase.js']).catch(()=>{})));

@@ -242,7 +242,7 @@ renderWeekEvents();
 }
 function initials(name){return String(name||'CB').trim().split(/\s+/).slice(0,2).map(p=>p[0]||'').join('').toUpperCase()||'CB';}
 function card(e){return `<div class="event-card draggable-card ${eventColorClass(e)}" draggable="true" data-event-id="${e.id}" data-status="${esc(e.status||'Lead')}"><div class="card-row"><span class="client-avatar">${esc(initials(e.cliente))}</span><div class="card-main"><b>${e.cliente||'Cliente'}</b><p>${dow(e.data)} • ${shortDate(e.data)} • ${horario(e)}<br>${e.turno||'A definir'} · ${e.pessoas||'-'} pessoas · ${e.pacote||'A definir'}<br>📍 ${esc(salao(e))} · ${brl(e.valorEstimado)}</p></div></div><span class="status ${statusClass(e.status)}">${e.status||'Em negociação'}</span><div class="actions"><button onclick="EVENTOS.view('${e.id}')">Ver</button><button onclick="EVENTOS.edit('${e.id}')">Editar</button></div></div>`}
-function renderFunil(){const list=sortEventosRecentes(filtered().filter(e=>!isRecuperacaoStatus(e.status)));const actions=`<button class="btn alt" onclick="EVENTOS.toggleFilters()">▽ Filtros</button><button class="btn primary" onclick="EVENTOS.openForm()">+ Novo evento</button>`;$('funil').innerHTML=moduleHeader(actions)+`<div class="kanban pipeline-kanban">${PIPELINE_STATUS.map((st,idx)=>{const col=sortEventosRecentes(list.filter(e=>e.status===st));return `<div class="col pipeline-drop-zone ${eventColorClass({status:st})}" data-status="${esc(st)}" data-index="${idx}"><h3>${st} <span>${col.length}</span></h3><div class="drop-hint">Solte aqui para mover</div>${col.map(card).join('')||'<p class="muted empty-col">Sem eventos</p>'}</div>`}).join('')}</div>`;setupFunilDragDrop();}
+function renderFunil(){const list=sortEventosRecentes(filtered().filter(e=>!isRecuperacaoStatus(e.status)));const actions=`<button class="btn alt" onclick="EVENTOS.toggleFilters()">▽ Filtros</button><button class="btn primary" onclick="EVENTOS.openForm()">+ Novo evento</button>`;$('funil').innerHTML=moduleHeader(actions)+`<div class="kanban pipeline-kanban">${PIPELINE_STATUS.map((st,idx)=>{const col=sortEventosRecentes(list.filter(e=>e.status===st));return `<div class="col pipeline-drop-zone ${eventColorClass({status:st})}" data-status="${esc(st)}" data-index="${idx}"><h3>${st} <span>${col.length}</span></h3>${col.map(card).join('')||'<p class="muted empty-col">Sem eventos</p>'}</div>`}).join('')}</div>`;setupFunilDragDrop();}
 
 let __pipelineDraggedId=null;
 let __pipelineScrollLeft=0;
@@ -255,10 +255,9 @@ function setupFunilDragDrop(){
     requestAnimationFrame(()=>{kanban.scrollLeft=__pipelineScrollLeft||0;});
   }
 
-  setupPipelineNativeDrag(root);
   root.querySelectorAll('.draggable-card').forEach(card=>{
-    card.setAttribute('draggable','true');
-    setupPipelineTouchDrag(card,root);
+    card.setAttribute('draggable','false');
+    setupPipelinePointerDrag(card,root);
   });
 }
 
@@ -274,31 +273,26 @@ function pipelineZoneFromPoint(root,x,y){
   const zones=pipelineZones(root);
   if(!zones.length)return null;
 
-  const kanban=root.querySelector('.pipeline-kanban');
-  if(kanban){
-    const kr=kanban.getBoundingClientRect();
-    const insideY=y>=kr.top-40 && y<=kr.bottom+40;
-    if(insideY){
-      const contentX=x-kr.left+kanban.scrollLeft;
-      let best=null,bestDist=Infinity;
-      zones.forEach(z=>{
-        const left=z.offsetLeft;
-        const right=left+z.offsetWidth;
-        const center=(left+right)/2;
-        const dist=contentX<left ? left-contentX : contentX>right ? contentX-right : Math.abs(contentX-center)*0.001;
-        if(dist<bestDist){bestDist=dist;best=z;}
-      });
-      if(best)return best;
-    }
-  }
-
+  // Detecção real pelo ponto visível na tela. Isso evita o erro de “descalibrar”
+  // quando o funil está com scroll horizontal ou quando o card fantasma cobre a área.
   const el=document.elementFromPoint(x,y);
   const direct=el&&el.closest?el.closest('.pipeline-drop-zone'):null;
-  if(direct)return direct;
+  if(direct&&root.contains(direct))return direct;
+
+  const kanban=root.querySelector('.pipeline-kanban');
+  const kr=kanban?kanban.getBoundingClientRect():null;
+  const yOk=!kr || (y>=kr.top-70 && y<=kr.bottom+70);
 
   let best=null,bestDist=Infinity;
   zones.forEach(z=>{
     const r=z.getBoundingClientRect();
+    // Primeiro tenta coluna realmente sob o X do ponteiro.
+    if(yOk && x>=r.left && x<=r.right){
+      const dy=y<r.top ? r.top-y : y>r.bottom ? y-r.bottom : 0;
+      if(dy<bestDist){bestDist=dy;best=z;}
+      return;
+    }
+    // Se estiver entre colunas ou na borda, pega a coluna visível mais próxima.
     const cx=Math.max(r.left,Math.min(x,r.right));
     const cy=Math.max(r.top,Math.min(y,r.bottom));
     const dx=x-cx, dy=y-cy;
@@ -308,60 +302,11 @@ function pipelineZoneFromPoint(root,x,y){
   return best;
 }
 
-function setupPipelineNativeDrag(root){
-  const kanban=root.querySelector('.pipeline-kanban');
-  if(!kanban||kanban.dataset.nativeDragReady==='1')return;
-  kanban.dataset.nativeDragReady='1';
+function setupPipelinePointerDrag(card,root){
+  if(card.dataset.pointerDragReady==='1')return;
+  card.dataset.pointerDragReady='1';
 
-  kanban.addEventListener('dragstart',ev=>{
-    const card=ev.target&&ev.target.closest?ev.target.closest('.draggable-card'):null;
-    if(!card)return;
-    __pipelineDraggedId=card.dataset.eventId||'';
-    __pipelineScrollLeft=kanban.scrollLeft||0;
-    card.classList.add('dragging');
-    document.body.classList.add('kanban-dragging');
-    try{
-      ev.dataTransfer.effectAllowed='move';
-      ev.dataTransfer.setData('text/plain',__pipelineDraggedId);
-    }catch(_){ }
-  });
-
-  kanban.addEventListener('dragover',ev=>{
-    if(!__pipelineDraggedId)return;
-    ev.preventDefault();
-    const zone=pipelineZoneFromPoint(root,ev.clientX,ev.clientY);
-    clearPipelineHighlights(root);
-    if(zone)zone.classList.add('drag-over');
-    try{ev.dataTransfer.dropEffect='move';}catch(_){ }
-  });
-
-  kanban.addEventListener('drop',ev=>{
-    if(!__pipelineDraggedId)return;
-    ev.preventDefault();
-    const id=__pipelineDraggedId;
-    const zone=pipelineZoneFromPoint(root,ev.clientX,ev.clientY);
-    const status=zone&&zone.dataset?zone.dataset.status:'';
-    __pipelineScrollLeft=kanban.scrollLeft||0;
-    clearPipelineHighlights(root);
-    root.querySelectorAll('.draggable-card.dragging').forEach(c=>c.classList.remove('dragging'));
-    document.body.classList.remove('kanban-dragging');
-    __pipelineDraggedId=null;
-    if(id&&status)EVENTOS.movePipeline(id,status);
-  });
-
-  kanban.addEventListener('dragend',()=>{
-    __pipelineScrollLeft=kanban.scrollLeft||__pipelineScrollLeft||0;
-    clearPipelineHighlights(root);
-    root.querySelectorAll('.draggable-card.dragging').forEach(c=>c.classList.remove('dragging'));
-    document.body.classList.remove('kanban-dragging');
-    __pipelineDraggedId=null;
-  });
-}
-
-function setupPipelineTouchDrag(card,root){
-  if(card.dataset.touchDragReady==='1')return;
-  card.dataset.touchDragReady='1';
-  let startX=0,startY=0,lastX=0,lastY=0,active=false,armed=false,timer=null,ghost=null,lastZone=null,pointerId=null,scrollTimer=null;
+  let startX=0,startY=0,lastX=0,lastY=0,active=false,armed=false,timer=null,ghost=null,lastZone=null,pointerId=null,scrollTimer=null,sourceCard=null;
   const isTouchLike=ev=>ev.pointerType==='touch'||ev.pointerType==='pen';
 
   const clearTimers=()=>{
@@ -369,14 +314,14 @@ function setupPipelineTouchDrag(card,root){
     if(scrollTimer){clearInterval(scrollTimer);scrollTimer=null;}
   };
 
-  const cleanup=()=>{
+  const clearState=()=>{
     clearTimers();
     active=false; armed=false; pointerId=null; __pipelineDraggedId=null;
-    card.classList.remove('dragging','touch-dragging');
+    if(sourceCard)sourceCard.classList.remove('dragging','touch-dragging');
     document.body.classList.remove('kanban-dragging','touch-drag-active');
     clearPipelineHighlights(root);
     if(ghost){ghost.remove();ghost=null;}
-    lastZone=null;
+    lastZone=null; sourceCard=null;
   };
 
   const setZone=zone=>{
@@ -396,35 +341,31 @@ function setupPipelineTouchDrag(card,root){
     const kanban=root.querySelector('.pipeline-kanban');
     if(!kanban)return;
     const r=kanban.getBoundingClientRect();
-    const edge=76;
+    const edge=70;
     let dir=0;
     if(lastX<r.left+edge)dir=-1;
     else if(lastX>r.right-edge)dir=1;
     if(!dir)return;
-    kanban.scrollLeft+=dir*18;
+    kanban.scrollLeft+=dir*20;
     __pipelineScrollLeft=kanban.scrollLeft;
     setZone(pipelineZoneFromPoint(root,lastX,lastY));
   };
 
-  const startScrollLoop=()=>{
-    if(scrollTimer)return;
-    scrollTimer=setInterval(autoScroll,24);
-  };
-
   const begin=()=>{
-    if(active||!armed)return;
+    if(active||!armed||!sourceCard)return;
     active=true;
-    __pipelineDraggedId=card.dataset.eventId||'';
+    __pipelineDraggedId=sourceCard.dataset.eventId||'';
     const kanban=root.querySelector('.pipeline-kanban');
     if(kanban)__pipelineScrollLeft=kanban.scrollLeft;
-    card.classList.add('dragging','touch-dragging');
+    sourceCard.classList.add('dragging');
+    if(sourceCard.dataset.pointerType!=='mouse')sourceCard.classList.add('touch-dragging');
     document.body.classList.add('kanban-dragging','touch-drag-active');
-    if(navigator.vibrate)try{navigator.vibrate(18)}catch(_){ }
-    ghost=card.cloneNode(true);
+    if(navigator.vibrate && sourceCard.dataset.pointerType!=='mouse')try{navigator.vibrate(18)}catch(_){ }
+    ghost=sourceCard.cloneNode(true);
     ghost.className='event-card drag-ghost drag-ghost-visible';
     ghost.style.position='fixed';
     ghost.style.zIndex='999999';
-    ghost.style.width=Math.min(card.getBoundingClientRect().width||260,300)+'px';
+    ghost.style.width=Math.min(sourceCard.getBoundingClientRect().width||260,300)+'px';
     ghost.style.pointerEvents='none';
     ghost.style.margin='0';
     ghost.style.opacity='.96';
@@ -432,25 +373,38 @@ function setupPipelineTouchDrag(card,root){
     document.body.appendChild(ghost);
     moveGhost(lastX,lastY);
     setZone(pipelineZoneFromPoint(root,lastX,lastY));
-    startScrollLoop();
+    if(!scrollTimer)scrollTimer=setInterval(autoScroll,24);
   };
 
+  card.addEventListener('dragstart',ev=>ev.preventDefault());
+
   card.addEventListener('pointerdown',ev=>{
-    if(!isTouchLike(ev))return; // desktop usa o drag/drop nativo, mais estável para ir e voltar
     if(ev.target.closest('button,a,input,select,textarea'))return;
-    startX=lastX=ev.clientX; startY=lastY=ev.clientY; pointerId=ev.pointerId; armed=true;
+    // Botão direito não deve iniciar arraste.
+    if(ev.pointerType==='mouse' && ev.button!==0)return;
+    startX=lastX=ev.clientX; startY=lastY=ev.clientY; pointerId=ev.pointerId; armed=true; active=false; sourceCard=card;
+    sourceCard.dataset.pointerType=ev.pointerType||'mouse';
     clearTimers();
-    timer=setTimeout(begin,430);
+    try{card.setPointerCapture(ev.pointerId);}catch(_){ }
+    // No desktop começa com pequeno movimento. No mobile, só com toque longo para preservar a rolagem.
+    if(isTouchLike(ev)) timer=setTimeout(begin,430);
   },{passive:true});
 
   window.addEventListener('pointermove',ev=>{
     if(!armed||pointerId!==ev.pointerId)return;
     lastX=ev.clientX; lastY=ev.clientY;
     const dx=Math.abs(lastX-startX),dy=Math.abs(lastY-startY);
+
     if(!active){
-      if(dx>12||dy>12)cleanup();
-      return;
+      if(isTouchLike(ev)){
+        // Se o usuário só está rolando no celular, cancela o modo mover.
+        if(dx>12||dy>12)clearState();
+        return;
+      }
+      if(dx<4&&dy<4)return;
+      begin();
     }
+    if(!active)return;
     ev.preventDefault();
     moveGhost(lastX,lastY);
     setZone(pipelineZoneFromPoint(root,lastX,lastY));
@@ -458,16 +412,16 @@ function setupPipelineTouchDrag(card,root){
 
   window.addEventListener('pointerup',ev=>{
     if(!armed||pointerId!==ev.pointerId)return;
-    const id=card.dataset.eventId;
+    const id=sourceCard&&sourceCard.dataset?sourceCard.dataset.eventId:'';
     const zone=active?pipelineZoneFromPoint(root,ev.clientX,ev.clientY):null;
     const status=zone&&zone.dataset?zone.dataset.status:'';
     const kanban=root.querySelector('.pipeline-kanban');
     if(kanban)__pipelineScrollLeft=kanban.scrollLeft;
-    cleanup();
+    clearState();
     if(id&&status)EVENTOS.movePipeline(id,status);
   });
 
-  window.addEventListener('pointercancel',ev=>{if(armed&&pointerId===ev.pointerId)cleanup();});
+  window.addEventListener('pointercancel',ev=>{if(armed&&pointerId===ev.pointerId)clearState();});
 }
 
 function canMovePipeline(from,to){

@@ -12,7 +12,7 @@ const PIPELINE_STATUS=['Lead','Proposta enviada','Visita do espaço','Negociaç�
 const RECOVERY_STATUS=['Recuperação','Sem resposta','Cancelado','Perdido','Perdido/Cancelado'];
 const STATUS=[...PIPELINE_STATUS,...RECOVERY_STATUS];
 const TABS=[['dashboard','Dashboard'],['funil','Funil'],['calendario','Calendário'],['vendas','Vendas'],['recuperacao','Recuperação'],['clientes','Clientes'],['pacotes','Pacotes'],['agenda','Agenda'],['sheets','Relatórios']];
-let state={tab:'dashboard',eventos:[],pacotes:window.EVENTOS_PACOTES||[],agenda:[],agendaResponsaveis:[],agendaFiltros:{criador:'',visibilidade:'',tipo:'',status:''},clientesView:'historico',clientesCadastros:[],meta:{metaMensal:150000},cal:{year:new Date().getFullYear(),month:new Date().getMonth()+1}};
+let state={tab:'dashboard',eventos:[],pacotes:window.EVENTOS_PACOTES||[],agenda:[],agendaResponsaveis:[],agendaFiltros:{criador:'',visibilidade:'',tipo:'',status:''},clientesView:'historico',clientesCadastros:[],meta:{metaMensal:150000},cal:{year:new Date().getFullYear(),month:new Date().getMonth()+1,view:'mes',day:new Date().getDate()}};
 function brl(n){return (Number(n)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
 function dt(s){ const iso=parseDateAny(s); if(!iso) return ''; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`;}
 function dow(s){ const iso=parseDateAny(s); if(!iso) return ''; const d=new Date(iso+'T12:00:00'); return ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'][d.getDay()]||'';}
@@ -507,24 +507,40 @@ function openAgendaModal(a={}){ $('modalTitle').textContent=a.id?'Editar ativida
 function responsavelFormHtml(){return `<div class="panel"><h3>Cadastrar responsável</h3><p class="muted">Os nomes cadastrados aparecerão nos filtros e no formulário de atividades.</p><input class="field" id="resp_nome" placeholder="Nome do responsável"><div class="divider"></div><button class="btn" onclick="EVENTOS.saveResponsavel()">Cadastrar</button></div><div class="agenda-resp-list">${(state.agendaResponsaveis||[]).map(n=>`<span>${esc(n)}</span>`).join('')||'<p class="muted">Nenhum responsável cadastrado.</p>'}</div>`;}
 
 function renderCalendar(){
-  const now=new Date();
-  const year=Number(state.cal.year)||Number($('ano').value)||now.getFullYear();
-  const month=Number(state.cal.month)||Number($('mes').value)||now.getMonth()+1;
-  state.cal={year,month};
-  const ym=`${year}-${String(month).padStart(2,'0')}`;
-  const list=filtered().filter(e=>parseDateAny(e.data).slice(0,7)===ym).sort((a,b)=>String(a.data).localeCompare(String(b.data))||String(horario(a)).localeCompare(String(horario(b))));
-  const first=new Date(year,month-1,1);const last=new Date(year,month,0);
-  const blanks=(first.getDay()+6)%7;
-  const days=[];
-  for(let b=0;b<blanks;b++)days.push(`<div class="day empty"><span></span></div>`);
-  for(let i=1;i<=last.getDate();i++){
-    const iso=`${year}-${String(month).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-    const evs=list.filter(e=>parseDateAny(e.data)===iso);
-    days.push(`<div class="day ${evs.length?'has-events':''}"><b>${i} <span>${['DOM','SEG','TER','QUA','QUI','SEX','SÁB'][new Date(iso+'T12:00').getDay()]}</span></b>${evs.map(e=>`<div class="ev ${statusClass(e.status)} ${eventColorClass(e)}" onclick="EVENTOS.view('${e.id}')"><span class="ev-dot"></span><strong>${esc(e.cliente||'Cliente')}</strong><small>${horario(e)} · ${esc(e.turno||'A definir')} · ${e.pessoas||'-'}p</small></div>`).join('')}</div>`);
-  }
+  const year=state.cal.year, month=state.cal.month, view=state.cal.view||'mes';
+  const list=filtered();
+  const first=new Date(year,month-1,1), last=new Date(year,month,0);
   const years=[...new Set([...state.eventos.map(e=>Number(e.ano||String(e.data).slice(0,4))).filter(Boolean),2026,2027,new Date().getFullYear()])].sort();
-  const actions=`<select class="field compact" onchange="EVENTOS.setCalendar(this.value,null)">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${month===i+1?'selected':''}>${monthName(i+1)}</option>`).join('')}</select><select class="field compact" onchange="EVENTOS.setCalendar(null,this.value)">${years.map(y=>`<option ${year===y?'selected':''}>${y}</option>`).join('')}</select><button class="btn alt" onclick="EVENTOS.setCalendar(new Date().getMonth()+1,new Date().getFullYear())">Hoje</button><button class="btn alt" onclick="EVENTOS.toggleFilters()">▽ Filtros</button><button class="btn primary" onclick="EVENTOS.openForm()">+ Novo Evento</button>`;
-  $('calendario').innerHTML=moduleHeader(actions)+`<div class="calendar-toolbar"><div class="view-pills"><button class="active">Mês</button><button>Semana</button><button>Dia</button></div><div class="cal-legend"><span class="evc-yellow">Orçamento/Lead</span><span class="evc-green">Fechado</span><span class="evc-red">Atenção</span><span class="evc-blue">Corporativo</span><span class="evc-purple">Contrato/Alinhamento</span></div></div><div class="calendar-weekdays"><span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span><span>DOM</span></div><div class="calendar-grid visual-calendar">${days.join('')}</div>`;
+  const actions=`<select class="field compact" onchange="EVENTOS.setCalendar(this.value,null)">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${month===i+1?'selected':''}>${monthName(i+1)}</option>`).join('')}</select><select class="field compact" onchange="EVENTOS.setCalendar(null,this.value)">${years.map(y=>`<option ${year===y?'selected':''}>${y}</option>`).join('')}</select><button class="btn alt" onclick="EVENTOS.setCalendar(new Date().getMonth()+1,new Date().getFullYear(),new Date().getDate())">Hoje</button><button class="btn alt" onclick="EVENTOS.toggleFilters()">▽ Filtros</button><button class="btn primary" onclick="EVENTOS.openForm()">+ Novo Evento</button>`;
+  const legend=`<div class="cal-legend"><span class="evc-yellow">Orçamento/Lead</span><span class="evc-green">Fechado</span><span class="evc-red">Atenção</span><span class="evc-blue">Corporativo</span><span class="evc-purple">Contrato/Alinhamento</span></div>`;
+  const pills=`<div class="view-pills"><button class="${view==='mes'?'active':''}" onclick="EVENTOS.setCalendarView('mes')">Mês</button><button class="${view==='semana'?'active':''}" onclick="EVENTOS.setCalendarView('semana')">Semana</button><button class="${view==='dia'?'active':''}" onclick="EVENTOS.setCalendarView('dia')">Dia</button></div>`;
+  function evHtml(e){return `<div class="ev ${statusClass(e.status)} ${eventColorClass(e)}" onclick="EVENTOS.view('${e.id}')"><span class="ev-dot"></span><strong>${esc(e.cliente||'Cliente')}</strong><small>${horario(e)} · ${esc(e.turno||'A definir')} · ${e.pessoas||'-'}p</small></div>`;}
+  function dayBox(date,empty=false){
+    const iso=date.toISOString().slice(0,10);
+    const evs=list.filter(e=>parseDateAny(e.data)===iso);
+    return `<div class="day ${empty?'empty':''} ${evs.length?'has-events':''}"><b>${date.getDate()} <span>${['DOM','SEG','TER','QUA','QUI','SEX','SÁB'][date.getDay()]}</span></b>${evs.map(evHtml).join('')}</div>`;
+  }
+  let body='';
+  let weekdays=`<div class="calendar-weekdays"><span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span><span>DOM</span></div>`;
+  if(view==='mes'){
+    const days=[];
+    const offset=(first.getDay()+6)%7;
+    for(let i=0;i<offset;i++)days.push('<div class="day empty"></div>');
+    for(let i=1;i<=last.getDate();i++) days.push(dayBox(new Date(year,month-1,i)));
+    body=`${weekdays}<div class="calendar-grid visual-calendar">${days.join('')}</div>`;
+  }else if(view==='semana'){
+    const day=Math.min(state.cal.day||new Date().getDate(), last.getDate());
+    const base=new Date(year,month-1,day);
+    const startWeek=new Date(base); startWeek.setDate(base.getDate()-((base.getDay()+6)%7));
+    const days=[]; for(let i=0;i<7;i++){const d=new Date(startWeek);d.setDate(startWeek.getDate()+i);days.push(dayBox(d,d.getMonth()!==month-1));}
+    body=`${weekdays}<div class="calendar-grid visual-calendar week-view">${days.join('')}</div>`;
+  }else{
+    const day=Math.min(state.cal.day||new Date().getDate(), last.getDate());
+    const d=new Date(year,month-1,day);
+    const evs=list.filter(e=>parseDateAny(e.data)===d.toISOString().slice(0,10));
+    body=`<div class="calendar-day-view premium-block"><div class="day-view-head"><button class="btn alt" onclick="EVENTOS.shiftCalendarDay(-1)">‹</button><h3>${dow(d.toISOString().slice(0,10))} · ${String(day).padStart(2,'0')}/${String(month).padStart(2,'0')}/${year}</h3><button class="btn alt" onclick="EVENTOS.shiftCalendarDay(1)">›</button></div><div class="day-view-events">${evs.map(evHtml).join('')||'<p class="muted">Nenhum evento neste dia.</p>'}</div></div>`;
+  }
+  $('calendario').innerHTML=moduleHeader(actions)+`<div class="calendar-toolbar">${pills}${legend}</div>${body}`;
 }
 function render(){document.body.dataset.tab=state.tab;setupTabs();document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));$(state.tab).classList.add('active');document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===state.tab));renderHero();({dashboard:renderDashboard,funil:renderFunil,calendario:renderCalendar,vendas:renderVendas,recuperacao:renderRecuperacao,clientes:renderClientes,pacotes:renderPacotes,agenda:renderAgenda,sheets:renderSheets}[state.tab]||renderDashboard)();}
 
@@ -572,7 +588,9 @@ window.EVENTOS={
   toggleAgendaDone(id){const a=(state.agenda||[]).find(x=>x.id===id); if(!a)return; a.status=a.status==='Concluída'?'Pendente':'Concluída'; a.atualizadoEm=new Date().toISOString(); saveAgenda(); renderAgenda();},
   openResponsavelForm(){ $('modalTitle').textContent='Responsáveis da agenda'; $('modalBody').innerHTML=responsavelFormHtml(); $('modal').classList.add('open');},
   saveResponsavel(){const n=($('resp_nome')?.value||'').trim(); if(!n)return toast('Digite o nome do responsável'); if(!state.agendaResponsaveis.includes(n))state.agendaResponsaveis.push(n); state.agendaResponsaveis.sort((a,b)=>a.localeCompare(b,'pt-BR')); saveAgenda(); $('modalBody').innerHTML=responsavelFormHtml(); if(state.tab==='agenda')renderAgenda(); toast('Responsável cadastrado');},
-  setCalendar(month,year){if(month)state.cal.month=Number(month); if(year)state.cal.year=Number(year); renderCalendar();},
+  setCalendar(month,year,day){if(month)state.cal.month=Number(month); if(year)state.cal.year=Number(year); if(day)state.cal.day=Number(day); renderCalendar();},
+  setCalendarView(v){state.cal.view=v||'mes'; renderCalendar();},
+  shiftCalendarDay(delta){const max=new Date(state.cal.year,state.cal.month,0).getDate(); const d=new Date(state.cal.year,state.cal.month-1,Math.min(state.cal.day||1,max)); d.setDate(d.getDate()+Number(delta||0)); state.cal.year=d.getFullYear(); state.cal.month=d.getMonth()+1; state.cal.day=d.getDate(); renderCalendar();},
   toggleFilters(force){const p=$('filtersPanel'); if(!p)return; p.classList.toggle('open', typeof force==='boolean'?force:!p.classList.contains('open'));},
   toggleConfig(force){const p=$('configPanel'); if(!p)return; p.classList.toggle('open', typeof force==='boolean'?force:!p.classList.contains('open'));},
   showInstallHelp(){
@@ -596,7 +614,7 @@ window.EVENTOS={
   saveForm(id){const e=collect(id); const idx=state.eventos.findIndex(x=>x.id===e.id); if(idx>=0)state.eventos[idx]=Object.assign({},state.eventos[idx],e); else state.eventos.unshift(e); save(); $('modal').classList.remove('open'); toast('Evento salvo'); render();},
   view(id){const e=state.eventos.find(x=>x.id===id); if(!e)return; const wa=e.telefone?`<a class="whats" target="_blank" href="https://wa.me/${String(e.telefone).replace(/\D/g,'')}">Abrir WhatsApp</a>`:''; $('modalTitle').textContent=e.cliente; $('modalBody').innerHTML=`<div class="kpi-grid"><div class="kpi"><div class="label">Data</div><div class="value">${dow(e.data)} ${shortDate(e.data)}<br><span style="font-size:16px;color:var(--sub)">${horario(e)}</span></div></div><div class="kpi"><div class="label">Valor total</div><div class="value">${brl(e.valorEstimado)}</div></div><div class="kpi"><div class="label">Pessoas</div><div class="value">${e.pessoas||'-'}</div></div><div class="kpi"><div class="label">Status</div><div class="value" style="font-size:20px">${e.status}</div></div></div><div class="panel" style="margin-top:14px"><p><b>Telefone:</b> ${e.telefone||'-'} ${wa}</p><p><b>Tipo:</b> ${e.tipo} · <b>Turno:</b> ${e.turno} · <b>Pacote:</b> ${e.pacote}</p><p><b>Unidade/Salão:</b> ${e.unidade||'-'}</p><p><b>Origem:</b> ${e.origem||e.origemPlanilha||'-'}</p><p><b>Diretoria:</b> ${(e.diretores&&e.diretores.length)?e.diretores.map(d=>`${esc(d.nome)} ${d.assinado?'✅':'⏳'}`).join(' · '):'Não cadastrada'}</p><div class="divider"></div><p style="white-space:pre-wrap">${esc(e.observacoes||'')}</p></div><br><button class="btn" onclick="EVENTOS.edit('${e.id}')">Editar</button>`; $('modal').classList.add('open');},
   closeModal(){ $('modal').classList.remove('open');},
-  movePipeline(id,status){const e=state.eventos.find(x=>x.id===id); if(!e)return toast('Evento não encontrado'); if(!canMovePipeline(e.status,status))return toast('Etapa inválida'); if(e.status===status)return toast('Card já está nesta etapa'); const antigo=e.status; const agora=new Date().toISOString(); e.status=status; e.movidoEm=agora; e.statusAtualizadoEm=agora; e.atualizadoEm=agora; e.observacoes=(e.observacoes||'')+`\n\n[FUNIL] Movido de ${antigo||'Sem status'} para ${status} em ${new Date().toLocaleString('pt-BR')}`; save(); toast(`Movido para ${status}`); render();},
+  movePipeline(id,status){const e=state.eventos.find(x=>String(x.id)===String(id)); if(!e)return toast('Evento não encontrado'); if(!canMovePipeline(e.status,status))return toast('Etapa inválida'); if(e.status===status)return toast('Card já está nesta etapa'); const antigo=e.status; const agora=new Date().toISOString(); e.status=status; e.movidoEm=agora; e.statusAtualizadoEm=agora; e.atualizadoEm=agora; e.criadoEm=e.criadoEm||agora; e.observacoes=(e.observacoes||'')+`\n\n[FUNIL] Movido de ${antigo||'Sem status'} para ${status} em ${new Date().toLocaleString('pt-BR')}`; localStorage.setItem(STORE,JSON.stringify(state.eventos)); if(window.EventosFirebase&&EventosFirebase.enabled){try{EventosFirebase.saveAll(state.eventos).catch(()=>{});}catch(_){}} toast(`Movido para ${status}`); render();},
   markRecuperado(id){const e=state.eventos.find(x=>x.id===id); if(e){e.status='Proposta enviada';e.movidoEm=new Date().toISOString();e.statusAtualizadoEm=e.movidoEm;e.observacoes=(e.observacoes||'')+'\n\n[RECUPERAÇÃO] Cliente reativado em '+new Date().toLocaleDateString('pt-BR');save();toast('Cliente movido para proposta');render();}},
   whats(id){const e=state.eventos.find(x=>x.id===id); if(!e||!e.telefone)return toast('Telefone não cadastrado'); window.open(`https://wa.me/${String(e.telefone).replace(/\D/g,'')}?text=${encodeURIComponent('Olá, tudo bem? Estou entrando em contato sobre sua proposta de evento no Coco Bambu.')}`,'_blank');},
   seedReset(){if(confirm('Recarregar a base importada da planilha? Eventos cadastrados manualmente serão mantidos.')){const manual=state.eventos.filter(e=>!e.importado);state.eventos=dedupeEventos([...(window.EVENTOS_SEED||[]).map(e=>({...e,importado:true})),...manual]);save();toast('Base 2026/2027 recarregada');setupFilters();render();}},

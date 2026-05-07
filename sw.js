@@ -1,4 +1,4 @@
-const CACHE='gestao-coco-bambu-v81-69-funil-leads-topo';
+const CACHE='gestao-coco-bambu-v82-69-funil-leads-topo';
 self.addEventListener('install', e => {
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./manifest.json','./icon.png','./index.html','./eventos.html','./eventos.css','./eventos.js','./eventos-seed.js','./eventos-firebase.js']).catch(()=>{})));

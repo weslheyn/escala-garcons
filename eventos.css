@@ -352,9 +352,9 @@ body:not([data-tab="dashboard"]) .dashboard-only{display:none!important;}
 .drop-hint{display:none;margin:0 4px 10px;border:1px dashed rgba(242,199,91,.48);border-radius:14px;padding:10px;text-align:center;color:var(--gold);font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.4px;background:rgba(242,199,91,.07)}
 .kanban-dragging .pipeline-drop-zone .drop-hint{display:block}
 .kanban-dragging .pipeline-drop-zone.drag-blocked .drop-hint{color:#ff9c9c;border-color:rgba(231,76,60,.55);background:rgba(231,76,60,.08)}
-.kanban-dragging .pipeline-drop-zone.drag-blocked .drop-hint::after{content:' — etapa anterior bloqueada'}
+
 .empty-col{padding:8px 6px}
-@media(max-width:900px){.draggable-card{touch-action:none}.drop-hint{font-size:10px;padding:8px}}
+@media(max-width:900px){.draggable-card{touch-action:pan-x pan-y}.drop-hint{font-size:10px;padding:8px}}
 
 
 /* ===== v71 seguro: mobile sem menu inferior + touch longo no funil ===== */
@@ -521,3 +521,6 @@ body:not([data-tab="dashboard"]) .app{padding-top:0!important}
 .top-actions .icon-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.top-actions .icon-btn{color:#f4c756!important;background:rgba(5,7,12,.64)!important;border-color:rgba(244,199,86,.28)!important;box-shadow:0 10px 28px rgba(0,0,0,.35)!important}.top-actions .icon-btn:hover{border-color:rgba(244,199,86,.58)!important;background:rgba(244,199,86,.10)!important;transform:translateY(-1px)}
 .module-head{margin-top:0!important}.module-actions .btn.primary:only-child{display:inline-flex}.module-actions .btn.primary{box-shadow:0 12px 28px rgba(244,199,86,.18)!important}.module-actions .btn+.btn.primary{margin-left:0}.view-pills button{cursor:pointer}.view-pills button:hover{color:#fff;background:rgba(244,199,86,.10)}.calendar-grid.week-view .day{min-height:390px!important}.calendar-day-view{padding:16px!important}.day-view-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.day-view-head h3{margin:0;color:#fff}.day-view-events{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}.day-view-events .ev{min-height:72px}.pipeline-drop-zone{transition:border-color .18s ease,background .18s ease,box-shadow .18s ease}.pipeline-drop-zone.drag-blocked{border-color:rgba(242,199,91,.75)!important;background:linear-gradient(180deg,rgba(37,28,13,.95),rgba(10,13,20,.92))!important}.event-card{touch-action:auto}.event-card.dragging{cursor:grabbing!important}
 @media(max-width:900px){body:not([data-tab="dashboard"]) .topbar{display:none!important}.calendar-grid.week-view{display:block!important}.calendar-grid.week-view .day{min-height:auto!important}.calendar-day-view{padding:12px!important}.day-view-events{grid-template-columns:1fr}.module-actions{grid-template-columns:1fr 1fr!important}.module-actions .btn.primary{grid-column:auto}.top-actions .icon-btn svg{width:17px;height:17px}}
+
+/* v83: remove título intermediário do funil */
+.funil-title-line{display:none!important}

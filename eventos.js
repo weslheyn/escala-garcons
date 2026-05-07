@@ -242,64 +242,43 @@ renderWeekEvents();
 }
 function initials(name){return String(name||'CB').trim().split(/\s+/).slice(0,2).map(p=>p[0]||'').join('').toUpperCase()||'CB';}
 function card(e){return `<div class="event-card draggable-card ${eventColorClass(e)}" draggable="true" data-event-id="${e.id}" data-status="${esc(e.status||'Lead')}"><div class="card-row"><span class="client-avatar">${esc(initials(e.cliente))}</span><div class="card-main"><b>${e.cliente||'Cliente'}</b><p>${dow(e.data)} • ${shortDate(e.data)} • ${horario(e)}<br>${e.turno||'A definir'} · ${e.pessoas||'-'} pessoas · ${e.pacote||'A definir'}<br>📍 ${esc(salao(e))} · ${brl(e.valorEstimado)}</p></div></div><span class="status ${statusClass(e.status)}">${e.status||'Em negociação'}</span><div class="actions"><button onclick="EVENTOS.view('${e.id}')">Ver</button><button onclick="EVENTOS.edit('${e.id}')">Editar</button></div></div>`}
-function renderFunil(){const list=sortEventosRecentes(filtered().filter(e=>!isRecuperacaoStatus(e.status)));const total=list.length;const actions=`<button class="btn alt" onclick="EVENTOS.toggleFilters()">▽ Filtros</button><button class="btn primary" onclick="EVENTOS.openForm()">+ Novo evento</button>`;$('funil').innerHTML=moduleHeader(actions)+`<div class="funil-title-line"><h3>Pipeline comercial</h3><span>${total} eventos</span></div><div class="kanban pipeline-kanban">${PIPELINE_STATUS.map((st,idx)=>{const col=sortEventosRecentes(list.filter(e=>e.status===st));return `<div class="col pipeline-drop-zone ${eventColorClass({status:st})}" data-status="${esc(st)}" data-index="${idx}"><h3>${st} <span>${col.length}</span></h3><div class="drop-hint">Solte aqui para mover</div>${col.map(card).join('')||'<p class="muted empty-col">Sem eventos</p>'}</div>`}).join('')}</div>`;setupFunilDragDrop();}
+function renderFunil(){const list=sortEventosRecentes(filtered().filter(e=>!isRecuperacaoStatus(e.status)));const actions=`<button class="btn alt" onclick="EVENTOS.toggleFilters()">▽ Filtros</button><button class="btn primary" onclick="EVENTOS.openForm()">+ Novo evento</button>`;$('funil').innerHTML=moduleHeader(actions)+`<div class="kanban pipeline-kanban">${PIPELINE_STATUS.map((st,idx)=>{const col=sortEventosRecentes(list.filter(e=>e.status===st));return `<div class="col pipeline-drop-zone ${eventColorClass({status:st})}" data-status="${esc(st)}" data-index="${idx}"><h3>${st} <span>${col.length}</span></h3><div class="drop-hint">Solte aqui para mover</div>${col.map(card).join('')||'<p class="muted empty-col">Sem eventos</p>'}</div>`}).join('')}</div>`;setupFunilDragDrop();}
 
 let __pipelineDraggedId=null;
+let __pipelineScrollLeft=0;
 function setupFunilDragDrop(){
   const root=$('funil');
   if(!root)return;
-  const isTouch=window.matchMedia&&window.matchMedia('(pointer: coarse)').matches;
+  const kanban=root.querySelector('.pipeline-kanban');
+  if(kanban&&__pipelineScrollLeft){
+    requestAnimationFrame(()=>{kanban.scrollLeft=__pipelineScrollLeft||0;});
+  }
   root.querySelectorAll('.draggable-card').forEach(card=>{
-    card.setAttribute('draggable',isTouch?'false':'true');
-    if(isTouch){setupTouchPipelineCard(card,root);return;}
-    card.addEventListener('dragstart',ev=>{
-      __pipelineDraggedId=card.dataset.eventId||'';
-      ev.dataTransfer.setData('text/plain',__pipelineDraggedId);
-      ev.dataTransfer.effectAllowed='move';
-      card.classList.add('dragging');
-      document.body.classList.add('kanban-dragging');
-    });
-    card.addEventListener('dragend',()=>{
-      __pipelineDraggedId=null;
-      card.classList.remove('dragging');
-      document.body.classList.remove('kanban-dragging');
-      root.querySelectorAll('.pipeline-drop-zone').forEach(z=>z.classList.remove('drag-over','drag-blocked'));
-    });
+    card.setAttribute('draggable','false');
+    setupPointerPipelineCard(card,root);
   });
   root.querySelectorAll('.pipeline-drop-zone').forEach(zone=>{
-    zone.addEventListener('dragover',ev=>{
-      const id=__pipelineDraggedId||ev.dataTransfer.getData('text/plain')||document.querySelector('.draggable-card.dragging')?.dataset.eventId||'';
-      if(!id)return;
-      const e=state.eventos.find(x=>x.id===id);
-      const ok=e?canMovePipeline(e.status,zone.dataset.status):true;
-      ev.preventDefault();
-      ev.dataTransfer.dropEffect=ok?'move':'none';
-      zone.classList.toggle('drag-over',ok);
-      zone.classList.toggle('drag-blocked',!ok);
-    });
-    zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over','drag-blocked'));
-    zone.addEventListener('drop',ev=>{
-      ev.preventDefault();
-      const id=__pipelineDraggedId||ev.dataTransfer.getData('text/plain')||document.querySelector('.draggable-card.dragging')?.dataset.eventId||'';
-      zone.classList.remove('drag-over','drag-blocked');
-      if(id) EVENTOS.movePipeline(id,zone.dataset.status);
-    });
+    zone.addEventListener('dragover',ev=>ev.preventDefault());
+    zone.addEventListener('drop',ev=>ev.preventDefault());
   });
 }
-function setupTouchPipelineCard(card,root){
-  let timer=null,startX=0,startY=0,active=false,lastZone=null,ghost=null,scrollTimer=null;
-  const clear=()=>{
-    if(timer){clearTimeout(timer);timer=null;}
-    if(scrollTimer){clearInterval(scrollTimer);scrollTimer=null;}
-  };
+function setupPointerPipelineCard(card,root){
+  let startX=0,startY=0,lastX=0,lastY=0,startTime=0,active=false,armed=false,timer=null,ghost=null,lastZone=null,scrollTimer=null,pointerId=null;
+  const isTouchLike=(ev)=>ev.pointerType==='touch'||ev.pointerType==='pen';
+  const clear=()=>{if(timer){clearTimeout(timer);timer=null;} if(scrollTimer){clearInterval(scrollTimer);scrollTimer=null;}};
   const cleanup=()=>{
-    clear();active=false;card.classList.remove('touch-dragging');document.body.classList.remove('kanban-dragging','touch-drag-active');
+    clear(); active=false; armed=false; pointerId=null; __pipelineDraggedId=null;
+    card.classList.remove('dragging','touch-dragging');
+    document.body.classList.remove('kanban-dragging','touch-drag-active');
     root.querySelectorAll('.pipeline-drop-zone').forEach(z=>z.classList.remove('drag-over','drag-blocked'));
     if(ghost){ghost.remove();ghost=null;}
     lastZone=null;
   };
   const zoneAt=(x,y)=>{
+    const prev=ghost?ghost.style.display:null;
+    if(ghost)ghost.style.display='none';
     const el=document.elementFromPoint(x,y);
+    if(ghost)ghost.style.display=prev||'';
     return el?el.closest('.pipeline-drop-zone'):null;
   };
   const setZone=(zone)=>{
@@ -307,7 +286,7 @@ function setupTouchPipelineCard(card,root){
     if(lastZone)lastZone.classList.remove('drag-over','drag-blocked');
     lastZone=zone;
     if(!zone)return;
-    const e=state.eventos.find(x=>x.id===card.dataset.eventId);
+    const e=state.eventos.find(x=>String(x.id)===String(card.dataset.eventId));
     const ok=e?canMovePipeline(e.status,zone.dataset.status):true;
     zone.classList.toggle('drag-over',ok);
     zone.classList.toggle('drag-blocked',!ok);
@@ -317,62 +296,73 @@ function setupTouchPipelineCard(card,root){
     ghost.style.transform=`translate3d(${x+12}px,${y+12}px,0)`;
   };
   const startAutoScroll=(x)=>{
-    const kanban=root.querySelector('.kanban'); if(!kanban)return;
+    const kanban=root.querySelector('.pipeline-kanban'); if(!kanban)return;
     const r=kanban.getBoundingClientRect();
-    let dir=0;
-    if(x<r.left+45)dir=-1; else if(x>r.right-45)dir=1;
+    const dir=x<r.left+55?-1:(x>r.right-55?1:0);
     if(!dir){if(scrollTimer){clearInterval(scrollTimer);scrollTimer=null;}return;}
     if(scrollTimer)return;
     scrollTimer=setInterval(()=>{
-      const t=window.__touchDragX||0;
-      const rr=kanban.getBoundingClientRect();
-      const d=t<rr.left+45?-1:(t>rr.right-45?1:0);
+      const k=root.querySelector('.pipeline-kanban'); if(!k)return;
+      const rr=k.getBoundingClientRect();
+      const d=lastX<rr.left+55?-1:(lastX>rr.right-55?1:0);
       if(!d){clearInterval(scrollTimer);scrollTimer=null;return;}
-      kanban.scrollLeft+=d*14;
+      k.scrollLeft+=d*18;
+      __pipelineScrollLeft=k.scrollLeft;
+      setZone(zoneAt(lastX,lastY));
     },16);
   };
-  card.addEventListener('touchstart',ev=>{
-    if(ev.touches.length!==1)return;
-    const t=ev.touches[0]; startX=t.clientX; startY=t.clientY;
+  const begin=()=>{
+    if(active||!armed)return;
+    active=true;
+    __pipelineDraggedId=card.dataset.eventId||'';
+    const kanban=root.querySelector('.pipeline-kanban'); if(kanban)__pipelineScrollLeft=kanban.scrollLeft;
+    card.classList.add('dragging','touch-dragging');
+    document.body.classList.add('kanban-dragging','touch-drag-active');
+    if(navigator.vibrate)try{navigator.vibrate(18)}catch(_){ }
+    ghost=card.cloneNode(true);
+    ghost.className='event-card drag-ghost';
+    ghost.style.width=Math.min(card.offsetWidth,280)+'px';
+    ghost.style.pointerEvents='none';
+    document.body.appendChild(ghost);
+    moveGhost(lastX,lastY);
+    setZone(zoneAt(lastX,lastY));
+  };
+  card.addEventListener('pointerdown',ev=>{
+    if(ev.button!==undefined&&ev.button!==0)return;
+    if(ev.target.closest('button,a,input,select,textarea'))return;
+    startX=lastX=ev.clientX; startY=lastY=ev.clientY; startTime=Date.now(); pointerId=ev.pointerId; armed=true;
     clear();
-    timer=setTimeout(()=>{
-      active=true;
-      card.classList.add('touch-dragging');
-      document.body.classList.add('kanban-dragging','touch-drag-active');
-      if(navigator.vibrate)try{navigator.vibrate(25)}catch(e){}
-      ghost=card.cloneNode(true);
-      ghost.className='event-card drag-ghost';
-      ghost.style.width=Math.min(card.offsetWidth,260)+'px';
-      document.body.appendChild(ghost);
-      moveGhost(startX,startY);
-      setZone(zoneAt(startX,startY));
-    },520);
-  },{passive:true});
-  card.addEventListener('touchmove',ev=>{
-    const t=ev.touches[0]; if(!t)return;
-    window.__touchDragX=t.clientX;
+    if(isTouchLike(ev)) timer=setTimeout(begin,460);
+    else timer=setTimeout(()=>{},0);
+  });
+  window.addEventListener('pointermove',ev=>{
+    if(!armed||pointerId!==ev.pointerId)return;
+    lastX=ev.clientX; lastY=ev.clientY;
+    const dx=Math.abs(lastX-startX), dy=Math.abs(lastY-startY);
     if(!active){
-      if(Math.abs(t.clientX-startX)>8||Math.abs(t.clientY-startY)>8)clear();
-      return;
+      if(isTouchLike(ev)){
+        if(dx>12||dy>12)cleanup();
+        return;
+      }
+      if(dx>5||dy>5)begin();
     }
+    if(!active)return;
     ev.preventDefault();
-    moveGhost(t.clientX,t.clientY);
-    setZone(zoneAt(t.clientX,t.clientY));
-    startAutoScroll(t.clientX);
+    moveGhost(lastX,lastY);
+    setZone(zoneAt(lastX,lastY));
+    startAutoScroll(lastX);
   },{passive:false});
-  card.addEventListener('touchend',ev=>{
-    if(!active){cleanup();return;}
-    const t=ev.changedTouches[0];
-    const zone=t?zoneAt(t.clientX,t.clientY):lastZone;
+  window.addEventListener('pointerup',ev=>{
+    if(!armed||pointerId!==ev.pointerId)return;
+    const zone=active?zoneAt(ev.clientX,ev.clientY):null;
     const id=card.dataset.eventId; const status=zone?.dataset?.status;
+    const kanban=root.querySelector('.pipeline-kanban'); if(kanban)__pipelineScrollLeft=kanban.scrollLeft;
     cleanup();
     if(id&&status)EVENTOS.movePipeline(id,status);
-  },{passive:true});
-  card.addEventListener('touchcancel',cleanup,{passive:true});
+  });
+  window.addEventListener('pointercancel',ev=>{if(armed&&pointerId===ev.pointerId)cleanup();});
 }
 function canMovePipeline(from,to){
-  // v77: permite movimentar o card livremente no funil, tanto para frente quanto para trás.
-  // A validação permanece apenas para impedir soltar fora das etapas oficiais.
   return !!to && PIPELINE_STATUS.includes(to);
 }
 
@@ -614,7 +604,7 @@ window.EVENTOS={
   saveForm(id){const e=collect(id); const idx=state.eventos.findIndex(x=>x.id===e.id); if(idx>=0)state.eventos[idx]=Object.assign({},state.eventos[idx],e); else state.eventos.unshift(e); save(); $('modal').classList.remove('open'); toast('Evento salvo'); render();},
   view(id){const e=state.eventos.find(x=>x.id===id); if(!e)return; const wa=e.telefone?`<a class="whats" target="_blank" href="https://wa.me/${String(e.telefone).replace(/\D/g,'')}">Abrir WhatsApp</a>`:''; $('modalTitle').textContent=e.cliente; $('modalBody').innerHTML=`<div class="kpi-grid"><div class="kpi"><div class="label">Data</div><div class="value">${dow(e.data)} ${shortDate(e.data)}<br><span style="font-size:16px;color:var(--sub)">${horario(e)}</span></div></div><div class="kpi"><div class="label">Valor total</div><div class="value">${brl(e.valorEstimado)}</div></div><div class="kpi"><div class="label">Pessoas</div><div class="value">${e.pessoas||'-'}</div></div><div class="kpi"><div class="label">Status</div><div class="value" style="font-size:20px">${e.status}</div></div></div><div class="panel" style="margin-top:14px"><p><b>Telefone:</b> ${e.telefone||'-'} ${wa}</p><p><b>Tipo:</b> ${e.tipo} · <b>Turno:</b> ${e.turno} · <b>Pacote:</b> ${e.pacote}</p><p><b>Unidade/Salão:</b> ${e.unidade||'-'}</p><p><b>Origem:</b> ${e.origem||e.origemPlanilha||'-'}</p><p><b>Diretoria:</b> ${(e.diretores&&e.diretores.length)?e.diretores.map(d=>`${esc(d.nome)} ${d.assinado?'✅':'⏳'}`).join(' · '):'Não cadastrada'}</p><div class="divider"></div><p style="white-space:pre-wrap">${esc(e.observacoes||'')}</p></div><br><button class="btn" onclick="EVENTOS.edit('${e.id}')">Editar</button>`; $('modal').classList.add('open');},
   closeModal(){ $('modal').classList.remove('open');},
-  movePipeline(id,status){const e=state.eventos.find(x=>String(x.id)===String(id)); if(!e)return toast('Evento não encontrado'); if(!canMovePipeline(e.status,status))return toast('Etapa inválida'); if(e.status===status)return toast('Card já está nesta etapa'); const antigo=e.status; const agora=new Date().toISOString(); e.status=status; e.movidoEm=agora; e.statusAtualizadoEm=agora; e.atualizadoEm=agora; e.criadoEm=e.criadoEm||agora; e.observacoes=(e.observacoes||'')+`\n\n[FUNIL] Movido de ${antigo||'Sem status'} para ${status} em ${new Date().toLocaleString('pt-BR')}`; localStorage.setItem(STORE,JSON.stringify(state.eventos)); if(window.EventosFirebase&&EventosFirebase.enabled){try{EventosFirebase.saveAll(state.eventos).catch(()=>{});}catch(_){}} toast(`Movido para ${status}`); render();},
+  movePipeline(id,status){const e=state.eventos.find(x=>String(x.id)===String(id)); if(!e)return toast('Evento não encontrado'); if(!canMovePipeline(e.status,status))return toast('Etapa inválida'); if(e.status===status)return toast('Card já está nesta etapa'); const kanban=document.querySelector('#funil .pipeline-kanban'); if(kanban)__pipelineScrollLeft=kanban.scrollLeft; const antigo=e.status; const agora=new Date().toISOString(); e.status=status; e.movidoEm=agora; e.statusAtualizadoEm=agora; e.atualizadoEm=agora; e.criadoEm=e.criadoEm||agora; e.observacoes=(e.observacoes||'')+`\n\n[FUNIL] Movido de ${antigo||'Sem status'} para ${status} em ${new Date().toLocaleString('pt-BR')}`; localStorage.setItem(STORE,JSON.stringify(state.eventos)); if(window.EventosFirebase&&EventosFirebase.enabled){try{EventosFirebase.saveAll(state.eventos).catch(()=>{});}catch(_){}} toast(`Movido para ${status}`); render(); requestAnimationFrame(()=>{const k=document.querySelector('#funil .pipeline-kanban');if(k)k.scrollLeft=__pipelineScrollLeft||0;});},
   markRecuperado(id){const e=state.eventos.find(x=>x.id===id); if(e){e.status='Proposta enviada';e.movidoEm=new Date().toISOString();e.statusAtualizadoEm=e.movidoEm;e.observacoes=(e.observacoes||'')+'\n\n[RECUPERAÇÃO] Cliente reativado em '+new Date().toLocaleDateString('pt-BR');save();toast('Cliente movido para proposta');render();}},
   whats(id){const e=state.eventos.find(x=>x.id===id); if(!e||!e.telefone)return toast('Telefone não cadastrado'); window.open(`https://wa.me/${String(e.telefone).replace(/\D/g,'')}?text=${encodeURIComponent('Olá, tudo bem? Estou entrando em contato sobre sua proposta de evento no Coco Bambu.')}`,'_blank');},
   seedReset(){if(confirm('Recarregar a base importada da planilha? Eventos cadastrados manualmente serão mantidos.')){const manual=state.eventos.filter(e=>!e.importado);state.eventos=dedupeEventos([...(window.EVENTOS_SEED||[]).map(e=>({...e,importado:true})),...manual]);save();toast('Base 2026/2027 recarregada');setupFilters();render();}},

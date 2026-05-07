@@ -127,7 +127,18 @@ function moduleMeta(){const map={dashboard:['Dashboard','Visão geral comercial 
 function moduleHeader(extra=''){const [title,subtitle,icon]=moduleMeta();return `<div class="module-head premium-panel"><div><span class="eyebrow">${icon} ${esc(title.split(' ')[0])}</span><h2>${esc(title)}</h2><p>${esc(subtitle)}</p></div>${extra?`<div class="module-actions">${extra}</div>`:''}</div>`;}
 function isRecuperacaoStatus(s){return ['Recuperação','Sem resposta','Cancelado','Perdido','Perdido/Cancelado'].includes(s);}
 function normalizeStatus(s, obs=''){
-  const n=norm([s,obs].join(' '));
+  const raw=String(s||'').trim();
+  const rawNorm=norm(raw);
+  const allStatus=[...PIPELINE_STATUS,...RECOVERY_STATUS];
+  const exact=allStatus.find(st=>norm(st)===rawNorm);
+  // Regra crítica do funil: quando o campo STATUS já vem preenchido com uma etapa válida,
+  // ele deve ser a verdade. Não podemos reclassificar usando observações antigas, porque o
+  // histórico pode conter frases como “Movido de Proposta enviada para Lead” e isso fazia
+  // o card voltar para a etapa anterior.
+  if(exact) return exact;
+
+  // Se o status veio vazio/sem status, aí sim usamos observações/texto importado para sugerir etapa.
+  const n=norm([raw,obs].join(' '));
   if(n.includes('realizado')) return 'Realizado';
   if(n.includes('fechado') || n.includes('contrato assinado') || n.includes('evento fechado')) return 'Fechado';
   if(n.includes('assinatura diretoria') || n.includes('diretoria')) return 'Assinatura diretoria';
@@ -141,7 +152,6 @@ function normalizeStatus(s, obs=''){
   if(n.includes('sem retorno') || n.includes('sem resposta')) return 'Sem resposta';
   if(n.includes('cancel')) return 'Cancelado';
   if(n.includes('declin') || n.includes('perdido') || n.includes('desistiu')) return 'Perdido';
-  if(PIPELINE_STATUS.includes(s) || RECOVERY_STATUS.includes(s)) return s;
   return 'Lead';
 }
 function eventoDedupeKey(e){

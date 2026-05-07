@@ -27,6 +27,11 @@ window.EventosFirebase = {
     await this.db.ref('eventos_premium/eventos').set(obj);
     return true;
   },
+  async saveEvento(evento){
+    if(!this.enabled||!this.db||!evento||!evento.id) return false;
+    await this.db.ref('eventos_premium/eventos/'+evento.id).update(evento);
+    return true;
+  },
   listen(cb){
     if(!this.enabled||!this.db) return false;
     this.db.ref('eventos_premium/eventos').on('value',snap=>{

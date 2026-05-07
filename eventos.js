@@ -246,10 +246,13 @@ function renderFunil(){const list=sortEventosRecentes(filtered().filter(e=>!isRe
 
 let __pipelineDraggedId=null;
 let __pipelineScrollLeft=0;
+let __pipelineGlobalDropReady=false;
+const __pendingEventoWrites=new Map();
 
 function setupFunilDragDrop(){
   const root=$('funil');
   if(!root)return;
+  setupPipelineGlobalDrop(root);
   const kanban=root.querySelector('.pipeline-kanban');
   if(kanban&&__pipelineScrollLeft){
     requestAnimationFrame(()=>{kanban.scrollLeft=__pipelineScrollLeft||0;});
@@ -297,6 +300,46 @@ function setupFunilDragDrop(){
   });
 }
 
+
+function setupPipelineGlobalDrop(root){
+  if(__pipelineGlobalDropReady)return;
+  __pipelineGlobalDropReady=true;
+
+  const activeRoot=()=>document.getElementById('funil');
+  const activeKanban=()=>activeRoot()?.querySelector('.pipeline-kanban');
+
+  window.addEventListener('dragover',ev=>{
+    if(!__pipelineDraggedId)return;
+    const rootNow=activeRoot();
+    if(!rootNow)return;
+    const kanban=activeKanban();
+    if(!kanban)return;
+    ev.preventDefault();
+    if(ev.dataTransfer)ev.dataTransfer.dropEffect='move';
+    const z=pipelineZoneFromPoint(rootNow,ev.clientX,ev.clientY);
+    clearPipelineHighlights(rootNow);
+    if(z)z.classList.add('drag-over');
+    __pipelineScrollLeft=kanban.scrollLeft;
+  },{passive:false});
+
+  window.addEventListener('drop',ev=>{
+    if(!__pipelineDraggedId)return;
+    const rootNow=activeRoot();
+    if(!rootNow)return;
+    ev.preventDefault();
+    const id=(ev.dataTransfer&&ev.dataTransfer.getData('text/plain'))||__pipelineDraggedId;
+    const z=pipelineZoneFromPoint(rootNow,ev.clientX,ev.clientY);
+    const status=z&&z.dataset?z.dataset.status:'';
+    const kanban=activeKanban();
+    if(kanban)__pipelineScrollLeft=kanban.scrollLeft;
+    clearPipelineHighlights(rootNow);
+    rootNow.querySelectorAll('.draggable-card.dragging').forEach(c=>c.classList.remove('dragging'));
+    document.body.classList.remove('kanban-dragging');
+    __pipelineDraggedId=null;
+    if(id&&status)EVENTOS.movePipeline(id,status);
+  },{passive:false});
+}
+
 function setupPipelineNativeDrag(card,root){
   if(card.dataset.nativeDragReady==='1')return;
   card.dataset.nativeDragReady='1';
@@ -333,35 +376,31 @@ function clearPipelineHighlights(root){
 }
 
 function pipelineZoneFromPoint(root,x,y){
-  const zones=pipelineZones(root);
+  const zones=pipelineZones(root).filter(z=>z.offsetParent!==null);
   if(!zones.length)return null;
 
-  // Detecção real pelo ponto visível na tela. Isso evita o erro de “descalibrar”
-  // quando o funil está com scroll horizontal ou quando o card fantasma cobre a área.
+  // 1) Primeiro tenta o elemento real sob o cursor.
   const el=document.elementFromPoint(x,y);
   const direct=el&&el.closest?el.closest('.pipeline-drop-zone'):null;
   if(direct&&root.contains(direct))return direct;
 
-  const kanban=root.querySelector('.pipeline-kanban');
-  const kr=kanban?kanban.getBoundingClientRect():null;
-  const yOk=!kr || (y>=kr.top-70 && y<=kr.bottom+70);
-
-  let best=null,bestDist=Infinity;
-  zones.forEach(z=>{
+  // 2) Depois usa as coordenadas visíveis de cada coluna. Isso permite voltar para a esquerda
+  // mesmo quando o card/ghost está por cima ou quando o funil está com scroll horizontal.
+  let candidate=null;
+  for(const z of zones){
     const r=z.getBoundingClientRect();
-    // Primeiro tenta coluna realmente sob o X do ponteiro.
-    if(yOk && x>=r.left && x<=r.right){
-      const dy=y<r.top ? r.top-y : y>r.bottom ? y-r.bottom : 0;
-      if(dy<bestDist){bestDist=dy;best=z;}
-      return;
-    }
-    // Se estiver entre colunas ou na borda, pega a coluna visível mais próxima.
-    const cx=Math.max(r.left,Math.min(x,r.right));
-    const cy=Math.max(r.top,Math.min(y,r.bottom));
-    const dx=x-cx, dy=y-cy;
-    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(x>=r.left && x<=r.right){candidate=z;break;}
+  }
+  if(candidate)return candidate;
+
+  // 3) Se estiver exatamente no vão entre colunas, usa a coluna mais próxima pelo centro.
+  let best=null,bestDist=Infinity;
+  for(const z of zones){
+    const r=z.getBoundingClientRect();
+    const cx=r.left+(r.width/2);
+    const dist=Math.abs(x-cx);
     if(dist<bestDist){bestDist=dist;best=z;}
-  });
+  }
   return best;
 }
 
@@ -686,6 +725,44 @@ function setupEventFinancials(){
 function formHtml(e={}){const packs=['A definir',...new Set(state.pacotes.map(p=>p.nome.replace('Menu ','')))];return `<div class="form-grid"><div><label>Cliente</label><input class="field" id="f_cliente" value="${esc(e.cliente||'')}"></div><div><label>Telefone</label><input class="field" id="f_telefone" value="${esc(e.telefone||'')}"></div><div><label>Data</label><input class="field" type="date" id="f_data" value="${e.data||''}"></div><div><label>Horário</label><input class="field" type="time" id="f_horario" value="${e.horario||''}"></div><div><label>Status</label><select class="field" id="f_status">${STATUS.map(s=>`<option ${s===(e.status||'Lead')?'selected':''}>${s}</option>`).join('')}</select></div><div><label>Origem</label><select class="field" id="f_origem"><option>${e.origem||'WhatsApp'}</option><option>Instagram</option><option>Telefone</option><option>Anúncio</option><option>Indicação</option><option>Presencial</option></select></div><div><label>Tipo</label><input class="field" id="f_tipo" value="${esc(e.tipo||'Evento')}"></div><div><label>Turno</label><select class="field" id="f_turno">${['Almoço','Jantar','Ambos','A definir'].map(s=>`<option ${s===(e.turno||'A definir')?'selected':''}>${s}</option>`).join('')}</select></div><div><label>Pessoas</label><input class="field" type="number" id="f_pessoas" value="${e.pessoas||''}"></div><div><label>Pacote</label><select class="field" id="f_pacote">${packs.map(p=>`<option ${p===(e.pacote||'A definir')?'selected':''}>${p}</option>`).join('')}</select></div><div><label>Valor por pessoa</label><input class="field" type="text" inputmode="decimal" id="f_valorPessoa" value="${String(e.valorPessoa||0).replace('.',',')}"></div><div><label>Taxa serviço %</label><input class="field" type="text" inputmode="decimal" id="f_taxa" value="${String(e.taxaServicoPct??13).replace('.',',')}"></div><div><label>Gorjeta</label><input class="field" type="text" inputmode="decimal" id="f_gorjeta" value="${e.gorjeta||0}" readonly></div><div class="span2"><label>Salão</label><select class="field" id="f_unidade">${['Salão Vasto','Salão Barra','Salão Beira Mar','Varanda','Salão Barra + Beira Mar + Varanda','A definir'].map(s=>`<option ${s===(e.unidade||'A definir')?'selected':''}>${s}</option>`).join('')}</select></div><div class="span2"><label>Valor total</label><input class="field" type="text" inputmode="decimal" id="f_valorEstimado" value="${e.valorTotal||e.valorEstimado||0}" readonly></div><div class="span4"><label>Observações / andamento</label><textarea class="field" id="f_obs">${esc(e.observacoes||'')}</textarea></div><div class="span4 directors-box"><label>Assinatura da diretoria</label>${[0,1,2].map(i=>{const d=(e.diretores||[])[i]||{};return `<div class="director-row"><input class="field" id="f_dir_nome_${i}" placeholder="Nome do diretor" value="${esc(d.nome||'')}"><span>Assinou?</span><input type="checkbox" id="f_dir_ok_${i}" ${d.assinado?'checked':''}></div>`}).join('')}<p class="muted" style="margin:8px 0 0;font-size:11px">Marque cada diretor que assinou. Quando todos estiverem OK, o evento pode avançar para Fechado.</p></div></div><div class="divider"></div><button class="btn" onclick="EVENTOS.saveForm('${e.id||''}')">Salvar evento</button>`}
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function collect(id){const data=$('f_data').value;calcEventFinancialsFromFields();const pessoas=parseNum($('f_pessoas').value)||null;const valorPessoa=parseNum($('f_valorPessoa').value);const taxaServicoPct=parseNum($('f_taxa').value);const gorjeta=parseNum($('f_gorjeta').value);const valorTotal=parseNum($('f_valorEstimado').value);return{id:id||uid(),ano:data?Number(data.slice(0,4)):new Date().getFullYear(),data:data||new Date().toISOString().slice(0,10),horario:$('f_horario')?$('f_horario').value:'',cliente:$('f_cliente').value.trim()||'Cliente não informado',telefone:$('f_telefone').value.trim(),origem:$('f_origem').value,unidade:$('f_unidade').value,tipo:$('f_tipo').value,turno:$('f_turno').value,pessoas,pacote:$('f_pacote').value,status:$('f_status').value,valorPessoa,taxaServicoPct,gorjeta,valorEstimado:valorTotal,valorTotal,observacoes:$('f_obs').value.trim(),diretores:[0,1,2].map(i=>({nome:($('f_dir_nome_'+i)?.value||'').trim(),assinado:!!$('f_dir_ok_'+i)?.checked})).filter(d=>d.nome),atualizadoEm:new Date().toISOString()};}
+
+function eventoFreshMs(e){return Math.max(parseTimestampBR(e&&e.atualizadoEm),parseTimestampBR(e&&e.movidoEm),parseTimestampBR(e&&e.statusAtualizadoEm),parseTimestampBR(e&&e.criadoEm));}
+function markPendingEvento(e){
+  if(!e||!e.id)return;
+  __pendingEventoWrites.set(String(e.id),{status:e.status||'',ms:eventoFreshMs(e)||Date.now()});
+  setTimeout(()=>__pendingEventoWrites.delete(String(e.id)),15000);
+}
+function persistEvento(e){
+  localStorage.setItem(STORE,JSON.stringify(state.eventos));
+  markPendingEvento(e);
+  if(window.EventosFirebase&&EventosFirebase.enabled){
+    try{
+      if(EventosFirebase.saveEvento) return EventosFirebase.saveEvento(e).catch(()=>EventosFirebase.saveAll(state.eventos).catch(()=>{}));
+      return EventosFirebase.saveAll(state.eventos).catch(()=>{});
+    }catch(_){ }
+  }
+}
+function mergeRemoteEventos(arr){
+  const map=new Map((state.eventos||[]).map(e=>[String(e.id),e]));
+  (arr||[]).forEach(remote=>{
+    if(!remote||!remote.id)return;
+    const id=String(remote.id);
+    const local=map.get(id);
+    const pending=__pendingEventoWrites.get(id);
+    const rMs=eventoFreshMs(remote);
+    const lMs=eventoFreshMs(local);
+    if(pending){
+      // Se o Firebase ainda devolveu a versão antiga, não deixa sobrescrever a alteração local.
+      if((remote.status||'')!==pending.status && rMs<=pending.ms){return;}
+      if((remote.status||'')===pending.status) __pendingEventoWrites.delete(id);
+    }
+    if(local && lMs>rMs){return;}
+    map.set(id,Object.assign({},local||{},remote));
+  });
+  state.eventos=dedupeEventos([...map.values()]);
+  localStorage.setItem(STORE,JSON.stringify(state.eventos));
+}
+
 window.EVENTOS={
   tab(id){state.tab=id;document.body.classList.remove('menu-open');render()},
   clientesTab(v){state.clientesView=v;renderClientes();},
@@ -723,10 +800,10 @@ window.EVENTOS={
   setMeta(v){state.meta.metaMensal=Number(v)||0;save();render()},
   openForm(){ $('modalTitle').textContent='Novo Evento'; $('modalBody').innerHTML=formHtml(); $('modal').classList.add('open'); setupEventFinancials();},
   edit(id){const e=state.eventos.find(x=>x.id===id); if(!e)return; $('modalTitle').textContent='Editar Evento'; $('modalBody').innerHTML=formHtml(e); $('modal').classList.add('open'); setupEventFinancials();},
-  saveForm(id){const e=collect(id); const idx=state.eventos.findIndex(x=>x.id===e.id); if(idx>=0)state.eventos[idx]=Object.assign({},state.eventos[idx],e); else state.eventos.unshift(e); save(); $('modal').classList.remove('open'); toast('Evento salvo'); render();},
+  saveForm(id){const e=collect(id); const idx=state.eventos.findIndex(x=>String(x.id)===String(e.id)); const antigo=idx>=0?state.eventos[idx]:null; const agora=new Date().toISOString(); if(antigo){e.criadoEm=antigo.criadoEm||e.criadoEm||agora; if((antigo.status||'')!==(e.status||'')){e.movidoEm=agora;e.statusAtualizadoEm=agora;e.observacoes=(e.observacoes||'')+`\n\n[FUNIL] Status alterado manualmente de ${antigo.status||'Sem status'} para ${e.status} em ${new Date().toLocaleString('pt-BR')}`;} state.eventos[idx]=Object.assign({},antigo,e,{atualizadoEm:agora});} else {state.eventos.unshift(Object.assign({},e,{criadoEm:agora,atualizadoEm:agora}));} persistEvento(state.eventos[idx>=0?idx:0]); $('modal').classList.remove('open'); toast('Evento salvo'); render();},
   view(id){const e=state.eventos.find(x=>x.id===id); if(!e)return; const wa=e.telefone?`<a class="whats" target="_blank" href="https://wa.me/${String(e.telefone).replace(/\D/g,'')}">Abrir WhatsApp</a>`:''; $('modalTitle').textContent=e.cliente; $('modalBody').innerHTML=`<div class="kpi-grid"><div class="kpi"><div class="label">Data</div><div class="value">${dow(e.data)} ${shortDate(e.data)}<br><span style="font-size:16px;color:var(--sub)">${horario(e)}</span></div></div><div class="kpi"><div class="label">Valor total</div><div class="value">${brl(e.valorEstimado)}</div></div><div class="kpi"><div class="label">Pessoas</div><div class="value">${e.pessoas||'-'}</div></div><div class="kpi"><div class="label">Status</div><div class="value" style="font-size:20px">${e.status}</div></div></div><div class="panel" style="margin-top:14px"><p><b>Telefone:</b> ${e.telefone||'-'} ${wa}</p><p><b>Tipo:</b> ${e.tipo} · <b>Turno:</b> ${e.turno} · <b>Pacote:</b> ${e.pacote}</p><p><b>Unidade/Salão:</b> ${e.unidade||'-'}</p><p><b>Origem:</b> ${e.origem||e.origemPlanilha||'-'}</p><p><b>Diretoria:</b> ${(e.diretores&&e.diretores.length)?e.diretores.map(d=>`${esc(d.nome)} ${d.assinado?'✅':'⏳'}`).join(' · '):'Não cadastrada'}</p><div class="divider"></div><p style="white-space:pre-wrap">${esc(e.observacoes||'')}</p></div><br><button class="btn" onclick="EVENTOS.edit('${e.id}')">Editar</button>`; $('modal').classList.add('open');},
   closeModal(){ $('modal').classList.remove('open');},
-  movePipeline(id,status){const e=state.eventos.find(x=>String(x.id)===String(id)); if(!e)return toast('Evento não encontrado'); if(!canMovePipeline(e.status,status))return toast('Etapa inválida'); if(e.status===status)return toast('Card já está nesta etapa'); const kanban=document.querySelector('#funil .pipeline-kanban'); if(kanban)__pipelineScrollLeft=kanban.scrollLeft; const antigo=e.status; const agora=new Date().toISOString(); e.status=status; e.movidoEm=agora; e.statusAtualizadoEm=agora; e.atualizadoEm=agora; e.criadoEm=e.criadoEm||agora; e.observacoes=(e.observacoes||'')+`\n\n[FUNIL] Movido de ${antigo||'Sem status'} para ${status} em ${new Date().toLocaleString('pt-BR')}`; localStorage.setItem(STORE,JSON.stringify(state.eventos)); if(window.EventosFirebase&&EventosFirebase.enabled){try{EventosFirebase.saveAll(state.eventos).catch(()=>{});}catch(_){}} toast(`Movido para ${status}`); render(); requestAnimationFrame(()=>{const k=document.querySelector('#funil .pipeline-kanban');if(k)k.scrollLeft=__pipelineScrollLeft||0;});},
+  movePipeline(id,status){const e=state.eventos.find(x=>String(x.id)===String(id)); if(!e)return toast('Evento não encontrado'); if(!canMovePipeline(e.status,status))return toast('Etapa inválida'); if(e.status===status)return toast('Card já está nesta etapa'); const kanban=document.querySelector('#funil .pipeline-kanban'); if(kanban)__pipelineScrollLeft=kanban.scrollLeft; const antigo=e.status; const agora=new Date().toISOString(); e.status=status; e.movidoEm=agora; e.statusAtualizadoEm=agora; e.atualizadoEm=agora; e.criadoEm=e.criadoEm||agora; e.observacoes=(e.observacoes||'')+`\n\n[FUNIL] Movido de ${antigo||'Sem status'} para ${status} em ${new Date().toLocaleString('pt-BR')}`; persistEvento(e); toast(`Movido para ${status}`); render(); requestAnimationFrame(()=>{const k=document.querySelector('#funil .pipeline-kanban');if(k)k.scrollLeft=__pipelineScrollLeft||0;});},
   markRecuperado(id){const e=state.eventos.find(x=>x.id===id); if(e){e.status='Proposta enviada';e.movidoEm=new Date().toISOString();e.statusAtualizadoEm=e.movidoEm;e.observacoes=(e.observacoes||'')+'\n\n[RECUPERAÇÃO] Cliente reativado em '+new Date().toLocaleDateString('pt-BR');save();toast('Cliente movido para proposta');render();}},
   whats(id){const e=state.eventos.find(x=>x.id===id); if(!e||!e.telefone)return toast('Telefone não cadastrado'); window.open(`https://wa.me/${String(e.telefone).replace(/\D/g,'')}?text=${encodeURIComponent('Olá, tudo bem? Estou entrando em contato sobre sua proposta de evento no Coco Bambu.')}`,'_blank');},
   seedReset(){if(confirm('Recarregar a base importada da planilha? Eventos cadastrados manualmente serão mantidos.')){const manual=state.eventos.filter(e=>!e.importado);state.eventos=dedupeEventos([...(window.EVENTOS_SEED||[]).map(e=>({...e,importado:true})),...manual]);save();toast('Base 2026/2027 recarregada');setupFilters();render();}},
@@ -742,6 +819,6 @@ function boot(){
   if(ev.target.closest('.desktop-sidebar')||ev.target.closest('.mobile-menu'))return;
   document.body.classList.remove('menu-open');
 });
-load();setupTabs();setupFilters();render(); if(window.EventosFirebase){EventosFirebase.init().then(ok=>{if(ok){EventosFirebase.listen(arr=>{if(Array.isArray(arr)&&arr.length){const map=new Map((state.eventos||[]).map(e=>[e.id,e]));arr.forEach(e=>{if(e&&e.id)map.set(e.id,Object.assign({},map.get(e.id)||{},e));});state.eventos=dedupeEventos([...map.values()]);localStorage.setItem(STORE,JSON.stringify(state.eventos));setupFilters();render();}}); if(EventosFirebase.listenClientes) EventosFirebase.listenClientes(arr=>{state.clientesCadastros=dedupeClientesCadastro([...(state.clientesCadastros||[]),...(arr||[])]);saveClientes(); if(state.tab==='clientes')renderClientes();});}});}}
+load();setupTabs();setupFilters();render(); if(window.EventosFirebase){EventosFirebase.init().then(ok=>{if(ok){EventosFirebase.listen(arr=>{if(Array.isArray(arr)&&arr.length){mergeRemoteEventos(arr);setupFilters();render();}}); if(EventosFirebase.listenClientes) EventosFirebase.listenClientes(arr=>{state.clientesCadastros=dedupeClientesCadastro([...(state.clientesCadastros||[]),...(arr||[])]);saveClientes(); if(state.tab==='clientes')renderClientes();});}});}}
 document.addEventListener('DOMContentLoaded',boot);
 })();

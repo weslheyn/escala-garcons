@@ -1027,3 +1027,50 @@
   };
   setInterval(()=>{ try{ window.updatePracasDashboardBadge(); }catch(e){} }, 4000);
 })();
+
+/* AJUSTE v110: manter escala estreita, aumentar altura vertical e liberar scroll */
+(function(){
+  if(document.getElementById('pracasV110VerticalFit')) return;
+  const st=document.createElement('style');
+  st.id='pracasV110VerticalFit';
+  st.textContent=`
+    @media (min-width: 900px){
+      .pracas-panel{overflow:auto!important;padding-bottom:18px!important;}
+      .pracas-wrap{height:auto!important;min-height:calc(100vh - 44px)!important;overflow:visible!important;}
+      #pracasViewSorteio,#pracasViewResultado{height:auto!important;min-height:calc(100vh - 92px)!important;overflow:visible!important;}
+      .pracas-live-grid{min-height:calc(100vh - 98px)!important;height:auto!important;align-items:stretch!important;}
+      .pracas-live-left{max-height:calc(100vh - 112px)!important;overflow:auto!important;}
+      .pracas-live-list{overflow:auto!important;}
+      .pracas-live-right{min-height:calc(100vh - 112px)!important;overflow:auto!important;align-items:center!important;justify-content:flex-start!important;}
+      .pracas-live-right .pracas-print-box{
+        width:76vw!important;
+        max-width:760px!important;
+        min-width:700px!important;
+        margin:0 auto!important;
+      }
+      .pracas-live-right .pracas-print-title{font-size:14px!important;padding:4px!important;line-height:1.05!important;}
+      .pracas-live-right .pracas-meta-table{font-size:7.2px!important;line-height:1.05!important;}
+      .pracas-live-right .pracas-meta-table td{height:14px!important;padding:1px 3px!important;line-height:1.05!important;}
+      .pracas-live-right .pracas-escala-table{font-size:7.8px!important;line-height:1.05!important;}
+      .pracas-live-right .pracas-escala-table th,
+      .pracas-live-right .pracas-escala-table td{
+        height:17px!important;
+        padding:1px 2px!important;
+        line-height:1.05!important;
+        white-space:nowrap!important;
+        overflow:hidden!important;
+        text-overflow:clip!important;
+      }
+      .pracas-live-right .pracas-area-row td{height:15px!important;padding:1px!important;font-size:7.8px!important;line-height:1.05!important;}
+      .pracas-summary-fit{max-width:760px!important;width:76vw!important;margin:0 auto!important;font-size:13px!important;padding-top:8px!important;}
+    }
+    @media (max-width: 899px){
+      .pracas-panel{overflow:auto!important;}
+      .pracas-live-right{overflow:auto!important;}
+      .pracas-live-right .pracas-escala-table th,
+      .pracas-live-right .pracas-escala-table td{height:10px!important;}
+      .pracas-live-right .pracas-area-row td{height:10px!important;}
+    }
+  `;
+  document.head.appendChild(st);
+})();

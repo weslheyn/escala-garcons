@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'gestao-coco-bambu-v106-pracas-eventos-stable';
+const CACHE_VERSION = 'gestao-coco-bambu-v107-eventos-v100-pracas-fit';
 
 self.addEventListener('install', event => {
   self.skipWaiting();

@@ -1,5 +1,5 @@
 /* =====================================================
-   MÓDULO PRAÇAS DIÁRIAS E SORTEIO — v106
+   MÓDULO PRAÇAS DIÁRIAS E SORTEIO — v40
    Isolado, integrado ao mapa/frequência e Firebase.
    Não altera a lógica principal do app.
 ===================================================== */
@@ -87,333 +87,87 @@
     .pracas-mini-nav{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:10px 0 4px}.pracas-mini-nav button{background:#111827;border:1px solid #263149;color:#9ca9c7;border-radius:14px;padding:10px 6px;font-weight:900;font-size:11px}.pracas-mini-nav button.active{background:#f5c842;color:#111;border-color:#f5c842}.pracas-hidden{display:none!important}
 
     .pracas-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.pracas-config-option{border:1px solid #28364f;background:#0d1320;color:#dbe7ff;border-radius:16px;padding:14px;text-align:left;font-weight:900}.pracas-config-option.active{background:linear-gradient(135deg,#f5c842,#f7b816);color:#111;border-color:#f5c842}.pracas-print-box{background:#fff;color:#111;border-radius:12px;margin:14px 0;padding:10px;overflow:visible;width:100%;box-sizing:border-box}.pracas-print-title{background:#202020;color:#fff;text-align:center;font-weight:900;padding:6px;font-size:15px;letter-spacing:.5px}.pracas-meta-table,.pracas-escala-table{width:100%;max-width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;table-layout:fixed}.pracas-meta-table td{border:1px solid #cfcfcf;padding:4px;word-break:break-word}.pracas-escala-table th,.pracas-escala-table td{border:1px solid #111;padding:3px 2px;text-align:center;vertical-align:middle;white-space:normal;word-break:break-word;overflow-wrap:anywhere;line-height:1.12}.pracas-escala-table th{background:#f4f4f4}.pracas-area-row td{background:#242424!important;color:#fff!important;font-weight:900;text-align:center;padding:4px}.pracas-flag{background:#202020;color:#fff;font-weight:900;width:26px}.pracas-prnum{font-weight:900;width:30px}.pracas-mesas{font-weight:900}.pracas-print-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.pracas-escala-table col.pr-col-num{width:34px}.pracas-escala-table col.pr-col-flag{width:30px}.pracas-escala-table col.pr-col-mesa{width:34%}.pracas-escala-table col.pr-col-turno{width:26%}.pracas-spinner-card{background:linear-gradient(145deg,#151b29,#0b101a);border:1px solid #f5c84277;border-radius:18px;padding:16px;text-align:center;margin:12px 0}.pracas-spinner-num{font-size:58px;font-weight:900;color:#f5c842;text-shadow:0 0 18px #f5c84255}.pracas-ind-person{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border-bottom:1px solid #ffffff10;padding:10px 0}.pracas-ind-person:last-child{border-bottom:0}.pracas-small-btn{border:0;border-radius:12px;padding:10px 12px;font-weight:900;background:#f5c842;color:#111}.pracas-small-btn:disabled{opacity:.45;background:#344056;color:#94a3b8}
+
+    /* v107 - Sorteio compacto sem alterar Eventos */
+    @media (min-width: 900px){
+      .pracas-panel{overflow:hidden!important;padding-bottom:0!important;background:#070b13!important}
+      .pracas-head{padding:8px 12px!important;min-height:38px!important;border-bottom:1px solid #25324a!important}
+      .pracas-head>div[style*="font-size"]{display:none!important}
+      .pracas-title{font-size:21px!important;letter-spacing:.2px!important}
+      .pracas-help{display:none!important}
+      .pracas-wrap{max-width:none!important;width:100%!important;height:calc(100vh - 44px)!important;padding:6px 8px!important;box-sizing:border-box!important;overflow:hidden!important}
+      .pracas-seg,.pracas-info{display:none!important}
+      .pracas-mini-nav{grid-template-columns:repeat(5,1fr)!important;gap:8px!important;margin:0 0 8px!important;height:32px!important}
+      .pracas-mini-nav button{padding:7px 6px!important;border-radius:10px!important;font-size:11px!important}
+      #pracasViewSorteio,#pracasViewResultado{height:calc(100vh - 92px)!important;overflow:hidden!important}
+      .pracas-live-grid{display:grid!important;grid-template-columns:300px minmax(0,1fr)!important;gap:10px!important;height:100%!important;min-height:0!important}
+      .pracas-live-left{min-height:0!important;overflow:hidden!important;background:#0d1320;border:1px solid #22304a;border-radius:12px;padding:8px;box-sizing:border-box;display:flex;flex-direction:column}
+      .pracas-live-left .pracas-section-title{margin:0 0 6px!important;font-size:13px!important;flex:0 0 auto}
+      .pracas-live-list{overflow:hidden!important;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:2px}
+      .pracas-live-person{display:grid;grid-template-columns:32px 1fr 76px;gap:7px;align-items:center;padding:5px 0;border-bottom:1px solid #ffffff12;min-height:38px}
+      .pracas-live-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#17345f;color:#fff;font-weight:900;font-size:13px}
+      .pracas-live-name{font-weight:900;color:#fff;font-size:13px;line-height:1.02;white-space:normal;overflow:visible;word-break:normal}
+      .pracas-live-role{font-size:8px;color:#9eb6dd;line-height:1;text-transform:uppercase;margin-top:1px}
+      .pracas-live-btn{border:0;border-radius:10px;background:#f5c842;color:#111;font-weight:900;font-size:11px;padding:8px 6px;cursor:pointer}
+      .pracas-live-right{min-width:0;min-height:0;overflow:hidden!important;background:#0d1320;border:1px solid #22304a;border-radius:12px;padding:8px;box-sizing:border-box}
+      .pracas-live-right>.pracas-section-title{margin:0 0 4px!important;font-size:20px!important;line-height:1!important}
+      .pracas-live-right .pracas-count{font-size:10px!important;color:#33f17b!important;text-transform:none!important}
+      .pracas-bottom{display:none!important}
+      .pracas-print-actions{display:none!important}
+      .pracas-print-box{border-radius:4px!important;margin:0!important;padding:0!important;overflow:hidden!important;background:#fff!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important}
+      .pracas-print-title{font-size:13px!important;line-height:1!important;padding:3px!important;letter-spacing:.3px!important}
+      .pracas-meta-table{font-size:6.6px!important;line-height:1!important;table-layout:fixed!important;width:100%!important}
+      .pracas-meta-table td{padding:1px 3px!important;height:12px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important;word-break:normal!important}
+      .pracas-escala-table{font-size:7.4px!important;line-height:1!important;table-layout:fixed!important;width:100%!important;border-collapse:collapse!important}
+      .pracas-escala-table th,.pracas-escala-table td{padding:0 2px!important;height:13px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important;word-break:normal!important;overflow-wrap:normal!important}
+      .pracas-area-row td{padding:1px!important;height:12px!important;font-size:7.2px!important;line-height:1!important}
+      .pracas-flag{width:auto!important;background:#202020!important;color:#fff!important;font-weight:900!important}
+      .pracas-prnum{width:auto!important;font-weight:900!important}
+      .pracas-mesas{font-weight:900!important}
+      .pracas-escala-table col.pr-col-num{width:28px!important}
+      .pracas-escala-table col.pr-col-flag{width:32px!important}
+      .pracas-escala-table col.pr-col-almoco{width:132px!important}
+      .pracas-escala-table col.pr-col-mesa{width:auto!important}
+      .pracas-escala-table col.pr-col-jantar{width:132px!important}
+      .pracas-summary-fit{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:5px 2px 0;color:#f5c842;font-weight:900;font-size:12px}
+      .pracas-spinner-overlay{position:fixed;inset:0;z-index:10020;background:rgba(0,0,0,.68);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+      .pracas-spinner-modal{background:#0d1320;border:1px solid #f5c84277;border-radius:18px;min-width:290px;padding:22px;text-align:center;box-shadow:0 20px 60px #000}
+      .pracas-spinner-modal .n{font-size:58px;font-weight:900;color:#f5c842;text-shadow:0 0 20px #f5c84255;margin:10px 0}
+    }
+    @media (max-width: 899px){
+      .pracas-panel{overflow:auto!important;padding-bottom:70px!important}
+      .pracas-wrap{max-width:none!important;width:100%!important;padding:8px!important;box-sizing:border-box!important}
+      .pracas-seg,.pracas-info{display:none!important}
+      .pracas-mini-nav{grid-template-columns:repeat(5,1fr)!important;gap:5px!important;margin:0 0 8px!important}
+      .pracas-mini-nav button{font-size:10px!important;padding:8px 3px!important;border-radius:9px!important}
+      .pracas-live-grid{display:block!important}
+      .pracas-live-left{background:#0d1320;border:1px solid #22304a;border-radius:12px;padding:8px;margin-bottom:8px;max-height:36vh;overflow:hidden;display:flex;flex-direction:column}
+      .pracas-live-list{overflow:hidden;display:flex;flex-direction:column;gap:2px}
+      .pracas-live-person{display:grid;grid-template-columns:28px 1fr 72px;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid #ffffff12;min-height:34px}
+      .pracas-live-avatar{width:27px;height:27px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#17345f;color:#fff;font-weight:900;font-size:11px}
+      .pracas-live-name{font-weight:900;color:#fff;font-size:11px;line-height:1.02;white-space:normal;overflow:visible}
+      .pracas-live-role{font-size:7px;color:#9eb6dd;text-transform:uppercase;line-height:1}
+      .pracas-live-btn{border:0;border-radius:9px;background:#f5c842;color:#111;font-weight:900;font-size:10px;padding:7px 5px}
+      .pracas-live-right{background:#0d1320;border:1px solid #22304a;border-radius:12px;padding:6px;overflow:hidden!important}
+      .pracas-live-right>.pracas-section-title{margin:0 0 4px!important;font-size:15px!important}
+      .pracas-print-box{border-radius:3px!important;margin:0!important;padding:0!important;overflow:hidden!important;width:100%!important;max-width:100%!important}
+      .pracas-print-title{font-size:9px!important;padding:2px!important;line-height:1!important}
+      .pracas-meta-table{font-size:4.5px!important;line-height:1!important;table-layout:fixed!important;width:100%!important}
+      .pracas-meta-table td{padding:0 1px!important;height:8px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;word-break:normal!important}
+      .pracas-escala-table{font-size:4.9px!important;line-height:1!important;table-layout:fixed!important;width:100%!important}
+      .pracas-escala-table th,.pracas-escala-table td{padding:0 1px!important;height:8px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;word-break:normal!important;overflow-wrap:normal!important}
+      .pracas-area-row td{height:8px!important;padding:0!important;font-size:4.8px!important}
+      .pracas-escala-table col.pr-col-num{width:18px!important}
+      .pracas-escala-table col.pr-col-flag{width:20px!important}
+      .pracas-escala-table col.pr-col-almoco{width:52px!important}
+      .pracas-escala-table col.pr-col-mesa{width:auto!important}
+      .pracas-escala-table col.pr-col-jantar{width:52px!important}
+    }
+
     @media print{body>*:not(#pracasPrintArea){display:none!important}#pracasPrintArea{display:block!important;position:static!important;background:#fff!important;color:#000!important}.no-print{display:none!important}.pracas-print-box{border-radius:0;margin:0;padding:0}.pracas-print-title{font-size:16px}.pracas-meta-table,.pracas-escala-table{font-size:11px}}
     @media(max-width:420px){.pracas-title{font-size:22px}.pracas-info{grid-template-columns:1fr}.pracas-result-card{grid-template-columns:36px 1fr}.pracas-assigned{text-align:left;grid-column:2}.pracas-bottom{grid-template-columns:1fr 1fr}.pracas-bottom .share{grid-column:span 2}.pracas-wrap{padding:10px}.pracas-card{padding:11px}.pracas-print-box{padding:6px;border-radius:10px}.pracas-print-title{font-size:12px;padding:5px}.pracas-meta-table,.pracas-escala-table{font-size:8px}.pracas-meta-table td{padding:2px}.pracas-escala-table th,.pracas-escala-table td{padding:2px 1px}.pracas-escala-table col.pr-col-num{width:26px}.pracas-escala-table col.pr-col-flag{width:24px}.pracas-escala-table col.pr-col-mesa{width:30%}.pracas-escala-table col.pr-col-turno{width:27%}}
     .pracas-modal-back{position:fixed;inset:0;background:#000a;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}.pracas-modal{width:min(520px,96vw);max-height:88vh;overflow:auto;background:#0d1320;border:1px solid #33415e;border-radius:20px;padding:16px;color:#fff;box-shadow:0 20px 60px #000}.pracas-modal h3{margin:0 0 12px;font-family:'Barlow Condensed',Inter,sans-serif;font-size:24px;text-transform:uppercase}.pracas-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.pracas-select,.pracas-text{width:100%;background:#090e18;border:1px solid #33415e;border-radius:12px;color:#fff;padding:11px;font-weight:800;margin:6px 0 10px}.pracas-textarea{min-height:70px}.pracas-danger{color:#ff7777}.pracas-gold{color:#f5c842}
-
-    /* v103 - Sorteio compacto com escala completa sem arrastar */
-    .pracas-panel{padding-bottom:18px!important;overflow:auto!important}
-    .pracas-head{padding:8px 12px!important;min-height:38px!important;border-bottom:1px solid #263149!important}
-    .pracas-head>div:nth-child(2){display:none!important}.pracas-help{display:none!important}
-    .pracas-title{font-size:20px!important;letter-spacing:.3px!important}.pracas-wrap{max-width:100%!important;width:100%!important;padding:8px 14px!important;box-sizing:border-box!important}
-    .pracas-seg{display:none!important}.pracas-info{grid-template-columns:220px 240px!important;gap:10px!important;margin:0 0 8px!important}.pracas-card{padding:8px 10px!important;border-radius:12px!important}.pracas-input{padding:7px 9px!important}.pracas-mini-nav{grid-template-columns:repeat(5,minmax(110px,1fr))!important;margin:6px 0 8px!important;gap:8px!important}.pracas-mini-nav button{padding:9px 6px!important;border-radius:12px!important}
-    #pracasViewSorteio{height:calc(100vh - 128px);min-height:620px;overflow:hidden!important}.pracas-sorteio-layout{display:grid;grid-template-columns:310px minmax(0,1fr);gap:10px;height:100%;min-height:0}.pracas-sorteio-left,.pracas-sorteio-scale{min-height:0;background:#0d1320;border:1px solid #22304a;border-radius:14px;overflow:hidden}.pracas-sorteio-left{display:flex;flex-direction:column}.pracas-sorteio-left .pracas-section-title{margin:0;padding:10px 10px 6px}.pracas-live-list{overflow:hidden;flex:1;padding:0 8px 8px}.pracas-live-person{display:grid;grid-template-columns:36px 1fr 88px;gap:8px;align-items:center;border-bottom:1px solid #ffffff10;padding:7px 0}.pracas-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#2b3760,#17314e);font-weight:900;color:#fff}.pracas-live-person .pracas-name{font-size:13px;line-height:1.1;white-space:normal;overflow:visible;text-overflow:unset}.pracas-live-person .pracas-sub{font-size:9px;line-height:1.05}.pracas-live-person .pracas-small-btn{padding:8px 9px;border-radius:10px;font-size:11px}.pracas-sorteio-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px;border-top:1px solid #ffffff10}.pracas-sorteio-actions .pracas-btn{padding:10px;border-radius:12px;font-size:12px}.pracas-sorteio-scale{padding:8px;display:flex;flex-direction:column}.pracas-sorteio-scale-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}.pracas-sorteio-scale-title{font-size:18px;text-transform:uppercase;font-weight:900}.pracas-live-dot{color:#35e477;font-weight:900;font-size:11px;white-space:nowrap}
-    .pracas-print-box.pracas-fit{border-radius:6px!important;margin:0!important;padding:0!important;overflow:hidden!important;flex:1;min-height:0}.pracas-print-box.pracas-fit .pracas-print-title{font-size:14px!important;padding:4px!important}.pracas-print-box.pracas-fit .pracas-meta-table{font-size:9px!important}.pracas-print-box.pracas-fit .pracas-meta-table td{padding:2px 5px!important;height:16px!important}.pracas-print-box.pracas-fit .pracas-escala-table{font-size:9px!important;line-height:1!important}.pracas-print-box.pracas-fit .pracas-escala-table th,.pracas-print-box.pracas-fit .pracas-escala-table td{padding:1px 2px!important;height:17px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;word-break:normal!important}.pracas-print-box.pracas-fit .pracas-area-row td{padding:2px!important;height:16px!important}.pracas-print-box.pracas-fit .pracas-mesas{font-size:9px!important}.pracas-print-box.pracas-fit col.pr-col-num{width:34px!important}.pracas-print-box.pracas-fit col.pr-col-flag{width:38px!important}.pracas-print-box.pracas-fit col.pr-col-mesa{width:30%!important}.pracas-print-box.pracas-fit col.pr-col-turno{width:22%!important}.pracas-fit-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 4px 0;font-size:12px;font-weight:900}.pracas-fit-footer span{padding:5px 9px;border:1px solid #263149;border-radius:10px;background:#0b111d}.pracas-fit-footer b{color:#f5c842}.pracas-print-actions{display:none!important}
-    .pracas-sorteio-modal{position:fixed;inset:0;background:#000b;z-index:10020;display:flex;align-items:center;justify-content:center;padding:18px}.pracas-sorteio-box{width:min(420px,94vw);background:#0d1320;border:1px solid #f5c84277;border-radius:22px;padding:20px;text-align:center;box-shadow:0 24px 80px #000}.pracas-sorteio-box h3{margin:0 0 8px;font-size:22px}.pracas-sorteio-roll{display:flex;align-items:center;justify-content:center;gap:12px;margin:16px 0}.pracas-roll-num{width:86px;height:86px;border-radius:20px;background:#111827;border:1px solid #33415e;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900;color:#f5c842}.pracas-roll-final{background:#155d27!important;color:#fff!important;border-color:#34d26c!important;box-shadow:0 0 25px #22c55e55}.pracas-sorteio-final{font-size:15px;color:#dbe7ff;font-weight:800;min-height:42px}.pracas-sorteio-final b{color:#f5c842}
-    @media(max-width:900px){.pracas-wrap{padding:8px!important}.pracas-info,.pracas-mini-nav{display:none!important}#pracasViewSorteio{height:calc(100vh - 48px);min-height:0}.pracas-sorteio-layout{grid-template-columns:1fr;grid-template-rows:260px 1fr;gap:8px}.pracas-live-list{overflow:hidden}.pracas-sorteio-scale{padding:6px}.pracas-sorteio-scale-title{font-size:13px}.pracas-live-dot{font-size:9px}.pracas-print-box.pracas-fit .pracas-print-title{font-size:10px!important;padding:3px!important}.pracas-print-box.pracas-fit .pracas-meta-table{font-size:6px!important}.pracas-print-box.pracas-fit .pracas-meta-table td{padding:1px 2px!important;height:10px!important}.pracas-print-box.pracas-fit .pracas-escala-table{font-size:5.8px!important}.pracas-print-box.pracas-fit .pracas-escala-table th,.pracas-print-box.pracas-fit .pracas-escala-table td{padding:0 1px!important;height:10px!important}.pracas-print-box.pracas-fit .pracas-area-row td{height:9px!important;padding:0!important}.pracas-print-box.pracas-fit .pracas-mesas{font-size:5.8px!important}.pracas-fit-footer{font-size:9px;padding-top:4px}.pracas-fit-footer span{padding:3px 5px}.pracas-bottom{display:none!important}.pracas-head{padding:6px 8px!important}.pracas-title{font-size:17px!important}.pracas-back{font-size:22px!important}.pracas-live-person{grid-template-columns:28px 1fr 76px;padding:4px 0}.pracas-avatar{width:26px;height:26px;font-size:11px}.pracas-live-person .pracas-name{font-size:11px}.pracas-live-person .pracas-sub{font-size:8px}.pracas-live-person .pracas-small-btn{font-size:9px;padding:6px}.pracas-sorteio-actions{padding:6px}.pracas-sorteio-actions .pracas-btn{padding:8px;font-size:10px}}
-
-
-    /* v104 - Escala original miniaturizada: tudo visível sem arrastar */
-    .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)){max-width:none!important;width:100%!important;margin:0!important;padding:6px 8px 4px!important;box-sizing:border-box!important;height:calc(100vh - 40px)!important;overflow:hidden!important}
-    .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)) .pracas-info{display:none!important}
-    .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)) .pracas-bottom{display:none!important}
-    .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)) .pracas-mini-nav{margin:4px 0 6px!important;gap:7px!important;grid-template-columns:repeat(5,1fr)!important}
-    .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)) .pracas-mini-nav button{padding:8px 6px!important;border-radius:10px!important;font-size:10px!important}
-    #pracasViewSorteio{height:calc(100vh - 92px)!important;min-height:0!important;overflow:hidden!important}
-    .pracas-sorteio-layout{height:100%!important;display:grid!important;grid-template-columns:minmax(250px,300px) minmax(0,1fr)!important;gap:8px!important;min-height:0!important;overflow:hidden!important}
-    .pracas-sorteio-left,.pracas-sorteio-scale{min-height:0!important;overflow:hidden!important;border-radius:10px!important}
-    .pracas-sorteio-left{padding:8px!important;display:flex!important;flex-direction:column!important}
-    .pracas-live-list{flex:1!important;min-height:0!important;overflow:auto!important;padding-right:2px!important}
-    .pracas-sorteio-scale{padding:8px!important;display:flex!important;flex-direction:column!important}
-    .pracas-sorteio-scale-head{padding:0 0 5px!important;margin:0!important}
-    .pracas-sorteio-scale-title{font-size:19px!important;line-height:1!important;margin:0!important}
-    .pracas-live-dot{font-size:10px!important;line-height:1!important}
-    .pracas-live-person{grid-template-columns:32px minmax(0,1fr) 82px!important;gap:7px!important;padding:5px 0!important}
-    .pracas-avatar{width:30px!important;height:30px!important;font-size:12px!important;flex:none!important}
-    .pracas-live-person .pracas-name{font-size:12px!important;line-height:1.05!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;word-break:normal!important}
-    .pracas-live-person .pracas-sub{font-size:8px!important;line-height:1!important}
-    .pracas-live-person .pracas-small-btn{padding:7px 8px!important;border-radius:10px!important;font-size:10px!important}
-    .pracas-sorteio-actions{padding:6px 0 0!important;gap:6px!important}.pracas-sorteio-actions .pracas-btn{padding:8px!important;border-radius:10px!important;font-size:10px!important}
-
-    .pracas-print-box.pracas-fit{flex:1!important;min-height:0!important;margin:0!important;padding:0!important;border-radius:4px!important;overflow:hidden!important;background:#fff!important;display:flex!important;flex-direction:column!important;box-sizing:border-box!important}
-    .pracas-print-box.pracas-fit .pracas-print-title{font-size:13px!important;line-height:1!important;padding:3px!important;letter-spacing:.3px!important;flex:0 0 auto!important}
-    .pracas-print-box.pracas-fit .pracas-meta-table{font-size:7.6px!important;line-height:1!important;flex:0 0 auto!important}
-    .pracas-print-box.pracas-fit .pracas-meta-table td{padding:1px 4px!important;height:13px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important;word-break:normal!important}
-    .pracas-print-box.pracas-fit .pracas-escala-table{font-size:7.6px!important;line-height:1!important;table-layout:fixed!important;flex:1 1 auto!important;height:auto!important}
-    .pracas-print-box.pracas-fit .pracas-escala-table th,.pracas-print-box.pracas-fit .pracas-escala-table td{padding:0 2px!important;height:11px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important;word-break:normal!important;overflow-wrap:normal!important;vertical-align:middle!important}
-    .pracas-print-box.pracas-fit .pracas-area-row td{height:10px!important;line-height:1!important;padding:1px!important;font-size:7.7px!important;background:#242424!important;color:#fff!important}
-    .pracas-print-box.pracas-fit .pracas-mesas{font-size:7.6px!important;font-weight:900!important}
-    .pracas-print-box.pracas-fit .pracas-prnum{font-size:7.6px!important;font-weight:900!important}
-    .pracas-print-box.pracas-fit .pracas-flag{font-size:7.6px!important;font-weight:900!important}
-    .pracas-print-box.pracas-fit col.pr-col-num{width:24px!important}
-    .pracas-print-box.pracas-fit col.pr-col-flag{width:28px!important}
-    .pracas-print-box.pracas-fit col.pr-col-mesa{width:35%!important}
-    .pracas-print-box.pracas-fit col.pr-col-turno{width:21%!important}
-    .pracas-fit-footer{flex:0 0 auto!important;padding:4px 0 0!important;font-size:11px!important;line-height:1!important}
-    .pracas-fit-footer span{padding:4px 7px!important;border-radius:8px!important}
-    .pracas-print-actions{display:none!important}
-
-    @media(max-width:900px){
-      .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)){height:calc(100vh - 38px)!important;padding:5px!important}
-      #pracasViewSorteio{height:calc(100vh - 82px)!important}
-      .pracas-sorteio-layout{grid-template-columns:1fr!important;grid-template-rows:210px minmax(0,1fr)!important;gap:6px!important}
-      .pracas-sorteio-left{padding:6px!important}.pracas-sorteio-scale{padding:5px!important}
-      .pracas-live-person{grid-template-columns:26px minmax(0,1fr) 70px!important;padding:3px 0!important;gap:5px!important}
-      .pracas-avatar{width:24px!important;height:24px!important;font-size:10px!important}.pracas-live-person .pracas-name{font-size:10px!important}.pracas-live-person .pracas-sub{font-size:7px!important}.pracas-live-person .pracas-small-btn{font-size:8px!important;padding:5px!important}
-      .pracas-sorteio-scale-title{font-size:12px!important}.pracas-live-dot{font-size:8px!important}.pracas-sorteio-scale-head .pracas-pill{display:none!important}
-      .pracas-print-box.pracas-fit .pracas-print-title{font-size:8px!important;padding:2px!important}
-      .pracas-print-box.pracas-fit .pracas-meta-table{font-size:4.9px!important}
-      .pracas-print-box.pracas-fit .pracas-meta-table td{height:7px!important;padding:0 1px!important}
-      .pracas-print-box.pracas-fit .pracas-escala-table{font-size:4.8px!important}
-      .pracas-print-box.pracas-fit .pracas-escala-table th,.pracas-print-box.pracas-fit .pracas-escala-table td{height:7px!important;padding:0!important}
-      .pracas-print-box.pracas-fit .pracas-area-row td{height:6px!important;font-size:4.8px!important;padding:0!important}
-      .pracas-print-box.pracas-fit .pracas-mesas,.pracas-print-box.pracas-fit .pracas-prnum,.pracas-print-box.pracas-fit .pracas-flag{font-size:4.8px!important}
-      .pracas-print-box.pracas-fit col.pr-col-num{width:14px!important}.pracas-print-box.pracas-fit col.pr-col-flag{width:16px!important}.pracas-print-box.pracas-fit col.pr-col-mesa{width:34%!important}.pracas-print-box.pracas-fit col.pr-col-turno{width:22%!important}
-      .pracas-fit-footer{font-size:8px!important;padding-top:2px!important}.pracas-fit-footer span{padding:2px 4px!important}
-    }
-
-
-
-    /* V105 - Sorteio: folha original compacta, sem scroll para visualizar a escala */
-    .pracas-panel:has(#pracasViewSorteio:not(.pracas-hidden)){
-      padding-bottom:0!important;
-      overflow:hidden!important;
-    }
-    .pracas-panel:has(#pracasViewSorteio:not(.pracas-hidden)) .pracas-bottom{
-      display:none!important;
-    }
-    .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)){
-      max-width:none!important;
-      width:100%!important;
-      height:calc(100vh - 42px)!important;
-      padding:6px 8px!important;
-      box-sizing:border-box!important;
-      overflow:hidden!important;
-    }
-    .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)) .pracas-info{
-      display:none!important;
-    }
-    .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)) .pracas-mini-nav{
-      margin:0 0 6px!important;
-      gap:7px!important;
-      height:30px!important;
-    }
-    .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)) .pracas-mini-nav button{
-      padding:6px 4px!important;
-      min-height:30px!important;
-      border-radius:9px!important;
-      font-size:10px!important;
-    }
-    #pracasViewSorteio{
-      height:calc(100vh - 84px)!important;
-      min-height:0!important;
-      overflow:hidden!important;
-    }
-    .pracas-sorteio-layout{
-      height:100%!important;
-      display:grid!important;
-      grid-template-columns:300px minmax(0,1fr)!important;
-      gap:8px!important;
-      overflow:hidden!important;
-      min-height:0!important;
-    }
-    .pracas-sorteio-left{
-      min-height:0!important;
-      height:100%!important;
-      overflow:hidden!important;
-      padding:8px!important;
-      border-radius:10px!important;
-      display:flex!important;
-      flex-direction:column!important;
-    }
-    .pracas-live-list{
-      flex:1!important;
-      min-height:0!important;
-      overflow:hidden!important;
-    }
-    .pracas-live-person{
-      grid-template-columns:30px minmax(0,1fr) 76px!important;
-      gap:6px!important;
-      padding:4px 0!important;
-    }
-    .pracas-avatar{width:28px!important;height:28px!important;font-size:11px!important}
-    .pracas-live-person .pracas-name{
-      font-size:11px!important;
-      line-height:1.03!important;
-      white-space:normal!important;
-      overflow:visible!important;
-      text-overflow:clip!important;
-      word-break:normal!important;
-    }
-    .pracas-live-person .pracas-sub{font-size:7.5px!important;line-height:1!important}
-    .pracas-live-person .pracas-small-btn{font-size:9px!important;padding:6px!important;border-radius:9px!important}
-    .pracas-sorteio-actions{display:none!important}
-    .pracas-sorteio-scale{
-      min-height:0!important;
-      height:100%!important;
-      overflow:hidden!important;
-      padding:7px!important;
-      border-radius:10px!important;
-      display:flex!important;
-      flex-direction:column!important;
-    }
-    .pracas-sorteio-scale-head{
-      flex:0 0 auto!important;
-      padding:0 0 4px!important;
-      margin:0!important;
-      align-items:center!important;
-    }
-    .pracas-sorteio-scale-title{font-size:18px!important;line-height:1!important;margin:0!important}
-    .pracas-live-dot{font-size:9px!important;line-height:1!important}
-
-    /* Folha original da escala: mesma ordem de colunas e proporção de impressão */
-    .pracas-print-box.pracas-fit{
-      flex:1 1 auto!important;
-      min-height:0!important;
-      height:100%!important;
-      margin:0!important;
-      padding:0!important;
-      border-radius:2px!important;
-      overflow:hidden!important;
-      background:#fff!important;
-      color:#000!important;
-      display:flex!important;
-      flex-direction:column!important;
-      box-sizing:border-box!important;
-      border:1px solid #1b1b1b!important;
-    }
-    .pracas-print-box.pracas-fit .pracas-print-title{
-      flex:0 0 auto!important;
-      background:#202020!important;
-      color:#fff!important;
-      font-size:12px!important;
-      line-height:1!important;
-      padding:3px!important;
-      letter-spacing:.2px!important;
-      text-align:center!important;
-    }
-    .pracas-print-box.pracas-fit .pracas-meta-table{
-      flex:0 0 auto!important;
-      font-size:7.2px!important;
-      line-height:1!important;
-      table-layout:fixed!important;
-      width:100%!important;
-    }
-    .pracas-print-box.pracas-fit .pracas-meta-table td{
-      padding:1px 3px!important;
-      height:10px!important;
-      line-height:1!important;
-      white-space:nowrap!important;
-      overflow:hidden!important;
-      text-overflow:clip!important;
-      border:1px solid #222!important;
-    }
-    .pracas-print-box.pracas-fit .pracas-logo-cell{
-      width:82px!important;
-      background:#5b140f!important;
-      color:#f5c842!important;
-      font-weight:900!important;
-      text-align:center!important;
-      font-size:9px!important;
-      line-height:1.05!important;
-    }
-    .pracas-print-box.pracas-fit .pracas-escala-table{
-      flex:1 1 auto!important;
-      height:100%!important;
-      width:100%!important;
-      table-layout:fixed!important;
-      border-collapse:collapse!important;
-      font-size:7.15px!important;
-      line-height:1!important;
-    }
-    .pracas-print-box.pracas-fit .pracas-escala-table th,
-    .pracas-print-box.pracas-fit .pracas-escala-table td{
-      border:1px solid #111!important;
-      padding:0 1px!important;
-      height:9.6px!important;
-      max-height:9.6px!important;
-      line-height:1!important;
-      white-space:nowrap!important;
-      overflow:hidden!important;
-      text-overflow:clip!important;
-      word-break:normal!important;
-      overflow-wrap:normal!important;
-      vertical-align:middle!important;
-      text-align:center!important;
-    }
-    .pracas-print-box.pracas-fit .pracas-escala-table th{
-      background:#f4f4f4!important;
-      color:#000!important;
-      font-weight:900!important;
-    }
-    .pracas-print-box.pracas-fit .pracas-area-row td{
-      height:9.6px!important;
-      max-height:9.6px!important;
-      padding:0!important;
-      background:#242424!important;
-      color:#fff!important;
-      font-size:7px!important;
-      font-weight:900!important;
-      text-align:center!important;
-    }
-    .pracas-print-box.pracas-fit .pracas-prnum{width:auto!important;font-size:7.1px!important;font-weight:900!important;background:#fff!important;color:#000!important}
-    .pracas-print-box.pracas-fit .pracas-flag{width:auto!important;font-size:7.1px!important;font-weight:900!important;background:#202020!important;color:#fff!important}
-    .pracas-print-box.pracas-fit .pracas-mesas{font-size:7.1px!important;font-weight:900!important;color:#000!important}
-    .pracas-print-box.pracas-fit col.pr-col-num{width:28px!important}
-    .pracas-print-box.pracas-fit col.pr-col-flag{width:28px!important}
-    .pracas-print-box.pracas-fit col.pr-col-almoco{width:13%!important}
-    .pracas-print-box.pracas-fit col.pr-col-mesa{width:44%!important}
-    .pracas-print-box.pracas-fit col.pr-col-jantar{width:19%!important}
-    .pracas-fit-footer{
-      flex:0 0 auto!important;
-      display:flex!important;
-      align-items:center!important;
-      justify-content:space-between!important;
-      gap:8px!important;
-      padding:3px 0 0!important;
-      font-size:10px!important;
-      line-height:1!important;
-    }
-    .pracas-fit-footer span{padding:3px 6px!important;border-radius:7px!important}
-
-    @media(max-width:900px){
-      .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)){height:calc(100vh - 36px)!important;padding:4px!important}
-      #pracasViewSorteio{height:calc(100vh - 76px)!important}
-      .pracas-sorteio-layout{grid-template-columns:1fr!important;grid-template-rows:170px minmax(0,1fr)!important;gap:5px!important}
-      .pracas-live-list{overflow:hidden!important}
-      .pracas-live-person{grid-template-columns:24px minmax(0,1fr) 62px!important;padding:2px 0!important;gap:4px!important}
-      .pracas-avatar{width:22px!important;height:22px!important;font-size:9px!important}
-      .pracas-live-person .pracas-name{font-size:9px!important;line-height:1!important}
-      .pracas-live-person .pracas-sub{font-size:6px!important}
-      .pracas-live-person .pracas-small-btn{font-size:7px!important;padding:4px!important}
-      .pracas-sorteio-scale-title{font-size:11px!important}.pracas-live-dot{font-size:7px!important}.pracas-sorteio-scale-head .pracas-pill{display:none!important}
-      .pracas-print-box.pracas-fit .pracas-print-title{font-size:7px!important;padding:2px!important}
-      .pracas-print-box.pracas-fit .pracas-meta-table{font-size:4.4px!important}
-      .pracas-print-box.pracas-fit .pracas-meta-table td{height:6px!important;padding:0 1px!important}
-      .pracas-print-box.pracas-fit .pracas-logo-cell{width:34px!important;font-size:5px!important}
-      .pracas-print-box.pracas-fit .pracas-escala-table{font-size:4.25px!important}
-      .pracas-print-box.pracas-fit .pracas-escala-table th,.pracas-print-box.pracas-fit .pracas-escala-table td{height:5.8px!important;max-height:5.8px!important;padding:0!important}
-      .pracas-print-box.pracas-fit .pracas-area-row td{height:5.8px!important;font-size:4.25px!important}
-      .pracas-print-box.pracas-fit .pracas-mesas,.pracas-print-box.pracas-fit .pracas-prnum,.pracas-print-box.pracas-fit .pracas-flag{font-size:4.25px!important}
-      .pracas-print-box.pracas-fit col.pr-col-num{width:13px!important}.pracas-print-box.pracas-fit col.pr-col-flag{width:13px!important}.pracas-print-box.pracas-fit col.pr-col-almoco{width:13%!important}.pracas-print-box.pracas-fit col.pr-col-mesa{width:43%!important}.pracas-print-box.pracas-fit col.pr-col-jantar{width:19%!important}
-      .pracas-fit-footer{font-size:7px!important;padding-top:1px!important}.pracas-fit-footer span{padding:2px 3px!important}
-    }
     `;
-
-    /* V106 - eventos v100 preservado + escala original proporcional menor */
-    .pracas-panel:has(#pracasViewSorteio:not(.pracas-hidden)){overflow:hidden!important;padding-bottom:0!important}
-    .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)){height:calc(100vh - 42px)!important;overflow:hidden!important;padding:5px 8px!important;max-width:none!important;width:100%!important;box-sizing:border-box!important}
-    .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)) .pracas-info,.pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)) .pracas-bottom{display:none!important}
-    .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)) .pracas-mini-nav{height:28px!important;margin:0 0 5px!important;gap:7px!important}
-    .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)) .pracas-mini-nav button{min-height:28px!important;padding:5px!important;font-size:10px!important;border-radius:9px!important}
-    #pracasViewSorteio{height:calc(100vh - 78px)!important;overflow:hidden!important;min-height:0!important}
-    .pracas-sorteio-layout{grid-template-columns:300px minmax(0,1fr)!important;gap:8px!important;height:100%!important;overflow:hidden!important;min-height:0!important}
-    .pracas-sorteio-left{height:100%!important;overflow:hidden!important;padding:8px!important;border-radius:10px!important;display:flex!important;flex-direction:column!important;min-height:0!important}
-    .pracas-sorteio-scale{padding:7px!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;min-height:0!important}
-    .pracas-sorteio-scale-head{width:100%!important;flex:0 0 auto!important;margin:0 0 4px!important}.pracas-sorteio-scale-title{font-size:18px!important;line-height:1!important}
-    .pracas-print-box.pracas-fit{width:min(760px,100%)!important;max-width:760px!important;min-width:0!important;align-self:flex-start!important;flex:0 0 auto!important;height:auto!important;max-height:calc(100vh - 128px)!important;margin:0!important;padding:0!important;overflow:hidden!important;border-radius:3px!important;background:#fff!important;color:#000!important;box-sizing:border-box!important;display:block!important}
-    .pracas-print-box.pracas-fit .pracas-print-title{font-size:12px!important;line-height:1!important;padding:3px 2px!important;letter-spacing:.2px!important}
-    .pracas-print-box.pracas-fit .pracas-meta-table,.pracas-print-box.pracas-fit .pracas-escala-table{width:100%!important;max-width:100%!important;table-layout:fixed!important;border-collapse:collapse!important;font-family:Arial,sans-serif!important;color:#000!important}
-    .pracas-print-box.pracas-fit .pracas-meta-table{font-size:6.5px!important;line-height:1!important}.pracas-print-box.pracas-fit .pracas-meta-table td{height:9px!important;max-height:9px!important;padding:0 3px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important;border:1px solid #999!important}
-    .pracas-print-box.pracas-fit .pracas-logo-cell{width:56px!important;min-width:56px!important;max-width:56px!important;background:#5b130f!important;color:#d5a64d!important;font-size:6.5px!important;line-height:1.05!important;font-weight:900!important;text-align:center!important}
-    .pracas-print-box.pracas-fit .pracas-escala-table{font-size:6.7px!important;line-height:1!important}.pracas-print-box.pracas-fit .pracas-escala-table th,.pracas-print-box.pracas-fit .pracas-escala-table td{height:9px!important;max-height:9px!important;padding:0 1px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important;word-break:normal!important;overflow-wrap:normal!important;vertical-align:middle!important;border:1px solid #111!important}
-    .pracas-print-box.pracas-fit .pracas-area-row td{height:10px!important;max-height:10px!important;padding:0!important;font-size:6.8px!important;line-height:1!important;background:#242424!important;color:#fff!important;font-weight:900!important;text-align:center!important}
-    .pracas-print-box.pracas-fit .pracas-prnum,.pracas-print-box.pracas-fit .pracas-flag,.pracas-print-box.pracas-fit .pracas-mesas{font-size:6.7px!important;line-height:1!important;font-weight:900!important}.pracas-print-box.pracas-fit .pracas-prnum{background:#fff!important;color:#000!important}.pracas-print-box.pracas-fit .pracas-flag{background:#202020!important;color:#fff!important}
-    .pracas-print-box.pracas-fit col.pr-col-num{width:24px!important}.pracas-print-box.pracas-fit col.pr-col-flag{width:28px!important}.pracas-print-box.pracas-fit col.pr-col-almoco{width:100px!important}.pracas-print-box.pracas-fit col.pr-col-mesa{width:235px!important}.pracas-print-box.pracas-fit col.pr-col-jantar{width:100px!important}
-    .pracas-fit-footer{width:min(760px,100%)!important;max-width:760px!important;flex:0 0 auto!important;display:flex!important;justify-content:space-between!important;padding:3px 0 0!important;font-size:10px!important;line-height:1!important}.pracas-fit-footer span{padding:3px 6px!important;border-radius:7px!important}
-    .pracas-live-list{overflow:auto!important;flex:1!important;min-height:0!important}.pracas-live-person{grid-template-columns:30px minmax(0,1fr) 76px!important;gap:6px!important;padding:4px 0!important}.pracas-avatar{width:28px!important;height:28px!important;font-size:11px!important}.pracas-live-person .pracas-name{font-size:11px!important;line-height:1.02!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important}.pracas-live-person .pracas-sub{font-size:7.5px!important;line-height:1!important}.pracas-live-person .pracas-small-btn{font-size:9px!important;padding:6px!important;border-radius:9px!important}
-    @media(max-width:900px){#pracasViewSorteio{height:calc(100vh - 70px)!important}.pracas-sorteio-layout{grid-template-columns:1fr!important;grid-template-rows:210px minmax(0,1fr)!important;gap:6px!important}.pracas-sorteio-scale{align-items:center!important;padding:4px!important}.pracas-print-box.pracas-fit{width:100%!important;max-width:520px!important;max-height:calc(100vh - 292px)!important}.pracas-print-box.pracas-fit .pracas-print-title{font-size:7px!important;padding:2px!important}.pracas-print-box.pracas-fit .pracas-meta-table{font-size:4.4px!important}.pracas-print-box.pracas-fit .pracas-meta-table td{height:6px!important;padding:0 1px!important}.pracas-print-box.pracas-fit .pracas-logo-cell{width:34px!important;font-size:4.6px!important}.pracas-print-box.pracas-fit .pracas-escala-table{font-size:4.25px!important}.pracas-print-box.pracas-fit .pracas-escala-table th,.pracas-print-box.pracas-fit .pracas-escala-table td{height:5.7px!important;max-height:5.7px!important;padding:0!important}.pracas-print-box.pracas-fit .pracas-area-row td{height:5.8px!important;font-size:4.25px!important}.pracas-print-box.pracas-fit .pracas-prnum,.pracas-print-box.pracas-fit .pracas-flag,.pracas-print-box.pracas-fit .pracas-mesas{font-size:4.25px!important}.pracas-print-box.pracas-fit col.pr-col-num{width:14px!important}.pracas-print-box.pracas-fit col.pr-col-flag{width:16px!important}.pracas-print-box.pracas-fit col.pr-col-almoco{width:21%!important}.pracas-print-box.pracas-fit col.pr-col-mesa{width:40%!important}.pracas-print-box.pracas-fit col.pr-col-jantar{width:21%!important}.pracas-fit-footer{width:100%!important;max-width:520px!important;font-size:8px!important;padding-top:2px!important}.pracas-fit-footer span{padding:2px 4px!important}}
-
     const style=document.createElement('style'); style.id='pracasDiariasStyle'; style.textContent=css; document.head.appendChild(style);
   }
 
@@ -670,7 +424,6 @@
       resumo:{garcons:selectedList('garcons').length, cf:selectedList('cf').length, fechamento:selectedList('fechamento').length, modo:'geral'}
     };
     st.resultadosTurnos[st.turno]=st.resultado;
-    mostrarAnimacaoSorteio(st.resultado);
     renderSorteio();
     renderResultado();
     setPracasView('sorteio');
@@ -696,47 +449,25 @@
 
   function renderResultado(){
     const el=document.getElementById('pracasViewResultado'); if(!el) return;
-    el.innerHTML=`
-      <div class="pracas-section-title"><span>Escala de praças dos garçons</span><span class="pracas-count">visão completa sem arrastar</span></div>
-      ${renderEscalaPracas(true, 'resultado')}
-    `;
-  }
-
-  function sorteioPessoasDisponiveis(){
-    const usadas=new Set();
-    if(st.resultado){ resultadoArrayFrom(st.resultado).forEach(x=>{ if(x.pessoa&&x.pessoa.id) usadas.add(x.pessoa.id); }); }
-    const todos=[...selectedList('garcons'),...selectedList('cf'),...selectedList('fechamento')];
-    const seen=new Set();
-    return todos.filter(p=>{ if(!p||!p.id||seen.has(p.id)||usadas.has(p.id)) return false; seen.add(p.id); return true; });
-  }
-
-  function initials(nome){
-    return String(nome||'').trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase() || '—';
-  }
-
-  function renderListaSorteioCompacta(){
-    const pessoas=sorteioPessoasDisponiveis();
-    const html=pessoas.map(p=>{
-      const grupo = selectedList('cf').some(x=>x.id===p.id) ? 'cf' : (selectedList('fechamento').some(x=>x.id===p.id) ? 'fechamento' : 'garcons');
-      return `<div class="pracas-live-person"><div class="pracas-avatar">${initials(p.nome)}</div><div><div class="pracas-name">${p.nome}</div><div class="pracas-sub">${grupo==='cf'?'CHEFE DE FILA':'GARÇOM'}</div></div><button class="pracas-small-btn" onclick="sortearPracaIndividual('${grupo}','${encodeURIComponent(p.id)}')">🎲 Sortear</button></div>`;
-    }).join('') || '<div class="pracas-empty">Todos já foram sorteados ou não há equipe disponível.</div>';
-    return `<div class="pracas-sorteio-left"><div class="pracas-section-title"><span>Sorteio de praças</span><span class="pracas-count">${pessoas.length} disponíveis</span></div><div class="pracas-live-list">${html}</div><div class="pracas-sorteio-actions"><button class="pracas-btn purple" onclick="setPracasView('equipe')">👥 Equipe</button><button class="pracas-btn" onclick="setPracasView('config')">⚙️ Configurar</button></div></div>`;
+    el.innerHTML=`<div class="pracas-live-right" style="height:100%;overflow:hidden"><div class="pracas-section-title"><span>Escala de praças dos garçons</span><span class="pracas-count">completa sem arrastar</span></div>${renderEscalaPracas(true, 'resultado')}</div>`;
   }
 
   function renderSorteio(){
     const el=document.getElementById('pracasViewSorteio'); if(!el) return;
-    const disponiveis=sorteioPessoasDisponiveis().length;
-    const preenchidas=st.resultado ? resultadoArrayFrom(st.resultado).filter(x=>x.pessoa&&x.pessoa.nome).length : 0;
-    const total=getPracas().filter(isPracaDisponivelTurno).length;
-    el.innerHTML=`
-      <div class="pracas-sorteio-layout">
-        ${renderListaSorteioCompacta()}
-        <div class="pracas-sorteio-scale">
-          <div class="pracas-sorteio-scale-head"><div><div class="pracas-sorteio-scale-title">Escala de praças dos garçons</div><div class="pracas-live-dot">● atualizado ao vivo conforme o sorteio</div></div><button class="pracas-pill" onclick="imprimirEscalaPracas()">🖨️ Imprimir</button></div>
-          ${renderEscalaPracas(false, 'sorteio')}
-          <div class="pracas-fit-footer"><span>Disponíveis: <b>${disponiveis}</b></span><span>Total de praças: <b>${total}</b></span><span>Preenchidas: <b>${preenchidas}</b></span></div>
-        </div>
-      </div>`;
+    const pessoas = pessoasPorGrupoParaSorteio();
+    const lista = [...pessoas.garcons, ...pessoas.cf, ...pessoas.fechamento].filter(p=>p && p.nome);
+    const disponiveis = totalPracasDisponiveisAgora();
+    const left = `<div class="pracas-live-left">
+      <div class="pracas-section-title"><span>Sorteio de praças</span><span class="pracas-count">${disponiveis} disponíveis</span></div>
+      <div class="pracas-live-list">${lista.map((p,i)=>{
+        const ini=(p.nome||'?').split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+        const grupo = pessoas.cf.some(x=>x.id===p.id) ? 'cf' : (pessoas.fechamento.some(x=>x.id===p.id) ? 'fechamento' : 'garcons');
+        return `<div class="pracas-live-person"><div class="pracas-live-avatar">${ini}</div><div><div class="pracas-live-name">${p.nome}</div><div class="pracas-live-role">${grupo==='cf'?'Chefe de fila':'Garçom'}</div></div><button class="pracas-live-btn" onclick="sortearPracaIndividual('${grupo}','${encodeURIComponent(p.id)}')">🎲 Sortear</button></div>`;
+      }).join('') || '<div class="pracas-empty">Nenhum garçom disponível no dia.</div>'}</div>
+      <div class="pracas-actions" style="grid-template-columns:1fr 1fr;margin:8px 0 0"><button class="pracas-btn purple" onclick="setPracasView('equipe')">👥 Equipe</button><button class="pracas-btn" onclick="setPracasView('config')">⚙️ Configurar</button></div>
+    </div>`;
+    const right = `<div class="pracas-live-right"><div class="pracas-section-title"><span>Escala de praças dos garçons</span><span class="pracas-count">• atualizado ao vivo</span></div>${renderEscalaPracas(true, 'sorteio')}</div>`;
+    el.innerHTML = `<div class="pracas-live-grid">${left}${right}</div>`;
   }
 
   function resultCard(x,grupo){
@@ -947,19 +678,16 @@
     const diaSemana=(()=>{try{const d=new Date((st.data||todayISO())+'T12:00:00');return d.toLocaleDateString('pt-BR',{weekday:'long'}).toUpperCase();}catch(e){return '';}})();
     const qtdAlmoco=st.resultadosTurnos.almoco?resultadoArrayFrom(st.resultadosTurnos.almoco).filter(x=>x.pessoa&&x.pessoa.nome).length:0;
     const qtdJantar=st.resultadosTurnos.jantar?resultadoArrayFrom(st.resultadosTurnos.jantar).filter(x=>x.pessoa&&x.pessoa.nome).length:0;
-    const equipeUnica=new Set([...selectedList('garcons'),...selectedList('cf'),...selectedList('fechamento')].filter(p=>p&&p.id).map(p=>p.id));
-    const totalEquipe=equipeUnica.size || qtdAlmoco || qtdJantar || 0;
-    const totalPracasDia=getPracas().filter(isPracaDisponivelTurno).length;
-    const qtd=`${totalEquipe} / ${totalPracasDia}`;
+    const qtd=(qtdAlmoco||qtdJantar) ? `${qtdAlmoco||'-'} / ${qtdJantar||'-'}` : '';
     const groups=areaRows();
     const rowsHtml = groups.length ? groups.map(g=>`<tr class="pracas-area-row"><td colspan="5">${g.area}</td></tr>${g.rows.map(p=>`<tr><td class="pracas-prnum">${p.numero}º</td><td class="pracas-flag">${p.tipo==='F'?'F/':(p.tipo==='CF'?'CF':'')}</td><td>${nomePorPracaTurno('almoco',p.id)||''}</td><td class="pracas-mesas">${p.mesas}</td><td>${nomePorPracaTurno('jantar',p.id)||''}</td></tr>`).join('')}`).join('') : '<tr><td colspan="5">Nenhuma praça disponível conforme as configurações atuais.</td></tr>';
-    return `<div id="pracasPrintArea" class="pracas-print-box ${(['resultado','sorteio'].includes(contexto)?'pracas-fit':'')}">
+    return `<div id="pracasPrintArea" class="pracas-print-box ${contexto==='resultado'?'pracas-print-compact':''}">
       <div class="pracas-print-title">ESCALA DE PRAÇAS DOS GARÇONS</div>
-      <table class="pracas-meta-table"><tr><td rowspan="3" class="pracas-logo-cell">COCO<br>BAMBU</td><td>DATA: <b>${data}</b></td><td>TURNO: <b>ALMOÇO / JANTAR</b></td></tr><tr><td>DIA DA SEMANA: <b>${diaSemana}</b></td><td>GARÇONS / PRAÇAS: <b>${qtd}</b></td></tr><tr><td>MAITRE: ____________________</td><td></td></tr></table>
+      <table class="pracas-meta-table"><tr><td rowspan="3" style="width:82px;text-align:center;font-weight:900;color:#8b5a24">COCO<br>BAMBU</td><td>DATA: <b>${data}</b></td><td>TURNO: <b>ALMOÇO / JANTAR</b></td></tr><tr><td>DIA DA SEMANA: <b>${diaSemana}</b></td><td>QUANT. GARÇOM: <b>${qtd}</b></td></tr><tr><td>MAITRE: ____________________</td><td></td></tr></table>
       <table class="pracas-escala-table"><colgroup><col class="pr-col-num"><col class="pr-col-flag"><col class="pr-col-almoco"><col class="pr-col-mesa"><col class="pr-col-jantar"></colgroup><thead><tr><th></th><th></th><th>ALMOÇO</th><th>Nº DA MESA</th><th>JANTAR</th></tr></thead><tbody>
       ${rowsHtml}
       </tbody></table>
-    </div>${showActions?`<div class="pracas-print-actions no-print"><button class="pracas-btn" onclick="imprimirEscalaPracas()">🖨️ Imprimir / PDF</button><button class="pracas-btn green" onclick="abrirCompartilharPracas()">📤 Compartilhar</button></div>`:''}`;
+    </div><div class="pracas-summary-fit no-print"><span>Garçons/pracas: ${qtd || '0 / '+getPracas().filter(isPracaDisponivelTurno).length}</span><span>Total de praças: ${getPracas().filter(isPracaDisponivelTurno).length}</span><span>Preenchidas: ${resultadoArrayAtual().length}</span></div>${showActions?`<div class="pracas-print-actions no-print"><button class="pracas-btn" onclick="imprimirEscalaPracas()">🖨️ Imprimir / PDF</button><button class="pracas-btn green" onclick="abrirCompartilharPracas()">📤 Compartilhar</button></div>`:''}`;
   }
   function resultadoArrayFrom(r){ return [...(r.normal||[]),...(r.cf||[]),...(r.fechamento||[])]; }
   function textoEscalaTabela(){
@@ -988,7 +716,7 @@
     st.data = st.data || todayISO();
     document.getElementById('pracasDiariasPanel').classList.add('open');
     try{ document.body.classList.remove('home-active'); }catch(e){}
-    ensureSelected(); renderAll(); setView('equipe');
+    ensureSelected(); renderAll(); setView('sorteio');
     await carregarAmbosTurnos();
     carregarHistorico();
   };
@@ -1009,26 +737,35 @@
   window.toggleSalaoPracas = function(encodedArea){ const area=decodeURIComponent(encodedArea); st.saloesAtivos[area]=!isSalaoAtivo(area); salvarConfigLocal(); renderAll(); toast((st.saloesAtivos[area]?'✅ ':'🚫 ')+area); };
   window.toggleBloqueioPraca = function(pracaId){ if(st.pracasBloqueadas[pracaId]) delete st.pracasBloqueadas[pracaId]; else st.pracasBloqueadas[pracaId]=true; salvarConfigLocal(); renderPracas(); renderConfig(); renderResultado(); renderSorteio(); };
   window.limparBloqueiosPracas = function(){ if(confirm('Liberar todas as praças bloqueadas?')){st.pracasBloqueadas={}; salvarConfigLocal(); renderAll(); toast('✅ Praças liberadas');} };
+
+  function mostrarAnimacaoPraca(disponiveis, escolhida, pessoa, cb){
+    const old=document.getElementById('pracasAnimacaoSorteio'); if(old) old.remove();
+    const d=document.createElement('div'); d.id='pracasAnimacaoSorteio'; d.className='pracas-spinner-overlay';
+    d.innerHTML=`<div class="pracas-spinner-modal"><div class="pracas-label">Sorteando praça para</div><div class="pracas-name" style="font-size:18px;margin-top:4px">${pessoa?.nome||''}</div><div class="n" id="pracasAnimNum">--</div><div class="pracas-sub">Números passando até cair na praça final</div></div>`;
+    document.body.appendChild(d);
+    const num=d.querySelector('#pracasAnimNum');
+    let ticks=0;
+    const timer=setInterval(()=>{
+      const p=disponiveis[Math.floor(Math.random()*disponiveis.length)];
+      if(num) num.textContent=String(p.numero).padStart(2,'0');
+      ticks++;
+      if(ticks>=22){
+        clearInterval(timer);
+        if(num) num.textContent=String(escolhida.numero).padStart(2,'0');
+        setTimeout(()=>{ d.remove(); if(typeof cb==='function') cb(); },650);
+      }
+    },70);
+  }
   window.sortearPracaIndividual = function(grupo, encodedId){
     const id=decodeURIComponent(encodedId); const pessoa=selectedList(grupo).find(p=>p.id===id); if(!pessoa) return toast('Pessoa não encontrada');
     const disponiveis=pracaElegivelIndividual(grupo); if(!disponiveis.length) return toast('Não há praça disponível para este grupo');
-    const sp=document.getElementById('pracasSpinner'), num=document.getElementById('pracasSpinnerNum'); if(sp) sp.classList.remove('pracas-hidden');
-    let ticks=0; const timer=setInterval(()=>{ const p=disponiveis[Math.floor(Math.random()*disponiveis.length)]; if(num) num.textContent=p.numero; ticks++; if(ticks>18){ clearInterval(timer); const escolhida=disponiveis[Math.floor(Math.random()*disponiveis.length)]; if(num) num.textContent=escolhida.numero; pushResultadoIndividual(grupo,pessoa,escolhida); setTimeout(()=>{if(sp) sp.classList.add('pracas-hidden'); renderSorteio(); renderResultado(); renderConfig(); toast(`🎲 ${pessoa.nome} caiu na Praça ${escolhida.numero}`);},500); } },80);
+    const escolhida=disponiveis[Math.floor(Math.random()*disponiveis.length)];
+    mostrarAnimacaoPraca(disponiveis, escolhida, pessoa, ()=>{
+      pushResultadoIndividual(grupo,pessoa,escolhida);
+      renderSorteio(); renderResultado(); renderConfig();
+      toast(`🎲 ${pessoa.nome} caiu na Praça ${escolhida.numero}`);
+    });
   };
-
-  function mostrarAnimacaoSorteio(resultado){
-    const arr=resultadoArrayFrom(resultado||st.resultado||{}).filter(x=>x.praca);
-    if(!arr.length) return;
-    const final=arr[arr.length-1];
-    const nums=arr.map(x=>x.praca.numero);
-    const old=document.getElementById('pracasSorteioAnimacao'); if(old) old.remove();
-    const d=document.createElement('div'); d.id='pracasSorteioAnimacao'; d.className='pracas-sorteio-modal';
-    d.innerHTML=`<div class="pracas-sorteio-box"><h3>🎲 Sorteio em andamento</h3><div class="pracas-sub">os números passam até parar na praça sorteada</div><div class="pracas-sorteio-roll"><div id="pracasRollNum" class="pracas-roll-num">--</div></div><div id="pracasRollFinal" class="pracas-sorteio-final">Sorteando...</div></div>`;
-    document.body.appendChild(d);
-    const num=document.getElementById('pracasRollNum'); const msg=document.getElementById('pracasRollFinal');
-    let i=0; const all=getPracas().filter(isPracaDisponivelTurno).map(p=>p.numero); const base=all.length?all:nums;
-    const timer=setInterval(()=>{ num.textContent=base[Math.floor(Math.random()*base.length)]||'--'; i++; if(i>24){ clearInterval(timer); num.textContent=final.praca.numero; num.classList.add('pracas-roll-final'); msg.innerHTML=`Praça sorteada:<br><b>${final.praca.area} - ${final.praca.numero}º</b><br><small>Mesas: ${final.praca.mesas}</small>`; setTimeout(()=>{ d.remove(); },1200); } },55);
-  }
 
   function modalPracas(html){
     const old=document.getElementById('pracasModalBack'); if(old) old.remove();

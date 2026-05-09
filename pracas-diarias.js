@@ -1309,3 +1309,25 @@
   `;
   document.head.appendChild(st);
 })();
+
+
+/* v113 - garante rolagem funcional com barra invisível */
+(function(){
+  if(document.getElementById('pracasHideScrollbarsV113')) return;
+  const st=document.createElement('style');
+  st.id='pracasHideScrollbarsV113';
+  st.textContent=`
+    html,body,.app,.main,.pracas-panel,.pracas-wrap,#pracasViewSorteio,#pracasViewResultado,.pracas-live-left,.pracas-live-list,.pracas-live-right{
+      -ms-overflow-style:none!important;
+      scrollbar-width:none!important;
+    }
+    html::-webkit-scrollbar,body::-webkit-scrollbar,.app::-webkit-scrollbar,.main::-webkit-scrollbar,.pracas-panel::-webkit-scrollbar,.pracas-wrap::-webkit-scrollbar,#pracasViewSorteio::-webkit-scrollbar,#pracasViewResultado::-webkit-scrollbar,.pracas-live-left::-webkit-scrollbar,.pracas-live-list::-webkit-scrollbar,.pracas-live-right::-webkit-scrollbar{
+      width:0!important;height:0!important;display:none!important;
+    }
+    body{overflow-y:auto!important;overflow-x:hidden!important;}
+    .pracas-panel{overflow-y:auto!important;overflow-x:hidden!important;}
+    .pracas-live-left,.pracas-live-list{overflow-y:auto!important;overflow-x:hidden!important;}
+    .pracas-live-right{overflow-y:auto!important;overflow-x:hidden!important;}
+  `;
+  document.head.appendChild(st);
+})();

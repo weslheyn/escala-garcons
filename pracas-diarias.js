@@ -194,6 +194,46 @@
       .pracas-live-right .pracas-escala-table col.pr-col-jantar{width:30%!important}
     }
 
+
+
+    /* AJUSTE v109: escala mais estreita horizontalmente e mais alta verticalmente */
+    @media (min-width: 900px){
+      .pracas-live-right{align-items:center!important;}
+      .pracas-live-right .pracas-print-box{
+        width:76vw!important;
+        max-width:760px!important;
+        min-width:700px!important;
+        margin:0 auto!important;
+        transform:none!important;
+      }
+      .pracas-live-right .pracas-print-title{font-size:13px!important;padding:3px!important;line-height:1.05!important;}
+      .pracas-live-right .pracas-meta-table{font-size:6.8px!important;}
+      .pracas-live-right .pracas-meta-table td{height:12px!important;padding:1px 3px!important;line-height:1.05!important;}
+      .pracas-live-right .pracas-escala-table{font-size:7.3px!important;line-height:1.05!important;}
+      .pracas-live-right .pracas-escala-table th,
+      .pracas-live-right .pracas-escala-table td{
+        height:13px!important;
+        padding:1px 2px!important;
+        line-height:1.05!important;
+        white-space:nowrap!important;
+        overflow:hidden!important;
+        text-overflow:clip!important;
+      }
+      .pracas-live-right .pracas-area-row td{height:12px!important;padding:1px!important;font-size:7.2px!important;line-height:1.05!important;}
+      .pracas-live-right .pracas-escala-table col.pr-col-num{width:7%!important;}
+      .pracas-live-right .pracas-escala-table col.pr-col-flag{width:7%!important;}
+      .pracas-live-right .pracas-escala-table col.pr-col-almoco{width:22%!important;}
+      .pracas-live-right .pracas-escala-table col.pr-col-mesa{width:40%!important;}
+      .pracas-live-right .pracas-escala-table col.pr-col-jantar{width:24%!important;}
+      .pracas-summary-fit{max-width:760px!important;width:76vw!important;margin:0 auto!important;font-size:12px!important;padding-top:6px!important;}
+    }
+    @media (max-width: 899px){
+      .pracas-live-right .pracas-print-box{width:100%!important;max-width:100%!important;}
+      .pracas-live-right .pracas-escala-table th,
+      .pracas-live-right .pracas-escala-table td{height:9px!important;line-height:1.02!important;}
+      .pracas-live-right .pracas-area-row td{height:9px!important;}
+    }
+
     .pracas-modal-back{position:fixed;inset:0;background:#000a;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}.pracas-modal{width:min(520px,96vw);max-height:88vh;overflow:auto;background:#0d1320;border:1px solid #33415e;border-radius:20px;padding:16px;color:#fff;box-shadow:0 20px 60px #000}.pracas-modal h3{margin:0 0 12px;font-family:'Barlow Condensed',Inter,sans-serif;font-size:24px;text-transform:uppercase}.pracas-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.pracas-select,.pracas-text{width:100%;background:#090e18;border:1px solid #33415e;border-radius:12px;color:#fff;padding:11px;font-weight:800;margin:6px 0 10px}.pracas-textarea{min-height:70px}.pracas-danger{color:#ff7777}.pracas-gold{color:#f5c842}
     `;
     const style=document.createElement('style'); style.id='pracasDiariasStyle'; style.textContent=css; document.head.appendChild(style);

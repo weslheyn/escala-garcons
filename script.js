@@ -4747,7 +4747,7 @@ setTimeout(initFirebase, 500);
 // SERVICE WORKER + PWA INSTALL
 // ═══════════════════════════════════════════════════
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/escala-garcons/sw.js')
+  navigator.serviceWorker.register('./sw.js?v=98',{scope:'./'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.warn('SW erro:',e));
 }

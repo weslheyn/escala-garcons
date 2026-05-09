@@ -1,16 +1,55 @@
-const CACHE='gestao-coco-bambu-v69-funil-leads-topo';
-self.addEventListener('install', e => {
+const CACHE = 'gestao-coco-bambu-v98-cache-sync-firebase';
+const APP_SHELL = ['./manifest.json', './icon.png'];
+
+self.addEventListener('install', event => {
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./manifest.json','./icon.png','./index.html','./eventos.html','./eventos.css','./eventos.js','./eventos-seed.js','./eventos-firebase.js']).catch(()=>{})));
+  event.waitUntil(
+    caches.open(CACHE)
+      .then(cache => cache.addAll(APP_SHELL))
+      .catch(() => {})
+  );
 });
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))
+      .then(() => self.clients.claim())
+  );
 });
-self.addEventListener('fetch', e => {
-  const req = e.request;
-  if(req.mode === 'navigate' || (req.headers.get('accept')||'').includes('text/html')){
-    e.respondWith(fetch(req).catch(()=>caches.match(req)));
+
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  if (event.data && event.data.type === 'CLEAR_OLD_CACHES') {
+    event.waitUntil(caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key)))));
+  }
+});
+
+self.addEventListener('fetch', event => {
+  const req = event.request;
+  const url = new URL(req.url);
+
+  if (req.method !== 'GET') return;
+
+  // Nunca servir HTML/JS/CSS/JSON antigos do cache. Isso evita dashboard divergente entre dispositivos.
+  const isAppFile = req.mode === 'navigate' ||
+    (req.headers.get('accept') || '').includes('text/html') ||
+    ['script', 'style'].includes(req.destination) ||
+    /\.(html|js|css|json)$/i.test(url.pathname);
+
+  if (isAppFile) {
+    event.respondWith(fetch(new Request(req, { cache: 'no-store' })).catch(() => caches.match(req)));
     return;
   }
-  e.respondWith(fetch(req).catch(()=>caches.match(req)));
+
+  // Imagens/ícones podem usar cache como fallback.
+  event.respondWith(
+    fetch(req).then(res => {
+      const copy = res.clone();
+      caches.open(CACHE).then(cache => cache.put(req, copy)).catch(() => {});
+      return res;
+    }).catch(() => caches.match(req))
+  );
 });

@@ -162,6 +162,232 @@
       .pracas-fit-footer{font-size:8px!important;padding-top:2px!important}.pracas-fit-footer span{padding:2px 4px!important}
     }
 
+
+
+    /* V105 - Sorteio: folha original compacta, sem scroll para visualizar a escala */
+    .pracas-panel:has(#pracasViewSorteio:not(.pracas-hidden)){
+      padding-bottom:0!important;
+      overflow:hidden!important;
+    }
+    .pracas-panel:has(#pracasViewSorteio:not(.pracas-hidden)) .pracas-bottom{
+      display:none!important;
+    }
+    .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)){
+      max-width:none!important;
+      width:100%!important;
+      height:calc(100vh - 42px)!important;
+      padding:6px 8px!important;
+      box-sizing:border-box!important;
+      overflow:hidden!important;
+    }
+    .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)) .pracas-info{
+      display:none!important;
+    }
+    .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)) .pracas-mini-nav{
+      margin:0 0 6px!important;
+      gap:7px!important;
+      height:30px!important;
+    }
+    .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)) .pracas-mini-nav button{
+      padding:6px 4px!important;
+      min-height:30px!important;
+      border-radius:9px!important;
+      font-size:10px!important;
+    }
+    #pracasViewSorteio{
+      height:calc(100vh - 84px)!important;
+      min-height:0!important;
+      overflow:hidden!important;
+    }
+    .pracas-sorteio-layout{
+      height:100%!important;
+      display:grid!important;
+      grid-template-columns:300px minmax(0,1fr)!important;
+      gap:8px!important;
+      overflow:hidden!important;
+      min-height:0!important;
+    }
+    .pracas-sorteio-left{
+      min-height:0!important;
+      height:100%!important;
+      overflow:hidden!important;
+      padding:8px!important;
+      border-radius:10px!important;
+      display:flex!important;
+      flex-direction:column!important;
+    }
+    .pracas-live-list{
+      flex:1!important;
+      min-height:0!important;
+      overflow:hidden!important;
+    }
+    .pracas-live-person{
+      grid-template-columns:30px minmax(0,1fr) 76px!important;
+      gap:6px!important;
+      padding:4px 0!important;
+    }
+    .pracas-avatar{width:28px!important;height:28px!important;font-size:11px!important}
+    .pracas-live-person .pracas-name{
+      font-size:11px!important;
+      line-height:1.03!important;
+      white-space:normal!important;
+      overflow:visible!important;
+      text-overflow:clip!important;
+      word-break:normal!important;
+    }
+    .pracas-live-person .pracas-sub{font-size:7.5px!important;line-height:1!important}
+    .pracas-live-person .pracas-small-btn{font-size:9px!important;padding:6px!important;border-radius:9px!important}
+    .pracas-sorteio-actions{display:none!important}
+    .pracas-sorteio-scale{
+      min-height:0!important;
+      height:100%!important;
+      overflow:hidden!important;
+      padding:7px!important;
+      border-radius:10px!important;
+      display:flex!important;
+      flex-direction:column!important;
+    }
+    .pracas-sorteio-scale-head{
+      flex:0 0 auto!important;
+      padding:0 0 4px!important;
+      margin:0!important;
+      align-items:center!important;
+    }
+    .pracas-sorteio-scale-title{font-size:18px!important;line-height:1!important;margin:0!important}
+    .pracas-live-dot{font-size:9px!important;line-height:1!important}
+
+    /* Folha original da escala: mesma ordem de colunas e proporção de impressão */
+    .pracas-print-box.pracas-fit{
+      flex:1 1 auto!important;
+      min-height:0!important;
+      height:100%!important;
+      margin:0!important;
+      padding:0!important;
+      border-radius:2px!important;
+      overflow:hidden!important;
+      background:#fff!important;
+      color:#000!important;
+      display:flex!important;
+      flex-direction:column!important;
+      box-sizing:border-box!important;
+      border:1px solid #1b1b1b!important;
+    }
+    .pracas-print-box.pracas-fit .pracas-print-title{
+      flex:0 0 auto!important;
+      background:#202020!important;
+      color:#fff!important;
+      font-size:12px!important;
+      line-height:1!important;
+      padding:3px!important;
+      letter-spacing:.2px!important;
+      text-align:center!important;
+    }
+    .pracas-print-box.pracas-fit .pracas-meta-table{
+      flex:0 0 auto!important;
+      font-size:7.2px!important;
+      line-height:1!important;
+      table-layout:fixed!important;
+      width:100%!important;
+    }
+    .pracas-print-box.pracas-fit .pracas-meta-table td{
+      padding:1px 3px!important;
+      height:10px!important;
+      line-height:1!important;
+      white-space:nowrap!important;
+      overflow:hidden!important;
+      text-overflow:clip!important;
+      border:1px solid #222!important;
+    }
+    .pracas-print-box.pracas-fit .pracas-logo-cell{
+      width:82px!important;
+      background:#5b140f!important;
+      color:#f5c842!important;
+      font-weight:900!important;
+      text-align:center!important;
+      font-size:9px!important;
+      line-height:1.05!important;
+    }
+    .pracas-print-box.pracas-fit .pracas-escala-table{
+      flex:1 1 auto!important;
+      height:100%!important;
+      width:100%!important;
+      table-layout:fixed!important;
+      border-collapse:collapse!important;
+      font-size:7.15px!important;
+      line-height:1!important;
+    }
+    .pracas-print-box.pracas-fit .pracas-escala-table th,
+    .pracas-print-box.pracas-fit .pracas-escala-table td{
+      border:1px solid #111!important;
+      padding:0 1px!important;
+      height:9.6px!important;
+      max-height:9.6px!important;
+      line-height:1!important;
+      white-space:nowrap!important;
+      overflow:hidden!important;
+      text-overflow:clip!important;
+      word-break:normal!important;
+      overflow-wrap:normal!important;
+      vertical-align:middle!important;
+      text-align:center!important;
+    }
+    .pracas-print-box.pracas-fit .pracas-escala-table th{
+      background:#f4f4f4!important;
+      color:#000!important;
+      font-weight:900!important;
+    }
+    .pracas-print-box.pracas-fit .pracas-area-row td{
+      height:9.6px!important;
+      max-height:9.6px!important;
+      padding:0!important;
+      background:#242424!important;
+      color:#fff!important;
+      font-size:7px!important;
+      font-weight:900!important;
+      text-align:center!important;
+    }
+    .pracas-print-box.pracas-fit .pracas-prnum{width:auto!important;font-size:7.1px!important;font-weight:900!important;background:#fff!important;color:#000!important}
+    .pracas-print-box.pracas-fit .pracas-flag{width:auto!important;font-size:7.1px!important;font-weight:900!important;background:#202020!important;color:#fff!important}
+    .pracas-print-box.pracas-fit .pracas-mesas{font-size:7.1px!important;font-weight:900!important;color:#000!important}
+    .pracas-print-box.pracas-fit col.pr-col-num{width:28px!important}
+    .pracas-print-box.pracas-fit col.pr-col-flag{width:28px!important}
+    .pracas-print-box.pracas-fit col.pr-col-almoco{width:13%!important}
+    .pracas-print-box.pracas-fit col.pr-col-mesa{width:44%!important}
+    .pracas-print-box.pracas-fit col.pr-col-jantar{width:19%!important}
+    .pracas-fit-footer{
+      flex:0 0 auto!important;
+      display:flex!important;
+      align-items:center!important;
+      justify-content:space-between!important;
+      gap:8px!important;
+      padding:3px 0 0!important;
+      font-size:10px!important;
+      line-height:1!important;
+    }
+    .pracas-fit-footer span{padding:3px 6px!important;border-radius:7px!important}
+
+    @media(max-width:900px){
+      .pracas-wrap:has(#pracasViewSorteio:not(.pracas-hidden)){height:calc(100vh - 36px)!important;padding:4px!important}
+      #pracasViewSorteio{height:calc(100vh - 76px)!important}
+      .pracas-sorteio-layout{grid-template-columns:1fr!important;grid-template-rows:170px minmax(0,1fr)!important;gap:5px!important}
+      .pracas-live-list{overflow:hidden!important}
+      .pracas-live-person{grid-template-columns:24px minmax(0,1fr) 62px!important;padding:2px 0!important;gap:4px!important}
+      .pracas-avatar{width:22px!important;height:22px!important;font-size:9px!important}
+      .pracas-live-person .pracas-name{font-size:9px!important;line-height:1!important}
+      .pracas-live-person .pracas-sub{font-size:6px!important}
+      .pracas-live-person .pracas-small-btn{font-size:7px!important;padding:4px!important}
+      .pracas-sorteio-scale-title{font-size:11px!important}.pracas-live-dot{font-size:7px!important}.pracas-sorteio-scale-head .pracas-pill{display:none!important}
+      .pracas-print-box.pracas-fit .pracas-print-title{font-size:7px!important;padding:2px!important}
+      .pracas-print-box.pracas-fit .pracas-meta-table{font-size:4.4px!important}
+      .pracas-print-box.pracas-fit .pracas-meta-table td{height:6px!important;padding:0 1px!important}
+      .pracas-print-box.pracas-fit .pracas-logo-cell{width:34px!important;font-size:5px!important}
+      .pracas-print-box.pracas-fit .pracas-escala-table{font-size:4.25px!important}
+      .pracas-print-box.pracas-fit .pracas-escala-table th,.pracas-print-box.pracas-fit .pracas-escala-table td{height:5.8px!important;max-height:5.8px!important;padding:0!important}
+      .pracas-print-box.pracas-fit .pracas-area-row td{height:5.8px!important;font-size:4.25px!important}
+      .pracas-print-box.pracas-fit .pracas-mesas,.pracas-print-box.pracas-fit .pracas-prnum,.pracas-print-box.pracas-fit .pracas-flag{font-size:4.25px!important}
+      .pracas-print-box.pracas-fit col.pr-col-num{width:13px!important}.pracas-print-box.pracas-fit col.pr-col-flag{width:13px!important}.pracas-print-box.pracas-fit col.pr-col-almoco{width:13%!important}.pracas-print-box.pracas-fit col.pr-col-mesa{width:43%!important}.pracas-print-box.pracas-fit col.pr-col-jantar{width:19%!important}
+      .pracas-fit-footer{font-size:7px!important;padding-top:1px!important}.pracas-fit-footer span{padding:2px 3px!important}
+    }
     `;
     const style=document.createElement('style'); style.id='pracasDiariasStyle'; style.textContent=css; document.head.appendChild(style);
   }
@@ -701,11 +927,11 @@
     const totalPracasDia=getPracas().filter(isPracaDisponivelTurno).length;
     const qtd=`${totalEquipe} / ${totalPracasDia}`;
     const groups=areaRows();
-    const rowsHtml = groups.length ? groups.map(g=>`<tr class="pracas-area-row"><td colspan="5">${g.area}</td></tr>${g.rows.map(p=>`<tr><td class="pracas-prnum">${p.numero}º</td><td class="pracas-flag">${p.tipo==='F'?'F/':(p.tipo==='CF'?'CF':'')}</td><td class="pracas-mesas">${p.mesas}</td><td>${nomePorPracaTurno('almoco',p.id)||'-'}</td><td>${nomePorPracaTurno('jantar',p.id)||'-'}</td></tr>`).join('')}`).join('') : '<tr><td colspan="5">Nenhuma praça disponível conforme as configurações atuais.</td></tr>';
+    const rowsHtml = groups.length ? groups.map(g=>`<tr class="pracas-area-row"><td colspan="5">${g.area}</td></tr>${g.rows.map(p=>`<tr><td class="pracas-prnum">${p.numero}º</td><td class="pracas-flag">${p.tipo==='F'?'F/':(p.tipo==='CF'?'CF':'')}</td><td>${nomePorPracaTurno('almoco',p.id)||''}</td><td class="pracas-mesas">${p.mesas}</td><td>${nomePorPracaTurno('jantar',p.id)||''}</td></tr>`).join('')}`).join('') : '<tr><td colspan="5">Nenhuma praça disponível conforme as configurações atuais.</td></tr>';
     return `<div id="pracasPrintArea" class="pracas-print-box ${(['resultado','sorteio'].includes(contexto)?'pracas-fit':'')}">
       <div class="pracas-print-title">ESCALA DE PRAÇAS DOS GARÇONS</div>
-      <table class="pracas-meta-table"><tr><td rowspan="3" style="width:82px;text-align:center;font-weight:900;color:#8b5a24">COCO<br>BAMBU</td><td>DATA: <b>${data}</b></td><td>TURNO: <b>ALMOÇO / JANTAR</b></td></tr><tr><td>DIA DA SEMANA: <b>${diaSemana}</b></td><td>GARÇONS / PRAÇAS: <b>${qtd}</b></td></tr><tr><td>MAITRE: ____________________</td><td></td></tr></table>
-      <table class="pracas-escala-table"><colgroup><col class="pr-col-num"><col class="pr-col-flag"><col class="pr-col-mesa"><col class="pr-col-turno"><col class="pr-col-turno"></colgroup><thead><tr><th></th><th></th><th>Nº DA MESA</th><th>ALMOÇO</th><th>JANTAR</th></tr></thead><tbody>
+      <table class="pracas-meta-table"><tr><td rowspan="3" class="pracas-logo-cell">COCO<br>BAMBU</td><td>DATA: <b>${data}</b></td><td>TURNO: <b>ALMOÇO / JANTAR</b></td></tr><tr><td>DIA DA SEMANA: <b>${diaSemana}</b></td><td>GARÇONS / PRAÇAS: <b>${qtd}</b></td></tr><tr><td>MAITRE: ____________________</td><td></td></tr></table>
+      <table class="pracas-escala-table"><colgroup><col class="pr-col-num"><col class="pr-col-flag"><col class="pr-col-almoco"><col class="pr-col-mesa"><col class="pr-col-jantar"></colgroup><thead><tr><th></th><th></th><th>ALMOÇO</th><th>Nº DA MESA</th><th>JANTAR</th></tr></thead><tbody>
       ${rowsHtml}
       </tbody></table>
     </div>${showActions?`<div class="pracas-print-actions no-print"><button class="pracas-btn" onclick="imprimirEscalaPracas()">🖨️ Imprimir / PDF</button><button class="pracas-btn green" onclick="abrirCompartilharPracas()">📤 Compartilhar</button></div>`:''}`;

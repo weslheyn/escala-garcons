@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const CACHE = 'gestao-coco-bambu-v98-cache-sync-firebase';
 
 const APP_SHELL = [
@@ -6,6 +7,10 @@ const APP_SHELL = [
 ];
 
 self.addEventListener('install', event => {
+=======
+const CACHE='gestao-coco-bambu-v84-funil-drag-livre-definitivo';
+self.addEventListener('install', e => {
+>>>>>>> c2844d52d466849ce437b1706bbda4febee8fc91
   self.skipWaiting();
 
   event.waitUntil(

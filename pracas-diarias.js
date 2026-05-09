@@ -166,6 +166,34 @@
 
     @media print{body>*:not(#pracasPrintArea){display:none!important}#pracasPrintArea{display:block!important;position:static!important;background:#fff!important;color:#000!important}.no-print{display:none!important}.pracas-print-box{border-radius:0;margin:0;padding:0}.pracas-print-title{font-size:16px}.pracas-meta-table,.pracas-escala-table{font-size:11px}}
     @media(max-width:420px){.pracas-title{font-size:22px}.pracas-info{grid-template-columns:1fr}.pracas-result-card{grid-template-columns:36px 1fr}.pracas-assigned{text-align:left;grid-column:2}.pracas-bottom{grid-template-columns:1fr 1fr}.pracas-bottom .share{grid-column:span 2}.pracas-wrap{padding:10px}.pracas-card{padding:11px}.pracas-print-box{padding:6px;border-radius:10px}.pracas-print-title{font-size:12px;padding:5px}.pracas-meta-table,.pracas-escala-table{font-size:8px}.pracas-meta-table td{padding:2px}.pracas-escala-table th,.pracas-escala-table td{padding:2px 1px}.pracas-escala-table col.pr-col-num{width:26px}.pracas-escala-table col.pr-col-flag{width:24px}.pracas-escala-table col.pr-col-mesa{width:30%}.pracas-escala-table col.pr-col-turno{width:27%}}
+
+    /* AJUSTE v108: escala proporcional no formato original, sem campos exagerados */
+    @media (min-width: 900px){
+      .pracas-live-right{display:flex!important;flex-direction:column!important;align-items:stretch!important;overflow:hidden!important}
+      .pracas-live-right .pracas-print-box{width:100%!important;max-width:860px!important;margin:0 auto!important;align-self:center!important;overflow:hidden!important}
+      .pracas-live-right .pracas-meta-table,.pracas-live-right .pracas-escala-table{width:100%!important;max-width:100%!important;table-layout:fixed!important}
+      .pracas-live-right .pracas-meta-table{font-size:6.2px!important}
+      .pracas-live-right .pracas-meta-table td{height:10px!important;padding:1px 3px!important;line-height:1!important}
+      .pracas-live-right .pracas-print-title{font-size:12px!important;padding:2px!important;line-height:1!important}
+      .pracas-live-right .pracas-escala-table{font-size:6.9px!important;line-height:1!important}
+      .pracas-live-right .pracas-escala-table th,.pracas-live-right .pracas-escala-table td{height:11px!important;padding:0 1px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important}
+      .pracas-live-right .pracas-area-row td{height:10px!important;padding:0!important;font-size:6.7px!important;line-height:1!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-num{width:6%!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-flag{width:6%!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-almoco{width:24%!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-mesa{width:34%!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-jantar{width:30%!important}
+      .pracas-summary-fit{max-width:860px!important;margin:0 auto!important;width:100%!important;box-sizing:border-box!important}
+    }
+    @media (max-width: 899px){
+      .pracas-live-right .pracas-print-box{max-width:100%!important;margin:0 auto!important;transform:none!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-num{width:6%!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-flag{width:6%!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-almoco{width:24%!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-mesa{width:34%!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-jantar{width:30%!important}
+    }
+
     .pracas-modal-back{position:fixed;inset:0;background:#000a;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}.pracas-modal{width:min(520px,96vw);max-height:88vh;overflow:auto;background:#0d1320;border:1px solid #33415e;border-radius:20px;padding:16px;color:#fff;box-shadow:0 20px 60px #000}.pracas-modal h3{margin:0 0 12px;font-family:'Barlow Condensed',Inter,sans-serif;font-size:24px;text-transform:uppercase}.pracas-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.pracas-select,.pracas-text{width:100%;background:#090e18;border:1px solid #33415e;border-radius:12px;color:#fff;padding:11px;font-weight:800;margin:6px 0 10px}.pracas-textarea{min-height:70px}.pracas-danger{color:#ff7777}.pracas-gold{color:#f5c842}
     `;
     const style=document.createElement('style'); style.id='pracasDiariasStyle'; style.textContent=css; document.head.appendChild(style);

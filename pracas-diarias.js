@@ -1074,3 +1074,105 @@
   `;
   document.head.appendChild(st);
 })();
+
+
+/* AJUSTE v111: painel da escala ocupa a altura até a área inferior marcada, mantendo largura controlada */
+(function(){
+  if(document.getElementById('pracasV111PainelAlto')) return;
+  const st=document.createElement('style');
+  st.id='pracasV111PainelAlto';
+  st.textContent=`
+    @media (min-width: 900px){
+      .pracas-panel{
+        overflow:hidden!important;
+        padding-bottom:0!important;
+      }
+      .pracas-wrap{
+        height:calc(100vh - 44px)!important;
+        min-height:calc(100vh - 44px)!important;
+        overflow:hidden!important;
+        padding-bottom:6px!important;
+      }
+      #pracasViewSorteio,#pracasViewResultado{
+        height:calc(100vh - 90px)!important;
+        min-height:calc(100vh - 90px)!important;
+        overflow:hidden!important;
+      }
+      .pracas-live-grid{
+        height:100%!important;
+        min-height:0!important;
+        align-items:stretch!important;
+      }
+      .pracas-live-left{
+        height:100%!important;
+        max-height:none!important;
+        overflow:hidden!important;
+      }
+      .pracas-live-list{
+        overflow:auto!important;
+        min-height:0!important;
+      }
+      .pracas-live-right{
+        height:100%!important;
+        min-height:0!important;
+        max-height:none!important;
+        overflow:auto!important;
+        display:flex!important;
+        flex-direction:column!important;
+        align-items:center!important;
+        justify-content:flex-start!important;
+        padding:8px 10px 12px!important;
+        box-sizing:border-box!important;
+      }
+      .pracas-live-right .pracas-print-box{
+        width:74vw!important;
+        max-width:790px!important;
+        min-width:700px!important;
+        margin:0 auto!important;
+        flex:0 0 auto!important;
+      }
+      .pracas-live-right .pracas-print-title{
+        font-size:14px!important;
+        padding:4px!important;
+        line-height:1.08!important;
+      }
+      .pracas-live-right .pracas-meta-table{
+        font-size:7.3px!important;
+        line-height:1.08!important;
+      }
+      .pracas-live-right .pracas-meta-table td{
+        height:14px!important;
+        padding:1px 3px!important;
+        line-height:1.08!important;
+      }
+      .pracas-live-right .pracas-escala-table{
+        font-size:8px!important;
+        line-height:1.08!important;
+      }
+      .pracas-live-right .pracas-escala-table th,
+      .pracas-live-right .pracas-escala-table td{
+        height:18px!important;
+        padding:1px 2px!important;
+        line-height:1.08!important;
+        white-space:nowrap!important;
+        overflow:hidden!important;
+        text-overflow:clip!important;
+      }
+      .pracas-live-right .pracas-area-row td{
+        height:16px!important;
+        padding:1px!important;
+        font-size:8px!important;
+        line-height:1.08!important;
+      }
+      .pracas-summary-fit{
+        max-width:790px!important;
+        width:74vw!important;
+        margin:0 auto!important;
+        font-size:13px!important;
+        padding:8px 0 0!important;
+        flex:0 0 auto!important;
+      }
+    }
+  `;
+  document.head.appendChild(st);
+})();

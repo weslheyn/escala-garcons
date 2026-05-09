@@ -1176,3 +1176,136 @@
   `;
   document.head.appendChild(st);
 })();
+
+/* AJUSTE v112: a própria tabela da escala cresce verticalmente até a área inferior marcada */
+(function(){
+  if(document.getElementById('pracasV112TabelaAlta')) return;
+  const st=document.createElement('style');
+  st.id='pracasV112TabelaAlta';
+  st.textContent=`
+    @media (min-width: 900px){
+      .pracas-panel{
+        overflow:hidden!important;
+        padding-bottom:0!important;
+      }
+      .pracas-wrap{
+        height:calc(100vh - 44px)!important;
+        min-height:calc(100vh - 44px)!important;
+        overflow:hidden!important;
+        padding:6px 8px!important;
+      }
+      #pracasViewSorteio,#pracasViewResultado{
+        height:calc(100vh - 90px)!important;
+        min-height:calc(100vh - 90px)!important;
+        overflow:hidden!important;
+      }
+      .pracas-live-grid{
+        height:100%!important;
+        min-height:0!important;
+        align-items:stretch!important;
+        grid-template-columns:300px minmax(0,1fr)!important;
+      }
+      .pracas-live-left{
+        height:100%!important;
+        max-height:none!important;
+        overflow:hidden!important;
+      }
+      .pracas-live-list{
+        overflow:auto!important;
+        min-height:0!important;
+      }
+      .pracas-live-right{
+        height:100%!important;
+        min-height:0!important;
+        overflow:hidden!important;
+        display:flex!important;
+        flex-direction:column!important;
+        align-items:center!important;
+        justify-content:flex-start!important;
+        padding:8px 10px 10px!important;
+        box-sizing:border-box!important;
+      }
+      .pracas-live-right>.pracas-section-title{
+        flex:0 0 auto!important;
+        margin:0 0 4px!important;
+        font-size:22px!important;
+        line-height:1!important;
+      }
+      .pracas-live-right .pracas-print-box{
+        width:74vw!important;
+        max-width:790px!important;
+        min-width:700px!important;
+        height:calc(100% - 42px)!important;
+        max-height:calc(100% - 42px)!important;
+        margin:0 auto!important;
+        padding:0!important;
+        border-radius:4px!important;
+        display:flex!important;
+        flex-direction:column!important;
+        overflow:hidden!important;
+        box-sizing:border-box!important;
+        flex:1 1 auto!important;
+      }
+      .pracas-live-right .pracas-print-title{
+        flex:0 0 18px!important;
+        height:18px!important;
+        font-size:14px!important;
+        padding:2px!important;
+        line-height:14px!important;
+        box-sizing:border-box!important;
+      }
+      .pracas-live-right .pracas-meta-table{
+        flex:0 0 44px!important;
+        height:44px!important;
+        font-size:7.2px!important;
+        line-height:1!important;
+        table-layout:fixed!important;
+      }
+      .pracas-live-right .pracas-meta-table td{
+        height:13px!important;
+        padding:1px 3px!important;
+        line-height:1!important;
+      }
+      .pracas-live-right .pracas-escala-table{
+        flex:1 1 auto!important;
+        height:auto!important;
+        min-height:0!important;
+        width:100%!important;
+        font-size:8.8px!important;
+        line-height:1.08!important;
+        table-layout:fixed!important;
+      }
+      .pracas-live-right .pracas-escala-table th,
+      .pracas-live-right .pracas-escala-table td{
+        height:auto!important;
+        padding:1px 2px!important;
+        line-height:1.08!important;
+        white-space:nowrap!important;
+        overflow:hidden!important;
+        text-overflow:clip!important;
+        box-sizing:border-box!important;
+      }
+      .pracas-live-right .pracas-area-row td{
+        height:auto!important;
+        padding:1px!important;
+        font-size:8.8px!important;
+        line-height:1.08!important;
+      }
+      .pracas-live-right .pracas-escala-table col.pr-col-num{width:8%!important;}
+      .pracas-live-right .pracas-escala-table col.pr-col-flag{width:8%!important;}
+      .pracas-live-right .pracas-escala-table col.pr-col-almoco{width:18%!important;}
+      .pracas-live-right .pracas-escala-table col.pr-col-mesa{width:42%!important;}
+      .pracas-live-right .pracas-escala-table col.pr-col-jantar{width:24%!important;}
+      .pracas-summary-fit{
+        width:74vw!important;
+        max-width:790px!important;
+        min-width:700px!important;
+        margin:0 auto!important;
+        padding:4px 0 0!important;
+        font-size:13px!important;
+        flex:0 0 auto!important;
+      }
+    }
+  `;
+  document.head.appendChild(st);
+})();

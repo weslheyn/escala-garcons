@@ -276,6 +276,10 @@
     const counts={NORMAL:getPracas().filter(p=>isSalaoAtivo(p.area)&&p.tipo==='NORMAL').length, CF:getPracas().filter(p=>isSalaoAtivo(p.area)&&p.tipo==='CF').length, F:getPracas().filter(p=>isSalaoAtivo(p.area)&&p.tipo==='F').length};
     el.innerHTML=`
       <div class="pracas-section-title"><span>Praças disponíveis para sorteio</span><span class="pracas-count">${prs.length} praças</span></div>
+      <div class="pracas-actions" style="margin-top:0">
+        <button class="pracas-btn green" onclick="novoSalaoPracas()">+ Novo salão</button>
+        <button class="pracas-btn" onclick="novaPracaConfig()">+ Nova praça</button>
+      </div>
       <div class="pracas-tabs">
         <button class="${st.pracaFiltro==='todas'?'active':''}" onclick="setPracasFiltro('todas')">Todas</button>
         <button class="${st.pracaFiltro==='NORMAL'?'active':''}" onclick="setPracasFiltro('NORMAL')">Normal (${counts.NORMAL})</button>
@@ -559,6 +563,10 @@
       <div class="pracas-actions"><button class="pracas-btn green" onclick="novoSalaoPracas()">+ Novo salão</button><button class="pracas-btn" onclick="novaPracaConfig()">+ Nova praça</button></div>
 
       <div class="pracas-section-title"><span>Editar praças, mesas, CF e F/</span><span class="pracas-count">${totalBloq} bloqueadas</span></div>
+      <div class="pracas-actions" style="margin-top:0">
+        <button class="pracas-btn green" onclick="novaPracaConfig()">+ Adicionar praça</button>
+        <button class="pracas-btn" onclick="novoSalaoPracas()">+ Adicionar salão</button>
+      </div>
       <div class="pracas-list">${getPracas().map(p=>`<div class="pracas-row"><div class="pracas-num">${p.numero}</div><div><div class="pracas-name">Praça ${p.numero} <span class="pracas-pill ${tipoClass(p.tipo)}">${tipoLabel(p.tipo)}</span></div><div class="pracas-sub">${p.area} • Mesas: ${p.mesas}</div></div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="pracas-pill" onclick="editarConfigPraca('${p.id}')">✏️ Editar</button><button class="pracas-pill ${st.pracasBloqueadas[p.id]?'lock':''}" onclick="toggleBloqueioPraca('${p.id}')">${st.pracasBloqueadas[p.id]?'🚫 Bloqueada':'Disponível'}</button><button class="pracas-pill pracas-danger" onclick="excluirPracaConfig('${p.id}')">Excluir</button></div></div>`).join('') || '<div class="pracas-empty">Nenhuma praça cadastrada.</div>'}</div>
       <div class="pracas-actions"><button class="pracas-btn red" onclick="limparBloqueiosPracas()">🚫 Limpar bloqueios</button><button class="pracas-btn" onclick="restaurarPracasPadrao()">↩️ Restaurar padrão</button></div>
       <div class="pracas-actions"><button class="pracas-btn green" onclick="salvarConfigPracas()">💾 Salvar configurações</button><button class="pracas-btn" onclick="setPracasView('resultado')">📋 Ver escala</button></div>

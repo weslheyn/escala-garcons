@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'gestao-coco-bambu-v107-eventos-v100-pracas-fit';
+const CACHE_VERSION = 'gestao-coco-bambu-v114-scrollbar-hidden-global';
 
 self.addEventListener('install', event => {
   self.skipWaiting();

@@ -1,25 +1,16 @@
-const CACHE = 'gestao-coco-bambu-v102-pracas-sorteio-layout';
-
-self.addEventListener('install', event => {
+const CACHE = 'v103-pracas-compacta-sem-arrastar';
+self.addEventListener('install', e => {
   self.skipWaiting();
+  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./manifest.json','./icon.png','./index.html','./eventos.html','./eventos.css','./eventos.js','./eventos-seed.js','./eventos-firebase.js']).catch(()=>{})));
 });
-
-self.addEventListener('activate', event => {
-  event.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(keys.map(key => caches.delete(key)));
-    await self.clients.claim();
-    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    clients.forEach(client => {
-      try {
-        const url = new URL(client.url);
-        if (!url.searchParams.get('v102')) url.searchParams.set('v102', Date.now().toString());
-        client.navigate(url.toString());
-      } catch (e) {}
-    });
-  })());
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
 });
-
-self.addEventListener('fetch', event => {
-  event.respondWith(fetch(event.request, { cache: 'no-store' }));
+self.addEventListener('fetch', e => {
+  const req = e.request;
+  if(req.mode === 'navigate' || (req.headers.get('accept')||'').includes('text/html')){
+    e.respondWith(fetch(req).catch(()=>caches.match(req)));
+    return;
+  }
+  e.respondWith(fetch(req).catch(()=>caches.match(req)));
 });

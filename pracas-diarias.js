@@ -89,16 +89,19 @@
     .pracas-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.pracas-config-option{border:1px solid #28364f;background:#0d1320;color:#dbe7ff;border-radius:16px;padding:14px;text-align:left;font-weight:900}.pracas-config-option.active{background:linear-gradient(135deg,#f5c842,#f7b816);color:#111;border-color:#f5c842}.pracas-print-box{background:#fff;color:#111;border-radius:12px;margin:14px 0;padding:10px;overflow:visible;width:100%;box-sizing:border-box}.pracas-print-title{background:#202020;color:#fff;text-align:center;font-weight:900;padding:6px;font-size:15px;letter-spacing:.5px}.pracas-meta-table,.pracas-escala-table{width:100%;max-width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;table-layout:fixed}.pracas-meta-table td{border:1px solid #cfcfcf;padding:4px;word-break:break-word}.pracas-escala-table th,.pracas-escala-table td{border:1px solid #111;padding:3px 2px;text-align:center;vertical-align:middle;white-space:normal;word-break:break-word;overflow-wrap:anywhere;line-height:1.12}.pracas-escala-table th{background:#f4f4f4}.pracas-area-row td{background:#242424!important;color:#fff!important;font-weight:900;text-align:center;padding:4px}.pracas-flag{background:#202020;color:#fff;font-weight:900;width:26px}.pracas-prnum{font-weight:900;width:30px}.pracas-mesas{font-weight:900}.pracas-print-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.pracas-escala-table col.pr-col-num{width:34px}.pracas-escala-table col.pr-col-flag{width:30px}.pracas-escala-table col.pr-col-mesa{width:34%}.pracas-escala-table col.pr-col-turno{width:26%}.pracas-spinner-card{background:linear-gradient(145deg,#151b29,#0b101a);border:1px solid #f5c84277;border-radius:18px;padding:16px;text-align:center;margin:12px 0}.pracas-spinner-num{font-size:58px;font-weight:900;color:#f5c842;text-shadow:0 0 18px #f5c84255}.pracas-ind-person{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border-bottom:1px solid #ffffff10;padding:10px 0}.pracas-ind-person:last-child{border-bottom:0}.pracas-small-btn{border:0;border-radius:12px;padding:10px 12px;font-weight:900;background:#f5c842;color:#111}.pracas-small-btn:disabled{opacity:.45;background:#344056;color:#94a3b8}
     @media print{body>*:not(#pracasPrintArea){display:none!important}#pracasPrintArea{display:block!important;position:static!important;background:#fff!important;color:#000!important}.no-print{display:none!important}.pracas-print-box{border-radius:0;margin:0;padding:0}.pracas-print-title{font-size:16px}.pracas-meta-table,.pracas-escala-table{font-size:11px}}
     @media(max-width:420px){.pracas-title{font-size:22px}.pracas-info{grid-template-columns:1fr}.pracas-result-card{grid-template-columns:36px 1fr}.pracas-assigned{text-align:left;grid-column:2}.pracas-bottom{grid-template-columns:1fr 1fr}.pracas-bottom .share{grid-column:span 2}.pracas-wrap{padding:10px}.pracas-card{padding:11px}.pracas-print-box{padding:6px;border-radius:10px}.pracas-print-title{font-size:12px;padding:5px}.pracas-meta-table,.pracas-escala-table{font-size:8px}.pracas-meta-table td{padding:2px}.pracas-escala-table th,.pracas-escala-table td{padding:2px 1px}.pracas-escala-table col.pr-col-num{width:26px}.pracas-escala-table col.pr-col-flag{width:24px}.pracas-escala-table col.pr-col-mesa{width:30%}.pracas-escala-table col.pr-col-turno{width:27%}}
-
-    /* ===== Layout premium do Sorteio de Praças — v102 ===== */
-    .pracas-panel{background:radial-gradient(circle at top right,#0b2130 0,#06101a 34%,#05080d 100%)}
-    .pracas-head{padding:10px 14px;background:#07101a;border-bottom:1px solid #263149}.pracas-head .pracas-back{font-size:22px}.pracas-title-clean{font-size:20px;letter-spacing:.02em}.pracas-help{display:none}.pracas-wrap{max-width:none;width:100%;padding:10px 14px 82px}.pracas-seg,.pracas-info,.pracas-mini-nav{max-width:760px;margin-left:auto;margin-right:auto}.pracas-bottom{display:none}
-    .pracas-sorteio-top{display:grid;grid-template-columns:1.2fr .9fr .9fr .9fr 1.2fr;gap:10px;margin:0 0 10px}.pracas-top-card{background:linear-gradient(145deg,#111b29,#07101a);border:1px solid #263149;border-radius:12px;padding:10px 13px;min-height:56px;display:flex;align-items:center;justify-content:space-between;gap:10px}.pracas-top-title{font-size:10px;text-transform:uppercase;color:#c9d4ec;font-weight:900}.pracas-top-value{font-size:21px;color:#fff;font-weight:900}.pracas-top-value.gold{color:#f5c842}.pracas-top-value.green{color:#40e070}.pracas-top-action{border:1px solid #7b5b12;background:#14151a;color:#f5c842;border-radius:10px;padding:10px 14px;font-weight:900;white-space:nowrap}
-    .pracas-sorteio-layout{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:10px;align-items:start}.pracas-sorteio-left{background:linear-gradient(180deg,#0d1724,#070d15);border:1px solid #263149;border-radius:14px;padding:10px;min-height:calc(100vh - 170px)}.pracas-sorteio-left h3{margin:0 0 3px;font-size:16px;text-transform:uppercase}.pracas-sorteio-left .hint{font-size:12px;color:#b9c4dc;margin-bottom:8px}.pracas-live-list{border:1px solid #ffffff12;border-radius:12px;overflow:hidden}.pracas-live-person{display:grid;grid-template-columns:38px 1fr auto;gap:9px;align-items:center;padding:8px 9px;border-bottom:1px solid #ffffff10}.pracas-live-person:last-child{border-bottom:0}.pracas-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#3b275d,#0a4660);font-weight:900;color:#fff}.pracas-live-name{font-weight:900;font-size:14px}.pracas-live-role{font-size:10px;color:#aab6cf;text-transform:uppercase}.pracas-sort-btn{border:0;background:linear-gradient(135deg,#f8d04d,#f6ae1a);color:#111;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:900}.pracas-sort-btn:disabled{opacity:.4}.pracas-live-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.pracas-live-actions button{border:0;border-radius:10px;padding:10px;font-weight:900;color:#fff;background:#172b47}.pracas-live-actions button:first-child{background:#3b2458}.pracas-sync-box{margin-top:10px;border:1px solid #ffffff12;background:#0c1722;border-radius:12px;padding:10px;color:#6ff58a;font-size:12px;font-weight:800}.pracas-escala-live{background:linear-gradient(180deg,#0d1724,#070d15);border:1px solid #263149;border-radius:14px;padding:10px;min-height:calc(100vh - 170px)}.pracas-escala-live-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.pracas-escala-live h3{margin:0;color:#fff;font-size:20px;text-transform:uppercase}.pracas-live-dot{color:#4ee278;font-size:12px;font-weight:900}.pracas-print-box{margin:0!important;border-radius:0!important;padding:0!important;max-width:none!important;width:100%!important}.pracas-print-title{font-size:17px!important;padding:4px!important}.pracas-meta-table{font-size:12px!important}.pracas-meta-table td{padding:4px 8px!important}.pracas-escala-table{font-size:12px!important}.pracas-escala-table th,.pracas-escala-table td{padding:3px 5px!important;line-height:1.12}.pracas-area-row td{padding:4px!important;background:#050505!important;color:#fff!important}.pracas-print-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.pracas-print-actions .pracas-btn{padding:10px!important;border-radius:10px!important}
-    @media(max-width:980px){.pracas-sorteio-top{grid-template-columns:1fr 1fr}.pracas-sorteio-layout{grid-template-columns:1fr}.pracas-sorteio-left{min-height:auto}.pracas-escala-live{min-height:auto}.pracas-live-list{max-height:350px;overflow:auto}.pracas-meta-table{font-size:9px!important}.pracas-escala-table{font-size:8px!important}.pracas-escala-table th,.pracas-escala-table td{padding:2px!important}.pracas-print-title{font-size:13px!important}.pracas-sorteio-left h3,.pracas-escala-live h3{font-size:15px}.pracas-wrap{padding:8px 8px 70px}.pracas-seg,.pracas-info,.pracas-mini-nav{max-width:none}}
-    @media(max-width:520px){.pracas-head{padding:7px 9px}.pracas-title-clean{font-size:16px}.pracas-seg button{padding:9px;font-size:12px}.pracas-info{grid-template-columns:1fr 1fr;gap:6px}.pracas-card{padding:8px}.pracas-mini-nav{gap:5px}.pracas-mini-nav button{padding:8px 3px;font-size:9px}.pracas-sorteio-top{grid-template-columns:1fr 1fr;gap:6px}.pracas-top-card{padding:8px;min-height:46px}.pracas-top-title{font-size:8px}.pracas-top-value{font-size:17px}.pracas-top-action{grid-column:span 2;padding:9px}.pracas-sorteio-layout{gap:7px}.pracas-sorteio-left,.pracas-escala-live{padding:7px;border-radius:11px}.pracas-live-person{grid-template-columns:30px 1fr auto;padding:6px}.pracas-avatar{width:27px;height:27px;font-size:11px}.pracas-live-name{font-size:12px}.pracas-live-role{font-size:8px}.pracas-sort-btn{padding:7px 8px;font-size:10px}.pracas-live-list{max-height:260px}.pracas-meta-table{font-size:7px!important}.pracas-meta-table td{padding:2px!important}.pracas-escala-table{font-size:6.5px!important}.pracas-escala-table th,.pracas-escala-table td{padding:1px!important}.pracas-print-title{font-size:10px!important;padding:3px!important}.pracas-print-actions{grid-template-columns:1fr}.pracas-print-actions .pracas-btn{padding:8px!important;font-size:11px}}
-
     .pracas-modal-back{position:fixed;inset:0;background:#000a;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}.pracas-modal{width:min(520px,96vw);max-height:88vh;overflow:auto;background:#0d1320;border:1px solid #33415e;border-radius:20px;padding:16px;color:#fff;box-shadow:0 20px 60px #000}.pracas-modal h3{margin:0 0 12px;font-family:'Barlow Condensed',Inter,sans-serif;font-size:24px;text-transform:uppercase}.pracas-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.pracas-select,.pracas-text{width:100%;background:#090e18;border:1px solid #33415e;border-radius:12px;color:#fff;padding:11px;font-weight:800;margin:6px 0 10px}.pracas-textarea{min-height:70px}.pracas-danger{color:#ff7777}.pracas-gold{color:#f5c842}
+
+    /* v103 - Sorteio compacto com escala completa sem arrastar */
+    .pracas-panel{padding-bottom:18px!important;overflow:auto!important}
+    .pracas-head{padding:8px 12px!important;min-height:38px!important;border-bottom:1px solid #263149!important}
+    .pracas-head>div:nth-child(2){display:none!important}.pracas-help{display:none!important}
+    .pracas-title{font-size:20px!important;letter-spacing:.3px!important}.pracas-wrap{max-width:100%!important;width:100%!important;padding:8px 14px!important;box-sizing:border-box!important}
+    .pracas-seg{display:none!important}.pracas-info{grid-template-columns:220px 240px!important;gap:10px!important;margin:0 0 8px!important}.pracas-card{padding:8px 10px!important;border-radius:12px!important}.pracas-input{padding:7px 9px!important}.pracas-mini-nav{grid-template-columns:repeat(5,minmax(110px,1fr))!important;margin:6px 0 8px!important;gap:8px!important}.pracas-mini-nav button{padding:9px 6px!important;border-radius:12px!important}
+    #pracasViewSorteio{height:calc(100vh - 128px);min-height:620px;overflow:hidden!important}.pracas-sorteio-layout{display:grid;grid-template-columns:310px minmax(0,1fr);gap:10px;height:100%;min-height:0}.pracas-sorteio-left,.pracas-sorteio-scale{min-height:0;background:#0d1320;border:1px solid #22304a;border-radius:14px;overflow:hidden}.pracas-sorteio-left{display:flex;flex-direction:column}.pracas-sorteio-left .pracas-section-title{margin:0;padding:10px 10px 6px}.pracas-live-list{overflow:hidden;flex:1;padding:0 8px 8px}.pracas-live-person{display:grid;grid-template-columns:36px 1fr 88px;gap:8px;align-items:center;border-bottom:1px solid #ffffff10;padding:7px 0}.pracas-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#2b3760,#17314e);font-weight:900;color:#fff}.pracas-live-person .pracas-name{font-size:13px;line-height:1.1;white-space:normal;overflow:visible;text-overflow:unset}.pracas-live-person .pracas-sub{font-size:9px;line-height:1.05}.pracas-live-person .pracas-small-btn{padding:8px 9px;border-radius:10px;font-size:11px}.pracas-sorteio-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px;border-top:1px solid #ffffff10}.pracas-sorteio-actions .pracas-btn{padding:10px;border-radius:12px;font-size:12px}.pracas-sorteio-scale{padding:8px;display:flex;flex-direction:column}.pracas-sorteio-scale-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}.pracas-sorteio-scale-title{font-size:18px;text-transform:uppercase;font-weight:900}.pracas-live-dot{color:#35e477;font-weight:900;font-size:11px;white-space:nowrap}
+    .pracas-print-box.pracas-fit{border-radius:6px!important;margin:0!important;padding:0!important;overflow:hidden!important;flex:1;min-height:0}.pracas-print-box.pracas-fit .pracas-print-title{font-size:14px!important;padding:4px!important}.pracas-print-box.pracas-fit .pracas-meta-table{font-size:9px!important}.pracas-print-box.pracas-fit .pracas-meta-table td{padding:2px 5px!important;height:16px!important}.pracas-print-box.pracas-fit .pracas-escala-table{font-size:9px!important;line-height:1!important}.pracas-print-box.pracas-fit .pracas-escala-table th,.pracas-print-box.pracas-fit .pracas-escala-table td{padding:1px 2px!important;height:17px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;word-break:normal!important}.pracas-print-box.pracas-fit .pracas-area-row td{padding:2px!important;height:16px!important}.pracas-print-box.pracas-fit .pracas-mesas{font-size:9px!important}.pracas-print-box.pracas-fit col.pr-col-num{width:34px!important}.pracas-print-box.pracas-fit col.pr-col-flag{width:38px!important}.pracas-print-box.pracas-fit col.pr-col-mesa{width:30%!important}.pracas-print-box.pracas-fit col.pr-col-turno{width:22%!important}.pracas-fit-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 4px 0;font-size:12px;font-weight:900}.pracas-fit-footer span{padding:5px 9px;border:1px solid #263149;border-radius:10px;background:#0b111d}.pracas-fit-footer b{color:#f5c842}.pracas-print-actions{display:none!important}
+    .pracas-sorteio-modal{position:fixed;inset:0;background:#000b;z-index:10020;display:flex;align-items:center;justify-content:center;padding:18px}.pracas-sorteio-box{width:min(420px,94vw);background:#0d1320;border:1px solid #f5c84277;border-radius:22px;padding:20px;text-align:center;box-shadow:0 24px 80px #000}.pracas-sorteio-box h3{margin:0 0 8px;font-size:22px}.pracas-sorteio-roll{display:flex;align-items:center;justify-content:center;gap:12px;margin:16px 0}.pracas-roll-num{width:86px;height:86px;border-radius:20px;background:#111827;border:1px solid #33415e;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900;color:#f5c842}.pracas-roll-final{background:#155d27!important;color:#fff!important;border-color:#34d26c!important;box-shadow:0 0 25px #22c55e55}.pracas-sorteio-final{font-size:15px;color:#dbe7ff;font-weight:800;min-height:42px}.pracas-sorteio-final b{color:#f5c842}
+    @media(max-width:900px){.pracas-wrap{padding:8px!important}.pracas-info,.pracas-mini-nav{display:none!important}#pracasViewSorteio{height:calc(100vh - 48px);min-height:0}.pracas-sorteio-layout{grid-template-columns:1fr;grid-template-rows:260px 1fr;gap:8px}.pracas-live-list{overflow:hidden}.pracas-sorteio-scale{padding:6px}.pracas-sorteio-scale-title{font-size:13px}.pracas-live-dot{font-size:9px}.pracas-print-box.pracas-fit .pracas-print-title{font-size:10px!important;padding:3px!important}.pracas-print-box.pracas-fit .pracas-meta-table{font-size:6px!important}.pracas-print-box.pracas-fit .pracas-meta-table td{padding:1px 2px!important;height:10px!important}.pracas-print-box.pracas-fit .pracas-escala-table{font-size:5.8px!important}.pracas-print-box.pracas-fit .pracas-escala-table th,.pracas-print-box.pracas-fit .pracas-escala-table td{padding:0 1px!important;height:10px!important}.pracas-print-box.pracas-fit .pracas-area-row td{height:9px!important;padding:0!important}.pracas-print-box.pracas-fit .pracas-mesas{font-size:5.8px!important}.pracas-fit-footer{font-size:9px;padding-top:4px}.pracas-fit-footer span{padding:3px 5px}.pracas-bottom{display:none!important}.pracas-head{padding:6px 8px!important}.pracas-title{font-size:17px!important}.pracas-back{font-size:22px!important}.pracas-live-person{grid-template-columns:28px 1fr 76px;padding:4px 0}.pracas-avatar{width:26px;height:26px;font-size:11px}.pracas-live-person .pracas-name{font-size:11px}.pracas-live-person .pracas-sub{font-size:8px}.pracas-live-person .pracas-small-btn{font-size:9px;padding:6px}.pracas-sorteio-actions{padding:6px}.pracas-sorteio-actions .pracas-btn{padding:8px;font-size:10px}}
+
     `;
     const style=document.createElement('style'); style.id='pracasDiariasStyle'; style.textContent=css; document.head.appendChild(style);
   }
@@ -112,7 +115,8 @@
     panel.innerHTML=`
       <div class="pracas-head">
         <button class="pracas-back" onclick="closePracasDiarias()">‹</button>
-        <div class="pracas-title pracas-title-clean">Sorteio de Praças</div>
+        <div style="font-size:26px">🍽️</div>
+        <div class="pracas-title">Praças Diárias e Sorteio</div>
         <button class="pracas-help" onclick="pracasAjuda()">?</button>
       </div>
       <div class="pracas-wrap">
@@ -355,6 +359,7 @@
       resumo:{garcons:selectedList('garcons').length, cf:selectedList('cf').length, fechamento:selectedList('fechamento').length, modo:'geral'}
     };
     st.resultadosTurnos[st.turno]=st.resultado;
+    mostrarAnimacaoSorteio(st.resultado);
     renderSorteio();
     renderResultado();
     setPracasView('sorteio');
@@ -386,56 +391,41 @@
     `;
   }
 
-  function renderSorteio(){
-    const el=document.getElementById('pracasViewSorteio'); if(!el) return;
-    const totalPracas = getPracas().filter(isPracaDisponivelTurno).length;
-    const preenchidas = resultadoArrayAtual().filter(x=>x && x.pessoa && x.pessoa.nome).length;
-    const livres = Math.max(0,totalPracas-preenchidas);
-    const disp = pessoasElegiveisIndividual('garcons').length + pessoasElegiveisIndividual('cf').length + pessoasElegiveisIndividual('fechamento').length;
-    const fCount = resultadoArrayAtual().filter(x=>x.praca && x.praca.tipo==='F').length;
-    const cfCount = resultadoArrayAtual().filter(x=>x.praca && x.praca.tipo==='CF').length;
-    const nCount = resultadoArrayAtual().filter(x=>x.praca && x.praca.tipo!=='F' && x.praca.tipo!=='CF').length;
-
-    el.innerHTML = `
-      <div class="pracas-sorteio-top">
-        <div class="pracas-top-card"><div><div class="pracas-top-title">Garçons disponíveis</div><div class="pracas-top-value">${disp}</div></div></div>
-        <div class="pracas-top-card"><div><div class="pracas-top-title">Praças preenchidas</div><div class="pracas-top-value green">${preenchidas} / ${totalPracas}</div></div></div>
-        <div class="pracas-top-card"><div><div class="pracas-top-title">Praças livres</div><div class="pracas-top-value gold">${livres}</div></div></div>
-        <div class="pracas-top-card"><div><div class="pracas-top-title">Tipos sorteados</div><div class="pracas-top-value" style="font-size:14px"><span style="color:#37e57a">${fCount} F/</span> &nbsp; <span style="color:#d49bff">${cfCount} CF</span> &nbsp; <span style="color:#cbd4e8">${nCount} Normal</span></div></div></div>
-        <button class="pracas-top-action" onclick="refazerPracasDiarias()">↩ Desfazer / Refazer sorteio</button>
-      </div>
-      <div class="pracas-sorteio-layout">
-        <aside class="pracas-sorteio-left">
-          <h3>Sorteio de praças <span class="pracas-pill lock">Ao vivo</span></h3>
-          <div class="hint">Clique em “Sortear” para definir a praça e acompanhar na escala ao lado.</div>
-          ${renderListaSorteioAoVivo()}
-          <div class="pracas-live-actions">
-            <button onclick="setPracasView('equipe')">👥 Equipe</button>
-            <button onclick="setPracasView('config')">⚙️ Configurar</button>
-          </div>
-          <div class="pracas-sync-box">🟢 Sorteio em tempo real<br><small>Todos os dispositivos sincronizados</small></div>
-        </aside>
-        <main class="pracas-escala-live">
-          <div class="pracas-escala-live-head"><h3>Escala de praças dos garçons <span class="pracas-live-dot">● Atualizado agora</span></h3><button class="pracas-pill" onclick="imprimirEscalaPracas()">🖨️ Imprimir</button></div>
-          ${renderEscalaPracas(true, 'sorteio')}
-        </main>
-      </div>
-    `;
+  function sorteioPessoasDisponiveis(){
+    const usadas=new Set();
+    if(st.resultado){ resultadoArrayFrom(st.resultado).forEach(x=>{ if(x.pessoa&&x.pessoa.id) usadas.add(x.pessoa.id); }); }
+    const todos=[...selectedList('garcons'),...selectedList('cf'),...selectedList('fechamento')];
+    const seen=new Set();
+    return todos.filter(p=>{ if(!p||!p.id||seen.has(p.id)||usadas.has(p.id)) return false; seen.add(p.id); return true; });
   }
 
-  function renderListaSorteioAoVivo(){
-    const grupos=[['garcons','GARÇOM'],['cf','CHEFE DE FILA'],['fechamento','GARÇOM']];
-    let pessoas=[];
-    grupos.forEach(([g,label])=>{
-      if(st.turno==='almoco' && g==='fechamento' && !st.incluirFechamentoNoAlmoco) return;
-      pessoasElegiveisIndividual(g).forEach(p=>pessoas.push({grupo:g,label,pessoa:p,pracas:pracaElegivelIndividual(g).length}));
-    });
-    if(!pessoas.length) return '<div class="pracas-empty">Todos já foram sorteados ou não há pessoas disponíveis.</div>';
-    return `<div class="pracas-live-list">${pessoas.map(item=>{
-      const nome=item.pessoa.nome||'';
-      const iniciais=nome.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'?';
-      return `<div class="pracas-live-person"><div class="pracas-avatar">${iniciais}</div><div><div class="pracas-live-name">${nome}</div><div class="pracas-live-role">${item.label}</div></div><button class="pracas-sort-btn" ${!item.pracas?'disabled':''} onclick="sortearPracaIndividual('${item.grupo}','${encodeURIComponent(item.pessoa.id)}')">🎲 Sortear</button></div>`;
-    }).join('')}</div>`;
+  function initials(nome){
+    return String(nome||'').trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase() || '—';
+  }
+
+  function renderListaSorteioCompacta(){
+    const pessoas=sorteioPessoasDisponiveis();
+    const html=pessoas.map(p=>{
+      const grupo = selectedList('cf').some(x=>x.id===p.id) ? 'cf' : (selectedList('fechamento').some(x=>x.id===p.id) ? 'fechamento' : 'garcons');
+      return `<div class="pracas-live-person"><div class="pracas-avatar">${initials(p.nome)}</div><div><div class="pracas-name">${p.nome}</div><div class="pracas-sub">${grupo==='cf'?'CHEFE DE FILA':'GARÇOM'}</div></div><button class="pracas-small-btn" onclick="sortearPracaIndividual('${grupo}','${encodeURIComponent(p.id)}')">🎲 Sortear</button></div>`;
+    }).join('') || '<div class="pracas-empty">Todos já foram sorteados ou não há equipe disponível.</div>';
+    return `<div class="pracas-sorteio-left"><div class="pracas-section-title"><span>Sorteio de praças</span><span class="pracas-count">${pessoas.length} disponíveis</span></div><div class="pracas-live-list">${html}</div><div class="pracas-sorteio-actions"><button class="pracas-btn purple" onclick="setPracasView('equipe')">👥 Equipe</button><button class="pracas-btn" onclick="setPracasView('config')">⚙️ Configurar</button></div></div>`;
+  }
+
+  function renderSorteio(){
+    const el=document.getElementById('pracasViewSorteio'); if(!el) return;
+    const disponiveis=sorteioPessoasDisponiveis().length;
+    const preenchidas=st.resultado ? resultadoArrayFrom(st.resultado).filter(x=>x.pessoa&&x.pessoa.nome).length : 0;
+    const total=getPracas().filter(isPracaDisponivelTurno).length;
+    el.innerHTML=`
+      <div class="pracas-sorteio-layout">
+        ${renderListaSorteioCompacta()}
+        <div class="pracas-sorteio-scale">
+          <div class="pracas-sorteio-scale-head"><div><div class="pracas-sorteio-scale-title">Escala de praças dos garçons</div><div class="pracas-live-dot">● atualizado ao vivo conforme o sorteio</div></div><button class="pracas-pill" onclick="imprimirEscalaPracas()">🖨️ Imprimir</button></div>
+          ${renderEscalaPracas(false, 'sorteio')}
+          <div class="pracas-fit-footer"><span>Disponíveis: <b>${disponiveis}</b></span><span>Total de praças: <b>${total}</b></span><span>Preenchidas: <b>${preenchidas}</b></span></div>
+        </div>
+      </div>`;
   }
 
   function resultCard(x,grupo){
@@ -649,7 +639,7 @@
     const qtd=(qtdAlmoco||qtdJantar) ? `${qtdAlmoco||'-'} / ${qtdJantar||'-'}` : '';
     const groups=areaRows();
     const rowsHtml = groups.length ? groups.map(g=>`<tr class="pracas-area-row"><td colspan="5">${g.area}</td></tr>${g.rows.map(p=>`<tr><td class="pracas-prnum">${p.numero}º</td><td class="pracas-flag">${p.tipo==='F'?'F/':(p.tipo==='CF'?'CF':'')}</td><td class="pracas-mesas">${p.mesas}</td><td>${nomePorPracaTurno('almoco',p.id)||'-'}</td><td>${nomePorPracaTurno('jantar',p.id)||'-'}</td></tr>`).join('')}`).join('') : '<tr><td colspan="5">Nenhuma praça disponível conforme as configurações atuais.</td></tr>';
-    return `<div id="pracasPrintArea" class="pracas-print-box ${contexto==='resultado'?'pracas-print-compact':''}">
+    return `<div id="pracasPrintArea" class="pracas-print-box ${(['resultado','sorteio'].includes(contexto)?'pracas-fit':'')}">
       <div class="pracas-print-title">ESCALA DE PRAÇAS DOS GARÇONS</div>
       <table class="pracas-meta-table"><tr><td rowspan="3" style="width:82px;text-align:center;font-weight:900;color:#8b5a24">COCO<br>BAMBU</td><td>DATA: <b>${data}</b></td><td>TURNO: <b>ALMOÇO / JANTAR</b></td></tr><tr><td>DIA DA SEMANA: <b>${diaSemana}</b></td><td>QUANT. GARÇOM: <b>${qtd}</b></td></tr><tr><td>MAITRE: ____________________</td><td></td></tr></table>
       <table class="pracas-escala-table"><colgroup><col class="pr-col-num"><col class="pr-col-flag"><col class="pr-col-mesa"><col class="pr-col-turno"><col class="pr-col-turno"></colgroup><thead><tr><th></th><th></th><th>Nº DA MESA</th><th>ALMOÇO</th><th>JANTAR</th></tr></thead><tbody>
@@ -684,7 +674,7 @@
     st.data = st.data || todayISO();
     document.getElementById('pracasDiariasPanel').classList.add('open');
     try{ document.body.classList.remove('home-active'); }catch(e){}
-    ensureSelected(); renderAll(); setView('sorteio');
+    ensureSelected(); renderAll(); setView('equipe');
     await carregarAmbosTurnos();
     carregarHistorico();
   };
@@ -711,6 +701,20 @@
     const sp=document.getElementById('pracasSpinner'), num=document.getElementById('pracasSpinnerNum'); if(sp) sp.classList.remove('pracas-hidden');
     let ticks=0; const timer=setInterval(()=>{ const p=disponiveis[Math.floor(Math.random()*disponiveis.length)]; if(num) num.textContent=p.numero; ticks++; if(ticks>18){ clearInterval(timer); const escolhida=disponiveis[Math.floor(Math.random()*disponiveis.length)]; if(num) num.textContent=escolhida.numero; pushResultadoIndividual(grupo,pessoa,escolhida); setTimeout(()=>{if(sp) sp.classList.add('pracas-hidden'); renderSorteio(); renderResultado(); renderConfig(); toast(`🎲 ${pessoa.nome} caiu na Praça ${escolhida.numero}`);},500); } },80);
   };
+
+  function mostrarAnimacaoSorteio(resultado){
+    const arr=resultadoArrayFrom(resultado||st.resultado||{}).filter(x=>x.praca);
+    if(!arr.length) return;
+    const final=arr[arr.length-1];
+    const nums=arr.map(x=>x.praca.numero);
+    const old=document.getElementById('pracasSorteioAnimacao'); if(old) old.remove();
+    const d=document.createElement('div'); d.id='pracasSorteioAnimacao'; d.className='pracas-sorteio-modal';
+    d.innerHTML=`<div class="pracas-sorteio-box"><h3>🎲 Sorteio em andamento</h3><div class="pracas-sub">os números passam até parar na praça sorteada</div><div class="pracas-sorteio-roll"><div id="pracasRollNum" class="pracas-roll-num">--</div></div><div id="pracasRollFinal" class="pracas-sorteio-final">Sorteando...</div></div>`;
+    document.body.appendChild(d);
+    const num=document.getElementById('pracasRollNum'); const msg=document.getElementById('pracasRollFinal');
+    let i=0; const all=getPracas().filter(isPracaDisponivelTurno).map(p=>p.numero); const base=all.length?all:nums;
+    const timer=setInterval(()=>{ num.textContent=base[Math.floor(Math.random()*base.length)]||'--'; i++; if(i>24){ clearInterval(timer); num.textContent=final.praca.numero; num.classList.add('pracas-roll-final'); msg.innerHTML=`Praça sorteada:<br><b>${final.praca.area} - ${final.praca.numero}º</b><br><small>Mesas: ${final.praca.mesas}</small>`; setTimeout(()=>{ d.remove(); },1200); } },55);
+  }
 
   function modalPracas(html){
     const old=document.getElementById('pracasModalBack'); if(old) old.remove();

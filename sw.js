@@ -1,34 +1,31 @@
-const CACHE = 'gestao-coco-bambu-v98-cache-sync-firebase';
-
-const APP_SHELL = [
-  './manifest.json',
-  './icon.png'
-];
+const CACHE = 'v99-force-clean-all';
 
 self.addEventListener('install', event => {
   self.skipWaiting();
-
-  event.waitUntil(
-    caches.open(CACHE)
-  );
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(key => key !== CACHE)
-          .map(key => caches.delete(key))
-      )
-    )
-  );
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.map(key => caches.delete(key)));
 
-  self.clients.claim();
+    await self.clients.claim();
+
+    const clients = await self.clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true
+    });
+
+    clients.forEach(client => {
+      const url = new URL(client.url);
+      url.searchParams.set('cacheBust', Date.now().toString());
+      client.navigate(url.toString());
+    });
+  })());
 });
 
 self.addEventListener('fetch', event => {
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
+    fetch(event.request, { cache: 'no-store' })
   );
 });

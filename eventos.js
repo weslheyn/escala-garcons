@@ -1,18 +1,29 @@
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
-const STORE='eventos_premium_v58';
-const META='eventos_premium_meta_v58';
+const APP_DATA_VERSION='v100-firebase-sync';
+const STORE='eventos_premium_v100';
+const META='eventos_premium_meta_v100';
 const AGENDA_STORE='eventos_agenda_comercial_v61';
 const AGENDA_RESP_STORE='eventos_agenda_responsaveis_v61';
 const DEVICE_STORE='eventos_device_id_v61';
-const CLIENTES_STORE='eventos_clientes_cadastro_v64';
+const CLIENTES_STORE='eventos_clientes_cadastro_v100';
 let deferredInstallPrompt=null;
 const PIPELINE_STATUS=['Lead','Proposta enviada','Visita do espaço','Negociação 1','Negociação 2','Reunião de alinhamento','Contrato enviado','Assinatura cliente','Assinatura diretoria','Fechado','Realizado'];
 const RECOVERY_STATUS=['Recuperação','Sem resposta','Cancelado','Perdido','Perdido/Cancelado'];
 const STATUS=[...PIPELINE_STATUS,...RECOVERY_STATUS];
 const TABS=[['dashboard','Dashboard'],['funil','Funil'],['calendario','Calendário'],['vendas','Vendas'],['recuperacao','Recuperação'],['clientes','Clientes'],['pacotes','Pacotes'],['agenda','Agenda'],['sheets','Relatórios']];
 let state={tab:'dashboard',eventos:[],pacotes:window.EVENTOS_PACOTES||[],agenda:[],agendaResponsaveis:[],agendaFiltros:{criador:'',visibilidade:'',tipo:'',status:''},clientesView:'historico',clientesCadastros:[],meta:{metaMensal:150000},cal:{year:new Date().getFullYear(),month:new Date().getMonth()+1,view:'mes',day:new Date().getDate()}};
+function ensureFreshAppVersion(){
+  try{
+    const key='gestao_cb_eventos_app_version';
+    if(localStorage.getItem(key)!==APP_DATA_VERSION){
+      ['eventos_premium_v58','eventos_premium_meta_v58','eventos_clientes_cadastro_v64','eventos_premium_v95','eventos_premium_v96','eventos_premium_v97','dashboard_cache','dashboard','stats','metricas'].forEach(k=>localStorage.removeItem(k));
+      localStorage.setItem(key,APP_DATA_VERSION);
+    }
+  }catch(e){}
+}
+ensureFreshAppVersion();
 function brl(n){return (Number(n)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
 function dt(s){ const iso=parseDateAny(s); if(!iso) return ''; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`;}
 function dow(s){ const iso=parseDateAny(s); if(!iso) return ''; const d=new Date(iso+'T12:00:00'); return ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'][d.getDay()]||'';}

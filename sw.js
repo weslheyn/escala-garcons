@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'gestao-coco-bambu-v114-scrollbar-hidden-global';
+const CACHE_VERSION = 'gestao-coco-bambu-v100-force-network';
 
 self.addEventListener('install', event => {
   self.skipWaiting();

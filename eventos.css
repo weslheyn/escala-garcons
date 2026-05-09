@@ -678,60 +678,13 @@ body:not([data-tab="dashboard"]) .topbar{
   .modal-box{max-height:94vh!important}.event-form-premium .finance-layout{margin-top:10px!important}.finance-left{gap:10px!important}.finance-card,.finance-summary{padding:12px!important}.finance-table label,.finance-table strong,.finance-table .field{min-height:40px!important;height:40px!important}.finance-note{font-size:10.5px!important;margin-top:6px!important}
 }
 
-
-/* v113 - ocultar barras de rolagem em todos os módulos sem bloquear a rolagem */
-html, body, .app, .main, .section, .panel, .modal-box, .sheet-card, .table-wrap, .kanban, .week-scroll, .pracas-panel, .pracas-wrap, .pracas-live-left, .pracas-live-list, .pracas-live-right, #pracasViewSorteio, #pracasViewResultado {
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
+/* v116 - somente esconder barras de rolagem, sem alterar tamanhos/layout do módulo Eventos */
+html, body, .app, .main, .section, .panel, .modal-box, .table-wrap, .kanban, .pipeline-kanban, .week-scroll, .pracas-panel, .pracas-wrap, .pracas-live-left, .pracas-live-list, .pracas-live-right, #pracasViewSorteio, #pracasViewResultado {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
-html::-webkit-scrollbar, body::-webkit-scrollbar, .app::-webkit-scrollbar, .main::-webkit-scrollbar, .section::-webkit-scrollbar, .panel::-webkit-scrollbar, .modal-box::-webkit-scrollbar, .sheet-card::-webkit-scrollbar, .table-wrap::-webkit-scrollbar, .kanban::-webkit-scrollbar, .week-scroll::-webkit-scrollbar, .pracas-panel::-webkit-scrollbar, .pracas-wrap::-webkit-scrollbar, .pracas-live-left::-webkit-scrollbar, .pracas-live-list::-webkit-scrollbar, .pracas-live-right::-webkit-scrollbar, #pracasViewSorteio::-webkit-scrollbar, #pracasViewResultado::-webkit-scrollbar {
-  width: 0 !important;
-  height: 0 !important;
-  display: none !important;
-}
-body {
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-}
-.pracas-panel, .pracas-wrap, #pracasViewSorteio, #pracasViewResultado {
-  -webkit-overflow-scrolling: touch !important;
-}
-
-/* v114 - remover visualmente TODAS as barras de rolagem, mantendo rolagem funcional */
-* {
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
-}
-*::-webkit-scrollbar {
-  width: 0 !important;
-  height: 0 !important;
-  display: none !important;
-  background: transparent !important;
-}
-*::-webkit-scrollbar-track,
-*::-webkit-scrollbar-thumb,
-*::-webkit-scrollbar-corner {
-  display: none !important;
-  background: transparent !important;
-}
-html, body {
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-}
-.kanban,
-.pipeline-kanban,
-.week-scroll,
-.table-wrap,
-.pracas-live-list,
-.pracas-live-left,
-.pracas-live-right,
-.pracas-panel,
-.pracas-wrap,
-#pracasViewSorteio,
-#pracasViewResultado,
-.modal-box,
-.section,
-.main,
-.app {
-  -webkit-overflow-scrolling: touch !important;
+html::-webkit-scrollbar, body::-webkit-scrollbar, .app::-webkit-scrollbar, .main::-webkit-scrollbar, .section::-webkit-scrollbar, .panel::-webkit-scrollbar, .modal-box::-webkit-scrollbar, .table-wrap::-webkit-scrollbar, .kanban::-webkit-scrollbar, .pipeline-kanban::-webkit-scrollbar, .week-scroll::-webkit-scrollbar, .pracas-panel::-webkit-scrollbar, .pracas-wrap::-webkit-scrollbar, .pracas-live-left::-webkit-scrollbar, .pracas-live-list::-webkit-scrollbar, .pracas-live-right::-webkit-scrollbar, #pracasViewSorteio::-webkit-scrollbar, #pracasViewResultado::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }

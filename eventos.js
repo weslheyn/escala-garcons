@@ -8,54 +8,11 @@ const AGENDA_RESP_STORE='eventos_agenda_responsaveis_v61';
 const DEVICE_STORE='eventos_device_id_v61';
 const CLIENTES_STORE='eventos_clientes_cadastro_v64';
 let deferredInstallPrompt=null;
-const APP_VERSION='crm_eventos_v98_cache_sync_firebase_2026_05_09';
-const APP_VERSION_KEY='crm_eventos_app_version';
-function clearEventosLocalCachesForVersion(){
-  try{
-    const current=localStorage.getItem(APP_VERSION_KEY);
-    if(current===APP_VERSION) return false;
-    const keepInstall=localStorage.getItem('gestao_cb_install_dismissed');
-    const keepDevice=localStorage.getItem(DEVICE_STORE);
-    const prefixes=['eventos_','crm_eventos_'];
-    const exact=[STORE,META,AGENDA_STORE,AGENDA_RESP_STORE,CLIENTES_STORE,'dashboard_cache','dashboardCache','eventosDashboardCache','eventos_cache','calendario_eventos_cache'];
-    Object.keys(localStorage).forEach(k=>{
-      if(prefixes.some(pre=>k.startsWith(pre)) || exact.includes(k)) localStorage.removeItem(k);
-    });
-    if(keepInstall) localStorage.setItem('gestao_cb_install_dismissed',keepInstall);
-    if(keepDevice) localStorage.setItem(DEVICE_STORE,keepDevice);
-    localStorage.setItem(APP_VERSION_KEY,APP_VERSION);
-    localStorage.setItem('crm_eventos_cache_corrigido_em',new Date().toISOString());
-    return true;
-  }catch(e){return false;}
-}
-function hardRefreshAfterVersionUpdate(){
-  try{
-    if('caches' in window) caches.keys().then(keys=>Promise.all(keys.map(k=>caches.delete(k)))).catch(()=>{});
-    if(navigator.serviceWorker){
-      navigator.serviceWorker.getRegistrations().then(regs=>{
-        Promise.all(regs.map(r=>r.unregister().catch(()=>{}))).finally(()=>{
-          setTimeout(()=>{ location.replace(location.pathname+'?v='+encodeURIComponent(APP_VERSION)+'&t='+Date.now()); },250);
-        });
-      }).catch(()=>setTimeout(()=>location.reload(),250));
-    }else{
-      setTimeout(()=>location.reload(),250);
-    }
-  }catch(e){setTimeout(()=>location.reload(),250);}
-}
-function registerFreshServiceWorker(){
-  if(!('serviceWorker' in navigator)) return;
-  const swUrl='./sw.js?v='+encodeURIComponent(APP_VERSION);
-  navigator.serviceWorker.register(swUrl,{scope:'./'}).then(reg=>{
-    reg.update().catch(()=>{});
-    if(reg.waiting) reg.waiting.postMessage({type:'SKIP_WAITING'});
-  }).catch(()=>{});
-}
-
 const PIPELINE_STATUS=['Lead','Proposta enviada','Visita do espaço','Negociação 1','Negociação 2','Reunião de alinhamento','Contrato enviado','Assinatura cliente','Assinatura diretoria','Fechado','Realizado'];
 const RECOVERY_STATUS=['Recuperação','Sem resposta','Cancelado','Perdido','Perdido/Cancelado'];
 const STATUS=[...PIPELINE_STATUS,...RECOVERY_STATUS];
 const TABS=[['dashboard','Dashboard'],['funil','Funil'],['calendario','Calendário'],['vendas','Vendas'],['recuperacao','Recuperação'],['clientes','Clientes'],['pacotes','Pacotes'],['agenda','Agenda'],['sheets','Relatórios']];
-let state={tab:'dashboard',eventos:[],pacotes:window.EVENTOS_PACOTES||[],agenda:[],agendaResponsaveis:[],agendaFiltros:{criador:'',visibilidade:'',tipo:'',status:''},clientesView:'historico',clientesCadastros:[],meta:{metaMensal:150000},cal:{year:new Date().getFullYear(),month:new Date().getMonth()+1,view:'mes',day:new Date().getDate()}};
+let state={tab:'dashboard',eventos:[],pacotes:window.EVENTOS_PACOTES||[],agenda:[],agendaResponsaveis:[],agendaFiltros:{criador:'',visibilidade:'',tipo:'',status:''},clientesView:'historico',clientesCadastros:[],meta:{metaMensal:150000},cal:{year:new Date().getFullYear(),month:new Date().getMonth()+1}};
 function brl(n){return (Number(n)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
 function dt(s){ const iso=parseDateAny(s); if(!iso) return ''; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`;}
 function dow(s){ const iso=parseDateAny(s); if(!iso) return ''; const d=new Date(iso+'T12:00:00'); return ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'][d.getDay()]||'';}
@@ -141,36 +98,11 @@ function deviceId(){let id=localStorage.getItem(DEVICE_STORE); if(!id){id='dev_'
 function saveAgenda(){localStorage.setItem(AGENDA_STORE,JSON.stringify(state.agenda));localStorage.setItem(AGENDA_RESP_STORE,JSON.stringify(state.agendaResponsaveis));}
 function save(){localStorage.setItem(STORE,JSON.stringify(state.eventos));localStorage.setItem(META,JSON.stringify(state.meta)); if(window.EventosFirebase&&EventosFirebase.enabled) EventosFirebase.saveAll(state.eventos).catch(()=>{});}
 function saveClientes(){localStorage.setItem(CLIENTES_STORE,JSON.stringify(state.clientesCadastros||[]));}
-function clienteCadastroMatch(nome,telefone){
-  const n=norm(nome||''), tel=String(telefone||'').replace(/\D/g,'');
-  return (state.clientesCadastros||[]).find(c=>{
-    const cn=norm(c.nome||c.cliente||''), ct=String(c.telefone||'').replace(/\D/g,'');
-    return (n&&cn&&cn===n)||(tel&&ct&&ct===tel);
-  })||null;
-}
-function clientesDatalistHtml(){
-  const arr=dedupeClientesCadastro(state.clientesCadastros||[]);
-  return `<datalist id="clientesCadastroOptions">${arr.map(c=>`<option value="${esc(c.nome||'')}" label="${esc([c.telefone,c.email].filter(Boolean).join(' • '))}"></option>`).join('')}</datalist>`;
-}
-function applyClienteCadastroToEvento(){
-  const nome=($('f_cliente')?.value||'').trim(), tel=($('f_telefone')?.value||'').trim();
-  const c=clienteCadastroMatch(nome,tel);
-  if(!c)return null;
-  if($('f_cliente')&&!$('f_cliente').value.trim()) $('f_cliente').value=c.nome||'';
-  if($('f_telefone')&&!$('f_telefone').value.trim()) $('f_telefone').value=c.telefone||'';
-  if($('f_tipo')&&!$('f_tipo').value.trim()) $('f_tipo').value=c.tipoEvento||'Evento';
-  if($('f_data')&&!$('f_data').value&&c.dataEvento) $('f_data').value=c.dataEvento;
-  if($('f_pessoas')&&!$('f_pessoas').value&&c.pessoas) $('f_pessoas').value=c.pessoas;
-  return c;
-}
 function load(){
   const saved=localStorage.getItem(STORE);
-  if(saved){
-    try{state.eventos=dedupeEventos(JSON.parse(saved)||[])}catch(e){state.eventos=[]}
-  }else{
-    // v97: não carrega mais a base demonstrativa automaticamente.
-    // Isso permite começar o CRM do zero sem o eventos-seed.js repovoar a tela.
-    state.eventos=[];
+  if(saved){try{state.eventos=dedupeEventos(JSON.parse(saved)||[])}catch(e){state.eventos=[]}}
+  else{
+    state.eventos=dedupeEventos((window.EVENTOS_SEED||[]).map(e=>({...e,importado:true})));
     localStorage.setItem(STORE,JSON.stringify(state.eventos));
   }
   try{state.meta=Object.assign(state.meta,JSON.parse(localStorage.getItem(META)||'{}'))}catch(e){}
@@ -190,23 +122,9 @@ function filtered(){
   });
 }
 function statusClass(s){const n=norm(s); if(n.includes('fechado'))return's-fechado'; if(n.includes('perdido'))return's-perdido'; if(n.includes('cancel'))return's-cancelado'; if(n.includes('sem resposta')||n.includes('recupera'))return's-semresposta'; if(n.includes('contrato')||n.includes('assinatura'))return's-contrato'; if(n.includes('proposta')||n.includes('visita'))return's-proposta'; if(n.includes('reuniao'))return's-reuniao'; if(n.includes('realizado'))return's-fechado'; return's-neg';}
-function eventColorClass(e){const n=norm([e.status,e.tipo,e.pacote,e.origem].join(' ')); if(n.includes('fechado')||n.includes('realizado'))return'evc-green'; if(n.includes('cancel')||n.includes('perdido'))return'evc-red'; if(n.includes('corporativo')||n.includes('empresa'))return'evc-blue'; if(n.includes('reuniao')||n.includes('alinhamento')||n.includes('contrato')||n.includes('assinatura'))return'evc-purple'; if(n.includes('proposta')||n.includes('visita')||n.includes('lead'))return'evc-yellow'; return'evc-gray';}
-function moduleMeta(){const map={dashboard:['Dashboard','Visão geral comercial dos eventos.','▦'],funil:['Funil de Eventos','Acompanhe oportunidades e mova cards entre etapas.','▽'],calendario:['Calendário de Eventos','Visualize e gerencie os eventos do mês.','▣'],vendas:['Vendas','Controle de vendas, valores e orçamentos.','↗'],recuperacao:['Recuperação','Recupere clientes inativos e oportunidades perdidas.','↻'],clientes:['Clientes','Histórico e cadastro de clientes do CRM.','◌'],pacotes:['Pacotes','Pacotes, serviços e valores cadastrados.','▤'],agenda:['Agenda','Tarefas, compromissos e atividades da equipe.','☷'],sheets:['Relatórios','Exportações, integrações e indicadores.','▥']};return map[state.tab]||map.dashboard;}
-function moduleHeader(extra=''){const [title,subtitle,icon]=moduleMeta();return `<div class="module-head premium-panel"><div><span class="eyebrow">${icon} ${esc(title.split(' ')[0])}</span><h2>${esc(title)}</h2><p>${esc(subtitle)}</p></div>${extra?`<div class="module-actions">${extra}</div>`:''}</div>`;}
 function isRecuperacaoStatus(s){return ['Recuperação','Sem resposta','Cancelado','Perdido','Perdido/Cancelado'].includes(s);}
 function normalizeStatus(s, obs=''){
-  const raw=String(s||'').trim();
-  const rawNorm=norm(raw);
-  const allStatus=[...PIPELINE_STATUS,...RECOVERY_STATUS];
-  const exact=allStatus.find(st=>norm(st)===rawNorm);
-  // Regra crítica do funil: quando o campo STATUS já vem preenchido com uma etapa válida,
-  // ele deve ser a verdade. Não podemos reclassificar usando observações antigas, porque o
-  // histórico pode conter frases como “Movido de Proposta enviada para Lead” e isso fazia
-  // o card voltar para a etapa anterior.
-  if(exact) return exact;
-
-  // Se o status veio vazio/sem status, aí sim usamos observações/texto importado para sugerir etapa.
-  const n=norm([raw,obs].join(' '));
+  const n=norm([s,obs].join(' '));
   if(n.includes('realizado')) return 'Realizado';
   if(n.includes('fechado') || n.includes('contrato assinado') || n.includes('evento fechado')) return 'Fechado';
   if(n.includes('assinatura diretoria') || n.includes('diretoria')) return 'Assinatura diretoria';
@@ -220,6 +138,7 @@ function normalizeStatus(s, obs=''){
   if(n.includes('sem retorno') || n.includes('sem resposta')) return 'Sem resposta';
   if(n.includes('cancel')) return 'Cancelado';
   if(n.includes('declin') || n.includes('perdido') || n.includes('desistiu')) return 'Perdido';
+  if(PIPELINE_STATUS.includes(s) || RECOVERY_STATUS.includes(s)) return s;
   return 'Lead';
 }
 function eventoDedupeKey(e){
@@ -239,7 +158,6 @@ function normalizaEvento(e={}){
   out.status=normalizeStatus(e.status,e.observacoes);
   out.valorEstimado=Number(e.valorEstimado??e.valorTotal)||0;
   out.valorTotal=Number(e.valorTotal??e.valorEstimado)||0;
-  out.extras=Number(e.extras??e.valorExtras??e.valorExtra)||0;
   out.criadoEm=e.criadoEm||e.createdAt||e.dataCriacao||e.dataCadastro||e.formTimestamp||e.carimbo||e['Carimbo de data/hora']||e['CARIMBO DE DATA/HORA']||'';
   out.movidoEm=e.movidoEm||e.movimentadoEm||e.statusAtualizadoEm||'';
   out.atualizadoEm=e.atualizadoEm||e.updatedAt||'';
@@ -319,301 +237,148 @@ $('dashboard').innerHTML=`
 </div>`;
 renderWeekEvents();
 }
-function initials(name){return String(name||'CB').trim().split(/\s+/).slice(0,2).map(p=>p[0]||'').join('').toUpperCase()||'CB';}
-function card(e){return `<div class="event-card draggable-card ${eventColorClass(e)}" draggable="true" data-event-id="${e.id}" data-status="${esc(e.status||'Lead')}"><div class="card-row"><span class="client-avatar">${esc(initials(e.cliente))}</span><div class="card-main"><b>${e.cliente||'Cliente'}</b><p>${dow(e.data)} • ${shortDate(e.data)} • ${horario(e)}<br>${e.turno||'A definir'} · ${e.pessoas||'-'} pessoas · ${e.pacote||'A definir'}<br>📍 ${esc(salao(e))} · ${brl(e.valorEstimado)}</p></div></div><span class="status ${statusClass(e.status)}">${e.status||'Em negociação'}</span><div class="actions"><button onclick="EVENTOS.view('${e.id}')">Ver</button><button onclick="EVENTOS.edit('${e.id}')">Editar</button></div></div>`}
-function renderFunil(){const list=sortEventosRecentes(filtered().filter(e=>!isRecuperacaoStatus(e.status)));const actions=`<button class="btn alt" onclick="EVENTOS.toggleFilters()">▽ Filtros</button><button class="btn primary" onclick="EVENTOS.openForm()">+ Novo evento</button>`;$('funil').innerHTML=moduleHeader(actions)+`<div class="kanban pipeline-kanban">${PIPELINE_STATUS.map((st,idx)=>{const col=sortEventosRecentes(list.filter(e=>e.status===st));return `<div class="col pipeline-drop-zone ${eventColorClass({status:st})}" data-status="${esc(st)}" data-index="${idx}"><h3>${st} <span>${col.length}</span></h3>${col.map(card).join('')||'<p class="muted empty-col">Sem eventos</p>'}</div>`}).join('')}</div>`;setupFunilDragDrop();}
-
-let __pipelineDraggedId=null;
-let __pipelineScrollLeft=0;
-let __pipelineGlobalDropReady=false;
-const __pendingEventoWrites=new Map();
+function card(e){return `<div class="event-card draggable-card" draggable="true" data-event-id="${e.id}" data-status="${esc(e.status||'Lead')}"><b>${e.cliente||'Cliente'}</b><p>${dow(e.data)} • ${shortDate(e.data)} • ${horario(e)}<br>${e.turno||'A definir'} · ${e.pessoas||'-'} pessoas · ${e.pacote||'A definir'}<br>📍 ${esc(salao(e))} · ${brl(e.valorEstimado)}</p><span class="status ${statusClass(e.status)}">${e.status||'Em negociação'}</span><div class="actions"><button onclick="EVENTOS.view('${e.id}')">Ver</button><button onclick="EVENTOS.edit('${e.id}')">Editar</button></div></div>`}
+function renderFunil(){const list=sortEventosRecentes(filtered().filter(e=>!isRecuperacaoStatus(e.status)));$('funil').innerHTML=`<div class="kanban pipeline-kanban">${PIPELINE_STATUS.map((st,idx)=>{const col=sortEventosRecentes(list.filter(e=>e.status===st));return `<div class="col pipeline-drop-zone" data-status="${esc(st)}" data-index="${idx}"><h3>${st} · ${col.length}</h3><div class="drop-hint">Solte aqui para mover</div>${col.map(card).join('')||'<p class="muted empty-col">Sem eventos</p>'}</div>`}).join('')}</div>`;setupFunilDragDrop();}
 
 function setupFunilDragDrop(){
   const root=$('funil');
   if(!root)return;
-  setupPipelineGlobalDrop(root);
-  const kanban=root.querySelector('.pipeline-kanban');
-  if(kanban&&__pipelineScrollLeft){
-    requestAnimationFrame(()=>{kanban.scrollLeft=__pipelineScrollLeft||0;});
-  }
-
-  // Desktop usa Drag & Drop nativo do navegador. É mais estável para funil horizontal
-  // e permite mover para esquerda e direita sem descalibrar o ponto de soltar.
+  const isTouch=window.matchMedia&&window.matchMedia('(pointer: coarse)').matches;
   root.querySelectorAll('.draggable-card').forEach(card=>{
-    card.setAttribute('draggable','true');
-    setupPipelineNativeDrag(card,root);
-    setupPipelinePointerDrag(card,root); // usado só em touch/pen com toque longo
-  });
-
-  root.querySelectorAll('.pipeline-drop-zone').forEach(zone=>{
-    if(zone.dataset.nativeDropReady==='1')return;
-    zone.dataset.nativeDropReady='1';
-    zone.addEventListener('dragenter',ev=>{
-      if(!__pipelineDraggedId)return;
-      ev.preventDefault();
-      clearPipelineHighlights(root);
-      zone.classList.add('drag-over');
-    });
-    zone.addEventListener('dragover',ev=>{
-      if(!__pipelineDraggedId)return;
-      ev.preventDefault();
-      if(ev.dataTransfer)ev.dataTransfer.dropEffect='move';
-      clearPipelineHighlights(root);
-      zone.classList.add('drag-over');
-      const k=root.querySelector('.pipeline-kanban');
-      if(k)__pipelineScrollLeft=k.scrollLeft;
-    });
-    zone.addEventListener('drop',ev=>{
-      if(!__pipelineDraggedId)return;
-      ev.preventDefault();
-      const id=(ev.dataTransfer&&ev.dataTransfer.getData('text/plain'))||__pipelineDraggedId;
-      const status=zone.dataset.status||'';
-      const k=root.querySelector('.pipeline-kanban');
-      if(k)__pipelineScrollLeft=k.scrollLeft;
-      clearPipelineHighlights(root);
-      document.body.classList.remove('kanban-dragging');
-      root.querySelectorAll('.draggable-card.dragging').forEach(c=>c.classList.remove('dragging'));
-      __pipelineDraggedId=null;
-      if(id&&status)EVENTOS.movePipeline(id,status);
-    });
-  });
-}
-
-
-function setupPipelineGlobalDrop(root){
-  if(__pipelineGlobalDropReady)return;
-  __pipelineGlobalDropReady=true;
-
-  const activeRoot=()=>document.getElementById('funil');
-  const activeKanban=()=>activeRoot()?.querySelector('.pipeline-kanban');
-
-  window.addEventListener('dragover',ev=>{
-    if(!__pipelineDraggedId)return;
-    const rootNow=activeRoot();
-    if(!rootNow)return;
-    const kanban=activeKanban();
-    if(!kanban)return;
-    ev.preventDefault();
-    if(ev.dataTransfer)ev.dataTransfer.dropEffect='move';
-    const z=pipelineZoneFromPoint(rootNow,ev.clientX,ev.clientY);
-    clearPipelineHighlights(rootNow);
-    if(z)z.classList.add('drag-over');
-    __pipelineScrollLeft=kanban.scrollLeft;
-  },{passive:false});
-
-  window.addEventListener('drop',ev=>{
-    if(!__pipelineDraggedId)return;
-    const rootNow=activeRoot();
-    if(!rootNow)return;
-    ev.preventDefault();
-    const id=(ev.dataTransfer&&ev.dataTransfer.getData('text/plain'))||__pipelineDraggedId;
-    const z=pipelineZoneFromPoint(rootNow,ev.clientX,ev.clientY);
-    const status=z&&z.dataset?z.dataset.status:'';
-    const kanban=activeKanban();
-    if(kanban)__pipelineScrollLeft=kanban.scrollLeft;
-    clearPipelineHighlights(rootNow);
-    rootNow.querySelectorAll('.draggable-card.dragging').forEach(c=>c.classList.remove('dragging'));
-    document.body.classList.remove('kanban-dragging');
-    __pipelineDraggedId=null;
-    if(id&&status)EVENTOS.movePipeline(id,status);
-  },{passive:false});
-}
-
-function setupPipelineNativeDrag(card,root){
-  if(card.dataset.nativeDragReady==='1')return;
-  card.dataset.nativeDragReady='1';
-  card.addEventListener('dragstart',ev=>{
-    // Mouse/trackpad: arraste nativo. Touch é tratado no pointer/long press.
-    const id=card.dataset.eventId||'';
-    __pipelineDraggedId=id;
-    const k=root.querySelector('.pipeline-kanban');
-    if(k)__pipelineScrollLeft=k.scrollLeft;
-    card.classList.add('dragging');
-    document.body.classList.add('kanban-dragging');
-    if(ev.dataTransfer){
+    card.setAttribute('draggable',isTouch?'false':'true');
+    if(isTouch){setupTouchPipelineCard(card,root);return;}
+    card.addEventListener('dragstart',ev=>{
+      ev.dataTransfer.setData('text/plain',card.dataset.eventId||'');
       ev.dataTransfer.effectAllowed='move';
-      ev.dataTransfer.setData('text/plain',id);
-      try{ev.dataTransfer.setDragImage(card, Math.min(40,card.offsetWidth/2), 24);}catch(_){ }
-    }
+      card.classList.add('dragging');
+      document.body.classList.add('kanban-dragging');
+    });
+    card.addEventListener('dragend',()=>{
+      card.classList.remove('dragging');
+      document.body.classList.remove('kanban-dragging');
+      root.querySelectorAll('.pipeline-drop-zone').forEach(z=>z.classList.remove('drag-over','drag-blocked'));
+    });
   });
-  card.addEventListener('dragend',()=>{
-    card.classList.remove('dragging');
-    document.body.classList.remove('kanban-dragging');
-    clearPipelineHighlights(root);
-    __pipelineDraggedId=null;
-    const k=root.querySelector('.pipeline-kanban');
-    if(k)__pipelineScrollLeft=k.scrollLeft;
+  root.querySelectorAll('.pipeline-drop-zone').forEach(zone=>{
+    zone.addEventListener('dragover',ev=>{
+      const id=ev.dataTransfer.getData('text/plain')||document.querySelector('.draggable-card.dragging')?.dataset.eventId||'';
+      if(!id)return;
+      const e=state.eventos.find(x=>x.id===id);
+      const ok=e?canMovePipeline(e.status,zone.dataset.status):true;
+      ev.preventDefault();
+      ev.dataTransfer.dropEffect=ok?'move':'none';
+      zone.classList.toggle('drag-over',ok);
+      zone.classList.toggle('drag-blocked',!ok);
+    });
+    zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over','drag-blocked'));
+    zone.addEventListener('drop',ev=>{
+      ev.preventDefault();
+      const id=ev.dataTransfer.getData('text/plain')||'';
+      zone.classList.remove('drag-over','drag-blocked');
+      if(id) EVENTOS.movePipeline(id,zone.dataset.status);
+    });
   });
 }
-
-function pipelineZones(root){
-  return [...root.querySelectorAll('.pipeline-drop-zone')];
-}
-
-function clearPipelineHighlights(root){
-  root.querySelectorAll('.pipeline-drop-zone').forEach(z=>z.classList.remove('drag-over','drag-blocked'));
-}
-
-function pipelineZoneFromPoint(root,x,y){
-  const zones=pipelineZones(root).filter(z=>z.offsetParent!==null);
-  if(!zones.length)return null;
-
-  // 1) Primeiro tenta o elemento real sob o cursor.
-  const el=document.elementFromPoint(x,y);
-  const direct=el&&el.closest?el.closest('.pipeline-drop-zone'):null;
-  if(direct&&root.contains(direct))return direct;
-
-  // 2) Depois usa as coordenadas visíveis de cada coluna. Isso permite voltar para a esquerda
-  // mesmo quando o card/ghost está por cima ou quando o funil está com scroll horizontal.
-  let candidate=null;
-  for(const z of zones){
-    const r=z.getBoundingClientRect();
-    if(x>=r.left && x<=r.right){candidate=z;break;}
-  }
-  if(candidate)return candidate;
-
-  // 3) Se estiver exatamente no vão entre colunas, usa a coluna mais próxima pelo centro.
-  let best=null,bestDist=Infinity;
-  for(const z of zones){
-    const r=z.getBoundingClientRect();
-    const cx=r.left+(r.width/2);
-    const dist=Math.abs(x-cx);
-    if(dist<bestDist){bestDist=dist;best=z;}
-  }
-  return best;
-}
-
-function setupPipelinePointerDrag(card,root){
-  if(card.dataset.pointerDragReady==='1')return;
-  card.dataset.pointerDragReady='1';
-
-  let startX=0,startY=0,lastX=0,lastY=0,active=false,armed=false,timer=null,ghost=null,lastZone=null,pointerId=null,scrollTimer=null,sourceCard=null;
-  const isTouchLike=ev=>ev.pointerType==='touch'||ev.pointerType==='pen';
-
-  const clearTimers=()=>{
+function setupTouchPipelineCard(card,root){
+  let timer=null,startX=0,startY=0,active=false,lastZone=null,ghost=null,scrollTimer=null;
+  const clear=()=>{
     if(timer){clearTimeout(timer);timer=null;}
     if(scrollTimer){clearInterval(scrollTimer);scrollTimer=null;}
   };
-
-  const clearState=()=>{
-    clearTimers();
-    active=false; armed=false; pointerId=null; __pipelineDraggedId=null;
-    if(sourceCard)sourceCard.classList.remove('dragging','touch-dragging');
-    document.body.classList.remove('kanban-dragging','touch-drag-active');
-    clearPipelineHighlights(root);
+  const cleanup=()=>{
+    clear();active=false;card.classList.remove('touch-dragging');document.body.classList.remove('kanban-dragging','touch-drag-active');
+    root.querySelectorAll('.pipeline-drop-zone').forEach(z=>z.classList.remove('drag-over','drag-blocked'));
     if(ghost){ghost.remove();ghost=null;}
-    lastZone=null; sourceCard=null;
+    lastZone=null;
   };
-
-  const setZone=zone=>{
+  const zoneAt=(x,y)=>{
+    const el=document.elementFromPoint(x,y);
+    return el?el.closest('.pipeline-drop-zone'):null;
+  };
+  const setZone=(zone)=>{
     if(zone===lastZone)return;
-    clearPipelineHighlights(root);
+    if(lastZone)lastZone.classList.remove('drag-over','drag-blocked');
     lastZone=zone;
-    if(zone)zone.classList.add('drag-over');
+    if(!zone)return;
+    const e=state.eventos.find(x=>x.id===card.dataset.eventId);
+    const ok=e?canMovePipeline(e.status,zone.dataset.status):true;
+    zone.classList.toggle('drag-over',ok);
+    zone.classList.toggle('drag-blocked',!ok);
   };
-
   const moveGhost=(x,y)=>{
     if(!ghost)return;
-    ghost.style.left=(x+14)+'px';
-    ghost.style.top=(y+14)+'px';
+    ghost.style.transform=`translate3d(${x+12}px,${y+12}px,0)`;
   };
-
-  const autoScroll=()=>{
-    const kanban=root.querySelector('.pipeline-kanban');
-    if(!kanban)return;
+  const startAutoScroll=(x)=>{
+    const kanban=root.querySelector('.kanban'); if(!kanban)return;
     const r=kanban.getBoundingClientRect();
-    const edge=70;
     let dir=0;
-    if(lastX<r.left+edge)dir=-1;
-    else if(lastX>r.right-edge)dir=1;
-    if(!dir)return;
-    kanban.scrollLeft+=dir*34;
-    __pipelineScrollLeft=kanban.scrollLeft;
-    setZone(pipelineZoneFromPoint(root,lastX,lastY));
+    if(x<r.left+45)dir=-1; else if(x>r.right-45)dir=1;
+    if(!dir){if(scrollTimer){clearInterval(scrollTimer);scrollTimer=null;}return;}
+    if(scrollTimer)return;
+    scrollTimer=setInterval(()=>{
+      const t=window.__touchDragX||0;
+      const rr=kanban.getBoundingClientRect();
+      const d=t<rr.left+45?-1:(t>rr.right-45?1:0);
+      if(!d){clearInterval(scrollTimer);scrollTimer=null;return;}
+      kanban.scrollLeft+=d*14;
+    },16);
   };
-
-  const begin=()=>{
-    if(active||!armed||!sourceCard)return;
-    active=true;
-    __pipelineDraggedId=sourceCard.dataset.eventId||'';
-    const kanban=root.querySelector('.pipeline-kanban');
-    if(kanban)__pipelineScrollLeft=kanban.scrollLeft;
-    sourceCard.classList.add('dragging');
-    if(sourceCard.dataset.pointerType!=='mouse')sourceCard.classList.add('touch-dragging');
-    document.body.classList.add('kanban-dragging','touch-drag-active');
-    if(navigator.vibrate && sourceCard.dataset.pointerType!=='mouse')try{navigator.vibrate(18)}catch(_){ }
-    ghost=sourceCard.cloneNode(true);
-    ghost.className='event-card drag-ghost drag-ghost-visible';
-    ghost.style.position='fixed';
-    ghost.style.zIndex='999999';
-    ghost.style.width=Math.min(sourceCard.getBoundingClientRect().width||260,300)+'px';
-    ghost.style.pointerEvents='none';
-    ghost.style.margin='0';
-    ghost.style.opacity='.96';
-    ghost.style.transform='rotate(1deg) scale(1.02)';
-    document.body.appendChild(ghost);
-    moveGhost(lastX,lastY);
-    setZone(pipelineZoneFromPoint(root,lastX,lastY));
-    if(!scrollTimer)scrollTimer=setInterval(autoScroll,24);
-  };
-
-  card.addEventListener('pointerdown',ev=>{
-    if(ev.target.closest('button,a,input,select,textarea'))return;
-    // Desktop usa Drag & Drop nativo. Pointer drag fica reservado ao mobile/tablet.
-    if(!isTouchLike(ev))return;
-    startX=lastX=ev.clientX; startY=lastY=ev.clientY; pointerId=ev.pointerId; armed=true; active=false; sourceCard=card;
-    sourceCard.dataset.pointerType=ev.pointerType||'touch';
-    clearTimers();
-    try{card.setPointerCapture(ev.pointerId);}catch(_){ }
-    timer=setTimeout(begin,430);
+  card.addEventListener('touchstart',ev=>{
+    if(ev.touches.length!==1)return;
+    const t=ev.touches[0]; startX=t.clientX; startY=t.clientY;
+    clear();
+    timer=setTimeout(()=>{
+      active=true;
+      card.classList.add('touch-dragging');
+      document.body.classList.add('kanban-dragging','touch-drag-active');
+      if(navigator.vibrate)try{navigator.vibrate(25)}catch(e){}
+      ghost=card.cloneNode(true);
+      ghost.className='event-card drag-ghost';
+      ghost.style.width=Math.min(card.offsetWidth,260)+'px';
+      document.body.appendChild(ghost);
+      moveGhost(startX,startY);
+      setZone(zoneAt(startX,startY));
+    },520);
   },{passive:true});
-
-  window.addEventListener('pointermove',ev=>{
-    if(!armed||pointerId!==ev.pointerId)return;
-    lastX=ev.clientX; lastY=ev.clientY;
-    const dx=Math.abs(lastX-startX),dy=Math.abs(lastY-startY);
-
+  card.addEventListener('touchmove',ev=>{
+    const t=ev.touches[0]; if(!t)return;
+    window.__touchDragX=t.clientX;
     if(!active){
-      if(isTouchLike(ev)){
-        // Se o usuário só está rolando no celular, cancela o modo mover.
-        if(dx>28||dy>28)clearState();
-        return;
-      }
-      if(dx<4&&dy<4)return;
-      begin();
+      if(Math.abs(t.clientX-startX)>8||Math.abs(t.clientY-startY)>8)clear();
+      return;
     }
-    if(!active)return;
     ev.preventDefault();
-    moveGhost(lastX,lastY);
-    setZone(pipelineZoneFromPoint(root,lastX,lastY));
+    moveGhost(t.clientX,t.clientY);
+    setZone(zoneAt(t.clientX,t.clientY));
+    startAutoScroll(t.clientX);
   },{passive:false});
-
-  window.addEventListener('pointerup',ev=>{
-    if(!armed||pointerId!==ev.pointerId)return;
-    const id=sourceCard&&sourceCard.dataset?sourceCard.dataset.eventId:'';
-    const zone=active?pipelineZoneFromPoint(root,ev.clientX,ev.clientY):null;
-    const status=zone&&zone.dataset?zone.dataset.status:'';
-    const kanban=root.querySelector('.pipeline-kanban');
-    if(kanban)__pipelineScrollLeft=kanban.scrollLeft;
-    clearState();
+  card.addEventListener('touchend',ev=>{
+    if(!active){cleanup();return;}
+    const t=ev.changedTouches[0];
+    const zone=t?zoneAt(t.clientX,t.clientY):lastZone;
+    const id=card.dataset.eventId; const status=zone?.dataset?.status;
+    cleanup();
     if(id&&status)EVENTOS.movePipeline(id,status);
-  });
-
-  window.addEventListener('pointercancel',ev=>{if(armed&&pointerId===ev.pointerId)clearState();});
+  },{passive:true});
+  card.addEventListener('touchcancel',cleanup,{passive:true});
 }
-
 function canMovePipeline(from,to){
-  return !!to && PIPELINE_STATUS.includes(to);
+  if(!to||!PIPELINE_STATUS.includes(to))return false;
+  if(from===to)return true;
+  const a=PIPELINE_STATUS.indexOf(from), b=PIPELINE_STATUS.indexOf(to);
+  if(a<0||b<0)return true;
+  return b>=a;
 }
 
-function renderVendas(){const list=filtered().sort((a,b)=>String(a.data).localeCompare(String(b.data)));$('vendas').innerHTML=moduleHeader(`<button class="btn alt" onclick="EVENTOS.toggleFilters()">▽ Filtros</button><button class="btn primary" onclick="EVENTOS.openForm()">+ Novo evento</button>`)+`<div class="table-wrap"><table><thead><tr><th>Data</th><th>Horário</th><th>Cliente</th><th>Status</th><th>Turno</th><th>Pessoas</th><th>Pacote</th><th>Valor total</th><th>Gorjeta</th><th>Ações</th></tr></thead><tbody>${list.map(e=>`<tr><td>${dt(e.data)}</td><td>${horario(e)}</td><td><b>${e.cliente}</b><br><span class="muted">${e.telefone||''}</span></td><td><span class="status ${statusClass(e.status)}">${e.status}</span></td><td>${e.turno}</td><td>${e.pessoas||''}</td><td>${e.pacote}</td><td>${brl(e.valorEstimado)}</td><td>${brl(e.gorjeta)}</td><td><button class="btn alt" onclick="EVENTOS.view('${e.id}')">Abrir</button></td></tr>`).join('')}</tbody></table></div>`;}
+function renderVendas(){const list=filtered().sort((a,b)=>String(a.data).localeCompare(String(b.data)));$('vendas').innerHTML=`<div class="table-wrap"><table><thead><tr><th>Data</th><th>Horário</th><th>Cliente</th><th>Status</th><th>Turno</th><th>Pessoas</th><th>Pacote</th><th>Valor total</th><th>Gorjeta</th><th>Ações</th></tr></thead><tbody>${list.map(e=>`<tr><td>${dt(e.data)}</td><td>${horario(e)}</td><td><b>${e.cliente}</b><br><span class="muted">${e.telefone||''}</span></td><td><span class="status ${statusClass(e.status)}">${e.status}</span></td><td>${e.turno}</td><td>${e.pessoas||''}</td><td>${e.pacote}</td><td>${brl(e.valorEstimado)}</td><td>${brl(e.gorjeta)}</td><td><button class="btn alt" onclick="EVENTOS.view('${e.id}')">Abrir</button></td></tr>`).join('')}</tbody></table></div>`;}
 function recoveryCard(e){
   return `<div class="event-card recovery-card"><b>${e.cliente||'Cliente'}</b><p>${dow(e.data)} • ${shortDate(e.data)} • ${horario(e)}<br>${e.turno||'A definir'} · ${e.pessoas||'-'} pessoas · ${e.pacote||'A definir'}<br>📍 ${esc(salao(e))} · ${brl(e.valorEstimado)}</p><span class="status ${statusClass(e.status)}">${e.status||'Em recuperação'}</span><div class="actions recovery-actions"><button onclick="EVENTOS.view('${e.id}')">Ver</button><button onclick="EVENTOS.edit('${e.id}')">Editar</button><button onclick="EVENTOS.whats('${e.id}')">WhatsApp</button><button onclick="EVENTOS.markRecuperado('${e.id}')">Recuperado</button></div></div>`;
 }
 function renderRecuperacao(){
   const list=sortEventosRecentes(filtered().filter(e=>isRecuperacaoStatus(e.status)));
   const cols=RECOVERY_STATUS;
-  $('recuperacao').innerHTML=moduleHeader(`<button class="btn alt" onclick="EVENTOS.toggleFilters()">▽ Filtros</button>`)+`<div class="kanban recuperacao-kanban">${cols.map(st=>`<div class="col"><h3>${st} · ${list.filter(e=>e.status===st).length}</h3>${list.filter(e=>e.status===st).map(recoveryCard).join('')||'<p class="muted">Sem clientes</p>'}</div>`).join('')}</div>`;
+  $('recuperacao').innerHTML=`<div class="kanban recuperacao-kanban">${cols.map(st=>`<div class="col"><h3>${st} · ${list.filter(e=>e.status===st).length}</h3>${list.filter(e=>e.status===st).map(recoveryCard).join('')||'<p class="muted">Sem clientes</p>'}</div>`).join('')}</div>`;
 }
 function clienteKey(c){
   const origem=norm(c.origem||'');
@@ -642,12 +407,12 @@ function renderClientes(){
   if(state.clientesView==='cadastro') return renderClientesCadastro();
   const map={}; filtered().forEach(e=>{const k=e.cliente||'Cliente'; if(!map[k])map[k]={q:0,total:0,last:e.data,tel:e.telefone}; map[k].q++; map[k].total+=Number(e.valorEstimado)||0; if(e.data>map[k].last)map[k].last=e.data; if(e.telefone)map[k].tel=e.telefone;});
   const arr=Object.entries(map).sort((a,b)=>b[1].total-a[1].total);
-  $('clientes').innerHTML=moduleHeader(`<button class="btn primary" onclick="EVENTOS.openClienteForm()">+ Novo cliente</button>`)+`${clientesTabs()}<div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Telefone</th><th>Eventos</th><th>Total estimado</th><th>Último evento</th></tr></thead><tbody>${arr.map(([k,v])=>`<tr><td><b>${esc(k)}</b></td><td>${esc(v.tel||'')}</td><td>${v.q}</td><td>${brl(v.total)}</td><td>${dt(v.last)}</td></tr>`).join('')}</tbody></table></div>`;
+  $('clientes').innerHTML=`${clientesTabs()}<div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Telefone</th><th>Eventos</th><th>Total estimado</th><th>Último evento</th></tr></thead><tbody>${arr.map(([k,v])=>`<tr><td><b>${esc(k)}</b></td><td>${esc(v.tel||'')}</td><td>${v.q}</td><td>${brl(v.total)}</td><td>${dt(v.last)}</td></tr>`).join('')}</tbody></table></div>`;
 }
 function clientesTabs(){return `<div class="clientes-top"><div class="clientes-tabs"><button class="chip ${state.clientesView!=='cadastro'?'active':''}" onclick="EVENTOS.clientesTab('historico')">Histórico de Clientes</button><button class="chip ${state.clientesView==='cadastro'?'active':''}" onclick="EVENTOS.clientesTab('cadastro')">Cadastro de Clientes</button></div>${state.clientesView==='cadastro'?`<button class="btn primary" onclick="EVENTOS.openClienteForm()">+ Novo cliente</button>`:''}</div>`;}
 function renderClientesCadastro(){
   const arr=dedupeClientesCadastro(state.clientesCadastros||[]); state.clientesCadastros=arr; saveClientes();
-  $('clientes').innerHTML=moduleHeader(`<button class="btn primary" onclick="EVENTOS.openClienteForm()">+ Novo cliente</button>`)+`${clientesTabs()}<div class="clientes-toolbar premium-block"><input class="field" id="cliBusca" placeholder="Buscar nome, telefone, e-mail, CPF/CNPJ, origem ou tag..." oninput="EVENTOS.renderClientesCadastroFiltrado()"><select class="field" id="cliOrigem" onchange="EVENTOS.renderClientesCadastroFiltrado()"><option value="">Todas as origens</option>${[...new Set(arr.map(c=>c.origem).filter(Boolean))].sort().map(o=>`<option>${esc(o)}</option>`).join('')}</select></div><div id="clientesCadastroLista"></div>`;
+  $('clientes').innerHTML=`${clientesTabs()}<div class="clientes-toolbar premium-block"><input class="field" id="cliBusca" placeholder="Buscar nome, telefone, e-mail, CPF/CNPJ, origem ou tag..." oninput="EVENTOS.renderClientesCadastroFiltrado()"><select class="field" id="cliOrigem" onchange="EVENTOS.renderClientesCadastroFiltrado()"><option value="">Todas as origens</option>${[...new Set(arr.map(c=>c.origem).filter(Boolean))].sort().map(o=>`<option>${esc(o)}</option>`).join('')}</select></div><div id="clientesCadastroLista"></div>`;
   renderClientesCadastroFiltrado();
 }
 function renderClientesCadastroFiltrado(){
@@ -657,19 +422,19 @@ function renderClientesCadastroFiltrado(){
     return (!q||hay.includes(q))&&(!origem||c.origem===origem);
   });
   const el=$('clientesCadastroLista'); if(!el)return;
-  el.innerHTML=`<div class="table-wrap clientes-cadastro-table"><table><thead><tr><th>Cliente</th><th>Contato</th><th>Evento desejado</th><th>Origem</th><th>Dados fiscais</th><th>Tags</th><th>Ações</th></tr></thead><tbody>${arr.map(c=>`<tr><td><b>${esc(c.nome||'Cliente sem nome')}</b><br><span class="muted">Criado em ${new Date(c.criadoEm||Date.now()).toLocaleDateString('pt-BR')}</span></td><td>${esc(c.telefone||'')}<br><span class="muted">${esc(c.email||'')}</span></td><td>${esc(c.tipoEvento||'Evento')}<br><span class="muted">${dt(c.dataEvento)||'Data a definir'} · ${esc(c.horario||'Horário a definir')} · ${esc(c.pessoas||'-')} pessoas</span></td><td><span class="status s-proposta">${esc(c.origem||'Manual')}</span></td><td>${esc(c.cpfCnpj||'CPF/CNPJ pendente')}<br><span class="muted">${esc(c.razaoSocial||'Razão social pendente')}</span></td><td>${(c.tags||[]).map(t=>`<span class="client-tag">${esc(t)}</span>`).join('')||'<span class="muted">Sem tags</span>'}</td><td><button class="btn alt" onclick="EVENTOS.editCliente('${c.id}')">Editar</button>${c.eventoId?`<button class="btn alt" onclick="EVENTOS.view('${c.eventoId}')">Ver lead</button>`:''}<button class="btn danger" onclick="EVENTOS.deleteCliente('${c.id}')">Excluir</button></td></tr>`).join('')}</tbody></table></div>${!arr.length?'<div class="week-empty"><b>Nenhum cadastro encontrado.</b><br><span>Clientes vindos do Google Forms e cadastros manuais aparecerão aqui.</span></div>':''}`;
+  el.innerHTML=`<div class="table-wrap clientes-cadastro-table"><table><thead><tr><th>Cliente</th><th>Contato</th><th>Evento desejado</th><th>Origem</th><th>Dados fiscais</th><th>Tags</th><th>Ações</th></tr></thead><tbody>${arr.map(c=>`<tr><td><b>${esc(c.nome||'Cliente sem nome')}</b><br><span class="muted">Criado em ${new Date(c.criadoEm||Date.now()).toLocaleDateString('pt-BR')}</span></td><td>${esc(c.telefone||'')}<br><span class="muted">${esc(c.email||'')}</span></td><td>${esc(c.tipoEvento||'Evento')}<br><span class="muted">${dt(c.dataEvento)||'Data a definir'} · ${esc(c.horario||'Horário a definir')} · ${esc(c.pessoas||'-')} pessoas</span></td><td><span class="status s-proposta">${esc(c.origem||'Manual')}</span></td><td>${esc(c.cpfCnpj||'CPF/CNPJ pendente')}<br><span class="muted">${esc(c.razaoSocial||'Razão social pendente')}</span></td><td>${(c.tags||[]).map(t=>`<span class="client-tag">${esc(t)}</span>`).join('')||'<span class="muted">Sem tags</span>'}</td><td><button class="btn alt" onclick="EVENTOS.editCliente('${c.id}')">Editar</button>${c.eventoId?`<button class="btn alt" onclick="EVENTOS.view('${c.eventoId}')">Ver lead</button>`:''}</td></tr>`).join('')}</tbody></table></div>${!arr.length?'<div class="week-empty"><b>Nenhum cadastro encontrado.</b><br><span>Clientes vindos do Google Forms e cadastros manuais aparecerão aqui.</span></div>':''}`;
 }
 function clienteFormHtml(c={}){
   const tags=Array.isArray(c.tags)?c.tags.join(', '):(c.tags||'');
-  return `<div class="form-grid"><div><label>Nome completo</label><input class="field" id="cli_nome" value="${esc(c.nome||'')}"></div><div><label>Telefone</label><input class="field" id="cli_telefone" value="${esc(c.telefone||'')}"></div><div><label>E-mail</label><input class="field" id="cli_email" value="${esc(c.email||'')}"></div><div><label>Origem</label><select class="field" id="cli_origem">${['Manual','Google Forms','WhatsApp','Instagram','Indicação','Site','Telefone','Presencial'].map(o=>`<option ${o===(c.origem||'Manual')?'selected':''}>${o}</option>`).join('')}</select></div><div><label>CPF/CNPJ</label><input class="field" id="cli_cpf" value="${esc(c.cpfCnpj||'')}"></div><div><label>Razão social</label><input class="field" id="cli_razao" value="${esc(c.razaoSocial||'')}"></div><div><label>Instagram</label><input class="field" id="cli_instagram" value="${esc(c.instagram||'')}"></div><div><label>Tags</label><input class="field" id="cli_tags" placeholder="VIP, Corporativo, Noiva..." value="${esc(tags)}"></div><div><label>Data desejada</label><input class="field" type="date" id="cli_data" value="${esc(c.dataEvento||'')}"></div><div><label>Horário / turno</label><input class="field" id="cli_horario" value="${esc(c.horario||'')}"></div><div><label>Tipo de evento</label><input class="field" id="cli_tipo" value="${esc(c.tipoEvento||'')}"></div><div><label>Número de convidados</label><input class="field" type="number" id="cli_pessoas" value="${esc(c.pessoas||'')}"></div><div class="span4"><label>Observações internas</label><textarea class="field" id="cli_obs">${esc(c.observacoes||'')}</textarea></div></div><div class="divider"></div><div class="modal-actions-row"><button class="btn" onclick="EVENTOS.saveClienteForm('${c.id||''}')">Salvar cliente</button>${c.id?`<button class="btn danger" onclick="EVENTOS.deleteCliente('${c.id}')">Excluir cadastro</button>`:''}</div>`;
+  return `<div class="form-grid"><div><label>Nome completo</label><input class="field" id="cli_nome" value="${esc(c.nome||'')}"></div><div><label>Telefone</label><input class="field" id="cli_telefone" value="${esc(c.telefone||'')}"></div><div><label>E-mail</label><input class="field" id="cli_email" value="${esc(c.email||'')}"></div><div><label>Origem</label><select class="field" id="cli_origem">${['Manual','Google Forms','WhatsApp','Instagram','Indicação','Site','Telefone','Presencial'].map(o=>`<option ${o===(c.origem||'Manual')?'selected':''}>${o}</option>`).join('')}</select></div><div><label>CPF/CNPJ</label><input class="field" id="cli_cpf" value="${esc(c.cpfCnpj||'')}"></div><div><label>Razão social</label><input class="field" id="cli_razao" value="${esc(c.razaoSocial||'')}"></div><div><label>Instagram</label><input class="field" id="cli_instagram" value="${esc(c.instagram||'')}"></div><div><label>Tags</label><input class="field" id="cli_tags" placeholder="VIP, Corporativo, Noiva..." value="${esc(tags)}"></div><div><label>Data desejada</label><input class="field" type="date" id="cli_data" value="${esc(c.dataEvento||'')}"></div><div><label>Horário / turno</label><input class="field" id="cli_horario" value="${esc(c.horario||'')}"></div><div><label>Tipo de evento</label><input class="field" id="cli_tipo" value="${esc(c.tipoEvento||'')}"></div><div><label>Número de convidados</label><input class="field" type="number" id="cli_pessoas" value="${esc(c.pessoas||'')}"></div><div class="span4"><label>Observações internas</label><textarea class="field" id="cli_obs">${esc(c.observacoes||'')}</textarea></div></div><div class="divider"></div><button class="btn" onclick="EVENTOS.saveClienteForm('${c.id||''}')">Salvar cliente</button>`;
 }
 function collectClienteCadastro(id){
   const atual=(state.clientesCadastros||[]).find(c=>c.id===id)||{};
   return normalizaClienteCadastro({id:id||('cli_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)),nome:($('cli_nome')?.value||'').trim(),telefone:($('cli_telefone')?.value||'').trim(),email:($('cli_email')?.value||'').trim(),origem:$('cli_origem')?.value||'Manual',cpfCnpj:($('cli_cpf')?.value||'').trim(),razaoSocial:($('cli_razao')?.value||'').trim(),instagram:($('cli_instagram')?.value||'').trim(),tags:($('cli_tags')?.value||'').split(',').map(x=>x.trim()).filter(Boolean),dataEvento:$('cli_data')?.value||'',horario:($('cli_horario')?.value||'').trim(),tipoEvento:($('cli_tipo')?.value||'').trim(),pessoas:($('cli_pessoas')?.value||'').trim(),observacoes:($('cli_obs')?.value||'').trim(),eventoId:atual.eventoId||'',criadoEm:atual.criadoEm||new Date().toISOString(),atualizadoEm:new Date().toISOString()});
 }
 
-function renderPacotes(){$('pacotes').innerHTML=moduleHeader()+`<div class="package-grid">${state.pacotes.map(p=>`<div class="package"><h3>${p.nome}</h3><div class="price">${brl(p.valorSemana)} / ${brl(p.valorFimSemana)}</div><p><b>${p.categoria}</b> · ${p.servico} · ${p.duracao}<br>Mínimo: ${p.minPessoas} pessoas · Taxa: ${p.taxaServicoPct}%</p><p>${p.resumo}</p></div>`).join('')}</div>`;}
-function renderSheets(){ $('sheets').innerHTML=moduleHeader()+`<div class="grid-2"><div class="panel"><h3>Integração Google Sheets</h3><p class="muted">Esta versão inclui o arquivo <b>AppsScript_Eventos_Isolado.gs</b>. Cole esse script na planilha para receber os dados exportados do módulo Eventos.</p><button class="btn" onclick="EVENTOS.exportCSV()">Baixar CSV agora</button><div class="divider"></div><p class="muted">Abas sugeridas: Eventos, Clientes, Pacotes, Vendas, Recuperação, Dashboard e Configurações.</p></div><div class="panel"><h3>Segurança da integração</h3><p class="muted">O módulo salva no caminho isolado <b>/eventos_premium</b> no Firebase e usa localStorage como fallback. Nenhum caminho antigo de frequência, escala, mapa ou freelance é alterado.</p><button class="btn alt" onclick="EVENTOS.firebaseSync()">Tentar sincronizar Firebase</button></div></div>`; }
+function renderPacotes(){$('pacotes').innerHTML=`<div class="package-grid">${state.pacotes.map(p=>`<div class="package"><h3>${p.nome}</h3><div class="price">${brl(p.valorSemana)} / ${brl(p.valorFimSemana)}</div><p><b>${p.categoria}</b> · ${p.servico} · ${p.duracao}<br>Mínimo: ${p.minPessoas} pessoas · Taxa: ${p.taxaServicoPct}%</p><p>${p.resumo}</p></div>`).join('')}</div>`;}
+function renderSheets(){ $('sheets').innerHTML=`<div class="grid-2"><div class="panel"><h3>Integração Google Sheets</h3><p class="muted">Esta versão inclui o arquivo <b>AppsScript_Eventos_Isolado.gs</b>. Cole esse script na planilha para receber os dados exportados do módulo Eventos.</p><button class="btn" onclick="EVENTOS.exportCSV()">Baixar CSV agora</button><div class="divider"></div><p class="muted">Abas sugeridas: Eventos, Clientes, Pacotes, Vendas, Recuperação, Dashboard e Configurações.</p></div><div class="panel"><h3>Segurança da integração</h3><p class="muted">O módulo salva no caminho isolado <b>/eventos_premium</b> no Firebase e usa localStorage como fallback. Nenhum caminho antigo de frequência, escala, mapa ou freelance é alterado.</p><button class="btn alt" onclick="EVENTOS.firebaseSync()">Tentar sincronizar Firebase</button></div></div>`; }
 
 function agendaVisibleItems(){
   const f=state.agendaFiltros||{}; const dev=deviceId();
@@ -737,40 +502,30 @@ function openAgendaModal(a={}){ $('modalTitle').textContent=a.id?'Editar ativida
 function responsavelFormHtml(){return `<div class="panel"><h3>Cadastrar responsável</h3><p class="muted">Os nomes cadastrados aparecerão nos filtros e no formulário de atividades.</p><input class="field" id="resp_nome" placeholder="Nome do responsável"><div class="divider"></div><button class="btn" onclick="EVENTOS.saveResponsavel()">Cadastrar</button></div><div class="agenda-resp-list">${(state.agendaResponsaveis||[]).map(n=>`<span>${esc(n)}</span>`).join('')||'<p class="muted">Nenhum responsável cadastrado.</p>'}</div>`;}
 
 function renderCalendar(){
-  const year=state.cal.year, month=state.cal.month, view=state.cal.view||'mes';
-  const list=filtered();
-  const first=new Date(year,month-1,1), last=new Date(year,month,0);
+  const now=new Date();
+  const year=Number(state.cal.year)||Number($('ano').value)||now.getFullYear();
+  const month=Number(state.cal.month)||Number($('mes').value)||now.getMonth()+1;
+  state.cal={year,month};
+  const list=filtered().filter(e=>String(e.data||'').slice(0,7)===`${year}-${String(month).padStart(2,'0')}`).sort((a,b)=>String(a.data).localeCompare(String(b.data)));
+  const first=new Date(year,month-1,1);const last=new Date(year,month,0);
+  const blanks=(first.getDay()+6)%7;
+  const days=[];
+  for(let b=0;b<blanks;b++)days.push(`<div class="day empty"></div>`);
+  for(let i=1;i<=last.getDate();i++){
+    const iso=`${year}-${String(month).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+    const evs=list.filter(e=>e.data===iso);
+    days.push(`<div class="day ${evs.length?'has-events':''}"><b>${i} <span>${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][new Date(iso+'T12:00').getDay()]}</span></b>${evs.map(e=>`<div class="ev ${statusClass(e.status)}" onclick="EVENTOS.view('${e.id}')">${e.cliente}<br>${horario(e)} · ${e.turno} · ${e.pessoas||'-'}p</div>`).join('')}</div>`);
+  }
   const years=[...new Set([...state.eventos.map(e=>Number(e.ano||String(e.data).slice(0,4))).filter(Boolean),2026,2027,new Date().getFullYear()])].sort();
-  const actions=`<select class="field compact" onchange="EVENTOS.setCalendar(this.value,null)">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${month===i+1?'selected':''}>${monthName(i+1)}</option>`).join('')}</select><select class="field compact" onchange="EVENTOS.setCalendar(null,this.value)">${years.map(y=>`<option ${year===y?'selected':''}>${y}</option>`).join('')}</select><button class="btn alt" onclick="EVENTOS.setCalendar(new Date().getMonth()+1,new Date().getFullYear(),new Date().getDate())">Hoje</button><button class="btn alt" onclick="EVENTOS.toggleFilters()">▽ Filtros</button><button class="btn primary" onclick="EVENTOS.openForm()">+ Novo Evento</button>`;
-  const legend=`<div class="cal-legend"><span class="evc-yellow">Orçamento/Lead</span><span class="evc-green">Fechado</span><span class="evc-red">Atenção</span><span class="evc-blue">Corporativo</span><span class="evc-purple">Contrato/Alinhamento</span></div>`;
-  const pills=`<div class="view-pills"><button class="${view==='mes'?'active':''}" onclick="EVENTOS.setCalendarView('mes')">Mês</button><button class="${view==='semana'?'active':''}" onclick="EVENTOS.setCalendarView('semana')">Semana</button><button class="${view==='dia'?'active':''}" onclick="EVENTOS.setCalendarView('dia')">Dia</button></div>`;
-  function evHtml(e){return `<div class="ev ${statusClass(e.status)} ${eventColorClass(e)}" onclick="EVENTOS.view('${e.id}')"><span class="ev-dot"></span><strong>${esc(e.cliente||'Cliente')}</strong><small>${horario(e)} · ${esc(e.turno||'A definir')} · ${e.pessoas||'-'}p<br>📍 ${esc(salao(e)||'Salão a definir')}</small></div>`;}
-  function dayBox(date,empty=false){
-    const iso=date.toISOString().slice(0,10);
-    const evs=list.filter(e=>parseDateAny(e.data)===iso);
-    return `<div class="day ${empty?'empty':''} ${evs.length?'has-events':''}"><b>${date.getDate()} <span>${['DOM','SEG','TER','QUA','QUI','SEX','SÁB'][date.getDay()]}</span></b>${evs.map(evHtml).join('')}</div>`;
-  }
-  let body='';
-  let weekdays=`<div class="calendar-weekdays"><span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span><span>DOM</span></div>`;
-  if(view==='mes'){
-    const days=[];
-    const offset=(first.getDay()+6)%7;
-    for(let i=0;i<offset;i++)days.push('<div class="day empty"></div>');
-    for(let i=1;i<=last.getDate();i++) days.push(dayBox(new Date(year,month-1,i)));
-    body=`${weekdays}<div class="calendar-grid visual-calendar">${days.join('')}</div>`;
-  }else if(view==='semana'){
-    const day=Math.min(state.cal.day||new Date().getDate(), last.getDate());
-    const base=new Date(year,month-1,day);
-    const startWeek=new Date(base); startWeek.setDate(base.getDate()-((base.getDay()+6)%7));
-    const days=[]; for(let i=0;i<7;i++){const d=new Date(startWeek);d.setDate(startWeek.getDate()+i);days.push(dayBox(d,d.getMonth()!==month-1));}
-    body=`${weekdays}<div class="calendar-grid visual-calendar week-view">${days.join('')}</div>`;
-  }else{
-    const day=Math.min(state.cal.day||new Date().getDate(), last.getDate());
-    const d=new Date(year,month-1,day);
-    const evs=list.filter(e=>parseDateAny(e.data)===d.toISOString().slice(0,10));
-    body=`<div class="calendar-day-view premium-block"><div class="day-view-head"><button class="btn alt" onclick="EVENTOS.shiftCalendarDay(-1)">‹</button><h3>${dow(d.toISOString().slice(0,10))} · ${String(day).padStart(2,'0')}/${String(month).padStart(2,'0')}/${year}</h3><button class="btn alt" onclick="EVENTOS.shiftCalendarDay(1)">›</button></div><div class="day-view-events">${evs.map(evHtml).join('')||'<p class="muted">Nenhum evento neste dia.</p>'}</div></div>`;
-  }
-  $('calendario').innerHTML=moduleHeader(actions)+`<div class="calendar-toolbar">${pills}${legend}</div>${body}`;
+  $('calendario').innerHTML=`<div class="calendar-head premium-panel">
+    <div><span class="eyebrow">Agenda visual</span><h3>Calendário de eventos</h3></div>
+    <div class="calendar-controls">
+      <select class="field" onchange="EVENTOS.setCalendar(this.value,null)">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${month===i+1?'selected':''}>${monthName(i+1)}</option>`).join('')}</select>
+      <select class="field" onchange="EVENTOS.setCalendar(null,this.value)">${years.map(y=>`<option ${year===y?'selected':''}>${y}</option>`).join('')}</select>
+    </div>
+  </div>
+  <div class="calendar-weekdays"><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span></div>
+  <div class="calendar-grid visual-calendar">${days.join('')}</div>`;
 }
 function render(){document.body.dataset.tab=state.tab;setupTabs();document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));$(state.tab).classList.add('active');document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===state.tab));renderHero();({dashboard:renderDashboard,funil:renderFunil,calendario:renderCalendar,vendas:renderVendas,recuperacao:renderRecuperacao,clientes:renderClientes,pacotes:renderPacotes,agenda:renderAgenda,sheets:renderSheets}[state.tab]||renderDashboard)();}
 
@@ -783,219 +538,33 @@ function parseNum(v){
   const n=Number(t);
   return Number.isFinite(n)?n:0;
 }
-function fmtMoney(n){
-  const v=Number(n)||0;
-  return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-}
-function moneyInputValue(n){
-  const v=Number(n)||0;
-  return v ? String(v).replace('.',',') : '';
-}
-function eventFinancialValuesFromFields(){
+function calcEventFinancialsFromFields(){
   const pessoas=parseNum($('f_pessoas')?.value);
   const valorPessoa=parseNum($('f_valorPessoa')?.value);
   const taxa=parseNum($('f_taxa')?.value);
-  const baseA=pessoas*valorPessoa;
-  const servicoA=baseA*(taxa/100);
-  const totalA=baseA+servicoA;
-
-  const extra1=parseNum($('f_extra1')?.value);
-  const extra2=parseNum($('f_extra2')?.value);
-  const extra3=parseNum($('f_extra3')?.value);
-  const totalB=extra1+extra2+extra3;
-
-  const pessoasExcedentes=parseNum($('f_pessoasExcedentes')?.value);
-  const valorPessoaExcedente=parseNum($('f_valorPessoaExcedente')?.value);
-  const taxaExcedente=parseNum($('f_taxaExcedente')?.value || $('f_taxa')?.value);
-  const baseC=pessoasExcedentes*valorPessoaExcedente;
-  const servicoC=baseC*(taxaExcedente/100);
-  const totalC=baseC+servicoC;
-
-  const gorjeta=servicoA+servicoC;
-  const valorTotal=totalA+totalB+totalC;
-  return {pessoas,valorPessoa,taxa,baseA,servicoA,totalA,extra1,extra2,extra3,totalB,pessoasExcedentes,valorPessoaExcedente,taxaExcedente,baseC,servicoC,totalC,gorjeta,valorTotal};
-}
-function setText(id,value){const el=$(id); if(el)el.textContent=value;}
-function setVal(id,value){const el=$(id); if(el)el.value=value;}
-function calcEventFinancialsFromFields(){
-  const f=eventFinancialValuesFromFields();
-  setText('fin_baseA',fmtMoney(f.baseA));
-  setText('fin_servicoA',fmtMoney(f.servicoA));
-  setText('fin_totalA',fmtMoney(f.totalA));
-  setText('fin_extra1',fmtMoney(f.extra1));
-  setText('fin_extra2',fmtMoney(f.extra2));
-  setText('fin_extra3',fmtMoney(f.extra3));
-  setText('fin_totalB',fmtMoney(f.totalB));
-  setText('fin_baseC',fmtMoney(f.baseC));
-  setText('fin_servicoC',fmtMoney(f.servicoC));
-  setText('fin_totalC',fmtMoney(f.totalC));
-  setText('fin_grand',fmtMoney(f.valorTotal));
-  setText('fin_resumo_totalA',fmtMoney(f.totalA));
-  setText('fin_resumo_totalB',fmtMoney(f.totalB));
-  setText('fin_resumo_totalC',fmtMoney(f.totalC));
-  setText('fin_resumo_servicoA',fmtMoney(f.servicoA));
-  setText('fin_resumo_servicoC',fmtMoney(f.servicoC));
-  setVal('f_gorjeta',f.gorjeta?f.gorjeta.toFixed(2):'0.00');
-  setVal('f_valorEstimado',f.valorTotal?f.valorTotal.toFixed(2):'0.00');
+  const base=pessoas*valorPessoa;
+  const gorjeta=base*(taxa/100);
+  const total=base+gorjeta;
+  if($('f_gorjeta')) $('f_gorjeta').value=gorjeta?gorjeta.toFixed(2):'0.00';
+  if($('f_valorEstimado')) $('f_valorEstimado').value=total?total.toFixed(2):'0.00';
 }
 function setupEventFinancials(){
-  ['f_pessoas','f_valorPessoa','f_taxa','f_extra1','f_extra2','f_extra3','f_pessoasExcedentes','f_valorPessoaExcedente','f_taxaExcedente'].forEach(id=>{
+  ['f_pessoas','f_valorPessoa','f_taxa'].forEach(id=>{
     const el=$(id); if(!el)return;
     el.addEventListener('input',calcEventFinancialsFromFields);
     el.addEventListener('change',calcEventFinancialsFromFields);
   });
   calcEventFinancialsFromFields();
 }
-function financialHtml(e={}){
-  const ex1=e.extra1??e.consumoExtra1??e.extras1??e.extras??0;
-  const ex2=e.extra2??e.consumoExtra2??e.extras2??0;
-  const ex3=e.extra3??e.consumoExtra3??e.extras3??0;
-  const qtdExc=e.pessoasExcedentes??e.qtdExcedente??e.quantidadeExcedente??0;
-  const valExc=e.valorPessoaExcedente??e.valorExcedente??0;
-  const taxaExc=e.taxaExcedentePct??e.taxaExcedente??e.taxaServicoPct??13;
-  return `<div class="finance-layout span4">
-    <div class="finance-left">
-      <section class="finance-card">
-        <h3><span class="finance-badge">A</span> CONTRATO (VALORES BASE)</h3>
-        <div class="finance-table">
-          <label>Quantidade de pessoas</label><input class="field" type="number" id="f_pessoas" value="${e.pessoas||''}">
-          <label>Valor por pessoa - sem taxa</label><input class="field" type="text" inputmode="decimal" id="f_valorPessoa" value="${moneyInputValue(e.valorPessoa||0)}">
-          <label>Taxa de serviço (%)</label><input class="field" type="text" inputmode="decimal" id="f_taxa" value="${String(e.taxaServicoPct??13).replace('.',',')}">
-          <label>Total contrato (A)</label><strong id="fin_totalA">R$ 0,00</strong>
-        </div>
-        <p class="finance-note">Fórmula: (valor por pessoa × quantidade de pessoas) + taxa de serviço.</p>
-      </section>
-      <section class="finance-card">
-        <h3><span class="finance-badge">B</span> MESA EXTRA / CONSUMOS (SEM TAXA)</h3>
-        <div class="finance-table">
-          <label>Consumo extra 1</label><input class="field" type="text" inputmode="decimal" id="f_extra1" value="${moneyInputValue(ex1)}">
-          <label>Consumo extra 2</label><input class="field" type="text" inputmode="decimal" id="f_extra2" value="${moneyInputValue(ex2)}">
-          <label>Consumo extra 3</label><input class="field" type="text" inputmode="decimal" id="f_extra3" value="${moneyInputValue(ex3)}">
-          <label>Total extras (B)</label><strong id="fin_totalB">R$ 0,00</strong>
-        </div>
-        <p class="finance-note">Valores informados aqui não recebem taxa de serviço.</p>
-      </section>
-      <section class="finance-card">
-        <h3><span class="finance-badge">C</span> PESSOAS EXCEDENTES</h3>
-        <div class="finance-table">
-          <label>Quantidade de pessoas excedentes</label><input class="field" type="number" id="f_pessoasExcedentes" value="${qtdExc||''}">
-          <label>Valor por pessoa excedente - sem taxa</label><input class="field" type="text" inputmode="decimal" id="f_valorPessoaExcedente" value="${moneyInputValue(valExc)}">
-          <label>Taxa de serviço (%)</label><input class="field" type="text" inputmode="decimal" id="f_taxaExcedente" value="${String(taxaExc).replace('.',',')}">
-          <label>Total excedentes (C)</label><strong id="fin_totalC">R$ 0,00</strong>
-        </div>
-        <p class="finance-note">Fórmula: (valor por pessoa excedente × quantidade excedente) + taxa de serviço.</p>
-      </section>
-    </div>
-    <aside class="finance-summary">
-      <h3>RESUMO FINANCEIRO</h3>
-      <div class="finance-summary-block"><h4><span class="finance-badge">A</span> CONTRATO</h4><p><span>Total sem taxa</span><strong id="fin_baseA">R$ 0,00</strong></p><p><span>Taxa de serviço</span><strong id="fin_resumo_servicoA">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total contrato (A)</span><strong id="fin_resumo_totalA">R$ 0,00</strong></p></div>
-      <div class="finance-summary-block"><h4><span class="finance-badge">B</span> EXTRAS (SEM TAXA)</h4><p><span>Consumo extra 1</span><strong id="fin_extra1">R$ 0,00</strong></p><p><span>Consumo extra 2</span><strong id="fin_extra2">R$ 0,00</strong></p><p><span>Consumo extra 3</span><strong id="fin_extra3">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total extras (B)</span><strong id="fin_resumo_totalB">R$ 0,00</strong></p></div>
-      <div class="finance-summary-block"><h4><span class="finance-badge">C</span> EXCEDENTES</h4><p><span>Total sem taxa</span><strong id="fin_baseC">R$ 0,00</strong></p><p><span>Taxa de serviço</span><strong id="fin_resumo_servicoC">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total excedentes (C)</span><strong id="fin_resumo_totalC">R$ 0,00</strong></p></div>
-      <div class="finance-grand"><span>TOTAL GERAL (A + B + C)</span><strong id="fin_grand">R$ 0,00</strong></div>
-      <input type="hidden" id="f_gorjeta" value="${e.gorjeta||0}">
-      <input type="hidden" id="f_valorEstimado" value="${e.valorTotal||e.valorEstimado||0}">
-    </aside>
-  </div>`;
-}
-function formHtml(e={}){
-  const packs=['A definir',...new Set(state.pacotes.map(p=>p.nome.replace('Menu ','')))];
-  const clienteOptions=clientesDatalistHtml();
-  return `${clienteOptions}<div class="form-grid event-form-premium"><div><label>Cliente</label><input class="field" id="f_cliente" list="clientesCadastroOptions" value="${esc(e.cliente||'')}" oninput="EVENTOS.applyClienteLookup()" onchange="EVENTOS.applyClienteLookup()"><small class="muted">Digite e selecione um cliente já cadastrado.</small></div><div><label>Telefone</label><input class="field" id="f_telefone" value="${esc(e.telefone||'')}" onchange="EVENTOS.applyClienteLookup()"></div><div><label>Data</label><input class="field" type="date" id="f_data" value="${e.data||''}"></div><div><label>Horário</label><input class="field" type="time" id="f_horario" value="${e.horario||''}"></div><div><label>Status</label><select class="field" id="f_status">${STATUS.map(st=>`<option ${st===(e.status||'Lead')?'selected':''}>${st}</option>`).join('')}</select></div><div><label>Origem</label><select class="field" id="f_origem"><option>${e.origem||'WhatsApp'}</option><option>Instagram</option><option>Telefone</option><option>Anúncio</option><option>Indicação</option><option>Presencial</option><option>Google Forms</option></select></div><div><label>Tipo</label><input class="field" id="f_tipo" value="${esc(e.tipo||'Evento')}"></div><div><label>Turno</label><select class="field" id="f_turno">${['Almoço','Jantar','Ambos','A definir'].map(st=>`<option ${st===(e.turno||'A definir')?'selected':''}>${st}</option>`).join('')}</select></div><div><label>Pacote</label><select class="field" id="f_pacote">${packs.map(p=>`<option ${p===(e.pacote||'A definir')?'selected':''}>${p}</option>`).join('')}</select></div><div class="span2"><label>Salão</label><select class="field" id="f_unidade">${['Salão Vasto','Salão Barra','Salão Beira Mar','Varanda','Salão Barra + Beira Mar + Varanda','A definir'].map(st=>`<option ${st===(e.unidade||'A definir')?'selected':''}>${st}</option>`).join('')}</select></div><div class="span4"><label>Observações / andamento</label><textarea class="field" id="f_obs">${esc(e.observacoes||'')}</textarea></div>${financialHtml(e)}<div class="span4 directors-box"><label>Assinatura da diretoria</label>${[0,1,2].map(i=>{const d=(e.diretores||[])[i]||{};return `<div class="director-row"><input class="field" id="f_dir_nome_${i}" placeholder="Nome do diretor" value="${esc(d.nome||'')}"><span>Assinou?</span><input type="checkbox" id="f_dir_ok_${i}" ${d.assinado?'checked':''}></div>`}).join('')}<p class="muted" style="margin:8px 0 0;font-size:11px">Marque cada diretor que assinou. Quando todos estiverem OK, o evento pode avançar para Fechado.</p></div></div><div class="divider"></div><div class="modal-actions"><button class="btn alt" onclick="EVENTOS.closeModal&&EVENTOS.closeModal()">Cancelar</button><button class="btn" onclick="EVENTOS.saveForm('${e.id||''}')">Salvar alterações</button></div>`
-}
+function formHtml(e={}){const packs=['A definir',...new Set(state.pacotes.map(p=>p.nome.replace('Menu ','')))];return `<div class="form-grid"><div><label>Cliente</label><input class="field" id="f_cliente" value="${esc(e.cliente||'')}"></div><div><label>Telefone</label><input class="field" id="f_telefone" value="${esc(e.telefone||'')}"></div><div><label>Data</label><input class="field" type="date" id="f_data" value="${e.data||''}"></div><div><label>Horário</label><input class="field" type="time" id="f_horario" value="${e.horario||''}"></div><div><label>Status</label><select class="field" id="f_status">${STATUS.map(s=>`<option ${s===(e.status||'Lead')?'selected':''}>${s}</option>`).join('')}</select></div><div><label>Origem</label><select class="field" id="f_origem"><option>${e.origem||'WhatsApp'}</option><option>Instagram</option><option>Telefone</option><option>Anúncio</option><option>Indicação</option><option>Presencial</option></select></div><div><label>Tipo</label><input class="field" id="f_tipo" value="${esc(e.tipo||'Evento')}"></div><div><label>Turno</label><select class="field" id="f_turno">${['Almoço','Jantar','Ambos','A definir'].map(s=>`<option ${s===(e.turno||'A definir')?'selected':''}>${s}</option>`).join('')}</select></div><div><label>Pessoas</label><input class="field" type="number" id="f_pessoas" value="${e.pessoas||''}"></div><div><label>Pacote</label><select class="field" id="f_pacote">${packs.map(p=>`<option ${p===(e.pacote||'A definir')?'selected':''}>${p}</option>`).join('')}</select></div><div><label>Valor por pessoa</label><input class="field" type="text" inputmode="decimal" id="f_valorPessoa" value="${String(e.valorPessoa||0).replace('.',',')}"></div><div><label>Taxa serviço %</label><input class="field" type="text" inputmode="decimal" id="f_taxa" value="${String(e.taxaServicoPct??13).replace('.',',')}"></div><div><label>Gorjeta</label><input class="field" type="text" inputmode="decimal" id="f_gorjeta" value="${e.gorjeta||0}" readonly></div><div class="span2"><label>Salão</label><select class="field" id="f_unidade">${['Salão Vasto','Salão Barra','Salão Beira Mar','Varanda','Salão Barra + Beira Mar + Varanda','A definir'].map(s=>`<option ${s===(e.unidade||'A definir')?'selected':''}>${s}</option>`).join('')}</select></div><div class="span2"><label>Valor total</label><input class="field" type="text" inputmode="decimal" id="f_valorEstimado" value="${e.valorTotal||e.valorEstimado||0}" readonly></div><div class="span4"><label>Observações / andamento</label><textarea class="field" id="f_obs">${esc(e.observacoes||'')}</textarea></div><div class="span4 directors-box"><label>Assinatura da diretoria</label>${[0,1,2].map(i=>{const d=(e.diretores||[])[i]||{};return `<div class="director-row"><input class="field" id="f_dir_nome_${i}" placeholder="Nome do diretor" value="${esc(d.nome||'')}"><span>Assinou?</span><input type="checkbox" id="f_dir_ok_${i}" ${d.assinado?'checked':''}></div>`}).join('')}<p class="muted" style="margin:8px 0 0;font-size:11px">Marque cada diretor que assinou. Quando todos estiverem OK, o evento pode avançar para Fechado.</p></div></div><div class="divider"></div><button class="btn" onclick="EVENTOS.saveForm('${e.id||''}')">Salvar evento</button>`}
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-function collect(id){
-  const data=$('f_data').value;
-  calcEventFinancialsFromFields();
-  const f=eventFinancialValuesFromFields();
-  const pessoas=f.pessoas||null;
-  const valorTotal=f.valorTotal;
-  return{
-    id:id||uid(),
-    ano:data?Number(data.slice(0,4)):new Date().getFullYear(),
-    data:data||new Date().toISOString().slice(0,10),
-    horario:$('f_horario')?$('f_horario').value:'',
-    cliente:$('f_cliente').value.trim()||'Cliente não informado',
-    telefone:$('f_telefone').value.trim(),
-    origem:$('f_origem').value,
-    unidade:$('f_unidade').value,
-    tipo:$('f_tipo').value,
-    turno:$('f_turno').value,
-    pessoas,
-    pacote:$('f_pacote').value,
-    status:$('f_status').value,
-    valorPessoa:f.valorPessoa,
-    taxaServicoPct:f.taxa,
-    contratoBase:f.baseA,
-    contratoServico:f.servicoA,
-    contratoTotal:f.totalA,
-    extra1:f.extra1,
-    extra2:f.extra2,
-    extra3:f.extra3,
-    consumoExtra1:f.extra1,
-    consumoExtra2:f.extra2,
-    consumoExtra3:f.extra3,
-    extras:f.totalB,
-    totalExtras:f.totalB,
-    pessoasExcedentes:f.pessoasExcedentes,
-    valorPessoaExcedente:f.valorPessoaExcedente,
-    taxaExcedentePct:f.taxaExcedente,
-    excedenteBase:f.baseC,
-    excedenteServico:f.servicoC,
-    excedenteTotal:f.totalC,
-    gorjeta:f.gorjeta,
-    valorEstimado:valorTotal,
-    valorTotal,
-    observacoes:$('f_obs').value.trim(),
-    diretores:[0,1,2].map(i=>({nome:($('f_dir_nome_'+i)?.value||'').trim(),assinado:!!$('f_dir_ok_'+i)?.checked})).filter(d=>d.nome),
-    atualizadoEm:new Date().toISOString()
-  };
-}
-
-function eventoFreshMs(e){return Math.max(parseTimestampBR(e&&e.atualizadoEm),parseTimestampBR(e&&e.movidoEm),parseTimestampBR(e&&e.statusAtualizadoEm),parseTimestampBR(e&&e.criadoEm));}
-function markPendingEvento(e){
-  if(!e||!e.id)return;
-  __pendingEventoWrites.set(String(e.id),{status:e.status||'',ms:eventoFreshMs(e)||Date.now()});
-  setTimeout(()=>__pendingEventoWrites.delete(String(e.id)),15000);
-}
-function persistEvento(e){
-  localStorage.setItem(STORE,JSON.stringify(state.eventos));
-  markPendingEvento(e);
-  if(window.EventosFirebase&&EventosFirebase.enabled){
-    try{
-      if(EventosFirebase.saveEvento) return EventosFirebase.saveEvento(e).catch(()=>EventosFirebase.saveAll(state.eventos).catch(()=>{}));
-      return EventosFirebase.saveAll(state.eventos).catch(()=>{});
-    }catch(_){ }
-  }
-}
-function mergeRemoteEventos(arr){
-  const map=new Map((state.eventos||[]).map(e=>[String(e.id),e]));
-  (arr||[]).forEach(remote=>{
-    if(!remote||!remote.id)return;
-    const id=String(remote.id);
-    const local=map.get(id);
-    const pending=__pendingEventoWrites.get(id);
-    const rMs=eventoFreshMs(remote);
-    const lMs=eventoFreshMs(local);
-    if(pending){
-      // Se o Firebase ainda devolveu a versão antiga, não deixa sobrescrever a alteração local.
-      if((remote.status||'')!==pending.status && rMs<=pending.ms){return;}
-      if((remote.status||'')===pending.status) __pendingEventoWrites.delete(id);
-    }
-    if(local && lMs>rMs){return;}
-    map.set(id,Object.assign({},local||{},remote));
-  });
-  state.eventos=dedupeEventos([...map.values()]);
-  localStorage.setItem(STORE,JSON.stringify(state.eventos));
-}
-
+function collect(id){const data=$('f_data').value;calcEventFinancialsFromFields();const pessoas=parseNum($('f_pessoas').value)||null;const valorPessoa=parseNum($('f_valorPessoa').value);const taxaServicoPct=parseNum($('f_taxa').value);const gorjeta=parseNum($('f_gorjeta').value);const valorTotal=parseNum($('f_valorEstimado').value);return{id:id||uid(),ano:data?Number(data.slice(0,4)):new Date().getFullYear(),data:data||new Date().toISOString().slice(0,10),horario:$('f_horario')?$('f_horario').value:'',cliente:$('f_cliente').value.trim()||'Cliente não informado',telefone:$('f_telefone').value.trim(),origem:$('f_origem').value,unidade:$('f_unidade').value,tipo:$('f_tipo').value,turno:$('f_turno').value,pessoas,pacote:$('f_pacote').value,status:$('f_status').value,valorPessoa,taxaServicoPct,gorjeta,valorEstimado:valorTotal,valorTotal,observacoes:$('f_obs').value.trim(),diretores:[0,1,2].map(i=>({nome:($('f_dir_nome_'+i)?.value||'').trim(),assinado:!!$('f_dir_ok_'+i)?.checked})).filter(d=>d.nome),atualizadoEm:new Date().toISOString()};}
 window.EVENTOS={
-  closeModal(){ $('modal').classList.remove('open'); },
   tab(id){state.tab=id;document.body.classList.remove('menu-open');render()},
   clientesTab(v){state.clientesView=v;renderClientes();},
   renderClientesCadastroFiltrado(){renderClientesCadastroFiltrado();},
   openClienteForm(){ $('modalTitle').textContent='Novo cliente'; $('modalBody').innerHTML=clienteFormHtml(); $('modal').classList.add('open');},
   editCliente(id){const c=(state.clientesCadastros||[]).find(x=>x.id===id); if(!c)return toast('Cliente não encontrado'); $('modalTitle').textContent='Editar cliente'; $('modalBody').innerHTML=clienteFormHtml(c); $('modal').classList.add('open');},
-  deleteCliente(id){const c=(state.clientesCadastros||[]).find(x=>x.id===id); if(!c)return toast('Cliente não encontrado'); if(!confirm('Excluir este cadastro de cliente?'))return; state.clientesCadastros=(state.clientesCadastros||[]).filter(x=>x.id!==id); saveClientes(); if(window.EventosFirebase&&EventosFirebase.enabled&&EventosFirebase.deleteClienteCadastro) EventosFirebase.deleteClienteCadastro(id).catch(()=>{}); $('modal').classList.remove('open'); toast('Cadastro excluído'); if(state.tab==='clientes')renderClientes();},
   saveClienteForm(id){const c=collectClienteCadastro(id); if(!c.nome)return toast('Informe o nome do cliente'); const idx=state.clientesCadastros.findIndex(x=>x.id===c.id); if(idx>=0)state.clientesCadastros[idx]=Object.assign({},state.clientesCadastros[idx],c); else state.clientesCadastros.unshift(c); state.clientesCadastros=dedupeClientesCadastro(state.clientesCadastros); saveClientes(); if(window.EventosFirebase&&EventosFirebase.enabled&&EventosFirebase.saveClienteCadastro) EventosFirebase.saveClienteCadastro(c).catch(()=>{}); $('modal').classList.remove('open'); toast('Cliente salvo'); if(state.tab==='clientes')renderClientes();},
   agendaFiltro(k,v){state.agendaFiltros=state.agendaFiltros||{};state.agendaFiltros[k]=v;renderAgenda();},
   openAgendaForm(){openAgendaModal();},
@@ -1004,9 +573,7 @@ window.EVENTOS={
   toggleAgendaDone(id){const a=(state.agenda||[]).find(x=>x.id===id); if(!a)return; a.status=a.status==='Concluída'?'Pendente':'Concluída'; a.atualizadoEm=new Date().toISOString(); saveAgenda(); renderAgenda();},
   openResponsavelForm(){ $('modalTitle').textContent='Responsáveis da agenda'; $('modalBody').innerHTML=responsavelFormHtml(); $('modal').classList.add('open');},
   saveResponsavel(){const n=($('resp_nome')?.value||'').trim(); if(!n)return toast('Digite o nome do responsável'); if(!state.agendaResponsaveis.includes(n))state.agendaResponsaveis.push(n); state.agendaResponsaveis.sort((a,b)=>a.localeCompare(b,'pt-BR')); saveAgenda(); $('modalBody').innerHTML=responsavelFormHtml(); if(state.tab==='agenda')renderAgenda(); toast('Responsável cadastrado');},
-  setCalendar(month,year,day){if(month)state.cal.month=Number(month); if(year)state.cal.year=Number(year); if(day)state.cal.day=Number(day); renderCalendar();},
-  setCalendarView(v){state.cal.view=v||'mes'; renderCalendar();},
-  shiftCalendarDay(delta){const max=new Date(state.cal.year,state.cal.month,0).getDate(); const d=new Date(state.cal.year,state.cal.month-1,Math.min(state.cal.day||1,max)); d.setDate(d.getDate()+Number(delta||0)); state.cal.year=d.getFullYear(); state.cal.month=d.getMonth()+1; state.cal.day=d.getDate(); renderCalendar();},
+  setCalendar(month,year){if(month)state.cal.month=Number(month); if(year)state.cal.year=Number(year); renderCalendar();},
   toggleFilters(force){const p=$('filtersPanel'); if(!p)return; p.classList.toggle('open', typeof force==='boolean'?force:!p.classList.contains('open'));},
   toggleConfig(force){const p=$('configPanel'); if(!p)return; p.classList.toggle('open', typeof force==='boolean'?force:!p.classList.contains('open'));},
   showInstallHelp(){
@@ -1026,21 +593,18 @@ window.EVENTOS={
   dismissInstall(){localStorage.setItem('gestao_cb_install_dismissed','1'); const b=$('installBanner'); if(b)b.classList.remove('show');},
   setMeta(v){state.meta.metaMensal=Number(v)||0;save();render()},
   openForm(){ $('modalTitle').textContent='Novo Evento'; $('modalBody').innerHTML=formHtml(); $('modal').classList.add('open'); setupEventFinancials();},
-  applyClienteLookup(){applyClienteCadastroToEvento();},
   edit(id){const e=state.eventos.find(x=>x.id===id); if(!e)return; $('modalTitle').textContent='Editar Evento'; $('modalBody').innerHTML=formHtml(e); $('modal').classList.add('open'); setupEventFinancials();},
-  saveForm(id){if(!id&&!clienteCadastroMatch($('f_cliente')?.value,$('f_telefone')?.value)){toast('Cliente não cadastrado. Cadastre o cliente antes de criar o evento.');return;} const e=collect(id); const idx=state.eventos.findIndex(x=>String(x.id)===String(e.id)); const antigo=idx>=0?state.eventos[idx]:null; const agora=new Date().toISOString(); if(antigo){e.criadoEm=antigo.criadoEm||e.criadoEm||agora; if((antigo.status||'')!==(e.status||'')){e.movidoEm=agora;e.statusAtualizadoEm=agora;e.observacoes=(e.observacoes||'')+`\n\n[FUNIL] Status alterado manualmente de ${antigo.status||'Sem status'} para ${e.status} em ${new Date().toLocaleString('pt-BR')}`;} state.eventos[idx]=Object.assign({},antigo,e,{atualizadoEm:agora});} else {state.eventos.unshift(Object.assign({},e,{criadoEm:agora,atualizadoEm:agora}));} persistEvento(state.eventos[idx>=0?idx:0]); $('modal').classList.remove('open'); toast('Evento salvo'); render();},
+  saveForm(id){const e=collect(id); const idx=state.eventos.findIndex(x=>x.id===e.id); if(idx>=0)state.eventos[idx]=Object.assign({},state.eventos[idx],e); else state.eventos.unshift(e); save(); $('modal').classList.remove('open'); toast('Evento salvo'); render();},
   view(id){const e=state.eventos.find(x=>x.id===id); if(!e)return; const wa=e.telefone?`<a class="whats" target="_blank" href="https://wa.me/${String(e.telefone).replace(/\D/g,'')}">Abrir WhatsApp</a>`:''; $('modalTitle').textContent=e.cliente; $('modalBody').innerHTML=`<div class="kpi-grid"><div class="kpi"><div class="label">Data</div><div class="value">${dow(e.data)} ${shortDate(e.data)}<br><span style="font-size:16px;color:var(--sub)">${horario(e)}</span></div></div><div class="kpi"><div class="label">Valor total</div><div class="value">${brl(e.valorEstimado)}</div></div><div class="kpi"><div class="label">Pessoas</div><div class="value">${e.pessoas||'-'}</div></div><div class="kpi"><div class="label">Status</div><div class="value" style="font-size:20px">${e.status}</div></div></div><div class="panel" style="margin-top:14px"><p><b>Telefone:</b> ${e.telefone||'-'} ${wa}</p><p><b>Tipo:</b> ${e.tipo} · <b>Turno:</b> ${e.turno} · <b>Pacote:</b> ${e.pacote}</p><p><b>Unidade/Salão:</b> ${e.unidade||'-'}</p><p><b>Origem:</b> ${e.origem||e.origemPlanilha||'-'}</p><p><b>Diretoria:</b> ${(e.diretores&&e.diretores.length)?e.diretores.map(d=>`${esc(d.nome)} ${d.assinado?'✅':'⏳'}`).join(' · '):'Não cadastrada'}</p><div class="divider"></div><p style="white-space:pre-wrap">${esc(e.observacoes||'')}</p></div><br><button class="btn" onclick="EVENTOS.edit('${e.id}')">Editar</button>`; $('modal').classList.add('open');},
   closeModal(){ $('modal').classList.remove('open');},
-  movePipeline(id,status){const e=state.eventos.find(x=>String(x.id)===String(id)); if(!e)return toast('Evento não encontrado'); if(!canMovePipeline(e.status,status))return toast('Etapa inválida'); if(e.status===status)return toast('Card já está nesta etapa'); const kanban=document.querySelector('#funil .pipeline-kanban'); if(kanban)__pipelineScrollLeft=kanban.scrollLeft; const antigo=e.status; const agora=new Date().toISOString(); e.status=status; e.movidoEm=agora; e.statusAtualizadoEm=agora; e.atualizadoEm=agora; e.criadoEm=e.criadoEm||agora; e.observacoes=(e.observacoes||'')+`\n\n[FUNIL] Movido de ${antigo||'Sem status'} para ${status} em ${new Date().toLocaleString('pt-BR')}`; persistEvento(e); toast(`Movido para ${status}`); render(); requestAnimationFrame(()=>{const k=document.querySelector('#funil .pipeline-kanban');if(k)k.scrollLeft=__pipelineScrollLeft||0;});},
+  movePipeline(id,status){const e=state.eventos.find(x=>x.id===id); if(!e)return toast('Evento não encontrado'); if(!canMovePipeline(e.status,status))return toast('Movimento permitido apenas para a próxima etapa do funil'); const antigo=e.status; const agora=new Date().toISOString(); e.status=status; e.movidoEm=agora; e.statusAtualizadoEm=agora; e.atualizadoEm=agora; e.observacoes=(e.observacoes||'')+`\n\n[FUNIL] Movido de ${antigo||'Sem status'} para ${status} em ${new Date().toLocaleString('pt-BR')}`; save(); toast(`Movido para ${status}`); render();},
   markRecuperado(id){const e=state.eventos.find(x=>x.id===id); if(e){e.status='Proposta enviada';e.movidoEm=new Date().toISOString();e.statusAtualizadoEm=e.movidoEm;e.observacoes=(e.observacoes||'')+'\n\n[RECUPERAÇÃO] Cliente reativado em '+new Date().toLocaleDateString('pt-BR');save();toast('Cliente movido para proposta');render();}},
   whats(id){const e=state.eventos.find(x=>x.id===id); if(!e||!e.telefone)return toast('Telefone não cadastrado'); window.open(`https://wa.me/${String(e.telefone).replace(/\D/g,'')}?text=${encodeURIComponent('Olá, tudo bem? Estou entrando em contato sobre sua proposta de evento no Coco Bambu.')}`,'_blank');},
   seedReset(){if(confirm('Recarregar a base importada da planilha? Eventos cadastrados manualmente serão mantidos.')){const manual=state.eventos.filter(e=>!e.importado);state.eventos=dedupeEventos([...(window.EVENTOS_SEED||[]).map(e=>({...e,importado:true})),...manual]);save();toast('Base 2026/2027 recarregada');setupFilters();render();}},
-  exportCSV(){const cols=['data','horario','cliente','telefone','unidade','tipo','turno','pessoas','pacote','status','valorPessoa','extras','taxaServicoPct','valorEstimado','gorjeta','origemPlanilha','observacoes'];const csv=[cols.join(';')].concat(state.eventos.map(e=>cols.map(c=>'"'+String(e[c]??'').replace(/"/g,'""').replace(/\n/g,' | ')+'"').join(';'))).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='eventos_premium_export.csv';a.click();URL.revokeObjectURL(a.href);},
+  exportCSV(){const cols=['data','horario','cliente','telefone','unidade','tipo','turno','pessoas','pacote','status','valorPessoa','taxaServicoPct','valorEstimado','gorjeta','origemPlanilha','observacoes'];const csv=[cols.join(';')].concat(state.eventos.map(e=>cols.map(c=>'"'+String(e[c]??'').replace(/"/g,'""').replace(/\n/g,' | ')+'"').join(';'))).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='eventos_premium_export.csv';a.click();URL.revokeObjectURL(a.href);},
   async firebaseSync(){if(!window.EventosFirebase)return toast('Firebase não carregado'); const ok=await EventosFirebase.init(); if(!ok)return toast('Firebase indisponível nesta abertura'); await EventosFirebase.saveAll(state.eventos); toast('Eventos enviados para /eventos_premium');},
 };
 function boot(){
-  if(clearEventosLocalCachesForVersion()){ hardRefreshAfterVersionUpdate(); return; }
-  registerFreshServiceWorker();
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;if(!localStorage.getItem('gestao_cb_install_dismissed')){const b=$('installBanner');if(b)setTimeout(()=>b.classList.add('show'),1200);}});
   const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;
   if(!standalone&&!localStorage.getItem('gestao_cb_install_dismissed')){const b=$('installBanner');if(b)setTimeout(()=>b.classList.add('show'),2200);}
@@ -1049,6 +613,6 @@ function boot(){
   if(ev.target.closest('.desktop-sidebar')||ev.target.closest('.mobile-menu'))return;
   document.body.classList.remove('menu-open');
 });
-load();setupTabs();setupFilters();render(); if(window.EventosFirebase){EventosFirebase.init().then(ok=>{if(ok){EventosFirebase.listen(arr=>{if(Array.isArray(arr)){if(arr.length){mergeRemoteEventos(arr);}else{state.eventos=[];localStorage.setItem(STORE,JSON.stringify(state.eventos));}setupFilters();render();}}); if(EventosFirebase.listenClientes) EventosFirebase.listenClientes(arr=>{state.clientesCadastros=dedupeClientesCadastro(arr||[]);saveClientes(); if(state.tab==='clientes')renderClientes();});}});}}
+load();setupTabs();setupFilters();render(); if(window.EventosFirebase){EventosFirebase.init().then(ok=>{if(ok){EventosFirebase.listen(arr=>{if(Array.isArray(arr)&&arr.length){const map=new Map((state.eventos||[]).map(e=>[e.id,e]));arr.forEach(e=>{if(e&&e.id)map.set(e.id,Object.assign({},map.get(e.id)||{},e));});state.eventos=dedupeEventos([...map.values()]);localStorage.setItem(STORE,JSON.stringify(state.eventos));setupFilters();render();}}); if(EventosFirebase.listenClientes) EventosFirebase.listenClientes(arr=>{state.clientesCadastros=dedupeClientesCadastro([...(state.clientesCadastros||[]),...(arr||[])]);saveClientes(); if(state.tab==='clientes')renderClientes();});}});}}
 document.addEventListener('DOMContentLoaded',boot);
 })();

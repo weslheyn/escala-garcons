@@ -460,7 +460,7 @@ body.gs-open #premiumDashboard{
 .gs-date{font-size:11px;color:#cbd5e1;line-height:1.25}.gs-alert{color:#f5c842;font-size:10px;font-weight:800;margin-top:3px}.gs-action{display:flex;gap:8px;justify-content:flex-end}.gs-btn{border:1px solid #d6a30066;background:#111827;color:#f5c842;border-radius:10px;padding:8px 9px;font-weight:900}.gs-btn.danger{border-color:#e74c3c66;color:#ff6b6b}.gs-btn.add{border-color:#35f08066;color:#35f080}
 body.gs-open #mainContent,body.gs-open .header,body.gs-open #syncBar,body.gs-open #sheetsBar,body.gs-open .date-bar,body.gs-open #summary{display:none!important}
 body.gs-open #premiumDashboard{display:block!important}
-@media(max-width:760px){.gs-row{grid-template-columns:1fr;gap:7px}.gs-action{justify-content:flex-start}}
+
 </style>
 
 
@@ -482,7 +482,7 @@ body.gs-open #premiumDashboard{display:block!important}
 .gs-btn{border:1px solid #d6a30066!important;background:#111827!important;color:#f5c842!important;border-radius:10px!important;padding:8px 9px!important;font-weight:900!important}
 .gs-btn.danger{border-color:#e74c3c66!important;color:#ff6b6b!important}
 .gs-btn.add{border-color:#35f08066!important;color:#35f080!important}
-@media(max-width:760px){#gsTableBody .gs-row{grid-template-columns:1fr!important}.gs-action{justify-content:flex-start!important}}
+
 </style>
 
 
@@ -505,6 +505,157 @@ body.gs-open{
 }
 #gsPanel .panel-header{
   z-index:9999999!important;
+}
+</style>
+
+
+<style id="gs-mobile-list-css">
+/* G's mobile em formato lista/tabela compacta */
+@media(max-width:760px){
+  #gsPanel.gs-fullscreen{
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    scrollbar-width:none!important;
+    -ms-overflow-style:none!important;
+  }
+  #gsPanel.gs-fullscreen::-webkit-scrollbar{
+    width:0!important;
+    height:0!important;
+    display:none!important;
+  }
+
+  #gsPanel .gs-wrap{
+    padding:10px!important;
+  }
+
+  #gsPanel .gs-hero{
+    padding:12px!important;
+    border-radius:14px!important;
+    margin-bottom:10px!important;
+  }
+
+  #gsPanel .gs-hero h2{
+    font-size:26px!important;
+  }
+
+  #gsPanel .gs-hero p{
+    font-size:11px!important;
+    line-height:1.25!important;
+  }
+
+  #gsPanel .gs-add{
+    width:auto!important;
+    padding:10px 12px!important;
+    font-size:12px!important;
+    border-radius:12px!important;
+    align-self:flex-end!important;
+  }
+
+  #gsPanel .gs-filters{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+    margin-bottom:10px!important;
+  }
+
+  #gsPanel .gs-table-card{
+    border-radius:14px!important;
+    overflow:hidden!important;
+  }
+
+  #gsPanel .gs-table-head{
+    display:grid!important;
+    grid-template-columns:1.35fr .55fr .9fr .75fr .7fr!important;
+    gap:4px!important;
+    padding:9px 8px!important;
+    font-size:8.5px!important;
+  }
+
+  #gsPanel .gs-table-head div:nth-child(5){
+    display:none!important;
+  }
+
+  #gsPanel .gs-row{
+    display:grid!important;
+    grid-template-columns:1.35fr .55fr .9fr .75fr .7fr!important;
+    gap:4px!important;
+    align-items:center!important;
+    padding:8px 8px!important;
+    min-height:42px!important;
+    border-top:1px solid #ffffff10!important;
+    font-size:10px!important;
+  }
+
+  #gsPanel .gs-person{
+    gap:6px!important;
+    min-width:0!important;
+  }
+
+  #gsPanel .gs-avatar{
+    width:28px!important;
+    height:28px!important;
+    font-size:10px!important;
+    flex:0 0 28px!important;
+  }
+
+  #gsPanel .gs-name{
+    font-size:10px!important;
+    line-height:1.05!important;
+    max-width:82px!important;
+    white-space:normal!important;
+    overflow:hidden!important;
+    display:-webkit-box!important;
+    -webkit-line-clamp:2!important;
+    -webkit-box-orient:vertical!important;
+  }
+
+  #gsPanel .gs-sub{
+    font-size:8px!important;
+    line-height:1.05!important;
+    margin-top:1px!important;
+  }
+
+  #gsPanel .gs-code{
+    font-size:11px!important;
+    text-align:center!important;
+  }
+
+  #gsPanel .gs-pass{
+    padding:5px 6px!important;
+    font-size:10px!important;
+    border-radius:8px!important;
+    justify-content:center!important;
+    white-space:nowrap!important;
+  }
+
+  #gsPanel .gs-status{
+    padding:5px 6px!important;
+    font-size:8.5px!important;
+    white-space:nowrap!important;
+  }
+
+  #gsPanel .gs-date{
+    display:none!important;
+  }
+
+  #gsPanel .gs-action{
+    gap:5px!important;
+    justify-content:flex-end!important;
+  }
+
+  #gsPanel .gs-btn{
+    padding:6px 7px!important;
+    min-width:30px!important;
+    height:30px!important;
+    font-size:12px!important;
+    border-radius:8px!important;
+  }
+
+  #gsPanel .gs-btn.danger{
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+  }
 }
 </style>
 

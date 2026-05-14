@@ -3384,7 +3384,7 @@ function buildFolgaCard(f, dayIdx){
 // Card para o dia de FOLGA compensatória (dia escolhido na troca)
 function buildTrocaFolgaCard(f, drRec){
   const extra=(drRec&&drRec.extra)||{};
-  const obs=extra.obs ? extra.obs : 'Folga por troca';
+  const obs=(extra.obs && String(extra.obs).toUpperCase().indexOf('TROCA FOLGA')===-1) ? extra.obs : '';
   const todayIso=WEEK_DATES[curDay].toISOString().split('T')[0];
   const trocaDe=extra.trocaDe || '';
   const trabalhouIso=extra.trabData || _ptBrToIso(trocaDe) || todayIso;
@@ -3401,7 +3401,7 @@ function buildTrocaFolgaCard(f, drRec){
         </button>
         <div class="emp-meta">${f.categoria}</div>
         <div style="font-size:10px;color:#1abc9c;margin-top:3px">🔄 TROCA FOLGA${trabalhouFmt?' · trabalhou em '+trabalhouFmt:''}</div>
-        <div style="font-size:10px;color:var(--sub);margin-top:2px">📝 ${obs}</div>
+        ${obs ? `<div style="font-size:10px;color:var(--sub);margin-top:2px">📝 ${obs}</div>` : ''}
       </div>
       <div class="emp-badges"><span class="badge badge-troca-dom">🔄 TROCA FOLGA</span></div>
     </div>
@@ -3679,12 +3679,12 @@ function buildCard(f){
       }
     } else if(st==='ferias'){
       let info='🌴 Férias';
-      if(ex2.ini || ex2.fim) info+='<br>📅 '+(ex2.ini||'?')+' até '+(ex2.fim||'?');
+      if(ex2.ini || ex2.fim) info+='<br>📅 '+(_isoToPtBr(ex2.ini)||'?')+' até '+(_isoToPtBr(ex2.fim)||'?');
       if(ex2.obs) info+='<br>📝 '+ex2.obs;
       extraHtml='<div class="saved-info">'+info+editBtn2+'</div>';
     } else if(st==='ferias'){
       let info='🌴 Férias';
-      if(ex2.ini || ex2.fim) info+='<br>📅 '+(ex2.ini||'?')+' até '+(ex2.fim||'?');
+      if(ex2.ini || ex2.fim) info+='<br>📅 '+(_isoToPtBr(ex2.ini)||'?')+' até '+(_isoToPtBr(ex2.fim)||'?');
       if(ex2.obs) info+='<br>📝 '+ex2.obs;
       extraHtml='<div class="saved-info">'+info+editBtn2+'</div>';
     } else {
@@ -3900,19 +3900,19 @@ function buildSavedInfo(st,ex){
   // PRESENTE com troca de folga — mostra info da troca
   if(st==='presente'&&ex.domTipo==='troca'&&ex.folgaEm){
     lines.push('🔄 TROCA FOLGA — folga em '+ex.folgaEm);
-    if(ex.obs&&!ex.obs.startsWith('TROCA FOLGA'))lines.push('📝 '+ex.obs);
+    if(ex.obs && String(ex.obs).toUpperCase().indexOf('TROCA FOLGA')===-1)lines.push('📝 '+ex.obs);
   } else if(st==='presente'){
     return ''; // presente sem info extra → não mostra nada
   }
   if(st==='falta'&&ex.obs)lines.push('⚠️ '+ex.obs);
-  if(st==='atestado'){if(ex.ini||ex.fim)lines.push('📅 '+(ex.ini||'?')+' até '+(ex.fim||'?'));if(ex.dias)lines.push('🔢 '+ex.dias+' dia(s)');if(ex.obs)lines.push('📝 '+ex.obs);}
-  if(st==='ferias'){if(ex.ini||ex.fim)lines.push('🌴 Férias: '+(ex.ini||'?')+' até '+(ex.fim||'?'));if(ex.obs)lines.push('📝 '+ex.obs);}
+  if(st==='atestado'){if(ex.ini||ex.fim)lines.push('📅 '+(ex.ini||'?')+' até '+(ex.fim||'?'));if(ex.dias)lines.push('🔢 '+ex.dias+' dia(s)');if(ex.obs && String(ex.obs).toUpperCase().indexOf('TROCA FOLGA')===-1)lines.push('📝 '+ex.obs);}
+  if(st==='ferias'){if(ex.ini||ex.fim)lines.push('🌴 Férias: '+(_isoToPtBr(ex.ini)||'?')+' até '+(_isoToPtBr(ex.fim)||'?'));if(ex.obs && String(ex.obs).toUpperCase().indexOf('TROCA FOLGA')===-1)lines.push('📝 '+ex.obs);}
   if(st==='troca-horario'){if(ex.ini||ex.fim)lines.push('🕐 '+(ex.ini||'?')+' às '+(ex.fim||'?'));if(ex.quem)lines.push('👤 '+ex.quem);}
   if(st==='troca-folga'){
     if(ex.trab)lines.push('📅 Trabalhou: '+ex.trab);
     if(ex.folga)lines.push('🏖️ Folga em: '+ex.folga);
     if(ex.quem)lines.push('👤 '+ex.quem);
-    if(ex.obs)lines.push('📝 '+ex.obs);
+    if(ex.obs && String(ex.obs).toUpperCase().indexOf('TROCA FOLGA')===-1)lines.push('📝 '+ex.obs);
   }
   if(st==='medida'){if(ex.motivo)lines.push('❌ '+ex.motivo);if(ex.acao)lines.push('⚠️ '+ex.acao);if(ex.resp)lines.push('👤 '+ex.resp);}
   if(st==='saida-antecipada'){
@@ -3925,7 +3925,7 @@ function buildSavedInfo(st,ex){
     if(ex.dataFormatada)lines.push('📅 '+ex.dataFormatada);
     if(ex.periodo)lines.push('🕐 '+ex.periodo);
     if(ex.horIni||ex.horFim)lines.push('⏰ '+(ex.horIni||'?')+' às '+(ex.horFim||'?'));
-    if(ex.obs)lines.push('📝 '+ex.obs);
+    if(ex.obs && String(ex.obs).toUpperCase().indexOf('TROCA FOLGA')===-1)lines.push('📝 '+ex.obs);
   }
   if(!lines.length)return '';
   return '<div class="saved-info">'+lines.map(l=>'<div>'+l+'</div>').join('')+'</div>';

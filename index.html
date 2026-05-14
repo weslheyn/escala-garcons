@@ -1110,13 +1110,9 @@ body.home-active #premiumDashboard{display:block}
 <div class="modal-overlay" id="maisMenu" onclick="if(event.target===this)closeModal('maisMenu')">
   <div class="modal-box" style="padding:16px 16px 32px">
     <div class="modal-title">MAIS OPÇÕES</div>
-    <button class="export-btn" onclick="closeModal('maisMenu');showEquipe();setTimeout(abrirImportarEscala,400)" style="font-size:14px;padding:14px;background:#27ae6011;border-color:#27ae6044;color:#27ae60;font-weight:800">📥 IMPORTAR ESCALA DO SHEETS</button>
     <button class="export-btn" onclick="closeModal('maisMenu');setTimeout(atualizarFrequenciaAtual,300)" style="font-size:14px;padding:14px;background:#0B539411;border-color:#0B539466;color:#6CB6FF;font-weight:800">🔄 ATUALIZAR FREQUÊNCIA ATUAL</button>
     <button class="export-btn" onclick="closeModal('maisMenu');setTimeout(gerarNovaFrequencia,300)" style="font-size:14px;padding:14px;background:#D6A30011;border-color:#D6A30066;color:#D6A300;font-weight:800">🆕 GERAR NOVA FREQUÊNCIA</button>
-    <button class="export-btn" onclick="closeModal('maisMenu');showEquipe();setTimeout(importarEscalaLimpaDoOficial,400)" style="font-size:14px;padding:14px;background:#7A3F0011;border-color:#D6A30066;color:#D6A300;font-weight:800">☁️ IMPORTAR ESCALA DO OFICIAL</button>
-    <button class="export-btn" onclick="closeModal('maisMenu');openAgendaGerencial()" style="font-size:14px;padding:14px;background:#00b89411;border-color:#00b89455;color:#00d1a0;font-weight:800">🗓️ Agenda Gerencial</button>
-    <button class="export-btn" onclick="closeModal('maisMenu');openFornecedoresPanel()" style="font-size:14px;padding:14px;background:#2980b911;border-color:#2980b955;color:#6CB6FF;font-weight:800">🧰 Fornecedores / Prestadores</button>
-    <button class="export-btn" onclick="openFreelance()" style="font-size:14px;padding:14px;background:#a855f711;border-color:#a855f744;color:#a855f7;font-weight:800">🎯 FREELANCES</button>
+    <button class="export-btn" onclick="closeModal('maisMenu');showEquipe();setTimeout(importarEscalaLimpaDoOficial,400)" style="font-size:14px;padding:14px;background:#7A3F0011;border-color:#D6A30066;color:#D6A300;font-weight:800">☁️ IMPORTAR ESCALA DO DRIVE</button>
     <button class="export-btn" onclick="closeModal('maisMenu');openAtestados()" style="font-size:14px;padding:14px">🏥 Painel de Atestados</button>
     <button class="export-btn" onclick="closeModal('maisMenu');openDisciplinar()" style="font-size:14px;padding:14px">⚠️ Medidas Disciplinares</button>
     <button class="export-btn" onclick="closeModal('maisMenu');openBancoHoras()" style="font-size:14px;padding:14px;color:#00b894;border-color:#00b89444">⏱️ Banco de Horas</button>
@@ -5888,7 +5884,7 @@ setTimeout(initFirebase, 500);
 // SERVICE WORKER + PWA INSTALL
 // ═══════════════════════════════════════════════════
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/escala-garcons/sw.js')
+  navigator.serviceWorker.register('./sw.js?v=100', {updateViaCache:'none'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.warn('SW erro:',e));
 }

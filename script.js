@@ -2155,10 +2155,32 @@ function setRecByDate(nome,ano,mes,dia,status,extra){
 // ─── Bridge: quando selecionar status na semana atual, salva também por data ───
 function bridgeSaveByDate(nome,dayIdx,status,extra){
   const d=WEEK_DATES[dayIdx];
-  const key=`drec_${nome}_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  const val={status,extra,ts:Date.now()};
+  const iso=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const key=`drec_${nome}_${iso}`;
+
+  if(status===''){
+    delete _fbCache[key];
+    if(fbDb&&fbConnected){
+      const wk=getWeekKeyByDate(new Date(iso+'T00:00:00'));
+      fbDb.ref('presenca/'+wk+'/'+fbEncode(key)).remove().catch(e=>console.warn('bridge remove:',e.message));
+    }
+    if(gToken&&SHEET_ID) triggerSheetsSync();
+    return;
+  }
+
+  const val={status,extra:extra||{},ts:Date.now()};
   save(key,val);
-  pushToFirebase(key, val);
+
+  if(fbDb&&fbConnected){
+    const wk=getWeekKeyByDate(new Date(iso+'T00:00:00'));
+    _ignoringRemoteUpdate=true;
+    fbDb.ref('presenca/'+wk+'/'+fbEncode(key)).set(val)
+      .catch(e=>console.warn('bridgeSaveByDate:',e.message))
+      .finally(()=>{setTimeout(()=>{_ignoringRemoteUpdate=false;},800);});
+  }else{
+    pushToFirebase(key, val);
+  }
+
   if(gToken&&SHEET_ID) triggerSheetsSync(); // sync automático ao salvar
 }
 
@@ -3610,10 +3632,11 @@ function buildCard(f){
   const atestadoSalvo   = st==='atestado'    && r.extra && (r.extra.ini || r.extra.obs);
   const faltaSalva      = st==='falta'       && r.extra && r.extra._saved;
   const trocaFolgaSalva = st==='troca-folga';
+  const feriasSalva     = st==='ferias'      && r.extra && (r.extra.ini || r.extra.fim || r.extra._saved);
 
-  if(atestadoSalvo || faltaSalva || trocaFolgaSalva){
-    const corBorda  = st==='atestado'?'#2980b9':st==='troca-folga'?'#8e44ad':'#e74c3c';
-    const badgeCls2 = st==='atestado'?'badge-atestado':st==='troca-folga'?'badge-troca-folga':'badge-falta';
+  if(atestadoSalvo || faltaSalva || trocaFolgaSalva || feriasSalva){
+    const corBorda  = st==='ferias'?'#00b894':st==='atestado'?'#2980b9':st==='troca-folga'?'#8e44ad':'#e74c3c';
+    const badgeCls2 = st==='ferias'?'badge-ferias':st==='atestado'?'badge-atestado':st==='troca-folga'?'badge-troca-folga':'badge-falta';
     const ex2 = (r.extra && typeof r.extra==='object') ? r.extra : {};
     const nomeSafe = f.nome.replace(/'/g,"\\'");
     const rawId = f.nome.replace(/ /g,'_').replace(/[^a-zA-Z0-9_]/g,'');
@@ -3654,6 +3677,11 @@ function buildCard(f){
           '<button onclick="cancelarTrocaFolga(\''+nomeSafe+'\')" style="width:100%;margin-top:6px;background:none;border:1.5px solid #e74c3c;color:#e74c3c;border-radius:9px;padding:8px;font-size:11px;font-weight:700;cursor:pointer">❌ Cancelar troca</button>'+
           '</div>';
       }
+    } else if(st==='ferias'){
+      let info='🌴 Férias';
+      if(ex2.ini || ex2.fim) info+='<br>📅 '+(ex2.ini||'?')+' até '+(ex2.fim||'?');
+      if(ex2.obs) info+='<br>📝 '+ex2.obs;
+      extraHtml='<div class="saved-info">'+info+editBtn2+'</div>';
     } else {
       extraHtml = buildExtra(f.nome,st,ex2);
     }
@@ -3964,7 +3992,7 @@ function selectStatus(name,newSt){
     openTrocaFolgaFromCard(name);
     return;
   }
-  if(status==='falta'||status==='atestado'){
+  if(status==='falta'||status==='atestado'||status==='ferias'){
     const dadosExistentes = r.status===status ? r.extra||{} : {};
     setRec(curDay,name,status,dadosExistentes);
     buildMain();refreshPendBadge();
@@ -4012,7 +4040,7 @@ function saveRec(name,st){
   if(st==='ferias'){
     ex={ini:v('f_fe_ini_'+rawId),fim:v('f_fe_fim_'+rawId),obs:v('f_fe_obs_'+rawId),_saved:true};
     if(!ex.ini || !ex.fim){
-      showToast('Informe o início e o fim das férias');
+      showToast('⚠️ Informe o início e o fim das férias');
       return;
     }
   }

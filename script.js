@@ -3682,6 +3682,11 @@ function buildCard(f){
       if(ex2.ini || ex2.fim) info+='<br>📅 '+(ex2.ini||'?')+' até '+(ex2.fim||'?');
       if(ex2.obs) info+='<br>📝 '+ex2.obs;
       extraHtml='<div class="saved-info">'+info+editBtn2+'</div>';
+    } else if(st==='ferias'){
+      let info='🌴 Férias';
+      if(ex2.ini || ex2.fim) info+='<br>📅 '+(ex2.ini||'?')+' até '+(ex2.fim||'?');
+      if(ex2.obs) info+='<br>📝 '+ex2.obs;
+      extraHtml='<div class="saved-info">'+info+editBtn2+'</div>';
     } else {
       extraHtml = buildExtra(f.nome,st,ex2);
     }

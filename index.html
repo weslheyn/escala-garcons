@@ -384,6 +384,25 @@ body.home-active #premiumDashboard{display:block}
   .slide-panel.open{right:0 !important;}
   .modal-box{max-width:720px;}
 }
+
+/* ===== MÓDULO G'S ===== */
+.gs-wrap{padding:14px;background:radial-gradient(circle at 15% 0%,#25130d 0%,#11131d 40%,#070910 100%);min-height:100%}
+.gs-hero{border:1px solid #d6a30055;background:linear-gradient(145deg,#151823,#080b11);border-radius:18px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.gs-hero h2{margin:0;color:#f5c842;font-family:'Barlow Condensed',sans-serif;font-size:34px;line-height:1}
+.gs-hero p{margin:6px 0 0;color:#b7bfd8;font-size:12px}
+.gs-add{border:0;border-radius:14px;background:#f5c842;color:#090b13;font-weight:900;padding:12px 16px;white-space:nowrap}
+.gs-filters{display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:10px;margin-bottom:12px}
+.gs-table-card{border:1px solid #ffffff14;background:linear-gradient(145deg,#151823,#080b11);border-radius:18px;overflow:hidden}
+.gs-table-head,.gs-row{display:grid;grid-template-columns:1.6fr .55fr .75fr .8fr 1fr .55fr;gap:8px;align-items:center}
+.gs-table-head{padding:12px 14px;background:#ffffff08;color:#c9cede;font-size:10px;font-weight:900;text-transform:uppercase}
+.gs-row{padding:11px 14px;border-top:1px solid #ffffff0d;color:#fff;font-size:12px}
+.gs-person{display:flex;align-items:center;gap:10px;min-width:0}.gs-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#3b82f6,#7c3aed);font-weight:900;color:#fff}.gs-name{font-weight:900;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gs-sub{font-size:10px;color:#8d96b8;margin-top:3px}
+.gs-code{color:#f5c842;font-weight:900;font-size:15px}.gs-pass{display:inline-flex;align-items:center;gap:6px;background:#ffffff08;border:1px solid #ffffff12;border-radius:9px;padding:7px 10px}
+.gs-status{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;font-size:10px;font-weight:900;padding:6px 9px;width:max-content}.gs-emuso{background:#0f513022;color:#35f080;border:1px solid #35f08033}.gs-bloq{background:#6b450022;color:#f5c842;border:1px solid #f5c84244}.gs-livre{background:#6b728022;color:#cbd5e1;border:1px solid #cbd5e133}
+.gs-date{font-size:11px;color:#cbd5e1;line-height:1.25}.gs-alert{color:#f5c842;font-size:10px;font-weight:800;margin-top:3px}.gs-action{display:flex;gap:8px;justify-content:flex-end}.gs-btn{border:1px solid #d6a30066;background:#111827;color:#f5c842;border-radius:10px;padding:8px 9px;font-weight:900}.gs-btn.danger{border-color:#e74c3c66;color:#ff6b6b}.gs-btn.add{border-color:#35f08066;color:#35f080}
+.gs-hist-item{border:1px solid #ffffff14;background:#111827;border-radius:12px;padding:10px;margin-bottom:8px;color:#cbd5e1;font-size:12px}.gs-hist-item b{color:#fff}
+@media(max-width:760px){.gs-filters{grid-template-columns:1fr}.gs-table-head{display:none}.gs-row{grid-template-columns:1fr;gap:7px}.gs-action{justify-content:flex-start}.gs-hero{align-items:flex-start;flex-direction:column}.gs-add{width:100%}}
+
 </style>
 <!-- Firebase SDK (Realtime Database — sync em tempo real) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -431,10 +450,73 @@ body.home-active #premiumDashboard{display:block}
     <div class="dash-card c-purple" onclick="openPracasDiarias()"><span class="dash-badge" id="dashPracasBadge">Sorteio</span><div><div class="ic">🎲</div><h3>Praças<br>Diárias</h3><p>Sorteio de praças integrado ao mapa do dia.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-gold" onclick="openDashboardModule('funcionarios')"><div><div class="ic">👤</div><h3>Funcionários</h3><p>Cadastro e gestão de funcionários.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-orange" onclick="location.href='eventos.html'"><span class="dash-badge" id="dashEventosBadge">Premium</span><div><div class="ic">🥂</div><h3>Eventos</h3><p>Vendas, negociações, calendário, contratos e recuperação de clientes.</p></div><div class="go">Acessar ›</div></div>
+    <div class="dash-card c-gold" onclick="openDashboardModule('gs')"><span class="dash-badge">Novo</span><div><div class="ic">🔐</div><h3>G's</h3><p>Gerencie códigos e senhas dos garçons.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-orange" onclick="openDashboardModule('fornecedores')"><div><div class="ic">🤝</div><h3>Fornecedores</h3><p>Prestadores de serviço e contatos.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-purple wide" onclick="openDashboardModule('relatorios')"><div><div class="ic">📊</div><h3>Relatórios / Exportar</h3><p>Visualize, filtre e exporte relatórios.</p></div><div class="go">Acessar ›</div></div>
   </div>
 </section>
+
+
+<!-- PAINEL G'S -->
+<div class="slide-panel" id="gsPanel">
+  <div class="panel-header">
+    <button class="panel-back" onclick="closePanel('gsPanel')">←</button>
+    <div class="panel-title">🔐 G's</div>
+    <button class="panel-action" onclick="openGsHistory()" style="background:#3a2609;color:#f5c842;border:1px solid #d6a30077">Histórico</button>
+  </div>
+
+  <div class="gs-wrap">
+    <div class="gs-hero">
+      <div>
+        <h2>G's</h2>
+        <p>Gerencie códigos e senhas dos garçons. Apenas o nome é editável. Código e senha não podem ser alterados.</p>
+      </div>
+      <button class="gs-add" onclick="gsNovoLivre()">+ Novo Garçom</button>
+    </div>
+
+    <div class="gs-filters">
+      <input id="gsBusca" class="field-input" placeholder="🔎 Pesquisar por nome ou código..." oninput="renderGsTable()">
+      <select id="gsStatusFiltro" class="field-input" onchange="renderGsTable()">
+        <option value="">Todos os status</option>
+        <option value="EM_USO">Em uso</option>
+        <option value="BLOQUEADO">Bloqueado</option>
+        <option value="LIVRE">Livre</option>
+      </select>
+      <select id="gsCodigoFiltro" class="field-input" onchange="renderGsTable()">
+        <option value="">Todos os G's</option>
+      </select>
+    </div>
+
+    <div class="gs-table-card">
+      <div class="gs-table-head">
+        <div>GARÇOM</div><div>CÓDIGO</div><div>SENHA</div><div>STATUS</div><div>ÚLTIMA ALTERAÇÃO</div><div>AÇÃO</div>
+      </div>
+      <div id="gsTableBody"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="gsEditModal" onclick="if(event.target===this)closeModal('gsEditModal')">
+  <div class="modal-box">
+    <div class="modal-title" id="gsEditTitle">Editar G</div>
+    <div class="field-wrap"><span class="field-label">Garçom</span><input class="field-input" id="gsNomeInput" placeholder="Nome do garçom"></div>
+    <div class="field-wrap"><span class="field-label">Código</span><input class="field-input" id="gsCodigoInput" disabled></div>
+    <div class="field-wrap"><span class="field-label">Senha</span><input class="field-input" id="gsSenhaInput" disabled></div>
+    <div class="field-wrap"><span class="field-label">Data da modificação</span><input class="field-input" id="gsDataInput" type="date"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('gsEditModal')">CANCELAR</button>
+      <button class="btn-confirm" onclick="salvarGsEdit()">💾 SALVAR</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="gsHistoryModal" onclick="if(event.target===this)closeModal('gsHistoryModal')">
+  <div class="modal-box" style="max-height:82vh;overflow:auto">
+    <div class="modal-title">🕘 Histórico de Alterações dos G's</div>
+    <div id="gsHistoryContent"></div>
+    <div class="modal-btns"><button class="btn-cancel" onclick="closeModal('gsHistoryModal')">FECHAR</button></div>
+  </div>
+</div>
 
 <!-- CENTRAL DE ALERTAS DO DASHBOARD -->
 <div class="modal-overlay" id="centralAlertasModal" onclick="if(event.target===this)closeModal('centralAlertasModal')">
@@ -7619,6 +7701,7 @@ function openDashboardModule(mod){
     if(mod==='pracas'){ if(typeof openPracasDiarias==='function') openPracasDiarias(); else showToast('Praças indisponível'); return; }
     if(mod==='funcionarios'){ showEquipe(); return; }
     if(mod==='eventos'){ if(typeof openCalendarioEventos==='function') openCalendarioEventos(); else showToast('Calendário de Eventos indisponível'); return; }
+    if(mod==='gs'){ if(typeof openGsPanel==='function') openGsPanel(); else showToast('Módulo G\'s indisponível'); return; }
     if(mod==='fornecedores'){ if(typeof openFornecedoresPanel==='function') openFornecedoresPanel(); else showMais(); return; }
     if(mod==='relatorios'){ openReport(); return; }
   }catch(e){ console.warn('openDashboardModule',mod,e); showToast('⚠️ Não foi possível abrir este módulo'); }
@@ -7790,6 +7873,25 @@ document.addEventListener('DOMContentLoaded',()=>{try{showHomeDashboard();update
 
 <style>
 #gc-install-banner{position:fixed;left:14px;right:14px;bottom:14px;z-index:99999;display:none;align-items:center;gap:10px;background:linear-gradient(145deg,#171c2b,#0f1320);border:1px solid rgba(242,199,91,.45);border-radius:18px;padding:12px;box-shadow:0 16px 50px rgba(0,0,0,.55);color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif}#gc-install-banner.show{display:flex}#gc-install-banner div{flex:1}#gc-install-banner b{display:block;color:#f2c75b;font-size:14px}#gc-install-banner span{display:block;color:#b9c0d0;font-size:12px;margin-top:2px}#gc-install-banner button{border:0;border-radius:12px;background:#f2c75b;color:#111;padding:10px 12px;font-weight:900}#gc-install-banner .gc-close{background:#172033;color:#fff;border:1px solid #2a3145;width:38px;padding:10px 0}@media(max-width:520px){#gc-install-banner span{display:none}}
+
+/* ===== MÓDULO G'S ===== */
+.gs-wrap{padding:14px;background:radial-gradient(circle at 15% 0%,#25130d 0%,#11131d 40%,#070910 100%);min-height:100%}
+.gs-hero{border:1px solid #d6a30055;background:linear-gradient(145deg,#151823,#080b11);border-radius:18px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.gs-hero h2{margin:0;color:#f5c842;font-family:'Barlow Condensed',sans-serif;font-size:34px;line-height:1}
+.gs-hero p{margin:6px 0 0;color:#b7bfd8;font-size:12px}
+.gs-add{border:0;border-radius:14px;background:#f5c842;color:#090b13;font-weight:900;padding:12px 16px;white-space:nowrap}
+.gs-filters{display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:10px;margin-bottom:12px}
+.gs-table-card{border:1px solid #ffffff14;background:linear-gradient(145deg,#151823,#080b11);border-radius:18px;overflow:hidden}
+.gs-table-head,.gs-row{display:grid;grid-template-columns:1.6fr .55fr .75fr .8fr 1fr .55fr;gap:8px;align-items:center}
+.gs-table-head{padding:12px 14px;background:#ffffff08;color:#c9cede;font-size:10px;font-weight:900;text-transform:uppercase}
+.gs-row{padding:11px 14px;border-top:1px solid #ffffff0d;color:#fff;font-size:12px}
+.gs-person{display:flex;align-items:center;gap:10px;min-width:0}.gs-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#3b82f6,#7c3aed);font-weight:900;color:#fff}.gs-name{font-weight:900;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gs-sub{font-size:10px;color:#8d96b8;margin-top:3px}
+.gs-code{color:#f5c842;font-weight:900;font-size:15px}.gs-pass{display:inline-flex;align-items:center;gap:6px;background:#ffffff08;border:1px solid #ffffff12;border-radius:9px;padding:7px 10px}
+.gs-status{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;font-size:10px;font-weight:900;padding:6px 9px;width:max-content}.gs-emuso{background:#0f513022;color:#35f080;border:1px solid #35f08033}.gs-bloq{background:#6b450022;color:#f5c842;border:1px solid #f5c84244}.gs-livre{background:#6b728022;color:#cbd5e1;border:1px solid #cbd5e133}
+.gs-date{font-size:11px;color:#cbd5e1;line-height:1.25}.gs-alert{color:#f5c842;font-size:10px;font-weight:800;margin-top:3px}.gs-action{display:flex;gap:8px;justify-content:flex-end}.gs-btn{border:1px solid #d6a30066;background:#111827;color:#f5c842;border-radius:10px;padding:8px 9px;font-weight:900}.gs-btn.danger{border-color:#e74c3c66;color:#ff6b6b}.gs-btn.add{border-color:#35f08066;color:#35f080}
+.gs-hist-item{border:1px solid #ffffff14;background:#111827;border-radius:12px;padding:10px;margin-bottom:8px;color:#cbd5e1;font-size:12px}.gs-hist-item b{color:#fff}
+@media(max-width:760px){.gs-filters{grid-template-columns:1fr}.gs-table-head{display:none}.gs-row{grid-template-columns:1fr;gap:7px}.gs-action{justify-content:flex-start}.gs-hero{align-items:flex-start;flex-direction:column}.gs-add{width:100%}}
+
 </style>
 <div id="gc-install-banner"><div><b>Instalar Gestão Coco Bambu</b><span>Use como app em tela cheia no celular ou computador.</span></div><button id="gc-install-btn">Instalar</button><button class="gc-close" id="gc-install-close">×</button></div>
 <script>
@@ -7808,6 +7910,53 @@ document.addEventListener('DOMContentLoaded',()=>{try{showHomeDashboard();update
   });
   if(close)close.addEventListener('click',function(){ localStorage.setItem(key,'1'); if(banner)banner.classList.remove('show'); });
 })();
+</script>
+
+
+<script>
+/* ===== MÓDULO G'S — ISOLADO ===== */
+const GS_DEFAULT=[
+  ['','G1','286511'],['WILLIAN FRANCO','G2','744432'],['FABRICIO','G3','337700'],['IGOR FERREIRA','G4','264684'],['','G5','847551'],['','G6','820157'],['','G7','558311'],['','G8','008398'],['','G9','999556'],['','G10','375339'],
+  ['','G11','514736'],['','G12','848700'],['','G13','303665'],['','G14','895374'],['KLEBER','G15','873436'],['ANDRE','G16','863621'],['','G17','839542'],['FABRICIA','G18','447782'],['ALEXANDRE','G19','274713'],['FABIALLY','G20','808791'],
+  ['ANA LUCIA','G21','310815'],['','G22','307658'],['RICKSON','G23','879566'],['PATRICIA','G24','825466'],['HELEN','G25','720093'],['MARINA','G26','826000'],['LEYREAN','G27','490507'],['PAULO','G28','408259'],['MIGUEL SEBASTIAN','G29','151116'],['','G30','180820'],
+  ['','G31','279629'],['','G32','252862'],['','G33','795893'],['','G34','188859'],['CAMILA','G35','187924'],['BAR','G36','654536'],['SAMUEL OLIVEIRA','G37','702444'],['','G38','435622'],['','G39','533391'],['','G40','395385'],
+  ['','M01','DIGITAL'],['THIAGO SANTOS','M02','DIGITAL']
+];
+let gsEditCodigo=null;
+function _gsHojeIso(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function _gsPt(v){if(!v)return '-';if(/^\d{4}-\d{2}-\d{2}$/.test(v)){const [y,m,d]=v.split('-');return `${d}/${m}/${y}`}return v}
+function _gsDiasDesde(iso){if(!iso)return null;const d=new Date(iso+'T00:00:00');const h=new Date();h.setHours(0,0,0,0);return Math.floor((h-d)/86400000)}
+function _gsBloqAte(iso){if(!iso)return '';const d=new Date(iso+'T00:00:00');d.setDate(d.getDate()+30);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function _gsLoad(){let arr=[];try{arr=JSON.parse(localStorage.getItem('gs_registros')||'[]')}catch(e){};if(!arr.length){arr=GS_DEFAULT.map(x=>({nome:x[0],codigo:x[1],senha:x[2],ultimaAlteracao:'',bloqueadoAte:'',historico:[]}));localStorage.setItem('gs_registros',JSON.stringify(arr));}return arr}
+function _gsSave(arr){localStorage.setItem('gs_registros',JSON.stringify(arr));try{if(typeof fbDb!=='undefined'&&fbDb&&fbConnected)fbDb.ref('gs_registros').set(arr)}catch(e){console.warn('gs firebase',e)}}
+function _gsStatus(g){if(String(g.nome||'').trim())return 'EM_USO';if(g.bloqueadoAte){const hoje=_gsHojeIso();if(g.bloqueadoAte>=hoje)return 'BLOQUEADO'}return 'LIVRE'}
+function openGsPanel(){showAppFromDashboard&&showAppFromDashboard();openPanel('gsPanel');renderGsFiltroCodigos();renderGsTable();try{if(typeof fbDb!=='undefined'&&fbDb&&fbConnected){fbDb.ref('gs_registros').once('value').then(s=>{if(s.exists()){localStorage.setItem('gs_registros',JSON.stringify(s.val()));renderGsTable();}})}}catch(e){}}
+function renderGsFiltroCodigos(){const sel=document.getElementById('gsCodigoFiltro');if(!sel)return;const old=sel.value;sel.innerHTML='<option value="">Todos os G\\'s</option>'+_gsLoad().map(g=>`<option value="${g.codigo}">${g.codigo}</option>`).join('');sel.value=old||''}
+function renderGsTable(){
+ const body=document.getElementById('gsTableBody');if(!body)return;
+ const busca=(document.getElementById('gsBusca')?.value||'').toUpperCase().trim();
+ const stf=document.getElementById('gsStatusFiltro')?.value||'';const codf=document.getElementById('gsCodigoFiltro')?.value||'';
+ let arr=_gsLoad().filter(g=>(!busca||String(g.nome||'').toUpperCase().includes(busca)||String(g.codigo||'').toUpperCase().includes(busca))&&(!stf||_gsStatus(g)===stf)&&(!codf||g.codigo===codf));
+ body.innerHTML=arr.map(g=>{
+  const st=_gsStatus(g);const cls=st==='EM_USO'?'gs-emuso':st==='BLOQUEADO'?'gs-bloq':'gs-livre';
+  const dias=_gsDiasDesde(g.ultimaAlteracao);let data=g.ultimaAlteracao?_gsPt(g.ultimaAlteracao)+'<br><span style="color:#8d96b8">'+(dias===0?'hoje':`há ${dias} dias`)+'</span>':'-<br><span style="color:#8d96b8">Nunca utilizado</span>';
+  if(st==='BLOQUEADO')data+=`<div class="gs-alert">Bloqueado até ${_gsPt(g.bloqueadoAte)}</div>`;
+  const initials=(g.nome||'--').split(' ').filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase()||'--';
+  return `<div class="gs-row">
+    <div class="gs-person"><div class="gs-avatar">${initials}</div><div><div class="gs-name">${g.nome||g.codigo}</div><div class="gs-sub">${g.nome?'':'(Disponível)'}</div></div></div>
+    <div class="gs-code">${g.codigo}</div>
+    <div><span class="gs-pass">${g.senha} 🔒</span></div>
+    <div><span class="gs-status ${cls}">${st==='EM_USO'?'EM USO':st==='BLOQUEADO'?'BLOQUEADO':'LIVRE'}</span></div>
+    <div class="gs-date">${data}</div>
+    <div class="gs-action"><button class="gs-btn" onclick="editarGs('${g.codigo}')">✏️</button>${g.nome?`<button class="gs-btn danger" onclick="removerGs('${g.codigo}')">⊘</button>`:`<button class="gs-btn add" onclick="editarGs('${g.codigo}')">+</button>`}</div>
+  </div>`;
+ }).join('')||'<div class="empty">Nenhum G encontrado.</div>';
+}
+function editarGs(cod){const g=_gsLoad().find(x=>x.codigo===cod);if(!g)return;gsEditCodigo=cod;document.getElementById('gsEditTitle').textContent='Editar '+cod;document.getElementById('gsNomeInput').value=g.nome||'';document.getElementById('gsCodigoInput').value=g.codigo;document.getElementById('gsSenhaInput').value=g.senha;document.getElementById('gsDataInput').value=_gsHojeIso();openModal('gsEditModal')}
+function salvarGsEdit(){const arr=_gsLoad();const g=arr.find(x=>x.codigo===gsEditCodigo);if(!g)return;const novo=(document.getElementById('gsNomeInput').value||'').trim().toUpperCase();const data=document.getElementById('gsDataInput').value||_gsHojeIso();const antigo=g.nome||'';if(novo!==antigo){g.historico=g.historico||[];g.historico.push({data,anterior:antigo||'(vazio)',novo:novo||'(vazio)',tipo:novo?'TROCA/INCLUSÃO':'REMOÇÃO'});g.nome=novo;g.ultimaAlteracao=data;g.bloqueadoAte=novo?'':_gsBloqAte(data)}_gsSave(arr);closeModal('gsEditModal');renderGsFiltroCodigos();renderGsTable();showToast('✅ G salvo com sucesso')}
+function removerGs(cod){if(!confirm('Remover o garçom deste G e bloquear por 30 dias?'))return;const arr=_gsLoad();const g=arr.find(x=>x.codigo===cod);if(!g)return;const data=_gsHojeIso();g.historico=g.historico||[];g.historico.push({data,anterior:g.nome||'(vazio)',novo:'(vazio)',tipo:'REMOÇÃO'});g.nome='';g.ultimaAlteracao=data;g.bloqueadoAte=_gsBloqAte(data);_gsSave(arr);renderGsTable();showToast('✅ G removido e bloqueado por 30 dias')}
+function gsNovoLivre(){document.getElementById('gsStatusFiltro').value='LIVRE';renderGsTable();showToast('Selecione um G livre para cadastrar o garçom')}
+function openGsHistory(){const arr=_gsLoad();const hist=[];arr.forEach(g=>(g.historico||[]).forEach(h=>hist.push({...h,codigo:g.codigo})));hist.sort((a,b)=>String(b.data).localeCompare(String(a.data)));document.getElementById('gsHistoryContent').innerHTML=hist.map(h=>`<div class="gs-hist-item"><b>${h.codigo}</b> — ${h.tipo}<br>Data: ${_gsPt(h.data)}<br>De: ${h.anterior}<br>Para: ${h.novo}</div>`).join('')||'<div class="empty">Nenhuma alteração registrada.</div>';openModal('gsHistoryModal')}
 </script>
 
 </body>

@@ -1,4 +1,1 @@
-// FIREBASE G's
-function salvarGsFirebase(dados){
- console.log("Salvar:",dados);
-}
+// Firebase do módulo G's usa fbDb/fbConnected já existentes no app.

@@ -403,6 +403,42 @@ body.home-active #premiumDashboard{display:block}
 .gs-hist-item{border:1px solid #ffffff14;background:#111827;border-radius:12px;padding:10px;margin-bottom:8px;color:#cbd5e1;font-size:12px}.gs-hist-item b{color:#fff}
 @media(max-width:760px){.gs-filters{grid-template-columns:1fr}.gs-table-head{display:none}.gs-row{grid-template-columns:1fr;gap:7px}.gs-action{justify-content:flex-start}.gs-hero{align-items:flex-start;flex-direction:column}.gs-add{width:100%}}
 
+
+/* ===== CORREÇÃO DEFINITIVA G'S: TELA EXCLUSIVA ===== */
+#gsPanel.gs-fullscreen{
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  height:100vh!important;
+  max-width:none!important;
+  transform:none!important;
+  left:0!important;
+  top:0!important;
+  z-index:999999!important;
+  display:block!important;
+  background:radial-gradient(circle at 15% 0%,#4a120f 0%,#11131d 38%,#070910 100%)!important;
+  border-left:0!important;
+  overflow:auto!important;
+}
+#gsPanel.gs-fullscreen .panel-header{
+  position:sticky!important;
+  top:0!important;
+  z-index:10!important;
+  background:#10131d!important;
+  border-bottom:1px solid #d6a30077!important;
+}
+body.gs-open #mainContent,
+body.gs-open .header,
+body.gs-open #syncBar,
+body.gs-open #sheetsBar,
+body.gs-open .date-bar,
+body.gs-open #summary{
+  display:none!important;
+}
+body.gs-open #premiumDashboard{
+  display:block!important;
+}
+
 </style>
 <!-- Firebase SDK (Realtime Database — sync em tempo real) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -450,7 +486,7 @@ body.home-active #premiumDashboard{display:block}
     <div class="dash-card c-purple" onclick="openPracasDiarias()"><span class="dash-badge" id="dashPracasBadge">Sorteio</span><div><div class="ic">🎲</div><h3>Praças<br>Diárias</h3><p>Sorteio de praças integrado ao mapa do dia.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-gold" onclick="openDashboardModule('funcionarios')"><div><div class="ic">👤</div><h3>Funcionários</h3><p>Cadastro e gestão de funcionários.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-orange" onclick="location.href='eventos.html'"><span class="dash-badge" id="dashEventosBadge">Premium</span><div><div class="ic">🥂</div><h3>Eventos</h3><p>Vendas, negociações, calendário, contratos e recuperação de clientes.</p></div><div class="go">Acessar ›</div></div>
-    <div class="dash-card c-gold" onclick="openDashboardModule('gs')"><span class="dash-badge">Novo</span><div><div class="ic">🔐</div><h3>G's</h3><p>Gerencie códigos e senhas dos garçons.</p></div><div class="go">Acessar ›</div></div>
+    <div class="dash-card c-gold" onclick="abrirGsTelaExclusiva()"><span class="dash-badge">Novo</span><div><div class="ic">🔐</div><h3>G\'s</h3><p>Gerencie códigos e senhas dos garçons.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-orange" onclick="openDashboardModule('fornecedores')"><div><div class="ic">🤝</div><h3>Fornecedores</h3><p>Prestadores de serviço e contatos.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-purple wide" onclick="openDashboardModule('relatorios')"><div><div class="ic">📊</div><h3>Relatórios / Exportar</h3><p>Visualize, filtre e exporte relatórios.</p></div><div class="go">Acessar ›</div></div>
   </div>
@@ -460,7 +496,7 @@ body.home-active #premiumDashboard{display:block}
 <!-- PAINEL G'S -->
 <div class="slide-panel" id="gsPanel">
   <div class="panel-header">
-    <button class="panel-back" onclick="closePanel('gsPanel')">←</button>
+    <button class="panel-back" onclick="fecharGsTelaExclusiva()">←</button>
     <div class="panel-title">🔐 G's</div>
     <button class="panel-action" onclick="openGsHistory()" style="background:#3a2609;color:#f5c842;border:1px solid #d6a30077">Histórico</button>
   </div>
@@ -7701,7 +7737,7 @@ function openDashboardModule(mod){
     if(mod==='pracas'){ if(typeof openPracasDiarias==='function') openPracasDiarias(); else showToast('Praças indisponível'); return; }
     if(mod==='funcionarios'){ showEquipe(); return; }
     if(mod==='eventos'){ if(typeof openCalendarioEventos==='function') openCalendarioEventos(); else showToast('Calendário de Eventos indisponível'); return; }
-    if(mod==='gs'){ if(typeof openGsPanel==='function') openGsPanel(); else showToast('Módulo G\'s indisponível'); return; }
+    if(mod==='gs'){ abrirGsTelaExclusiva(); return; }
     if(mod==='fornecedores'){ if(typeof openFornecedoresPanel==='function') openFornecedoresPanel(); else showMais(); return; }
     if(mod==='relatorios'){ openReport(); return; }
   }catch(e){ console.warn('openDashboardModule',mod,e); showToast('⚠️ Não foi possível abrir este módulo'); }
@@ -7892,6 +7928,42 @@ document.addEventListener('DOMContentLoaded',()=>{try{showHomeDashboard();update
 .gs-hist-item{border:1px solid #ffffff14;background:#111827;border-radius:12px;padding:10px;margin-bottom:8px;color:#cbd5e1;font-size:12px}.gs-hist-item b{color:#fff}
 @media(max-width:760px){.gs-filters{grid-template-columns:1fr}.gs-table-head{display:none}.gs-row{grid-template-columns:1fr;gap:7px}.gs-action{justify-content:flex-start}.gs-hero{align-items:flex-start;flex-direction:column}.gs-add{width:100%}}
 
+
+/* ===== CORREÇÃO DEFINITIVA G'S: TELA EXCLUSIVA ===== */
+#gsPanel.gs-fullscreen{
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  height:100vh!important;
+  max-width:none!important;
+  transform:none!important;
+  left:0!important;
+  top:0!important;
+  z-index:999999!important;
+  display:block!important;
+  background:radial-gradient(circle at 15% 0%,#4a120f 0%,#11131d 38%,#070910 100%)!important;
+  border-left:0!important;
+  overflow:auto!important;
+}
+#gsPanel.gs-fullscreen .panel-header{
+  position:sticky!important;
+  top:0!important;
+  z-index:10!important;
+  background:#10131d!important;
+  border-bottom:1px solid #d6a30077!important;
+}
+body.gs-open #mainContent,
+body.gs-open .header,
+body.gs-open #syncBar,
+body.gs-open #sheetsBar,
+body.gs-open .date-bar,
+body.gs-open #summary{
+  display:none!important;
+}
+body.gs-open #premiumDashboard{
+  display:block!important;
+}
+
 </style>
 <div id="gc-install-banner"><div><b>Instalar Gestão Coco Bambu</b><span>Use como app em tela cheia no celular ou computador.</span></div><button id="gc-install-btn">Instalar</button><button class="gc-close" id="gc-install-close">×</button></div>
 <script>
@@ -8017,6 +8089,62 @@ function salvarGsEdit(){const arr=_gsLoad();const g=arr.find(x=>x.codigo===gsEdi
 function removerGs(cod){if(!confirm('Remover o garçom deste G e bloquear por 30 dias?'))return;const arr=_gsLoad();const g=arr.find(x=>x.codigo===cod);if(!g)return;const data=_gsHojeIso();g.historico=g.historico||[];g.historico.push({data,anterior:g.nome||'(vazio)',novo:'(vazio)',tipo:'REMOÇÃO'});g.nome='';g.ultimaAlteracao=data;g.bloqueadoAte=_gsBloqAte(data);_gsSave(arr);renderGsTable();showToast('✅ G removido e bloqueado por 30 dias')}
 function gsNovoLivre(){document.getElementById('gsStatusFiltro').value='LIVRE';renderGsTable();showToast('Selecione um G livre para cadastrar o garçom')}
 function openGsHistory(){const arr=_gsLoad();const hist=[];arr.forEach(g=>(g.historico||[]).forEach(h=>hist.push({...h,codigo:g.codigo})));hist.sort((a,b)=>String(b.data).localeCompare(String(a.data)));document.getElementById('gsHistoryContent').innerHTML=hist.map(h=>`<div class="gs-hist-item"><b>${h.codigo}</b> — ${h.tipo}<br>Data: ${_gsPt(h.data)}<br>De: ${h.anterior}<br>Para: ${h.novo}</div>`).join('')||'<div class="empty">Nenhuma alteração registrada.</div>';openModal('gsHistoryModal')}
+</script>
+
+
+<script>
+/* ===== CORREÇÃO DEFINITIVA DA ROTA G'S ===== */
+function abrirGsTelaExclusiva(){
+  try{
+    document.body.classList.add('home-active');
+    document.body.classList.add('gs-open');
+    const dash=document.getElementById('premiumDashboard');
+    if(dash) dash.style.display='block';
+
+    const main=document.getElementById('mainContent');
+    if(main) main.style.display='none';
+
+    const p=document.getElementById('gsPanel');
+    if(!p){
+      if(typeof showToast==='function') showToast("⚠️ Painel G's não encontrado");
+      return;
+    }
+
+    // fecha outros painéis sem chamar tela de frequência
+    document.querySelectorAll('.slide-panel.active').forEach(el=>{
+      if(el.id!=='gsPanel') el.classList.remove('active');
+    });
+
+    p.classList.add('active');
+    p.classList.add('gs-fullscreen');
+    p.style.display='block';
+    p.style.transform='none';
+    p.style.left='0';
+    p.style.width='100vw';
+
+    if(typeof renderGsFiltroCodigos==='function') renderGsFiltroCodigos();
+    const st=document.getElementById('gsStatusFiltro');
+    if(st) st.value='';
+    if(typeof renderGsTable==='function') renderGsTable();
+
+  }catch(e){
+    console.warn('abrirGsTelaExclusiva',e);
+    if(typeof showToast==='function') showToast("⚠️ Erro ao abrir G's");
+  }
+}
+function fecharGsTelaExclusiva(){
+  const p=document.getElementById('gsPanel');
+  if(p){
+    p.classList.remove('active');
+    p.classList.remove('gs-fullscreen');
+    p.style.display='';
+  }
+  document.body.classList.remove('gs-open');
+  document.body.classList.add('home-active');
+  const dash=document.getElementById('premiumDashboard');
+  if(dash) dash.style.display='block';
+}
+function openGsPanel(){ abrirGsTelaExclusiva(); }
 </script>
 
 </body>

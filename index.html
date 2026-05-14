@@ -316,6 +316,11 @@ body.home-active #premiumDashboard{display:block}
 .alert-center-list{display:flex;flex-direction:column;gap:10px}.alert-center-card{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;background:var(--s2);border:1px solid var(--border);border-radius:16px;padding:12px}.alert-center-ic{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px}.alert-center-title{font-size:14px;font-weight:900;color:#fff}.alert-center-sub{font-size:11px;color:var(--sub);margin-top:2px}.alert-center-go{color:#f5c842;font-weight:900}
 @media/* Calendário de Eventos — módulo isolado */
 .eventos-toolbar{display:flex;gap:8px;overflow-x:auto;padding:12px 14px 8px}.eventos-chip{border:1px solid var(--border);background:var(--s2);color:var(--sub);border-radius:999px;padding:8px 12px;font-size:11px;font-weight:900;white-space:nowrap}.eventos-chip.active{background:#f5c842;color:#111;border-color:#f5c842}.eventos-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 14px 10px}.eventos-kpi{background:linear-gradient(145deg,#151823,#0b0d14);border:1px solid #d6a30044;border-radius:15px;padding:11px}.eventos-kpi b{display:block;color:#f5c842;font-size:19px}.eventos-kpi span{font-size:9px;color:var(--sub);text-transform:uppercase;font-weight:800}.evento-card{margin:0 14px 10px;background:var(--card);border:1px solid var(--border);border-left:4px solid #f5c842;border-radius:16px;padding:13px;box-shadow:0 4px 16px #0004}.evento-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.evento-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:#fff;line-height:1;text-transform:uppercase}.evento-status{font-size:9px;font-weight:900;border-radius:999px;padding:5px 8px;white-space:nowrap;border:1px solid #ffffff22}.evento-meta{font-size:11px;color:var(--sub);line-height:1.55;margin-top:8px}.evento-obs{margin-top:8px;font-size:11px;color:#d7dbea;line-height:1.45;background:#0b0e17;border:1px solid #ffffff10;border-radius:11px;padding:9px;white-space:pre-wrap}.evento-empty{margin:18px 14px;background:var(--s2);border:1px dashed var(--border);border-radius:16px;padding:20px;text-align:center;color:var(--sub);font-size:12px}.eventos-monthbar{padding:10px 14px;display:grid;grid-template-columns:1fr 1fr;gap:8px}.eventos-monthbar input,.eventos-monthbar select{background:var(--s2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:11px;font-weight:800}.evento-actions{display:flex;gap:8px;margin:8px 14px 12px}.evento-actions button{flex:1;border:1px solid #d6a30055;background:#d6a30018;color:#f5c842;border-radius:12px;padding:10px;font-weight:900;font-size:11px}.evento-actions button.alt{border-color:#2980b955;background:#2980b918;color:#71b7ff}
+/* ===== MÓDULO G's ===== */
+.gs-toolbar{display:grid;grid-template-columns:1.2fr .7fr .7fr auto;gap:10px;padding:14px;background:#0d111bcc;border-bottom:1px solid var(--border)}
+.gs-toolbar input,.gs-toolbar select{background:var(--s2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:11px 12px;font-size:12px;outline:none;font-weight:700}
+.gs-wrap{padding:14px;overflow:auto}.gs-table{width:100%;border-collapse:separate;border-spacing:0;background:linear-gradient(145deg,#151823,#0b0d14);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 8px 24px #0004}.gs-table th{font-size:10px;color:#b7bfd8;text-transform:uppercase;letter-spacing:.8px;background:#1a1f2c;padding:12px;text-align:left}.gs-table td{border-top:1px solid #ffffff10;padding:11px 12px;font-size:12px;vertical-align:middle}.gs-code{color:#f5c842;font-weight:900;font-size:14px}.gs-pass{display:inline-flex;align-items:center;gap:7px;background:#202638;border:1px solid #ffffff12;border-radius:9px;padding:7px 10px;color:#e8ecf6;font-weight:800}.gs-name{font-weight:900;color:#fff}.gs-sub{font-size:10px;color:var(--sub);margin-top:3px}.gs-avatar{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-right:10px;font-weight:900;color:#fff;background:linear-gradient(135deg,#335cff,#7b3fe4)}.gs-status{display:inline-block;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900;text-transform:uppercase}.gs-status.uso{background:#0f5f35;color:#34f08a;border:1px solid #34f08a33}.gs-status.livre{background:#3b4252;color:#d8dee9;border:1px solid #ffffff22}.gs-status.bloq{background:#5b3f0b;color:#ffc52e;border:1px solid #ffc52e44}.gs-action{border:1px solid #d6a30077;background:#d6a30014;color:#f5c842;border-radius:10px;padding:8px 10px;font-weight:900;cursor:pointer}.gs-action:disabled{opacity:.35;cursor:not-allowed}.gs-history{padding:12px 14px;background:#0b0e17;border-top:1px solid var(--border);color:var(--sub);font-size:11px}.gs-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:14px 14px 0}.gs-kpi{background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:12px}.gs-kpi b{display:block;color:#f5c842;font-size:20px}.gs-kpi span{font-size:9px;color:var(--sub);text-transform:uppercase;font-weight:900}@media(max-width:720px){.gs-toolbar{grid-template-columns:1fr}.gs-kpis{grid-template-columns:repeat(2,1fr)}.gs-table{min-width:760px}}
+
 
 (max-width:390px){.dash-grid{gap:7px}.dash-card{min-height:108px;padding:10px}.dash-card h3{font-size:16px}.dash-card p{font-size:9.5px}.bottom-nav{gap:8px}.bnav-btn.premium-nav{flex-basis:82px!important}.dash-hello h1{font-size:23px}}
 
@@ -432,6 +437,7 @@ body.home-active #premiumDashboard{display:block}
     <div class="dash-card c-gold" onclick="openDashboardModule('funcionarios')"><div><div class="ic">👤</div><h3>Funcionários</h3><p>Cadastro e gestão de funcionários.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-orange" onclick="location.href='eventos.html'"><span class="dash-badge" id="dashEventosBadge">Premium</span><div><div class="ic">🥂</div><h3>Eventos</h3><p>Vendas, negociações, calendário, contratos e recuperação de clientes.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-orange" onclick="openDashboardModule('fornecedores')"><div><div class="ic">🤝</div><h3>Fornecedores</h3><p>Prestadores de serviço e contatos.</p></div><div class="go">Acessar ›</div></div>
+    <div class="dash-card c-gold" onclick="openDashboardModule('gs')"><span class="dash-badge">Novo</span><div><div class="ic">🔐</div><h3>G's</h3><p>Controle de códigos, senhas e uso dos garçons.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-purple wide" onclick="openDashboardModule('relatorios')"><div><div class="ic">📊</div><h3>Relatórios / Exportar</h3><p>Visualize, filtre e exporte relatórios.</p></div><div class="go">Acessar ›</div></div>
   </div>
 </section>
@@ -7604,6 +7610,104 @@ function openPerfilPremium(){
   _premiumNavActive('navPerfil');
   showEquipe();
 }
+
+// ═══════════════════════════════════════════════════
+// MÓDULO G's — códigos e senhas dos garçons
+// ═══════════════════════════════════════════════════
+const GS_STORAGE_KEY='gestao_cb_gs_lista_v1';
+let _gsLista=[];
+let _gsEditCodigo=null;
+const GS_SEED=[
+ ['','G1','286511'],['WILLIAN FRANCO','G2','744432'],['FABRICIO','G3','337700'],['IGOR FERREIRA','G4','264684'],['','G5','847551'],['','G6','820157'],['','G7','558311'],['','G8','008398'],['','G9','999556'],['','G10','375339'],['','G11','514736'],['','G12','848700'],['','G13','303665'],['','G14','895374'],['KLEBER','G15','873436'],['ANDRE','G16','863621'],['','G17','839542'],['FABRICIA','G18','447782'],['ALEXANDRE','G19','274713'],['FABIALLY','G20','808791'],['ANA LUCIA','G21','310815'],['','G22','307658'],['RICKSON','G23','879566'],['PATRICIA','G24','825466'],['HELEN','G25','720093'],['MARINA','G26','826000'],['LEYREAN','G27','490507'],['PAULO','G28','408259'],['MIGUEL SEBASTIAN','G29','151116'],['','G30','180820'],['','G31','279629'],['','G32','252862'],['','G33','795893'],['','G34','188859'],['CAMILA','G35','187924'],['BAR','G36','654536'],['SAMUEL OLIVEIRA','G37','702444'],['','G38','435622'],['','G39','533391'],['','G40','395385'],['','M01','DIGITAL'],['THIAGO SANTOS','M02','DIGITAL']
+];
+function _gsHojeIso(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function _gsAddDays(iso,days){const d=new Date(iso+'T00:00:00');d.setDate(d.getDate()+days);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function _gsIsoBr(iso){if(!iso)return '-'; if(/^\d{2}\/\d{2}\/\d{4}$/.test(iso))return iso; if(/^\d{4}-\d{2}-\d{2}$/.test(iso)){const [y,m,d]=iso.split('-');return `${d}/${m}/${y}`} return iso}
+function _gsDiasDesde(iso){if(!iso)return '';const a=new Date(iso+'T00:00:00'),b=new Date();b.setHours(0,0,0,0);const n=Math.round((b-a)/86400000);if(n===0)return 'hoje';if(n>0)return 'há '+n+' dias';return 'em '+Math.abs(n)+' dias'}
+function _gsBloqueado(rec){return rec.bloqueadoAte && new Date(rec.bloqueadoAte+'T00:00:00')>new Date(new Date().toDateString())}
+function _gsStatus(rec){if(_gsBloqueado(rec))return 'bloqueado';if((rec.nome||'').trim())return 'uso';return 'livre'}
+function _gsSeed(){return GS_SEED.map((r,i)=>({id:r[1],nome:r[0],codigo:r[1],senha:r[2],ultimaAlteracao:r[0]?_gsHojeIso():'',bloqueadoAte:'',historico:r[0]?[{data:_gsHojeIso(),acao:'Cadastro inicial',novo:r[0]}]:[]}));}
+function _gsSaveLocal(){try{localStorage.setItem(GS_STORAGE_KEY,JSON.stringify(_gsLista));}catch(e){} }
+function _gsPushFirebase(){_gsSaveLocal(); if(fbDb&&fbConnected){fbDb.ref('controle_gs').set({atualizadoEm:new Date().toISOString(),lista:_gsLista}).catch(e=>console.warn('controle_gs',e.message));}}
+async function _gsLoad(){
+  let local=[];try{local=JSON.parse(localStorage.getItem(GS_STORAGE_KEY)||'[]')||[]}catch(e){}
+  if(local.length) _gsLista=local; else _gsLista=_gsSeed();
+  if(fbDb&&fbConnected){
+    try{const snap=await fbDb.ref('controle_gs/lista').once('value');const data=snap.val();if(Array.isArray(data)&&data.length){_gsLista=data;_gsSaveLocal();}else{_gsPushFirebase();}}catch(e){console.warn('load gs',e.message)}
+  }
+}
+async function openGsPanel(){
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+  openPanel('gsPanel');
+  await _gsLoad();
+  _gsFillCodigoFilter();
+  renderGsPanel();
+}
+function _gsFillCodigoFilter(){const sel=document.getElementById('gsCodigoFilter');if(!sel)return;const atual=sel.value||'todos';sel.innerHTML='<option value="todos">Todos os G\'s</option>'+_gsLista.map(r=>`<option value="${r.codigo}">${r.codigo}</option>`).join('');sel.value=atual||'todos';}
+function renderGsPanel(){
+  const q=(document.getElementById('gsSearch')?.value||'').toLowerCase().trim();
+  const stf=document.getElementById('gsStatusFilter')?.value||'todos';
+  const cf=document.getElementById('gsCodigoFilter')?.value||'todos';
+  const total=_gsLista.length, uso=_gsLista.filter(r=>_gsStatus(r)==='uso').length, bloq=_gsLista.filter(r=>_gsStatus(r)==='bloqueado').length, livre=_gsLista.filter(r=>_gsStatus(r)==='livre').length;
+  const k=document.getElementById('gsKpis'); if(k) k.innerHTML=`<div class="gs-kpi"><b>${total}</b><span>Total de códigos</span></div><div class="gs-kpi"><b>${uso}</b><span>Em uso</span></div><div class="gs-kpi"><b>${bloq}</b><span>Bloqueados</span></div><div class="gs-kpi"><b>${livre}</b><span>Livres</span></div>`;
+  let lista=_gsLista.filter(r=>{const st=_gsStatus(r); const busca=(r.nome+' '+r.codigo+' '+r.senha).toLowerCase();return (!q||busca.includes(q))&&(stf==='todos'||stf===st)&&(cf==='todos'||cf===r.codigo)});
+  const rows=lista.map(r=>{
+    const st=_gsStatus(r); const cls=st==='uso'?'uso':st==='bloqueado'?'bloq':'livre'; const label=st==='uso'?'EM USO':st==='bloqueado'?'BLOQUEADO':'LIVRE';
+    const iniciais=(r.nome||r.codigo||'--').split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'--';
+    const nome=(r.nome||'').trim();
+    const bloqInfo=st==='bloqueado'?`<div class="gs-sub" style="color:#f5c842">Bloqueado até ${_gsIsoBr(r.bloqueadoAte)}<br>faltam ${Math.max(0,Math.ceil((new Date(r.bloqueadoAte+'T00:00:00')-new Date(new Date().toDateString()))/86400000))} dias</div>`:'';
+    return `<tr><td><span class="gs-avatar">${nome?iniciais:'--'}</span><span class="gs-name">${nome||r.codigo}</span><div class="gs-sub">${nome?'Garçom':'Disponível'}</div></td><td><span class="gs-code">${r.codigo}</span></td><td><span class="gs-pass">${r.senha} 🔒</span></td><td><span class="gs-status ${cls}">${label}</span>${bloqInfo}</td><td>${r.ultimaAlteracao?_gsIsoBr(r.ultimaAlteracao):'-'}<div class="gs-sub">${r.ultimaAlteracao?_gsDiasDesde(r.ultimaAlteracao):'Nunca utilizado'}</div></td><td><button class="gs-action" onclick="editarGs('${r.codigo}')">✏️ Editar</button></td></tr>`;
+  }).join('');
+  const el=document.getElementById('gsContent');
+  if(!el)return;
+  el.innerHTML=`<table class="gs-table"><thead><tr><th>Garçom</th><th>Código</th><th>Senha</th><th>Status</th><th>Última alteração</th><th>Ação</th></tr></thead><tbody>${rows||'<tr><td colspan="6" style="text-align:center;color:var(--sub);padding:24px">Nenhum registro encontrado.</td></tr>'}</tbody></table><div class="gs-history">Regra operacional: quando um G é removido/trocado, ele fica bloqueado por 30 dias antes de ser usado por outro garçom.</div>`;
+}
+function editarGs(codigo){
+  const r=_gsLista.find(x=>x.codigo===codigo); if(!r)return;
+  _gsEditCodigo=codigo;
+  document.getElementById('gsEditTitle').textContent='Editar '+codigo;
+  document.getElementById('gsEditCodigo').value=r.codigo;
+  document.getElementById('gsEditSenha').value=r.senha;
+  document.getElementById('gsEditNome').value=r.nome||'';
+  const st=_gsStatus(r);
+  let info='Código e senha são fixos. Somente o nome do garçom pode ser editado.';
+  if(st==='bloqueado') info='Este G está bloqueado até '+_gsIsoBr(r.bloqueadoAte)+'. Para usar outro nome, aguarde completar 30 dias.';
+  document.getElementById('gsEditInfo').textContent=info;
+  openModal('gsEditModal');
+}
+function salvarGsEdit(){
+  const r=_gsLista.find(x=>x.codigo===_gsEditCodigo); if(!r)return;
+  const antigo=(r.nome||'').trim();
+  const novo=(document.getElementById('gsEditNome').value||'').trim().toUpperCase();
+  const hoje=_gsHojeIso();
+  if(antigo===novo){closeModal('gsEditModal');showToast('Sem alteração');return;}
+  if(_gsBloqueado(r) && novo){showToast('⚠️ Este G está bloqueado até '+_gsIsoBr(r.bloqueadoAte));return;}
+  if(antigo && novo && antigo!==novo){
+    if(!confirm('Este G estava em uso por '+antigo+'. Pela regra dos 30 dias, ele será removido e bloqueado antes de outro garçom usar. Continuar?'))return;
+    r.nome=''; r.ultimaAlteracao=hoje; r.bloqueadoAte=_gsAddDays(hoje,30); r.historico=r.historico||[]; r.historico.push({data:hoje,acao:'Troca solicitada / bloqueio 30 dias',anterior:antigo,novo:''});
+    _gsPushFirebase(); closeModal('gsEditModal'); renderGsPanel(); showToast('🔒 G bloqueado por 30 dias'); return;
+  }
+  if(antigo && !novo){
+    if(!confirm('Remover '+antigo+' deste G e bloquear por 30 dias?'))return;
+    r.nome=''; r.ultimaAlteracao=hoje; r.bloqueadoAte=_gsAddDays(hoje,30); r.historico=r.historico||[]; r.historico.push({data:hoje,acao:'Remoção / bloqueio 30 dias',anterior:antigo,novo:''});
+  }else if(!antigo && novo){
+    r.nome=novo; r.ultimaAlteracao=hoje; r.bloqueadoAte=''; r.historico=r.historico||[]; r.historico.push({data:hoje,acao:'Vinculado a garçom',anterior:'',novo:novo});
+  }
+  _gsPushFirebase(); closeModal('gsEditModal'); renderGsPanel(); showToast('✅ G atualizado');
+}
+function openGsNovoLivre(){
+  const r=_gsLista.find(x=>_gsStatus(x)==='livre');
+  if(!r){showToast('⚠️ Nenhum G livre disponível');return;}
+  editarGs(r.codigo);
+}
+function openGsHistorico(){
+  const hist=[]; _gsLista.forEach(r=>(r.historico||[]).forEach(h=>hist.push({...h,codigo:r.codigo,senha:r.senha})));
+  hist.sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  const el=document.getElementById('gsHistoricoContent');
+  el.innerHTML=hist.length?hist.map(h=>`<div class="export-card"><h3>${h.codigo} • ${_gsIsoBr(h.data)}</h3><div style="font-size:12px;color:var(--text);line-height:1.6"><b>${h.acao}</b><br>Anterior: ${h.anterior||'-'}<br>Novo: ${h.novo||'-'}</div></div>`).join(''):'<div class="empty">Nenhum histórico registrado.</div>';
+  openModal('gsHistoricoModal');
+}
+
 function openDashboardModule(mod){
   showAppFromDashboard();
   _premiumNavActive('navMaisPremium');
@@ -7620,6 +7724,7 @@ function openDashboardModule(mod){
     if(mod==='funcionarios'){ showEquipe(); return; }
     if(mod==='eventos'){ if(typeof openCalendarioEventos==='function') openCalendarioEventos(); else showToast('Calendário de Eventos indisponível'); return; }
     if(mod==='fornecedores'){ if(typeof openFornecedoresPanel==='function') openFornecedoresPanel(); else showMais(); return; }
+    if(mod==='gs'){ openGsPanel(); return; }
     if(mod==='relatorios'){ openReport(); return; }
   }catch(e){ console.warn('openDashboardModule',mod,e); showToast('⚠️ Não foi possível abrir este módulo'); }
 }

@@ -963,7 +963,51 @@ window.EVENTOS={
   renderClientesCadastroFiltrado(){renderClientesCadastroFiltrado();},
   openClienteForm(){ $('modalTitle').textContent='Novo cliente'; $('modalBody').innerHTML=clienteFormHtml(); $('modal').classList.add('open');},
   editCliente(id){const c=(state.clientesCadastros||[]).find(x=>x.id===id); if(!c)return toast('Cliente não encontrado'); $('modalTitle').textContent='Editar cliente'; $('modalBody').innerHTML=clienteFormHtml(c); $('modal').classList.add('open');},
-  deleteCliente(id){const c=(state.clientesCadastros||[]).find(x=>x.id===id); if(!c)return toast('Cliente não encontrado'); if(!confirm('Excluir este cadastro de cliente?'))return; state.clientesCadastros=(state.clientesCadastros||[]).filter(x=>x.id!==id); saveClientes(); if(window.EventosFirebase&&EventosFirebase.enabled&&EventosFirebase.deleteClienteCadastro) EventosFirebase.deleteClienteCadastro(id).catch(()=>{}); $('modal').classList.remove('open'); toast('Cadastro excluído'); if(state.tab==='clientes')renderClientes();},
+  deleteCliente(id){
+    const c=(state.clientesCadastros||[]).find(x=>x.id===id);
+    if(!c)return toast('Cliente não encontrado');
+
+    const nomeCliente=(c.nome||c.cliente||'').trim();
+    const msg = nomeCliente
+      ? `Excluir o cadastro de ${nomeCliente} e remover também os leads/eventos vinculados no funil?`
+      : 'Excluir este cadastro de cliente e remover também os leads/eventos vinculados no funil?';
+
+    if(!confirm(msg))return;
+
+    const nCliente=norm(nomeCliente);
+    const telCliente=String(c.telefone||'').replace(/\D/g,'');
+    const emailCliente=norm(c.email||'');
+    const eventoId=String(c.eventoId||'');
+
+    const removidos=[];
+    state.eventos=(state.eventos||[]).filter(e=>{
+      const matchEventoId = eventoId && String(e.id||'')===eventoId;
+      const matchNome = nCliente && norm(e.cliente||e.nomeCliente||e.nome||'')===nCliente;
+      const matchTel = telCliente && String(e.telefone||e.celular||e.whatsapp||'').replace(/\D/g,'')===telCliente;
+      const matchEmail = emailCliente && norm(e.email||'')===emailCliente;
+
+      if(matchEventoId || matchNome || matchTel || matchEmail){
+        removidos.push(e);
+        return false;
+      }
+      return true;
+    });
+
+    state.clientesCadastros=(state.clientesCadastros||[]).filter(x=>x.id!==id);
+    saveClientes();
+    save();
+
+    if(window.EventosFirebase&&EventosFirebase.enabled){
+      if(EventosFirebase.deleteClienteCadastro) EventosFirebase.deleteClienteCadastro(id).catch(()=>{});
+      if(EventosFirebase.saveAll) EventosFirebase.saveAll(state.eventos).catch(()=>{});
+    }
+
+    $('modal').classList.remove('open');
+
+    const qtd=removidos.length;
+    toast(qtd ? `Cadastro excluído e ${qtd} lead(s)/evento(s) removido(s) do funil` : 'Cadastro excluído');
+    render();
+  },
   saveClienteForm(id){const c=collectClienteCadastro(id); if(!c.nome)return toast('Informe o nome do cliente'); const idx=state.clientesCadastros.findIndex(x=>x.id===c.id); if(idx>=0)state.clientesCadastros[idx]=Object.assign({},state.clientesCadastros[idx],c); else state.clientesCadastros.unshift(c); state.clientesCadastros=dedupeClientesCadastro(state.clientesCadastros); saveClientes(); if(window.EventosFirebase&&EventosFirebase.enabled&&EventosFirebase.saveClienteCadastro) EventosFirebase.saveClienteCadastro(c).catch(()=>{}); $('modal').classList.remove('open'); toast('Cliente salvo'); if(state.tab==='clientes')renderClientes();},
   agendaFiltro(k,v){state.agendaFiltros=state.agendaFiltros||{};state.agendaFiltros[k]=v;renderAgenda();},
   openAgendaForm(){openAgendaModal();},

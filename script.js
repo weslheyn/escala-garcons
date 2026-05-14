@@ -134,6 +134,7 @@ const STATUS=[
   {id:'presente',      emoji:'✅', label:'Presente',         planilha:'PRESENTE',    color:'#27ae60'},
   {id:'falta',         emoji:'❌', label:'Falta',             planilha:'FALTA',       color:'#e74c3c'},
   {id:'atestado',      emoji:'🏥', label:'Atestado',          planilha:'ATESTADO',    color:'#2980b9'},
+  {id:'ferias',        emoji:'🌴', label:'Férias',            planilha:'FÉRIAS',      color:'#00b894'},
   {id:'troca-horario', emoji:'🔄', label:'Troca Horário',     planilha:'TROCA HOR.',  color:'#d35400'},
   {id:'troca-folga',   emoji:'📅', label:'Troca Folga',       planilha:'TROCA FOLGA', color:'#8e44ad'},
   {id:'medida',        emoji:'⚠️', label:'Medida Discipl.',   planilha:'MEDIDA DISC.',color:'#e84393'},
@@ -197,6 +198,8 @@ let _ignoringRemoteUpdate = false;
 let _fbListenerActive = false;
 let _equipeCentralListenerActive = false;
 let _aplicandoEquipeRemota = false;
+let _ultimaEscalaOficialTs = 0;
+function _payloadTsEquipe(p){ if(!p) return 0; if(typeof p.atualizadoEm==='number') return p.atualizadoEm; const t=Date.parse(p.atualizadoEm||''); return isNaN(t)?0:t; }
 const EQUIPE_OFICIAL_PATH = 'equipe_oficial/atual';
 const ESCALA_OFICIAL_ULTIMA_PATH = 'escala_oficial/ultima';
 
@@ -248,7 +251,7 @@ function aplicarEquipeCentral(payload, opts){
 function _normalizarDataFolgaDom(v){
   if(!v) return '';
   const s = String(v).trim();
-  if(!s || s.toUpperCase()==='FOLGA' || s.toUpperCase()==='LICENÇA') return s.toUpperCase();
+  if(!s || s.toUpperCase()==='FOLGA' || s.toUpperCase()==='LICENÇA' || s.toUpperCase()==='FERIAS' || s.toUpperCase()==='FÉRIAS') return s.toUpperCase();
   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if(iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
   return s;
@@ -257,6 +260,7 @@ function _turnoPorGrupoEscala(grupo, horario, funcao, status){
   const g = String(grupo||'').toUpperCase();
   const h = String(horario||'').toUpperCase();
   const st = String(status||'').toUpperCase();
+  if(st.includes('FERIAS') || st.includes('FÉRIAS') || h.includes('FERIAS') || h.includes('FÉRIAS')) return 'FÉRIAS';
   if(st.includes('LICEN') || h.includes('LICEN')) return 'LICENÇA';
   if(g.includes('FECHA')) return 'FECHAMENTO';
   if(g.includes('ABRE') || g.includes('ABERTURA')) return 'ABERTURA';
@@ -292,14 +296,16 @@ function _colaboradoresTabelaParaEquipe(rows){
     let folga = folgaPadrao;
     let folga2;
     let folgaDom;
-    if(status.includes('LICEN') || folgaPadrao.includes('LICEN') || horario.toUpperCase().includes('LICEN')){
+    if(status.includes('FERIAS') || status.includes('FÉRIAS') || folgaPadrao.includes('FERIAS') || folgaPadrao.includes('FÉRIAS') || horario.toUpperCase().includes('FERIAS') || horario.toUpperCase().includes('FÉRIAS')){
+      folga = '';
+    } else if(status.includes('LICEN') || folgaPadrao.includes('LICEN') || horario.toUpperCase().includes('LICEN')){
       folga = '';
     } else if(folgaDomRaw === 'FOLGA'){
       folga2 = 'DOM';
     } else if(folgaDomRaw && folgaDomRaw !== 'LICENÇA'){
       folgaDom = [folgaDomRaw];
     }
-    equipe.push({id,nome:nome.toUpperCase(),categoria,turno,horIni:ini,horFim:fim,folga,folga2,folgaDom});
+    equipe.push({id,nome:nome.toUpperCase(),categoria,turno,horIni:turno==='FÉRIAS'||turno==='LICENÇA'?'':ini,horFim:turno==='FÉRIAS'||turno==='LICENÇA'?'':fim,folga,folga2,folgaDom,statusEscala:status});
   });
   return equipe;
 }
@@ -328,11 +334,15 @@ function iniciarListenerEquipeOficial(){
   fbDb.ref(EQUIPE_OFICIAL_PATH).on('value', snap=>{
     const payload = snap.val();
     if(!payload) return;
+    const ts = _payloadTsEquipe(payload);
+    // Se a escala exportada do Drive é mais recente, não deixa a equipe antiga sobrescrever férias/licença/status.
+    if(_ultimaEscalaOficialTs && ts && ts < _ultimaEscalaOficialTs) return;
     aplicarEquipeCentral(payload, {silent:true});
   });
   fbDb.ref(ESCALA_OFICIAL_ULTIMA_PATH).on('value', snap=>{
     const payload = snap.val();
     if(!payload) return;
+    _ultimaEscalaOficialTs = Math.max(_ultimaEscalaOficialTs, _payloadTsEquipe(payload));
     aplicarEscalaOficialFirebase(payload, {silent:true});
   });
 }
@@ -754,13 +764,13 @@ let EQUIPE = (()=>{
 function getTurnos(){
   const t={};
   EQUIPE.forEach(f=>{
-    const turnoKey=f.turno==='LICENÇA'?'LICENÇA':f.turno;
+    const turnoKey=(f.turno==='LICENÇA'||f.turno==='LICENCA')?'LICENÇA':((String(f.turno||'').toUpperCase()==='FERIAS'||String(f.turno||'').toUpperCase()==='FÉRIAS')?'FÉRIAS':f.turno);
     if(!t[turnoKey])t[turnoKey]={id:turnoKey.toLowerCase(),label:turnoKey,membros:[],horario:''};
     t[turnoKey].membros.push(f);
     if(f.horIni&&f.horFim)t[turnoKey].horario=f.horIni+' às '+f.horFim;
   });
-  const order=['ABERTURA','INTERCALADO','FECHAMENTO','ADMINISTRATIVO','LICENÇA'];
-  const colors={'ABERTURA':'#f5c842','INTERCALADO':'#3498db','FECHAMENTO':'#e74c3c','ADMINISTRATIVO':'#27ae60','LICENÇA':'#7f8c8d'};
+  const order=['ABERTURA','INTERCALADO','FECHAMENTO','ADMINISTRATIVO','FÉRIAS','LICENÇA'];
+  const colors={'ABERTURA':'#f5c842','INTERCALADO':'#3498db','FECHAMENTO':'#e74c3c','ADMINISTRATIVO':'#27ae60','FÉRIAS':'#00b894','LICENÇA':'#7f8c8d'};
   return order.filter(k=>t[k]).map(k=>({...t[k],color:colors[k]||'#888'}));
 }
 
@@ -1112,7 +1122,8 @@ function getDiaSemana(ano,mes,dia){
 function statusToCell(nome,dayOfMonth,ano,mes){
   const f=EQUIPE.find(x=>x.nome===nome);
   if(!f)return '';
-  if(f.turno==='LICENÇA')return 'LICENÇA';
+  if(f.turno==='LICENÇA'||f.turno==='LICENCA')return 'LICENÇA';
+  if(String(f.turno||'').toUpperCase()==='FERIAS'||String(f.turno||'').toUpperCase()==='FÉRIAS')return 'FÉRIAS';
   const diaSem=getDiaSemana(ano,mes,dayOfMonth);
   if(isFolgaEscala(f,diaSem,new Date(ano,mes-1,dayOfMonth)))return 'FOLGA';
 
@@ -1519,6 +1530,7 @@ async function _aplicarFormatacaoAba(sheetId, sorted, totalDias){
       cf('FALTA',rgb(255,80,80),white),
       cf('ATESTADO',rgb(255,235,156),rgb(120,80,0)),
       cf('FOLGA',rgb(200,200,200),rgb(60,60,60)),
+      cf('FERIAS',rgb(204,255,229),rgb(0,120,90)),
       cf('LICENCA',rgb(173,216,230),rgb(0,80,120)),
       cf('TROCA HOR.',rgb(189,215,238),rgb(0,70,127)),
       cf('TROCA FOLGA',rgb(218,190,255),rgb(80,0,160)),
@@ -2231,6 +2243,7 @@ function _mapCategoria(funcStr){
 // ── Detecta turno pelo horário de início ──
 function _detectTurno(horStr, funcao){
   const h = (horStr||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  if(h.includes('FERIAS')) return 'FÉRIAS';
   if(h.includes('LICENCA')||h.includes('LICENCA')) return 'LICENÇA';
   // Funções administrativas — folga sab+dom
   const admFuncs = ['LANCADOR','ASSISTENTE RH','ANALISTA DE RH','AUDITOR','COMPRADOR',
@@ -3082,13 +3095,17 @@ function buildTabs(){
 function setDay(i){curDay=i;buildTabs();buildMain();}
 
 function buildSummary(){
-  const cnt={presente:0,falta:0,atestado:0,'troca-horario':0,'troca-folga':0,medida:0,'saida-antecipada':0,'banco-horas':0};
-  EQUIPE.forEach(f=>{const r=getRec(curDay,f.nome);if(r.status)cnt[r.status]=(cnt[r.status]||0)+1;});
+  const cnt={presente:0,falta:0,atestado:0,ferias:0,'troca-horario':0,'troca-folga':0,medida:0,'saida-antecipada':0,'banco-horas':0};
+  EQUIPE.forEach(f=>{
+    if(String(f.turno||'').toUpperCase()==='FERIAS'||String(f.turno||'').toUpperCase()==='FÉRIAS'){cnt.ferias++; return;}
+    const r=getRec(curDay,f.nome);if(r.status)cnt[r.status]=(cnt[r.status]||0)+1;
+  });
   document.getElementById('presentCount').textContent=cnt.presente+' presentes';
   document.getElementById('summary').innerHTML=
     '<div class="scard"><div class="scard-num c-green">'+cnt.presente+'</div><div class="scard-lbl">Presente</div></div>'+
     '<div class="scard"><div class="scard-num c-red">'+cnt.falta+'</div><div class="scard-lbl">Falta</div></div>'+
     '<div class="scard"><div class="scard-num c-blue">'+cnt.atestado+'</div><div class="scard-lbl">Atestado</div></div>'+
+    '<div class="scard"><div class="scard-num" style="color:#00b894">'+cnt.ferias+'</div><div class="scard-lbl">Férias</div></div>'+
     '<div class="scard"><div class="scard-num c-orange">'+cnt['troca-horario']+'</div><div class="scard-lbl">Troca H.</div></div>'+
     '<div class="scard"><div class="scard-num c-purple">'+cnt['troca-folga']+'</div><div class="scard-lbl">Troca F.</div></div>'+
     '<div class="scard"><div class="scard-num c-pink">'+cnt.medida+'</div><div class="scard-lbl">Discipl.</div></div>'+
@@ -3252,7 +3269,8 @@ function buildMain(){
 
 function buildTurno(t){
   const cards=t.membros.map(f=>{
-    if(f.turno==='LICENÇA')return buildLicencaCard(f);
+    if(f.turno==='LICENÇA'||f.turno==='LICENCA')return buildLicencaCard(f);
+    if(String(f.turno||'').toUpperCase()==='FERIAS'||String(f.turno||'').toUpperCase()==='FÉRIAS')return buildFeriasCard(f);
 
     // Verifica se o dia atual é o dia de folga da pessoa
     if(isFolgaEscala(f,DAYS[curDay],WEEK_DATES[curDay])){
@@ -3525,6 +3543,10 @@ function buildLicencaCard(f){
   return '<div class="emp-card" style="opacity:.5;border-left:3px solid #2980b9"><div class="emp-top"><div><button class="emp-name-btn" onclick="openFicha(\''+f.nome.replace(/'/g,"\\'")+'\')"><div class="emp-name">'+f.nome+'</div></button><div class="emp-meta">'+f.categoria+'</div></div><div class="emp-badges"><span class="badge badge-licenca">🏥 LICENÇA</span></div></div></div>';
 }
 
+function buildFeriasCard(f){
+  return '<div class="emp-card" style="opacity:.55;border-left:3px solid #00b894"><div class="emp-top"><div><button class="emp-name-btn" onclick="openFicha(\''+f.nome.replace(/'/g,"\\'")+'\')"><div class="emp-name">'+f.nome+'</div></button><div class="emp-meta">'+f.categoria+'</div></div><div class="emp-badges"><span class="badge" style="background:#00b89422;color:#00b894;border:1px solid #00b89455">🌴 FÉRIAS</span></div></div></div>';
+}
+
 // Conta quantos dias consecutivos de falta o funcionário teve ANTES do dia atual
 function contarFaltasConsecutivas(nome){
   const hoje=new Date();
@@ -3546,7 +3568,7 @@ function contarFaltasConsecutivas(nome){
       const f=EQUIPE.find(x=>x.nome===nome);
       if(!f)break;
       const diaSem=['DOM','SEG','TER','QUA','QUI','SEX','SAB'][d.getDay()];
-      if(isFolgaEscala(f,diaSem,d)||f.turno==='LICENÇA'){
+      if(isFolgaEscala(f,diaSem,d)||f.turno==='LICENÇA'||f.turno==='LICENCA'||String(f.turno||'').toUpperCase()==='FERIAS'||String(f.turno||'').toUpperCase()==='FÉRIAS'){
         // Era folga ou licença — ignora e continua
         continue;
       }
@@ -3734,6 +3756,12 @@ function buildExtra(name,st,ex){
     <div class="field-wrap"><span class="field-label">👤 Autorizado por</span><input class="field-input" id="f_sa_auth_${id}" placeholder="Nome do gestor..." value="${ex.autorizadoPor||''}"></div>
     ${saveBtn}
   </div>`;
+  if(st==='ferias'){
+    return '<div class="extra-fields">'+
+      '<div class="field-row"><div class="field-wrap"><span class="field-label">🌴 Início das férias</span><input class="field-input" type="date" id="f_fe_ini_'+id+'" value="'+(ex.ini||'')+'"></div>'+
+      '<div class="field-wrap"><span class="field-label">🏁 Fim das férias</span><input class="field-input" type="date" id="f_fe_fim_'+id+'" value="'+(ex.fim||'')+'"></div></div>'+
+      '<div class="field-wrap"><span class="field-label">📝 Observação</span><input class="field-input" id="f_fe_obs_'+id+'" placeholder="Opcional..." value="'+(ex.obs||'')+'"></div>'+saveBtn+'</div>';
+  }
   if(st==='banco-horas'){
     const hoje=new Date();
     const ano=hoje.getFullYear();
@@ -3839,6 +3867,7 @@ function buildSavedInfo(st,ex){
   }
   if(st==='falta'&&ex.obs)lines.push('⚠️ '+ex.obs);
   if(st==='atestado'){if(ex.ini||ex.fim)lines.push('📅 '+(ex.ini||'?')+' até '+(ex.fim||'?'));if(ex.dias)lines.push('🔢 '+ex.dias+' dia(s)');if(ex.obs)lines.push('📝 '+ex.obs);}
+  if(st==='ferias'){if(ex.ini||ex.fim)lines.push('🌴 Férias: '+(ex.ini||'?')+' até '+(ex.fim||'?'));if(ex.obs)lines.push('📝 '+ex.obs);}
   if(st==='troca-horario'){if(ex.ini||ex.fim)lines.push('🕐 '+(ex.ini||'?')+' às '+(ex.fim||'?'));if(ex.quem)lines.push('👤 '+ex.quem);}
   if(st==='troca-folga'){
     if(ex.trab)lines.push('📅 Trabalhou: '+ex.trab);
@@ -3851,6 +3880,12 @@ function buildSavedInfo(st,ex){
     if(ex.horSaida)lines.push('🚪 Saiu às '+ex.horSaida+(ex.horPrev?' (prev. '+ex.horPrev+')':''));
     if(ex.justificativa)lines.push('📝 '+ex.justificativa);
     if(ex.autorizadoPor)lines.push('👤 Auth: '+ex.autorizadoPor);
+  }
+  if(st==='ferias'){
+    return '<div class="extra-fields">'+
+      '<div class="field-row"><div class="field-wrap"><span class="field-label">🌴 Início das férias</span><input class="field-input" type="date" id="f_fe_ini_'+id+'" value="'+(ex.ini||'')+'"></div>'+
+      '<div class="field-wrap"><span class="field-label">🏁 Fim das férias</span><input class="field-input" type="date" id="f_fe_fim_'+id+'" value="'+(ex.fim||'')+'"></div></div>'+
+      '<div class="field-wrap"><span class="field-label">📝 Observação</span><input class="field-input" id="f_fe_obs_'+id+'" placeholder="Opcional..." value="'+(ex.obs||'')+'"></div>'+saveBtn+'</div>';
   }
   if(st==='banco-horas'){
     if(ex.tipo&&ex.horas)lines.push((ex.tipo==='CRÉDITO'?'➕':'➖')+' '+ex.horas+'h — '+ex.tipo);
@@ -3974,6 +4009,12 @@ function saveRec(name,st){
   }
   if(st==='medida')           ex={motivo:v('f_med_mot_'+rawId),acao:v('f_med_acao_'+rawId),resp:v('f_med_resp_'+rawId)};
   if(st==='saida-antecipada') ex={horSaida:v('f_sa_hor_'+rawId),horPrev:v('f_sa_prev_'+rawId),justificativa:v('f_sa_just_'+rawId),autorizadoPor:v('f_sa_auth_'+rawId)};
+  if(st==='ferias'){
+    return '<div class="extra-fields">'+
+      '<div class="field-row"><div class="field-wrap"><span class="field-label">🌴 Início das férias</span><input class="field-input" type="date" id="f_fe_ini_'+id+'" value="'+(ex.ini||'')+'"></div>'+
+      '<div class="field-wrap"><span class="field-label">🏁 Fim das férias</span><input class="field-input" type="date" id="f_fe_fim_'+id+'" value="'+(ex.fim||'')+'"></div></div>'+
+      '<div class="field-wrap"><span class="field-label">📝 Observação</span><input class="field-input" id="f_fe_obs_'+id+'" placeholder="Opcional..." value="'+(ex.obs||'')+'"></div>'+saveBtn+'</div>';
+  }
   if(st==='banco-horas'){
     const ini=v('f_bh_ini_'+rawId);
     const fim=v('f_bh_fim_'+rawId);
@@ -3992,6 +4033,19 @@ function saveRec(name,st){
   }
   setRec(curDay,name,st,ex);
   bridgeSaveByDate(name,curDay,st,ex);
+  // Se férias com período, marcar todos os dias da semana dentro do intervalo
+  if(st==='ferias' && ex.ini && ex.fim){
+    const parseDate = s => { if(!s) return null; const [y,m,d]=s.split('-'); return new Date(y,m-1,d); };
+    const iniDate = parseDate(ex.ini);
+    const fimDate = parseDate(ex.fim);
+    WEEK_DATES.forEach((wd, di) => {
+      const wdN = new Date(wd.getFullYear(), wd.getMonth(), wd.getDate());
+      if(iniDate && fimDate && wdN >= iniDate && wdN <= fimDate){
+        setRec(di, name, 'ferias', ex);
+        bridgeSaveByDate(name, di, 'ferias', ex);
+      }
+    });
+  }
   // Se atestado com período, marcar todos os dias da semana dentro do intervalo
   if(st==='atestado' && ex.ini && ex.fim){
     const parseDate = s => { if(!s) return null; const [y,m,d]=s.split('-'); return new Date(y,m-1,d); };
@@ -4060,7 +4114,7 @@ function buildPendencias(filtro){
   const entradas = []; // {func, dateStr, dayIdx, iso}
 
   EQUIPE.forEach(func=>{
-    if(func.turno==='LICENÇA') return;
+    if(func.turno==='LICENÇA'||func.turno==='LICENCA'||String(func.turno||'').toUpperCase()==='FERIAS'||String(func.turno||'').toUpperCase()==='FÉRIAS') return;
 
     // Faltas da semana atual (no cache)
     const maxDay = f==='hoje' ? curDay : WEEK_DATES.length - 1;
@@ -4407,7 +4461,7 @@ async function exportToSheets(){
       ...dataRows.map((_,i)=>cr(5+i,6+i,0,9,i%2===0?rowAlt:white,black,false,10,'CENTER')),
       bd(3,5+dataRows.length,0,9),
       cf('OK',rgb(0,176,80),white),cf('FALTA',rgb(255,199,206),rgb(156,0,6)),cf('ATESTADO',rgb(255,235,156),rgb(156,87,0)),
-      cf('FOLGA',rgb(217,217,217),rgb(80,80,80)),cf('LICENÇA',rgb(189,215,238),rgb(0,70,127)),
+      cf('FOLGA',rgb(217,217,217),rgb(80,80,80)),cf('FÉRIAS',rgb(204,255,229),rgb(0,120,90)),cf('LICENÇA',rgb(189,215,238),rgb(0,70,127)),
       cf('TROCA H.',rgb(189,215,238),rgb(0,70,127)),cf('TROCA F.',rgb(218,190,255),rgb(80,0,160)),cf('MEDIDA',rgb(255,180,220),rgb(160,0,80)),
     ]});
     showToast('✅ Planilha atualizada!');
@@ -4908,6 +4962,7 @@ function _turnoClass(turno){
   if(turno==='ABERTURA') return 'row-ab';
   if(turno==='INTERCALADO') return 'row-int';
   if(turno==='FECHAMENTO') return 'row-fec';
+  if(turno==='FÉRIAS'||turno==='FERIAS') return 'row-lic';
   if(turno==='LICENÇA') return 'row-lic';
   return 'row-int';
 }
@@ -4959,6 +5014,7 @@ function _mapaStatusInfo(status, extra){
   const cfg = {
     'falta':            {txt:'FALTA', bg:'#e74c3c33', color:'#e74c3c', conta:false},
     'atestado':         {txt:'ATES.', bg:'#2980b933', color:'#2980b9', conta:false},
+    'ferias':           {txt:'FÉR.',  bg:'#00b89433', color:'#00b894', conta:false},
     'troca-horario':    {txt:'T.HOR', bg:'#d3540033', color:'#d35400', conta:true},
     'troca-folga':      {txt:'T.FOL', bg:'#8e44ad33', color:'#8e44ad', conta:false},
     'medida':           {txt:'DISC.', bg:'#e8439333', color:'#e84393', conta:false},
@@ -4972,6 +5028,9 @@ function _mapaStatusInfo(status, extra){
 }
 
 function _mapaCell(f, turno, di){
+  if(turno === 'FÉRIAS' || turno === 'FERIAS'){
+    return {html:`<td style="background:#00b89422;color:#00b894;font-size:7px;font-weight:900">FÉR.</td>`, conta:false};
+  }
   if(turno === 'LICENÇA' || turno === 'LICENCA'){
     return {html:`<td style="color:#5a6480;font-size:7px">LIC</td>`, conta:false};
   }
@@ -5000,6 +5059,7 @@ function _mapaCell(f, turno, di){
 
 function _mapaTrabalhaDia(f, di){
   const turno = String(f.turno || 'INTERCALADO').toUpperCase();
+  if(turno === 'FÉRIAS' || turno === 'FERIAS') return {trabalha:false, status:'FÉRIAS'};
   if(turno === 'LICENÇA' || turno === 'LICENCA') return {trabalha:false, status:'LICENÇA'};
   const rec = getRec(di, f.nome);
   const st = rec && rec.status ? String(rec.status).toLowerCase() : '';
@@ -5026,6 +5086,7 @@ function _setorOperacionalLabel(f){
 
 function _turnoOperacional(f){
   const t = String(f.turno || 'INTERCALADO').toUpperCase();
+  if(t === 'FERIAS') return 'FÉRIAS';
   if(t === 'LICENCA') return 'LICENÇA';
   if(t.includes('ABERT')) return 'ABERTURA';
   if(t.includes('FECHA')) return 'FECHAMENTO';
@@ -5154,12 +5215,13 @@ function _renderCountRow(label, counts, rowClass){
 
 function renderMapaEscala(funcs){
   const dates = getWeekDates();
-  const ordemTurno = ['ABERTURA','INTERCALADO','FECHAMENTO','LICENÇA','LICENCA','ADMINISTRATIVO'];
+  const ordemTurno = ['ABERTURA','INTERCALADO','FECHAMENTO','FÉRIAS','FERIAS','LICENÇA','LICENCA','ADMINISTRATIVO'];
   const grupos = {};
   ordemTurno.forEach(t => grupos[t]=[]);
 
   funcs.forEach(f=>{
     let t = String(f.turno || 'INTERCALADO').toUpperCase();
+    if(t === 'FERIAS') t = 'FÉRIAS';
     if(t === 'LICENCA') t = 'LICENÇA';
     if(!grupos[t]) grupos[t]=[];
     grupos[t].push(f);

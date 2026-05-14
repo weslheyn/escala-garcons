@@ -3757,6 +3757,12 @@ function buildExtra(name,st,ex){
     ${saveBtn}
   </div>`;
   if(st==='ferias'){
+    if(ex && (ex.ini || ex.fim || ex.obs || ex._saved)){
+      let info='🌴 Férias';
+      if(ex.ini || ex.fim) info+='<br>📅 '+(ex.ini||'?')+' até '+(ex.fim||'?');
+      if(ex.obs) info+='<br>📝 '+ex.obs;
+      return '<div class="saved-info">'+info+editBtn+'</div>';
+    }
     return '<div class="extra-fields">'+
       '<div class="field-row"><div class="field-wrap"><span class="field-label">🌴 Início das férias</span><input class="field-input" type="date" id="f_fe_ini_'+id+'" value="'+(ex.ini||'')+'"></div>'+
       '<div class="field-wrap"><span class="field-label">🏁 Fim das férias</span><input class="field-input" type="date" id="f_fe_fim_'+id+'" value="'+(ex.fim||'')+'"></div></div>'+
@@ -3881,12 +3887,6 @@ function buildSavedInfo(st,ex){
     if(ex.justificativa)lines.push('📝 '+ex.justificativa);
     if(ex.autorizadoPor)lines.push('👤 Auth: '+ex.autorizadoPor);
   }
-  if(st==='ferias'){
-    return '<div class="extra-fields">'+
-      '<div class="field-row"><div class="field-wrap"><span class="field-label">🌴 Início das férias</span><input class="field-input" type="date" id="f_fe_ini_'+id+'" value="'+(ex.ini||'')+'"></div>'+
-      '<div class="field-wrap"><span class="field-label">🏁 Fim das férias</span><input class="field-input" type="date" id="f_fe_fim_'+id+'" value="'+(ex.fim||'')+'"></div></div>'+
-      '<div class="field-wrap"><span class="field-label">📝 Observação</span><input class="field-input" id="f_fe_obs_'+id+'" placeholder="Opcional..." value="'+(ex.obs||'')+'"></div>'+saveBtn+'</div>';
-  }
   if(st==='banco-horas'){
     if(ex.tipo&&ex.horas)lines.push((ex.tipo==='CRÉDITO'?'➕':'➖')+' '+ex.horas+'h — '+ex.tipo);
     if(ex.dataFormatada)lines.push('📅 '+ex.dataFormatada);
@@ -4010,10 +4010,11 @@ function saveRec(name,st){
   if(st==='medida')           ex={motivo:v('f_med_mot_'+rawId),acao:v('f_med_acao_'+rawId),resp:v('f_med_resp_'+rawId)};
   if(st==='saida-antecipada') ex={horSaida:v('f_sa_hor_'+rawId),horPrev:v('f_sa_prev_'+rawId),justificativa:v('f_sa_just_'+rawId),autorizadoPor:v('f_sa_auth_'+rawId)};
   if(st==='ferias'){
-    return '<div class="extra-fields">'+
-      '<div class="field-row"><div class="field-wrap"><span class="field-label">🌴 Início das férias</span><input class="field-input" type="date" id="f_fe_ini_'+id+'" value="'+(ex.ini||'')+'"></div>'+
-      '<div class="field-wrap"><span class="field-label">🏁 Fim das férias</span><input class="field-input" type="date" id="f_fe_fim_'+id+'" value="'+(ex.fim||'')+'"></div></div>'+
-      '<div class="field-wrap"><span class="field-label">📝 Observação</span><input class="field-input" id="f_fe_obs_'+id+'" placeholder="Opcional..." value="'+(ex.obs||'')+'"></div>'+saveBtn+'</div>';
+    ex={ini:v('f_fe_ini_'+rawId),fim:v('f_fe_fim_'+rawId),obs:v('f_fe_obs_'+rawId),_saved:true};
+    if(!ex.ini || !ex.fim){
+      showToast('Informe o início e o fim das férias');
+      return;
+    }
   }
   if(st==='banco-horas'){
     const ini=v('f_bh_ini_'+rawId);

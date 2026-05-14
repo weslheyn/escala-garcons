@@ -40,7 +40,9 @@ const GS_DEFAULT=[
   ['', 'G39', '533391'],
   ['', 'G40', '395385'],
   ['', 'M01', 'DIGITAL'],
-  ['THIAGO SANTOS', 'M02', 'DIGITAL']
+  ['THIAGO SANTOS', 'M02', 'DIGITAL'],
+  ['WESLLEY JANUARIO', 'M03', 'DIGITAL'],
+  ['EDMAGNA', 'M04', 'DIGITAL']
 ];
 function pt(v){if(!v)return '-'; if(/^\d{4}-\d{2}-\d{2}$/.test(v)){let [y,m,d]=v.split('-');return `${d}/${m}/${y}`} return v}
 function load(){let arr=[];try{arr=JSON.parse(localStorage.getItem('gs_registros')||'[]')}catch(e){};let by={};arr.forEach(g=>by[g.codigo]=g);GS_DEFAULT.forEach(x=>{if(!by[x[1]])by[x[1]]={nome:x[0],codigo:x[1],senha:x[2],ultimaAlteracao:'',bloqueadoAte:'',historico:[]};});arr=GS_DEFAULT.map(x=>by[x[1]]);localStorage.setItem('gs_registros',JSON.stringify(arr));return arr}

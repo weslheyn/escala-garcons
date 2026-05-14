@@ -509,156 +509,130 @@ body.gs-open{
 </style>
 
 
+
+
+
 <style id="gs-mobile-list-css">
-/* G's mobile em formato lista/tabela compacta */
-@media(max-width:760px){
-  #gsPanel.gs-fullscreen{
-    overflow-y:auto!important;
-    overflow-x:hidden!important;
-    scrollbar-width:none!important;
-    -ms-overflow-style:none!important;
-  }
-  #gsPanel.gs-fullscreen::-webkit-scrollbar{
-    width:0!important;
-    height:0!important;
-    display:none!important;
-  }
+@media (max-width: 760px){
 
-  #gsPanel .gs-wrap{
-    padding:10px!important;
-  }
+body.gs-open{
+overflow:hidden!important;
+}
 
-  #gsPanel .gs-hero{
-    padding:12px!important;
-    border-radius:14px!important;
-    margin-bottom:10px!important;
-  }
+#gsPanel{
+position:fixed!important;
+inset:0!important;
+width:100%!important;
+height:100%!important;
+overflow-y:auto!important;
+background:#060816!important;
+z-index:999999!important;
+padding-bottom:90px!important;
+}
 
-  #gsPanel .gs-hero h2{
-    font-size:26px!important;
-  }
+#gsPanel .gs-wrap{
+padding:8px!important;
+}
 
-  #gsPanel .gs-hero p{
-    font-size:11px!important;
-    line-height:1.25!important;
-  }
+#gsPanel .gs-hero{
+padding:10px!important;
+border-radius:14px!important;
+margin-bottom:8px!important;
+}
 
-  #gsPanel .gs-add{
-    width:auto!important;
-    padding:10px 12px!important;
-    font-size:12px!important;
-    border-radius:12px!important;
-    align-self:flex-end!important;
-  }
+#gsPanel .gs-filters{
+display:grid!important;
+grid-template-columns:1fr!important;
+gap:8px!important;
+}
 
-  #gsPanel .gs-filters{
-    display:grid!important;
-    grid-template-columns:1fr!important;
-    gap:8px!important;
-    margin-bottom:10px!important;
-  }
+#gsPanel .gs-table-head{
+display:none!important;
+}
 
-  #gsPanel .gs-table-card{
-    border-radius:14px!important;
-    overflow:hidden!important;
-  }
+#gsPanel .gs-row{
+display:flex!important;
+flex-direction:row!important;
+align-items:center!important;
+justify-content:space-between!important;
+gap:8px!important;
+padding:10px 8px!important;
+border-bottom:1px solid rgba(255,255,255,.06)!important;
+min-height:auto!important;
+}
 
-  #gsPanel .gs-table-head{
-    display:grid!important;
-    grid-template-columns:1.35fr .55fr .9fr .75fr .7fr!important;
-    gap:4px!important;
-    padding:9px 8px!important;
-    font-size:8.5px!important;
-  }
+#gsPanel .gs-person{
+display:flex!important;
+align-items:center!important;
+gap:8px!important;
+flex:1!important;
+min-width:0!important;
+}
 
-  #gsPanel .gs-table-head div:nth-child(5){
-    display:none!important;
-  }
+#gsPanel .gs-avatar{
+width:42px!important;
+height:42px!important;
+font-size:14px!important;
+flex-shrink:0!important;
+}
 
-  #gsPanel .gs-row{
-    display:grid!important;
-    grid-template-columns:1.35fr .55fr .9fr .75fr .7fr!important;
-    gap:4px!important;
-    align-items:center!important;
-    padding:8px 8px!important;
-    min-height:42px!important;
-    border-top:1px solid #ffffff10!important;
-    font-size:10px!important;
-  }
+#gsPanel .gs-name{
+font-size:14px!important;
+font-weight:700!important;
+line-height:1.1!important;
+white-space:nowrap!important;
+overflow:hidden!important;
+text-overflow:ellipsis!important;
+max-width:110px!important;
+}
 
-  #gsPanel .gs-person{
-    gap:6px!important;
-    min-width:0!important;
-  }
+#gsPanel .gs-sub{
+font-size:11px!important;
+opacity:.7!important;
+}
 
-  #gsPanel .gs-avatar{
-    width:28px!important;
-    height:28px!important;
-    font-size:10px!important;
-    flex:0 0 28px!important;
-  }
+#gsPanel .gs-code{
+font-size:18px!important;
+font-weight:800!important;
+color:#ffcc2f!important;
+min-width:42px!important;
+text-align:center!important;
+}
 
-  #gsPanel .gs-name{
-    font-size:10px!important;
-    line-height:1.05!important;
-    max-width:82px!important;
-    white-space:normal!important;
-    overflow:hidden!important;
-    display:-webkit-box!important;
-    -webkit-line-clamp:2!important;
-    -webkit-box-orient:vertical!important;
-  }
+#gsPanel .gs-pass{
+font-size:12px!important;
+padding:6px 8px!important;
+border-radius:8px!important;
+white-space:nowrap!important;
+}
 
-  #gsPanel .gs-sub{
-    font-size:8px!important;
-    line-height:1.05!important;
-    margin-top:1px!important;
-  }
+#gsPanel .gs-status{
+font-size:10px!important;
+padding:5px 8px!important;
+border-radius:999px!important;
+white-space:nowrap!important;
+}
 
-  #gsPanel .gs-code{
-    font-size:11px!important;
-    text-align:center!important;
-  }
+#gsPanel .gs-date{
+display:none!important;
+}
 
-  #gsPanel .gs-pass{
-    padding:5px 6px!important;
-    font-size:10px!important;
-    border-radius:8px!important;
-    justify-content:center!important;
-    white-space:nowrap!important;
-  }
+#gsPanel .gs-action{
+display:flex!important;
+gap:5px!important;
+}
 
-  #gsPanel .gs-status{
-    padding:5px 6px!important;
-    font-size:8.5px!important;
-    white-space:nowrap!important;
-  }
-
-  #gsPanel .gs-date{
-    display:none!important;
-  }
-
-  #gsPanel .gs-action{
-    gap:5px!important;
-    justify-content:flex-end!important;
-  }
-
-  #gsPanel .gs-btn{
-    padding:6px 7px!important;
-    min-width:30px!important;
-    height:30px!important;
-    font-size:12px!important;
-    border-radius:8px!important;
-  }
-
-  #gsPanel .gs-btn.danger{
-    display:inline-flex!important;
-    align-items:center!important;
-    justify-content:center!important;
-  }
+#gsPanel .gs-btn{
+width:34px!important;
+height:34px!important;
+padding:0!important;
+display:flex!important;
+align-items:center!important;
+justify-content:center!important;
+border-radius:10px!important;
+}
 }
 </style>
-
 </head>
 <body class="home-active">
 <div class="toast" id="toast"></div>
@@ -1073,6 +1047,24 @@ body.gs-open{
       <div class="gs-action"><button class="gs-btn" onclick="editarGs('M01')">✏️</button><button class="gs-btn add" onclick="editarGs('M01')">+</button></div>
     </div>
 <div class="gs-row" data-gs-row="1" data-nome="THIAGO SANTOS" data-codigo="M02" data-status="EM USO">
+<div class="gs-row" data-gs-row="1" data-nome="WESLLEY JANUARIO" data-codigo="M03" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">WJ</div><div><div class="gs-name">WESLLEY JANUARIO</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">M03</div>
+      <div><span class="gs-pass">DIGITAL 🔒</span></div>
+      <div><span class="gs-status gs-uso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('M03')">✏️</button><button class="gs-btn danger">⊘</button></div>
+</div>
+
+<div class="gs-row" data-gs-row="1" data-nome="EDMAGNA" data-codigo="M04" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">E</div><div><div class="gs-name">EDMAGNA</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">M04</div>
+      <div><span class="gs-pass">DIGITAL 🔒</span></div>
+      <div><span class="gs-status gs-uso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('M04')">✏️</button><button class="gs-btn danger">⊘</button></div>
+</div>
+
       <div class="gs-person"><div class="gs-avatar">TS</div><div><div class="gs-name">THIAGO SANTOS</div><div class="gs-sub"></div></div></div>
       <div class="gs-code">M02</div>
       <div><span class="gs-pass">DIGITAL 🔒</span></div>
@@ -9041,6 +9033,24 @@ function openGsPanel(){ abrirGsTelaExclusiva(); }
       <div class="gs-action"><button class="gs-btn" onclick="editarGs('M01')">✏️</button><button class="gs-btn add" onclick="editarGs('M01')">+</button></div>
     </div>
 <div class="gs-row" data-gs-row="1" data-nome="THIAGO SANTOS" data-codigo="M02" data-status="EM USO">
+<div class="gs-row" data-gs-row="1" data-nome="WESLLEY JANUARIO" data-codigo="M03" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">WJ</div><div><div class="gs-name">WESLLEY JANUARIO</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">M03</div>
+      <div><span class="gs-pass">DIGITAL 🔒</span></div>
+      <div><span class="gs-status gs-uso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('M03')">✏️</button><button class="gs-btn danger">⊘</button></div>
+</div>
+
+<div class="gs-row" data-gs-row="1" data-nome="EDMAGNA" data-codigo="M04" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">E</div><div><div class="gs-name">EDMAGNA</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">M04</div>
+      <div><span class="gs-pass">DIGITAL 🔒</span></div>
+      <div><span class="gs-status gs-uso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('M04')">✏️</button><button class="gs-btn danger">⊘</button></div>
+</div>
+
       <div class="gs-person"><div class="gs-avatar">TS</div><div><div class="gs-name">THIAGO SANTOS</div><div class="gs-sub"></div></div></div>
       <div class="gs-code">M02</div>
       <div><span class="gs-pass">DIGITAL 🔒</span></div>

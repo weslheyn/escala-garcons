@@ -7916,31 +7916,96 @@ document.addEventListener('DOMContentLoaded',()=>{try{showHomeDashboard();update
 <script>
 /* ===== MÓDULO G'S — ISOLADO ===== */
 const GS_DEFAULT=[
-  ['','G1','286511'],['WILLIAN FRANCO','G2','744432'],['FABRICIO','G3','337700'],['IGOR FERREIRA','G4','264684'],['','G5','847551'],['','G6','820157'],['','G7','558311'],['','G8','008398'],['','G9','999556'],['','G10','375339'],
-  ['','G11','514736'],['','G12','848700'],['','G13','303665'],['','G14','895374'],['KLEBER','G15','873436'],['ANDRE','G16','863621'],['','G17','839542'],['FABRICIA','G18','447782'],['ALEXANDRE','G19','274713'],['FABIALLY','G20','808791'],
-  ['ANA LUCIA','G21','310815'],['','G22','307658'],['RICKSON','G23','879566'],['PATRICIA','G24','825466'],['HELEN','G25','720093'],['MARINA','G26','826000'],['LEYREAN','G27','490507'],['PAULO','G28','408259'],['MIGUEL SEBASTIAN','G29','151116'],['','G30','180820'],
-  ['','G31','279629'],['','G32','252862'],['','G33','795893'],['','G34','188859'],['CAMILA','G35','187924'],['BAR','G36','654536'],['SAMUEL OLIVEIRA','G37','702444'],['','G38','435622'],['','G39','533391'],['','G40','395385'],
-  ['','M01','DIGITAL'],['THIAGO SANTOS','M02','DIGITAL']
+  ['', 'G1', '286511'],
+  ['WILLIAN FRANCO', 'G2', '744432'],
+  ['FABRICIO', 'G3', '337700'],
+  ['IGOR FERREIRA', 'G4', '264684'],
+  ['', 'G5', '847551'],
+  ['', 'G6', '820157'],
+  ['', 'G7', '558311'],
+  ['', 'G8', '008398'],
+  ['', 'G9', '999556'],
+  ['', 'G10', '375339'],
+  ['', 'G11', '514736'],
+  ['', 'G12', '848700'],
+  ['', 'G13', '303665'],
+  ['', 'G14', '895374'],
+  ['KLEBER', 'G15', '873436'],
+  ['ANDRE', 'G16', '863621'],
+  ['', 'G17', '839542'],
+  ['FABRICIA', 'G18', '447782'],
+  ['ALEXANDRE', 'G19', '274713'],
+  ['FABIALLY', 'G20', '808791'],
+  ['ANA LUCIA', 'G21', '310815'],
+  ['', 'G22', '307658'],
+  ['RICKSON', 'G23', '879566'],
+  ['PATRICIA', 'G24', '825466'],
+  ['HELEN', 'G25', '720093'],
+  ['MARINA', 'G26', '826000'],
+  ['LEYREAN', 'G27', '490507'],
+  ['PAULO', 'G28', '408259'],
+  ['MIGUEL SEBASTIAN', 'G29', '151116'],
+  ['', 'G30', '180820'],
+  ['', 'G31', '279629'],
+  ['', 'G32', '252862'],
+  ['', 'G33', '795893'],
+  ['', 'G34', '188859'],
+  ['CAMILA', 'G35', '187924'],
+  ['BAR', 'G36', '654536'],
+  ['SAMUEL OLIVEIRA', 'G37', '702444'],
+  ['', 'G38', '435622'],
+  ['', 'G39', '533391'],
+  ['', 'G40', '395385'],
+  ['', 'M01', 'DIGITAL'],
+  ['THIAGO SANTOS', 'M02', 'DIGITAL']
 ];
 let gsEditCodigo=null;
 function _gsHojeIso(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function _gsPt(v){if(!v)return '-';if(/^\d{4}-\d{2}-\d{2}$/.test(v)){const [y,m,d]=v.split('-');return `${d}/${m}/${y}`}return v}
 function _gsDiasDesde(iso){if(!iso)return null;const d=new Date(iso+'T00:00:00');const h=new Date();h.setHours(0,0,0,0);return Math.floor((h-d)/86400000)}
 function _gsBloqAte(iso){if(!iso)return '';const d=new Date(iso+'T00:00:00');d.setDate(d.getDate()+30);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
-function _gsLoad(){let arr=[];try{arr=JSON.parse(localStorage.getItem('gs_registros')||'[]')}catch(e){};if(!arr.length){arr=GS_DEFAULT.map(x=>({nome:x[0],codigo:x[1],senha:x[2],ultimaAlteracao:'',bloqueadoAte:'',historico:[]}));localStorage.setItem('gs_registros',JSON.stringify(arr));}return arr}
+function _gsLoad(){
+  let arr=[];
+  try{arr=JSON.parse(localStorage.getItem('gs_registros')||'[]')}catch(e){arr=[]}
+  const byCode={};
+  (arr||[]).forEach(g=>{ if(g&&g.codigo) byCode[g.codigo]=g; });
+  let changed=false;
+  GS_DEFAULT.forEach(x=>{
+    if(!byCode[x[1]]){
+      byCode[x[1]]={nome:x[0],codigo:x[1],senha:x[2],ultimaAlteracao:'',bloqueadoAte:'',historico:[]};
+      changed=true;
+    }else{
+      byCode[x[1]].senha=x[2];
+      byCode[x[1]].codigo=x[1];
+      if(typeof byCode[x[1]].nome==='undefined') byCode[x[1]].nome=x[0];
+      if(!byCode[x[1]].historico) byCode[x[1]].historico=[];
+    }
+  });
+  arr=GS_DEFAULT.map(x=>byCode[x[1]]);
+  if(changed||!localStorage.getItem('gs_registros')) localStorage.setItem('gs_registros',JSON.stringify(arr));
+  return arr;
+}catch(e){};if(!arr.length){arr=GS_DEFAULT.map(x=>({nome:x[0],codigo:x[1],senha:x[2],ultimaAlteracao:'',bloqueadoAte:'',historico:[]}));localStorage.setItem('gs_registros',JSON.stringify(arr));}return arr}
 function _gsSave(arr){localStorage.setItem('gs_registros',JSON.stringify(arr));try{if(typeof fbDb!=='undefined'&&fbDb&&fbConnected)fbDb.ref('gs_registros').set(arr)}catch(e){console.warn('gs firebase',e)}}
 function _gsStatus(g){if(String(g.nome||'').trim())return 'EM_USO';if(g.bloqueadoAte){const hoje=_gsHojeIso();if(g.bloqueadoAte>=hoje)return 'BLOQUEADO'}return 'LIVRE'}
 function openGsPanel(){
-  try{ showAppFromDashboard && showAppFromDashboard(); }catch(e){}
+  try{
+    document.body.classList.add('home-active');
+    const dash=document.getElementById('premiumDashboard');
+    if(dash) dash.style.display='block';
+    const main=document.getElementById('mainContent');
+    if(main) main.style.display='none';
+  }catch(e){}
   try{ closeAllPanels && closeAllPanels(); }catch(e){}
   openPanel('gsPanel');
   renderGsFiltroCodigos();
+  const st=document.getElementById('gsStatusFiltro'); if(st) st.value='';
   renderGsTable();
   try{
     if(typeof fbDb!=='undefined'&&fbDb&&fbConnected){
       fbDb.ref('gs_registros').once('value').then(s=>{
         if(s.exists()){
           localStorage.setItem('gs_registros',JSON.stringify(s.val()));
+          renderGsFiltroCodigos();
           renderGsTable();
         }
       });

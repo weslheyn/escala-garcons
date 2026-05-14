@@ -1,1 +1,1 @@
-// Firebase do módulo G's usa fbDb/fbConnected já existentes no app.
+// G's usa localStorage e pode usar Firebase do app quando integrado ao index.

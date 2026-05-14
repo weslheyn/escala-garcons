@@ -7930,27 +7930,22 @@ function _gsBloqAte(iso){if(!iso)return '';const d=new Date(iso+'T00:00:00');d.s
 function _gsLoad(){let arr=[];try{arr=JSON.parse(localStorage.getItem('gs_registros')||'[]')}catch(e){};if(!arr.length){arr=GS_DEFAULT.map(x=>({nome:x[0],codigo:x[1],senha:x[2],ultimaAlteracao:'',bloqueadoAte:'',historico:[]}));localStorage.setItem('gs_registros',JSON.stringify(arr));}return arr}
 function _gsSave(arr){localStorage.setItem('gs_registros',JSON.stringify(arr));try{if(typeof fbDb!=='undefined'&&fbDb&&fbConnected)fbDb.ref('gs_registros').set(arr)}catch(e){console.warn('gs firebase',e)}}
 function _gsStatus(g){if(String(g.nome||'').trim())return 'EM_USO';if(g.bloqueadoAte){const hoje=_gsHojeIso();if(g.bloqueadoAte>=hoje)return 'BLOQUEADO'}return 'LIVRE'}
-function openGsPanel(){showAppFromDashboard&&showAppFromDashboard();openPanel('gsPanel');renderGsFiltroCodigos();renderGsTable();try{if(typeof fbDb!=='undefined'&&fbDb&&fbConnected){fbDb.ref('gs_registros').once('value').then(s=>{if(s.exists()){localStorage.setItem('gs_registros',JSON.stringify(s.val()));renderGsTable();}})}}catch(e){}}
-function renderGsFiltroCodigos(){const sel=document.getElementById('gsCodigoFiltro');if(!sel)return;const old=sel.value;sel.innerHTML='<option value="">Todos os G\\'s</option>'+_gsLoad().map(g=>`<option value="${g.codigo}">${g.codigo}</option>`).join('');sel.value=old||''}
-function renderGsTable(){
- const body=document.getElementById('gsTableBody');if(!body)return;
- const busca=(document.getElementById('gsBusca')?.value||'').toUpperCase().trim();
- const stf=document.getElementById('gsStatusFiltro')?.value||'';const codf=document.getElementById('gsCodigoFiltro')?.value||'';
- let arr=_gsLoad().filter(g=>(!busca||String(g.nome||'').toUpperCase().includes(busca)||String(g.codigo||'').toUpperCase().includes(busca))&&(!stf||_gsStatus(g)===stf)&&(!codf||g.codigo===codf));
- body.innerHTML=arr.map(g=>{
-  const st=_gsStatus(g);const cls=st==='EM_USO'?'gs-emuso':st==='BLOQUEADO'?'gs-bloq':'gs-livre';
-  const dias=_gsDiasDesde(g.ultimaAlteracao);let data=g.ultimaAlteracao?_gsPt(g.ultimaAlteracao)+'<br><span style="color:#8d96b8">'+(dias===0?'hoje':`há ${dias} dias`)+'</span>':'-<br><span style="color:#8d96b8">Nunca utilizado</span>';
-  if(st==='BLOQUEADO')data+=`<div class="gs-alert">Bloqueado até ${_gsPt(g.bloqueadoAte)}</div>`;
-  const initials=(g.nome||'--').split(' ').filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase()||'--';
-  return `<div class="gs-row">
-    <div class="gs-person"><div class="gs-avatar">${initials}</div><div><div class="gs-name">${g.nome||g.codigo}</div><div class="gs-sub">${g.nome?'':'(Disponível)'}</div></div></div>
-    <div class="gs-code">${g.codigo}</div>
-    <div><span class="gs-pass">${g.senha} 🔒</span></div>
-    <div><span class="gs-status ${cls}">${st==='EM_USO'?'EM USO':st==='BLOQUEADO'?'BLOQUEADO':'LIVRE'}</span></div>
-    <div class="gs-date">${data}</div>
-    <div class="gs-action"><button class="gs-btn" onclick="editarGs('${g.codigo}')">✏️</button>${g.nome?`<button class="gs-btn danger" onclick="removerGs('${g.codigo}')">⊘</button>`:`<button class="gs-btn add" onclick="editarGs('${g.codigo}')">+</button>`}</div>
-  </div>`;
- }).join('')||'<div class="empty">Nenhum G encontrado.</div>';
+function openGsPanel(){
+  try{ showAppFromDashboard && showAppFromDashboard(); }catch(e){}
+  try{ closeAllPanels && closeAllPanels(); }catch(e){}
+  openPanel('gsPanel');
+  renderGsFiltroCodigos();
+  renderGsTable();
+  try{
+    if(typeof fbDb!=='undefined'&&fbDb&&fbConnected){
+      fbDb.ref('gs_registros').once('value').then(s=>{
+        if(s.exists()){
+          localStorage.setItem('gs_registros',JSON.stringify(s.val()));
+          renderGsTable();
+        }
+      });
+    }
+  }catch(e){}
 }
 function editarGs(cod){const g=_gsLoad().find(x=>x.codigo===cod);if(!g)return;gsEditCodigo=cod;document.getElementById('gsEditTitle').textContent='Editar '+cod;document.getElementById('gsNomeInput').value=g.nome||'';document.getElementById('gsCodigoInput').value=g.codigo;document.getElementById('gsSenhaInput').value=g.senha;document.getElementById('gsDataInput').value=_gsHojeIso();openModal('gsEditModal')}
 function salvarGsEdit(){const arr=_gsLoad();const g=arr.find(x=>x.codigo===gsEditCodigo);if(!g)return;const novo=(document.getElementById('gsNomeInput').value||'').trim().toUpperCase();const data=document.getElementById('gsDataInput').value||_gsHojeIso();const antigo=g.nome||'';if(novo!==antigo){g.historico=g.historico||[];g.historico.push({data,anterior:antigo||'(vazio)',novo:novo||'(vazio)',tipo:novo?'TROCA/INCLUSÃO':'REMOÇÃO'});g.nome=novo;g.ultimaAlteracao=data;g.bloqueadoAte=novo?'':_gsBloqAte(data)}_gsSave(arr);closeModal('gsEditModal');renderGsFiltroCodigos();renderGsTable();showToast('✅ G salvo com sucesso')}

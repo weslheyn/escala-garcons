@@ -443,6 +443,26 @@ body.gs-open #premiumDashboard{
 <!-- Firebase SDK (Realtime Database — sync em tempo real) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+<style id="gs-fix-style">
+#gsPanel.gs-fullscreen{
+  position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-width:none!important;
+  transform:none!important;left:0!important;top:0!important;z-index:999999!important;display:block!important;
+  background:radial-gradient(circle at 15% 0%,#4a120f 0%,#11131d 38%,#070910 100%)!important;
+  border-left:0!important;overflow:auto!important;
+}
+#gsPanel.gs-fullscreen .panel-header{position:sticky!important;top:0!important;z-index:20!important;background:#10131d!important;border-bottom:1px solid #d6a30077!important}
+.gs-row{display:grid;grid-template-columns:1.6fr .55fr .75fr .8fr 1fr .55fr;gap:8px;align-items:center;padding:11px 14px;border-top:1px solid #ffffff0d;color:#fff;font-size:12px}
+.gs-person{display:flex;align-items:center;gap:10px;min-width:0}.gs-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#3b82f6,#7c3aed);font-weight:900;color:#fff}
+.gs-name{font-weight:900;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gs-sub{font-size:10px;color:#8d96b8;margin-top:3px}
+.gs-code{color:#f5c842;font-weight:900;font-size:15px}.gs-pass{display:inline-flex;align-items:center;gap:6px;background:#ffffff08;border:1px solid #ffffff12;border-radius:9px;padding:7px 10px}
+.gs-status{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;font-size:10px;font-weight:900;padding:6px 9px;width:max-content}.gs-emuso{background:#0f513022;color:#35f080;border:1px solid #35f08033}.gs-bloq{background:#6b450022;color:#f5c842;border:1px solid #f5c84244}.gs-livre{background:#6b728022;color:#cbd5e1;border:1px solid #cbd5e133}
+.gs-date{font-size:11px;color:#cbd5e1;line-height:1.25}.gs-alert{color:#f5c842;font-size:10px;font-weight:800;margin-top:3px}.gs-action{display:flex;gap:8px;justify-content:flex-end}.gs-btn{border:1px solid #d6a30066;background:#111827;color:#f5c842;border-radius:10px;padding:8px 9px;font-weight:900}.gs-btn.danger{border-color:#e74c3c66;color:#ff6b6b}.gs-btn.add{border-color:#35f08066;color:#35f080}
+body.gs-open #mainContent,body.gs-open .header,body.gs-open #syncBar,body.gs-open #sheetsBar,body.gs-open .date-bar,body.gs-open #summary{display:none!important}
+body.gs-open #premiumDashboard{display:block!important}
+@media(max-width:760px){.gs-row{grid-template-columns:1fr;gap:7px}.gs-action{justify-content:flex-start}}
+</style>
+
 </head>
 <body class="home-active">
 <div class="toast" id="toast"></div>
@@ -8145,6 +8165,195 @@ function fecharGsTelaExclusiva(){
   if(dash) dash.style.display='block';
 }
 function openGsPanel(){ abrirGsTelaExclusiva(); }
+</script>
+
+
+<script id="gs-fix-final">
+/* ===== G'S - DADOS E ROTA DEFINITIVA ===== */
+window.GS_DEFAULT_FIX=[
+  {nome:'',codigo:'G1',senha:'286511'},
+  {nome:'WILLIAN FRANCO',codigo:'G2',senha:'744432'},
+  {nome:'FABRICIO',codigo:'G3',senha:'337700'},
+  {nome:'IGOR FERREIRA',codigo:'G4',senha:'264684'},
+  {nome:'',codigo:'G5',senha:'847551'},
+  {nome:'',codigo:'G6',senha:'820157'},
+  {nome:'',codigo:'G7',senha:'558311'},
+  {nome:'',codigo:'G8',senha:'008398'},
+  {nome:'',codigo:'G9',senha:'999556'},
+  {nome:'',codigo:'G10',senha:'375339'},
+  {nome:'',codigo:'G11',senha:'514736'},
+  {nome:'',codigo:'G12',senha:'848700'},
+  {nome:'',codigo:'G13',senha:'303665'},
+  {nome:'',codigo:'G14',senha:'895374'},
+  {nome:'KLEBER',codigo:'G15',senha:'873436'},
+  {nome:'ANDRE',codigo:'G16',senha:'863621'},
+  {nome:'',codigo:'G17',senha:'839542'},
+  {nome:'FABRICIA',codigo:'G18',senha:'447782'},
+  {nome:'ALEXANDRE',codigo:'G19',senha:'274713'},
+  {nome:'FABIALLY',codigo:'G20',senha:'808791'},
+  {nome:'ANA LUCIA',codigo:'G21',senha:'310815'},
+  {nome:'',codigo:'G22',senha:'307658'},
+  {nome:'RICKSON',codigo:'G23',senha:'879566'},
+  {nome:'PATRICIA',codigo:'G24',senha:'825466'},
+  {nome:'HELEN',codigo:'G25',senha:'720093'},
+  {nome:'MARINA',codigo:'G26',senha:'826000'},
+  {nome:'LEYREAN',codigo:'G27',senha:'490507'},
+  {nome:'PAULO',codigo:'G28',senha:'408259'},
+  {nome:'MIGUEL SEBASTIAN',codigo:'G29',senha:'151116'},
+  {nome:'',codigo:'G30',senha:'180820'},
+  {nome:'',codigo:'G31',senha:'279629'},
+  {nome:'',codigo:'G32',senha:'252862'},
+  {nome:'',codigo:'G33',senha:'795893'},
+  {nome:'',codigo:'G34',senha:'188859'},
+  {nome:'CAMILA',codigo:'G35',senha:'187924'},
+  {nome:'BAR',codigo:'G36',senha:'654536'},
+  {nome:'SAMUEL OLIVEIRA',codigo:'G37',senha:'702444'},
+  {nome:'',codigo:'G38',senha:'435622'},
+  {nome:'',codigo:'G39',senha:'533391'},
+  {nome:'',codigo:'G40',senha:'395385'},
+  {nome:'',codigo:'M01',senha:'DIGITAL'},
+  {nome:'THIAGO SANTOS',codigo:'M02',senha:'DIGITAL'}
+];
+
+function gsHojeIsoFix(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function gsPtFix(v){if(!v)return '-';if(/^\d{4}-\d{2}-\d{2}$/.test(v)){const [y,m,d]=v.split('-');return `${d}/${m}/${y}`}return v}
+function gsAdd30Fix(iso){const d=new Date((iso||gsHojeIsoFix())+'T00:00:00');d.setDate(d.getDate()+30);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function gsDiasFix(iso){if(!iso)return null;const d=new Date(iso+'T00:00:00');const h=new Date();h.setHours(0,0,0,0);return Math.floor((h-d)/86400000)}
+
+function gsLoadFix(){
+  let atual=[];
+  try{atual=JSON.parse(localStorage.getItem('gs_registros')||'[]')||[]}catch(e){atual=[]}
+  const by={};
+  atual.forEach(g=>{if(g&&g.codigo)by[g.codigo]=g});
+  const arr=window.GS_DEFAULT_FIX.map(def=>{
+    const salvo=by[def.codigo]||{};
+    return {
+      nome: typeof salvo.nome==='string' ? salvo.nome : def.nome,
+      codigo:def.codigo,
+      senha:def.senha,
+      ultimaAlteracao:salvo.ultimaAlteracao||'',
+      bloqueadoAte:salvo.bloqueadoAte||'',
+      historico:Array.isArray(salvo.historico)?salvo.historico:[]
+    };
+  });
+  localStorage.setItem('gs_registros',JSON.stringify(arr));
+  return arr;
+}
+function gsSaveFix(arr){
+  localStorage.setItem('gs_registros',JSON.stringify(arr));
+  try{if(typeof fbDb!=='undefined'&&fbDb&&fbConnected)fbDb.ref('gs_registros').set(arr)}catch(e){console.warn('gs firebase',e)}
+}
+function gsStatusFix(g){
+  if(String(g.nome||'').trim())return 'EM_USO';
+  if(g.bloqueadoAte && g.bloqueadoAte>=gsHojeIsoFix())return 'BLOQUEADO';
+  return 'LIVRE';
+}
+function renderGsFiltroCodigos(){
+  const sel=document.getElementById('gsCodigoFiltro');
+  if(!sel)return;
+  const old=sel.value||'';
+  sel.innerHTML='<option value="">Todos os G\\'s</option>'+gsLoadFix().map(g=>`<option value="${g.codigo}">${g.codigo}</option>`).join('');
+  sel.value=old;
+}
+function renderGsTable(){
+  const body=document.getElementById('gsTableBody');
+  if(!body)return;
+  const busca=(document.getElementById('gsBusca')?.value||'').toUpperCase().trim();
+  const stf=document.getElementById('gsStatusFiltro')?.value||'';
+  const codf=document.getElementById('gsCodigoFiltro')?.value||'';
+  const arr=gsLoadFix().filter(g=>{
+    const st=gsStatusFix(g);
+    return (!busca || String(g.nome||'').toUpperCase().includes(busca) || String(g.codigo||'').toUpperCase().includes(busca))
+      && (!stf || st===stf)
+      && (!codf || g.codigo===codf);
+  });
+  body.innerHTML=arr.map(g=>{
+    const st=gsStatusFix(g);
+    const cls=st==='EM_USO'?'gs-emuso':st==='BLOQUEADO'?'gs-bloq':'gs-livre';
+    const label=st==='EM_USO'?'EM USO':st==='BLOQUEADO'?'BLOQUEADO':'LIVRE';
+    const ini=(g.nome||'--').split(' ').filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase()||'--';
+    const dias=gsDiasFix(g.ultimaAlteracao);
+    let data=g.ultimaAlteracao?`${gsPtFix(g.ultimaAlteracao)}<br><span style="color:#8d96b8">${dias===0?'hoje':'há '+dias+' dias'}</span>`:'-<br><span style="color:#8d96b8">Nunca utilizado</span>';
+    if(st==='BLOQUEADO')data+=`<div class="gs-alert">Bloqueado até ${gsPtFix(g.bloqueadoAte)}</div>`;
+    return `<div class="gs-row">
+      <div class="gs-person"><div class="gs-avatar">${ini}</div><div><div class="gs-name">${g.nome||g.codigo}</div><div class="gs-sub">${g.nome?'':'(Disponível)'}</div></div></div>
+      <div class="gs-code">${g.codigo}</div>
+      <div><span class="gs-pass">${g.senha} 🔒</span></div>
+      <div><span class="gs-status ${cls}">${label}</span></div>
+      <div class="gs-date">${data}</div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('${g.codigo}')">✏️</button>${g.nome?`<button class="gs-btn danger" onclick="removerGs('${g.codigo}')">⊘</button>`:`<button class="gs-btn add" onclick="editarGs('${g.codigo}')">+</button>`}</div>
+    </div>`;
+  }).join('') || '<div class="empty">Nenhum G encontrado.</div>';
+}
+function abrirGsTelaExclusiva(){
+  document.body.classList.add('home-active');
+  document.body.classList.add('gs-open');
+  const dash=document.getElementById('premiumDashboard');
+  if(dash) dash.style.display='block';
+  const main=document.getElementById('mainContent');
+  if(main) main.style.display='none';
+  document.querySelectorAll('.slide-panel.active').forEach(el=>{if(el.id!=='gsPanel')el.classList.remove('active')});
+  const p=document.getElementById('gsPanel');
+  if(!p){alert("Painel G's não encontrado");return}
+  p.classList.add('active','gs-fullscreen');
+  p.style.display='block';
+  p.style.transform='none';
+  p.style.left='0';
+  p.style.width='100vw';
+  const st=document.getElementById('gsStatusFiltro');if(st)st.value='';
+  renderGsFiltroCodigos();
+  renderGsTable();
+}
+function fecharGsTelaExclusiva(){
+  const p=document.getElementById('gsPanel');
+  if(p){p.classList.remove('active','gs-fullscreen');p.style.display=''}
+  document.body.classList.remove('gs-open');
+  document.body.classList.add('home-active');
+  const dash=document.getElementById('premiumDashboard');
+  if(dash)dash.style.display='block';
+}
+function openGsPanel(){abrirGsTelaExclusiva()}
+function editarGs(cod){
+  const arr=gsLoadFix();
+  const g=arr.find(x=>x.codigo===cod);
+  if(!g)return;
+  const novo=prompt(`Editar nome do garçom para ${cod}:`,g.nome||'');
+  if(novo===null)return;
+  const nome=String(novo||'').trim().toUpperCase();
+  if(nome===g.nome)return;
+  const data=gsHojeIsoFix();
+  g.historico=g.historico||[];
+  g.historico.push({data,anterior:g.nome||'(vazio)',novo:nome||'(vazio)',tipo:nome?'TROCA/INCLUSÃO':'REMOÇÃO'});
+  g.nome=nome;
+  g.ultimaAlteracao=data;
+  g.bloqueadoAte=nome?'':gsAdd30Fix(data);
+  gsSaveFix(arr);
+  renderGsTable();
+  if(typeof showToast==='function')showToast('✅ G salvo com sucesso');
+}
+function removerGs(cod){
+  if(!confirm('Remover o garçom deste G e bloquear por 30 dias?'))return;
+  const arr=gsLoadFix();
+  const g=arr.find(x=>x.codigo===cod);
+  if(!g)return;
+  const data=gsHojeIsoFix();
+  g.historico=g.historico||[];
+  g.historico.push({data,anterior:g.nome||'(vazio)',novo:'(vazio)',tipo:'REMOÇÃO'});
+  g.nome='';
+  g.ultimaAlteracao=data;
+  g.bloqueadoAte=gsAdd30Fix(data);
+  gsSaveFix(arr);
+  renderGsTable();
+}
+function gsNovoLivre(){const st=document.getElementById('gsStatusFiltro');if(st)st.value='LIVRE';renderGsTable()}
+function openGsHistory(){
+  const hist=[];
+  gsLoadFix().forEach(g=>(g.historico||[]).forEach(h=>hist.push({...h,codigo:g.codigo})));
+  hist.sort((a,b)=>String(b.data).localeCompare(String(a.data)));
+  const el=document.getElementById('gsHistoryContent');
+  if(el)el.innerHTML=hist.map(h=>`<div class="gs-hist-item"><b>${h.codigo}</b> — ${h.tipo}<br>Data: ${gsPtFix(h.data)}<br>De: ${h.anterior}<br>Para: ${h.novo}</div>`).join('')||'<div class="empty">Nenhuma alteração registrada.</div>';
+  if(typeof openModal==='function')openModal('gsHistoryModal');
+}
 </script>
 
 </body>

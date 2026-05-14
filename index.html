@@ -485,6 +485,29 @@ body.gs-open #premiumDashboard{display:block!important}
 @media(max-width:760px){#gsTableBody .gs-row{grid-template-columns:1fr!important}.gs-action{justify-content:flex-start!important}}
 </style>
 
+
+<style id="gs-scroll-back-fix-css">
+/* G's: sem barra de scroll visível e voltar destravado */
+html.gs-no-scrollbar,
+body.gs-open{
+  overflow:hidden!important;
+}
+#gsPanel.gs-fullscreen{
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  scrollbar-width:none!important;
+  -ms-overflow-style:none!important;
+}
+#gsPanel.gs-fullscreen::-webkit-scrollbar{
+  width:0!important;
+  height:0!important;
+  display:none!important;
+}
+#gsPanel .panel-header{
+  z-index:9999999!important;
+}
+</style>
+
 </head>
 <body class="home-active">
 <div class="toast" id="toast"></div>
@@ -8995,6 +9018,76 @@ function openGsPanel(){ abrirGsTelaExclusiva(); }
     }
     if(typeof openModal==='function') openModal('gsHistoryModal');
   };
+})();
+</script>
+
+
+<script id="gs-scroll-back-fix-js">
+/* Correção final: voltar do G's e ocultar barra de scroll */
+(function(){
+  const oldOpenGs = window.abrirGsTelaExclusiva;
+  window.abrirGsTelaExclusiva = function(){
+    try{
+      document.documentElement.classList.add('gs-no-scrollbar');
+      document.body.classList.add('gs-open');
+    }catch(e){}
+    if(typeof oldOpenGs === 'function'){
+      oldOpenGs();
+    }else if(typeof openGsPanel === 'function'){
+      openGsPanel();
+    }
+    setTimeout(()=>{
+      const p=document.getElementById('gsPanel');
+      if(p){
+        p.classList.add('active','gs-fullscreen');
+        p.style.display='block';
+        p.style.transform='none';
+        p.style.left='0';
+        p.style.width='100vw';
+      }
+      if(typeof renderGsTable==='function') renderGsTable();
+    },50);
+  };
+
+  window.fecharGsTelaExclusiva = function(){
+    try{
+      const p=document.getElementById('gsPanel');
+      if(p){
+        p.classList.remove('active');
+        p.classList.remove('gs-fullscreen');
+        p.style.display='';
+        p.style.transform='';
+        p.style.left='';
+        p.style.width='';
+      }
+
+      document.body.classList.remove('gs-open');
+      document.documentElement.classList.remove('gs-no-scrollbar');
+      document.body.classList.add('home-active');
+
+      const dash=document.getElementById('premiumDashboard');
+      if(dash){
+        dash.style.display='block';
+        dash.scrollIntoView({block:'start'});
+      }
+
+      const main=document.getElementById('mainContent');
+      if(main) main.style.display='none';
+
+      if(typeof _premiumNavActive==='function') _premiumNavActive('navInicioPremium');
+    }catch(e){
+      console.warn('fecharGsTelaExclusiva', e);
+    }
+  };
+
+  document.addEventListener('click', function(ev){
+    const back = ev.target.closest && ev.target.closest('#gsPanel .panel-back');
+    if(back){
+      ev.preventDefault();
+      ev.stopPropagation();
+      window.fecharGsTelaExclusiva();
+    }
+  }, true);
 })();
 </script>
 

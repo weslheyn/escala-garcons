@@ -2987,11 +2987,30 @@ function setRecByDate(nome,ano,mes,dia,status,extra){
 // ─── Bridge: quando selecionar status na semana atual, salva também por data ───
 function bridgeSaveByDate(nome,dayIdx,status,extra){
   const d=WEEK_DATES[dayIdx];
-  const key=`drec_${nome}_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  const val={status,extra,ts:Date.now()};
+  const iso=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const key=`drec_${nome}_${iso}`;
+  if(status===''){
+    localStorage.removeItem(key);
+    delete _fbCache[key];
+    if(fbDb&&fbConnected){
+      const wk=getWeekKeyByDate(new Date(iso+'T00:00:00'));
+      fbDb.ref('presenca/'+wk+'/'+fbEncode(key)).remove().catch(e=>console.warn('bridge remove:',e.message));
+    }
+    if(gToken&&SHEET_ID) triggerSheetsSync();
+    return;
+  }
+  const val={status,extra:extra||{},ts:Date.now()};
   save(key,val);
-  pushToFirebase(key, val);
-  if(gToken&&SHEET_ID) triggerSheetsSync(); // sync automático ao salvar
+  if(fbDb&&fbConnected){
+    const wk=getWeekKeyByDate(new Date(iso+'T00:00:00'));
+    _ignoringRemoteUpdate=true;
+    fbDb.ref('presenca/'+wk+'/'+fbEncode(key)).set(val)
+      .catch(e=>console.warn('bridgeSaveByDate:',e.message))
+      .finally(()=>setTimeout(()=>{_ignoringRemoteUpdate=false;},800));
+  }else{
+    pushToFirebase(key, val);
+  }
+  if(gToken&&SHEET_ID) triggerSheetsSync();
 }
 
 // ═══════════════════════════════════════════════════
@@ -4246,8 +4265,8 @@ let EMP_SETOR='TODOS';
 function getSearchBoxHtml(){
   const setores=['TODOS', ...getTurnos().map(t=>t.label)];
   return `<div class="emp-search-wrap">
-    <div class="emp-search-box"><span class="icon">🔍</span><input class="emp-search-input" id="empSearchInput" placeholder="Buscar colaborador..." value="${String(EMP_SEARCH||'').replace(/"/g,'&quot;')}"></div>
-    <div class="emp-setor-box"><span class="icon">🏷️</span><select class="emp-setor-select" id="empSetorSelect">${setores.map(s=>`<option value="${s}"${EMP_SETOR===s?' selected':''}>${s==='TODOS'?'Todos os setores':s}</option>`).join('')}</select><span class="arrow">▾</span></div>
+    <div class="emp-search-box"><span class="icon">🔍</span><input class="emp-search-input" id="empSearchInput" placeholder="Buscar colaborador..." value="${String(EMP_SEARCH||'').replace(/"/g,'&quot;')}" oninput="EMP_SEARCH=this.value||'';renderEmployeeSections();" onkeyup="EMP_SEARCH=this.value||'';renderEmployeeSections();"></div>
+    <div class="emp-setor-box"><span class="icon">🏷️</span><select class="emp-setor-select" id="empSetorSelect" onchange="EMP_SETOR=this.value||'TODOS';renderEmployeeSections();">${setores.map(s=>`<option value="${s}"${EMP_SETOR===s?' selected':''}>${s==='TODOS'?'Todos os setores':s}</option>`).join('')}</select><span class="arrow">▾</span></div>
   </div>`;
 }
 
@@ -4874,11 +4893,18 @@ function buildExtra(name,st,ex){
   </div>`;
   if(st==='desligado')return '';
   if(st==='ferias'){
-    ex={ini:v('f_fe_ini_'+rawId),fim:v('f_fe_fim_'+rawId),obs:v('f_fe_obs_'+rawId),_saved:true};
-    if(!ex.ini || !ex.fim){
-      showToast('⚠️ Informe o início e o fim das férias');
-      return;
+    if(ex && (ex._saved || ex.ini || ex.fim)){
+      let info='🌴 Férias';
+      if(ex.ini||ex.fim) info+='<br>📅 '+(ex.ini||'?')+' até '+(ex.fim||'?');
+      if(ex.obs) info+='<br>📝 '+ex.obs;
+      return '<div class="saved-info">'+info+editBtn+'</div>';
     }
+    return '<div class="extra-fields">'+
+      '<div class="field-wrap"><span class="field-label">🌴 INÍCIO DAS FÉRIAS</span><input class="field-input" type="date" id="f_fe_ini_'+id+'" value="'+(ex.ini||'')+'"></div>'+
+      '<div class="field-wrap"><span class="field-label">🏁 FIM DAS FÉRIAS</span><input class="field-input" type="date" id="f_fe_fim_'+id+'" value="'+(ex.fim||'')+'"></div>'+
+      '<div class="field-wrap"><span class="field-label">📝 OBSERVAÇÃO</span><input class="field-input" id="f_fe_obs_'+id+'" placeholder="Opcional..." value="'+(ex.obs||'')+'"></div>'+
+      saveBtn+
+    '</div>';
   }
   if(st==='banco-horas'){
     const hoje=new Date();
@@ -5000,11 +5026,9 @@ function buildSavedInfo(st,ex){
     if(ex.autorizadoPor)lines.push('👤 Auth: '+ex.autorizadoPor);
   }
   if(st==='ferias'){
-    ex={ini:v('f_fe_ini_'+rawId),fim:v('f_fe_fim_'+rawId),obs:v('f_fe_obs_'+rawId),_saved:true};
-    if(!ex.ini || !ex.fim){
-      showToast('⚠️ Informe o início e o fim das férias');
-      return;
-    }
+    if(ex.ini||ex.fim)lines.push('🌴 Férias: '+(ex.ini||'?')+' até '+(ex.fim||'?'));
+    else lines.push('🌴 Férias');
+    if(ex.obs)lines.push('📝 '+ex.obs);
   }
   if(st==='banco-horas'){
     if(ex.tipo&&ex.horas)lines.push((ex.tipo==='CRÉDITO'?'➕':'➖')+' '+ex.horas+'h — '+ex.tipo);
@@ -5160,18 +5184,23 @@ function saveRec(name,st){
   }
   setRec(curDay,name,st,ex);
   bridgeSaveByDate(name,curDay,st,ex);
-  // Se férias com período, marcar todos os dias da semana dentro do intervalo
+  // Se férias com período, marcar todos os dias do período no Firebase/cache
   if(st==='ferias' && ex.ini && ex.fim){
-    const parseDate = s => { if(!s) return null; const [y,m,d]=s.split('-'); return new Date(y,m-1,d); };
+    const parseDate = s => { if(!s) return null; const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
     const iniDate = parseDate(ex.ini);
     const fimDate = parseDate(ex.fim);
-    WEEK_DATES.forEach((wd, di) => {
-      const wdN = new Date(wd.getFullYear(), wd.getMonth(), wd.getDate());
-      if(iniDate && fimDate && wdN >= iniDate && wdN <= fimDate){
-        setRec(di, name, 'ferias', ex);
-        bridgeSaveByDate(name, di, 'ferias', ex);
+    if(iniDate && fimDate){
+      const cur=new Date(iniDate);
+      while(cur<=fimDate){
+        setRecByDate(name, cur.getFullYear(), cur.getMonth()+1, cur.getDate(), 'ferias', ex);
+        // atualiza também a semana aberta na tela
+        WEEK_DATES.forEach((wd, di)=>{
+          const wdN=new Date(wd.getFullYear(),wd.getMonth(),wd.getDate());
+          if(wdN.getTime()===cur.getTime()) setRec(di,name,'ferias',ex);
+        });
+        cur.setDate(cur.getDate()+1);
       }
-    });
+    }
   }
   // Se atestado com período, marcar todos os dias da semana dentro do intervalo
   if(st==='atestado' && ex.ini && ex.fim){
@@ -5204,7 +5233,7 @@ function saveRec(name,st){
       });
     }
   }
-  showToast('💾 Salvo!');buildMain();refreshPendBadge();
+  showToast('✅ Registro salvo!');buildMain();refreshPendBadge();buildSummary();
 }
 
 // ═══════════════════════════════════════════════════

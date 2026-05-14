@@ -4043,11 +4043,18 @@ function saveRec(name,st){
   if(st==='medida')           ex={motivo:v('f_med_mot_'+rawId),acao:v('f_med_acao_'+rawId),resp:v('f_med_resp_'+rawId)};
   if(st==='saida-antecipada') ex={horSaida:v('f_sa_hor_'+rawId),horPrev:v('f_sa_prev_'+rawId),justificativa:v('f_sa_just_'+rawId),autorizadoPor:v('f_sa_auth_'+rawId)};
   if(st==='ferias'){
-    ex={ini:v('f_fe_ini_'+rawId),fim:v('f_fe_fim_'+rawId),obs:v('f_fe_obs_'+rawId),_saved:true};
-    if(!ex.ini || !ex.fim){
-      showToast('⚠️ Informe o início e o fim das férias');
-      return;
+    if(ex && (ex._saved || ex.ini || ex.fim)){
+      let info='🌴 Férias';
+      if(ex.ini||ex.fim) info+='<br>📅 '+(ex.ini||'?')+' até '+(ex.fim||'?');
+      if(ex.obs) info+='<br>📝 '+ex.obs;
+      return '<div class="saved-info">'+info+editBtn+'</div>';
     }
+    return '<div class="extra-fields">'+
+      '<div class="field-wrap"><span class="field-label">🌴 INÍCIO DAS FÉRIAS</span><input class="field-input" type="date" id="f_fe_ini_'+id+'" value="'+(ex.ini||'')+'"></div>'+
+      '<div class="field-wrap"><span class="field-label">🏁 FIM DAS FÉRIAS</span><input class="field-input" type="date" id="f_fe_fim_'+id+'" value="'+(ex.fim||'')+'"></div>'+
+      '<div class="field-wrap"><span class="field-label">📝 OBSERVAÇÃO</span><input class="field-input" id="f_fe_obs_'+id+'" placeholder="Opcional..." value="'+(ex.obs||'')+'"></div>'+
+      saveBtn+
+    '</div>';
   }
   if(st==='banco-horas'){
     const ini=v('f_bh_ini_'+rawId);
@@ -4067,18 +4074,23 @@ function saveRec(name,st){
   }
   setRec(curDay,name,st,ex);
   bridgeSaveByDate(name,curDay,st,ex);
-  // Se férias com período, marcar todos os dias da semana dentro do intervalo
+  // Se férias com período, marcar todos os dias do período no Firebase/cache
   if(st==='ferias' && ex.ini && ex.fim){
-    const parseDate = s => { if(!s) return null; const [y,m,d]=s.split('-'); return new Date(y,m-1,d); };
+    const parseDate = s => { if(!s) return null; const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
     const iniDate = parseDate(ex.ini);
     const fimDate = parseDate(ex.fim);
-    WEEK_DATES.forEach((wd, di) => {
-      const wdN = new Date(wd.getFullYear(), wd.getMonth(), wd.getDate());
-      if(iniDate && fimDate && wdN >= iniDate && wdN <= fimDate){
-        setRec(di, name, 'ferias', ex);
-        bridgeSaveByDate(name, di, 'ferias', ex);
+    if(iniDate && fimDate){
+      const cur=new Date(iniDate);
+      while(cur<=fimDate){
+        setRecByDate(name, cur.getFullYear(), cur.getMonth()+1, cur.getDate(), 'ferias', ex);
+        // atualiza também a semana aberta na tela
+        WEEK_DATES.forEach((wd, di)=>{
+          const wdN=new Date(wd.getFullYear(),wd.getMonth(),wd.getDate());
+          if(wdN.getTime()===cur.getTime()) setRec(di,name,'ferias',ex);
+        });
+        cur.setDate(cur.getDate()+1);
       }
-    });
+    }
   }
   // Se atestado com período, marcar todos os dias da semana dentro do intervalo
   if(st==='atestado' && ex.ini && ex.fim){
@@ -4111,7 +4123,7 @@ function saveRec(name,st){
       });
     }
   }
-  showToast('💾 Salvo!');buildMain();refreshPendBadge();
+  showToast('✅ Registro salvo!');buildMain();refreshPendBadge();buildSummary();
 }
 
 // ═══════════════════════════════════════════════════

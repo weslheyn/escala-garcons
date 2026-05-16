@@ -963,7 +963,51 @@ window.EVENTOS={
   renderClientesCadastroFiltrado(){renderClientesCadastroFiltrado();},
   openClienteForm(){ $('modalTitle').textContent='Novo cliente'; $('modalBody').innerHTML=clienteFormHtml(); $('modal').classList.add('open');},
   editCliente(id){const c=(state.clientesCadastros||[]).find(x=>x.id===id); if(!c)return toast('Cliente não encontrado'); $('modalTitle').textContent='Editar cliente'; $('modalBody').innerHTML=clienteFormHtml(c); $('modal').classList.add('open');},
-  deleteCliente(id){const c=(state.clientesCadastros||[]).find(x=>x.id===id); if(!c)return toast('Cliente não encontrado'); if(!confirm('Excluir este cadastro de cliente?'))return; state.clientesCadastros=(state.clientesCadastros||[]).filter(x=>x.id!==id); saveClientes(); if(window.EventosFirebase&&EventosFirebase.enabled&&EventosFirebase.deleteClienteCadastro) EventosFirebase.deleteClienteCadastro(id).catch(()=>{}); $('modal').classList.remove('open'); toast('Cadastro excluído'); if(state.tab==='clientes')renderClientes();},
+  deleteCliente(id){
+    const c=(state.clientesCadastros||[]).find(x=>x.id===id);
+    if(!c)return toast('Cliente não encontrado');
+
+    const nomeCliente=(c.nome||c.cliente||'').trim();
+    const msg = nomeCliente
+      ? `Excluir o cadastro de ${nomeCliente} e remover também os leads/eventos vinculados no funil?`
+      : 'Excluir este cadastro de cliente e remover também os leads/eventos vinculados no funil?';
+
+    if(!confirm(msg))return;
+
+    const nCliente=norm(nomeCliente);
+    const telCliente=String(c.telefone||'').replace(/\D/g,'');
+    const emailCliente=norm(c.email||'');
+    const eventoId=String(c.eventoId||'');
+
+    const removidos=[];
+    state.eventos=(state.eventos||[]).filter(e=>{
+      const matchEventoId = eventoId && String(e.id||'')===eventoId;
+      const matchNome = nCliente && norm(e.cliente||e.nomeCliente||e.nome||'')===nCliente;
+      const matchTel = telCliente && String(e.telefone||e.celular||e.whatsapp||'').replace(/\D/g,'')===telCliente;
+      const matchEmail = emailCliente && norm(e.email||'')===emailCliente;
+
+      if(matchEventoId || matchNome || matchTel || matchEmail){
+        removidos.push(e);
+        return false;
+      }
+      return true;
+    });
+
+    state.clientesCadastros=(state.clientesCadastros||[]).filter(x=>x.id!==id);
+    saveClientes();
+    save();
+
+    if(window.EventosFirebase&&EventosFirebase.enabled){
+      if(EventosFirebase.deleteClienteCadastro) EventosFirebase.deleteClienteCadastro(id).catch(()=>{});
+      if(EventosFirebase.saveAll) EventosFirebase.saveAll(state.eventos).catch(()=>{});
+    }
+
+    $('modal').classList.remove('open');
+
+    const qtd=removidos.length;
+    toast(qtd ? `Cadastro excluído e ${qtd} lead(s)/evento(s) removido(s) do funil` : 'Cadastro excluído');
+    render();
+  },
   saveClienteForm(id){const c=collectClienteCadastro(id); if(!c.nome)return toast('Informe o nome do cliente'); const idx=state.clientesCadastros.findIndex(x=>x.id===c.id); if(idx>=0)state.clientesCadastros[idx]=Object.assign({},state.clientesCadastros[idx],c); else state.clientesCadastros.unshift(c); state.clientesCadastros=dedupeClientesCadastro(state.clientesCadastros); saveClientes(); if(window.EventosFirebase&&EventosFirebase.enabled&&EventosFirebase.saveClienteCadastro) EventosFirebase.saveClienteCadastro(c).catch(()=>{}); $('modal').classList.remove('open'); toast('Cliente salvo'); if(state.tab==='clientes')renderClientes();},
   agendaFiltro(k,v){state.agendaFiltros=state.agendaFiltros||{};state.agendaFiltros[k]=v;renderAgenda();},
   openAgendaForm(){openAgendaModal();},
@@ -1017,4 +1061,206 @@ function boot(){
 });
 load();setupTabs();setupFilters();render(); if(window.EventosFirebase){EventosFirebase.init().then(ok=>{if(ok){EventosFirebase.listen(arr=>{if(Array.isArray(arr)){if(arr.length){mergeRemoteEventos(arr);}else{state.eventos=[];localStorage.setItem(STORE,JSON.stringify(state.eventos));}setupFilters();render();}}); if(EventosFirebase.listenClientes) EventosFirebase.listenClientes(arr=>{state.clientesCadastros=dedupeClientesCadastro(arr||[]);saveClientes(); if(state.tab==='clientes')renderClientes();});}});}}
 document.addEventListener('DOMContentLoaded',boot);
+})();
+
+
+
+/* =========================================================
+   CLIENTES - EDITAR / EXCLUIR SEM ALTERAR ESTRUTURA EXISTENTE
+   Patch isolado APP 101
+========================================================= */
+(function(){
+  if(window.__clientesEditPatch101) return;
+  window.__clientesEditPatch101 = true;
+
+  function normalizeText(v){
+    return String(v || '').trim();
+  }
+
+  function findClienteFromRow(row){
+    if(!row) return null;
+
+    const cells = Array.from(row.children || []);
+    const text = normalizeText(row.innerText);
+
+    // Tenta pegar por células da tabela visual
+    const nome = normalizeText(cells[0]?.innerText || '');
+    const telefone = normalizeText(cells[1]?.innerText || '');
+
+    return {
+      nome: nome || text.split('\n')[0] || '',
+      telefone: telefone || '',
+      row: row
+    };
+  }
+
+  function buildClienteModal(){
+    let modal = document.getElementById('clienteEditorModal101');
+    if(modal) return modal;
+
+    modal = document.createElement('div');
+    modal.id = 'clienteEditorModal101';
+    modal.className = 'cliente-editor-overlay-101';
+    modal.innerHTML = `
+      <div class="cliente-editor-box-101">
+        <div class="cliente-editor-header-101">
+          <div>
+            <div class="cliente-editor-kicker-101">CLIENTE</div>
+            <h2>Cadastro do Cliente</h2>
+            <p>Edite as informações do cadastro ou exclua o cliente.</p>
+          </div>
+          <button type="button" class="cliente-editor-close-101" onclick="fecharCadastroCliente101()">×</button>
+        </div>
+
+        <div class="cliente-editor-grid-101">
+          <label>
+            <span>Nome do cliente</span>
+            <input id="clienteEditNome101" type="text">
+          </label>
+          <label>
+            <span>Telefone</span>
+            <input id="clienteEditTelefone101" type="text">
+          </label>
+          <label>
+            <span>Total estimado</span>
+            <input id="clienteEditTotal101" type="text">
+          </label>
+          <label>
+            <span>Último evento</span>
+            <input id="clienteEditUltimo101" type="text">
+          </label>
+          <label class="full">
+            <span>Observações</span>
+            <textarea id="clienteEditObs101" rows="4" placeholder="Observações internas do cliente..."></textarea>
+          </label>
+        </div>
+
+        <div class="cliente-editor-actions-101">
+          <button type="button" class="btn-danger-101" onclick="excluirCadastroCliente101()">🗑 Excluir cadastro</button>
+          <div>
+            <button type="button" class="btn-cancel-101" onclick="fecharCadastroCliente101()">Cancelar</button>
+            <button type="button" class="btn-save-101" onclick="salvarCadastroCliente101()">💾 Salvar alterações</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    return modal;
+  }
+
+  window.abrirCadastroCliente101 = function(row){
+    const data = findClienteFromRow(row);
+    if(!data || !data.nome) return;
+
+    const cells = Array.from(row.children || []);
+    window.__clienteEditRow101 = row;
+    window.__clienteEditOriginalNome101 = data.nome;
+
+    const modal = buildClienteModal();
+    modal.style.display = 'flex';
+
+    document.getElementById('clienteEditNome101').value = data.nome || '';
+    document.getElementById('clienteEditTelefone101').value = normalizeText(cells[1]?.innerText || '');
+    document.getElementById('clienteEditTotal101').value = normalizeText(cells[3]?.innerText || '');
+    document.getElementById('clienteEditUltimo101').value = normalizeText(cells[4]?.innerText || '');
+    document.getElementById('clienteEditObs101').value = '';
+
+    setTimeout(()=>document.getElementById('clienteEditNome101')?.focus(),80);
+  };
+
+  window.fecharCadastroCliente101 = function(){
+    const modal = document.getElementById('clienteEditorModal101');
+    if(modal) modal.style.display = 'none';
+  };
+
+  window.salvarCadastroCliente101 = function(){
+    const row = window.__clienteEditRow101;
+    if(!row) return fecharCadastroCliente101();
+
+    const cells = Array.from(row.children || []);
+    const nome = normalizeText(document.getElementById('clienteEditNome101')?.value);
+    const telefone = normalizeText(document.getElementById('clienteEditTelefone101')?.value);
+    const total = normalizeText(document.getElementById('clienteEditTotal101')?.value);
+    const ultimo = normalizeText(document.getElementById('clienteEditUltimo101')?.value);
+
+    if(!nome){
+      alert('Informe o nome do cliente.');
+      return;
+    }
+
+    if(cells[0]) cells[0].textContent = nome;
+    if(cells[1]) cells[1].textContent = telefone;
+    if(cells[3]) cells[3].textContent = total;
+    if(cells[4]) cells[4].textContent = ultimo;
+
+    try{
+      const historico = JSON.parse(localStorage.getItem('eventos_clientes_editados_101') || '[]');
+      historico.push({
+        acao:'editar',
+        original: window.__clienteEditOriginalNome101 || '',
+        nome,
+        telefone,
+        total,
+        ultimo,
+        data: new Date().toISOString()
+      });
+      localStorage.setItem('eventos_clientes_editados_101', JSON.stringify(historico));
+    }catch(e){}
+
+    fecharCadastroCliente101();
+    if(typeof showToast === 'function') showToast('✅ Cliente atualizado');
+  };
+
+  window.excluirCadastroCliente101 = function(){
+    const row = window.__clienteEditRow101;
+    if(!row) return fecharCadastroCliente101();
+
+    const nome = normalizeText(document.getElementById('clienteEditNome101')?.value || window.__clienteEditOriginalNome101);
+    if(!confirm('Deseja excluir o cadastro de ' + nome + '?')) return;
+
+    try{
+      const historico = JSON.parse(localStorage.getItem('eventos_clientes_editados_101') || '[]');
+      historico.push({
+        acao:'excluir',
+        nome,
+        data: new Date().toISOString()
+      });
+      localStorage.setItem('eventos_clientes_editados_101', JSON.stringify(historico));
+    }catch(e){}
+
+    row.remove();
+    fecharCadastroCliente101();
+    if(typeof showToast === 'function') showToast('🗑 Cliente excluído');
+  };
+
+  // Delegação: funciona mesmo que a tabela seja renderizada depois.
+  document.addEventListener('click', function(ev){
+    const target = ev.target;
+    if(!target) return;
+
+    // Não interceptar botões/menus/sidebar
+    if(target.closest('button,a,input,select,textarea')) return;
+
+    const row = target.closest('tr, .cliente-row, .client-row, .crm-row, .table-row, [data-cliente], [data-client]');
+    if(!row) return;
+
+    const txt = normalizeText(row.innerText);
+    if(!txt) return;
+
+    // Detecta área de clientes pelo conteúdo/cabeçalho/tela atual
+    const inClientes =
+      document.body.innerText.includes('Histórico de Clientes') ||
+      document.body.innerText.includes('Cadastro de Clientes') ||
+      document.body.innerText.includes('CLIENTE') && document.body.innerText.includes('ÚLTIMO EVENTO');
+
+    if(!inClientes) return;
+
+    const firstCell = row.children && row.children[0];
+    if(!firstCell || !firstCell.innerText || firstCell.innerText.toUpperCase().includes('CLIENTE')) return;
+
+    ev.preventDefault();
+    ev.stopPropagation();
+    abrirCadastroCliente101(row);
+  }, true);
+
 })();

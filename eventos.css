@@ -688,3 +688,125 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, .app::-webkit-scrollbar, .main
   height: 0;
   display: none;
 }
+
+
+
+/* =========================================================
+   CLIENTES - MODAL EDITAR / EXCLUIR APP 101
+========================================================= */
+.cliente-editor-overlay-101{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.78);
+  z-index:999999;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:22px;
+  backdrop-filter:blur(5px);
+}
+.cliente-editor-box-101{
+  width:100%;
+  max-width:760px;
+  background:linear-gradient(145deg,#111827,#070910);
+  border:1px solid rgba(214,163,0,.45);
+  border-radius:24px;
+  padding:22px;
+  color:#fff;
+  box-shadow:0 24px 80px rgba(0,0,0,.65);
+}
+.cliente-editor-header-101{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:18px;
+}
+.cliente-editor-kicker-101{
+  color:#f5c842;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.8px;
+}
+.cliente-editor-header-101 h2{
+  margin:4px 0 6px;
+  font-size:28px;
+  line-height:1;
+}
+.cliente-editor-header-101 p{
+  margin:0;
+  color:#b7bfd8;
+  font-size:13px;
+}
+.cliente-editor-close-101{
+  width:42px;
+  height:42px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:#1b2132;
+  color:#fff;
+  font-size:28px;
+  cursor:pointer;
+}
+.cliente-editor-grid-101{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+.cliente-editor-grid-101 label{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  color:#c9cede;
+  font-size:12px;
+  font-weight:800;
+}
+.cliente-editor-grid-101 label.full{
+  grid-column:1 / -1;
+}
+.cliente-editor-grid-101 input,
+.cliente-editor-grid-101 textarea{
+  width:100%;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:#151b2d;
+  color:#fff;
+  padding:13px 14px;
+  outline:none;
+}
+.cliente-editor-actions-101{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  margin-top:20px;
+}
+.cliente-editor-actions-101 div{
+  display:flex;
+  gap:10px;
+}
+.btn-save-101,
+.btn-cancel-101,
+.btn-danger-101{
+  border:0;
+  border-radius:14px;
+  padding:13px 16px;
+  font-weight:900;
+  cursor:pointer;
+}
+.btn-save-101{
+  background:#f5c842;
+  color:#090b13;
+}
+.btn-cancel-101{
+  background:#22283a;
+  color:#fff;
+}
+.btn-danger-101{
+  background:#7d1f28;
+  color:#fff;
+}
+@media(max-width:760px){
+  .cliente-editor-grid-101{grid-template-columns:1fr}
+  .cliente-editor-actions-101{flex-direction:column}
+  .cliente-editor-actions-101 div{flex-direction:column}
+}

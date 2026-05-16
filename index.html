@@ -384,10 +384,295 @@ body.home-active #premiumDashboard{display:block}
   .slide-panel.open{right:0 !important;}
   .modal-box{max-width:720px;}
 }
+
+/* ===== MÓDULO G'S ===== */
+.gs-wrap{padding:14px;background:radial-gradient(circle at 15% 0%,#25130d 0%,#11131d 40%,#070910 100%);min-height:100%}
+.gs-hero{border:1px solid #d6a30055;background:linear-gradient(145deg,#151823,#080b11);border-radius:18px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.gs-hero h2{margin:0;color:#f5c842;font-family:'Barlow Condensed',sans-serif;font-size:34px;line-height:1}
+.gs-hero p{margin:6px 0 0;color:#b7bfd8;font-size:12px}
+.gs-add{border:0;border-radius:14px;background:#f5c842;color:#090b13;font-weight:900;padding:12px 16px;white-space:nowrap}
+.gs-filters{display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:10px;margin-bottom:12px}
+.gs-table-card{border:1px solid #ffffff14;background:linear-gradient(145deg,#151823,#080b11);border-radius:18px;overflow:hidden}
+.gs-table-head,.gs-row{display:grid;grid-template-columns:1.6fr .55fr .75fr .8fr 1fr .55fr;gap:8px;align-items:center}
+.gs-table-head{padding:12px 14px;background:#ffffff08;color:#c9cede;font-size:10px;font-weight:900;text-transform:uppercase}
+.gs-row{padding:11px 14px;border-top:1px solid #ffffff0d;color:#fff;font-size:12px}
+.gs-person{display:flex;align-items:center;gap:10px;min-width:0}.gs-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#3b82f6,#7c3aed);font-weight:900;color:#fff}.gs-name{font-weight:900;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gs-sub{font-size:10px;color:#8d96b8;margin-top:3px}
+.gs-code{color:#f5c842;font-weight:900;font-size:15px}.gs-pass{display:inline-flex;align-items:center;gap:6px;background:#ffffff08;border:1px solid #ffffff12;border-radius:9px;padding:7px 10px}
+.gs-status{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;font-size:10px;font-weight:900;padding:6px 9px;width:max-content}.gs-emuso{background:#0f513022;color:#35f080;border:1px solid #35f08033}.gs-bloq{background:#6b450022;color:#f5c842;border:1px solid #f5c84244}.gs-livre{background:#6b728022;color:#cbd5e1;border:1px solid #cbd5e133}
+.gs-date{font-size:11px;color:#cbd5e1;line-height:1.25}.gs-alert{color:#f5c842;font-size:10px;font-weight:800;margin-top:3px}.gs-action{display:flex;gap:8px;justify-content:flex-end}.gs-btn{border:1px solid #d6a30066;background:#111827;color:#f5c842;border-radius:10px;padding:8px 9px;font-weight:900}.gs-btn.danger{border-color:#e74c3c66;color:#ff6b6b}.gs-btn.add{border-color:#35f08066;color:#35f080}
+.gs-hist-item{border:1px solid #ffffff14;background:#111827;border-radius:12px;padding:10px;margin-bottom:8px;color:#cbd5e1;font-size:12px}.gs-hist-item b{color:#fff}
+@media(max-width:760px){.gs-filters{grid-template-columns:1fr}.gs-table-head{display:none}.gs-row{grid-template-columns:1fr;gap:7px}.gs-action{justify-content:flex-start}.gs-hero{align-items:flex-start;flex-direction:column}.gs-add{width:100%}}
+
+
+/* ===== CORREÇÃO DEFINITIVA G'S: TELA EXCLUSIVA ===== */
+#gsPanel.gs-fullscreen{
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  height:100vh!important;
+  max-width:none!important;
+  transform:none!important;
+  left:0!important;
+  top:0!important;
+  z-index:999999!important;
+  display:block!important;
+  background:radial-gradient(circle at 15% 0%,#4a120f 0%,#11131d 38%,#070910 100%)!important;
+  border-left:0!important;
+  overflow:auto!important;
+}
+#gsPanel.gs-fullscreen .panel-header{
+  position:sticky!important;
+  top:0!important;
+  z-index:10!important;
+  background:#10131d!important;
+  border-bottom:1px solid #d6a30077!important;
+}
+body.gs-open #mainContent,
+body.gs-open .header,
+body.gs-open #syncBar,
+body.gs-open #sheetsBar,
+body.gs-open .date-bar,
+body.gs-open #summary{
+  display:none!important;
+}
+body.gs-open #premiumDashboard{
+  display:block!important;
+}
+
 </style>
 <!-- Firebase SDK (Realtime Database — sync em tempo real) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+<style id="gs-fix-style">
+#gsPanel.gs-fullscreen{
+  position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-width:none!important;
+  transform:none!important;left:0!important;top:0!important;z-index:999999!important;display:block!important;
+  background:radial-gradient(circle at 15% 0%,#4a120f 0%,#11131d 38%,#070910 100%)!important;
+  border-left:0!important;overflow:auto!important;
+}
+#gsPanel.gs-fullscreen .panel-header{position:sticky!important;top:0!important;z-index:20!important;background:#10131d!important;border-bottom:1px solid #d6a30077!important}
+.gs-row{display:grid;grid-template-columns:1.6fr .55fr .75fr .8fr 1fr .55fr;gap:8px;align-items:center;padding:11px 14px;border-top:1px solid #ffffff0d;color:#fff;font-size:12px}
+.gs-person{display:flex;align-items:center;gap:10px;min-width:0}.gs-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#3b82f6,#7c3aed);font-weight:900;color:#fff}
+.gs-name{font-weight:900;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gs-sub{font-size:10px;color:#8d96b8;margin-top:3px}
+.gs-code{color:#f5c842;font-weight:900;font-size:15px}.gs-pass{display:inline-flex;align-items:center;gap:6px;background:#ffffff08;border:1px solid #ffffff12;border-radius:9px;padding:7px 10px}
+.gs-status{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;font-size:10px;font-weight:900;padding:6px 9px;width:max-content}.gs-emuso{background:#0f513022;color:#35f080;border:1px solid #35f08033}.gs-bloq{background:#6b450022;color:#f5c842;border:1px solid #f5c84244}.gs-livre{background:#6b728022;color:#cbd5e1;border:1px solid #cbd5e133}
+.gs-date{font-size:11px;color:#cbd5e1;line-height:1.25}.gs-alert{color:#f5c842;font-size:10px;font-weight:800;margin-top:3px}.gs-action{display:flex;gap:8px;justify-content:flex-end}.gs-btn{border:1px solid #d6a30066;background:#111827;color:#f5c842;border-radius:10px;padding:8px 9px;font-weight:900}.gs-btn.danger{border-color:#e74c3c66;color:#ff6b6b}.gs-btn.add{border-color:#35f08066;color:#35f080}
+body.gs-open #mainContent,body.gs-open .header,body.gs-open #syncBar,body.gs-open #sheetsBar,body.gs-open .date-bar,body.gs-open #summary{display:none!important}
+body.gs-open #premiumDashboard{display:block!important}
+
+</style>
+
+
+<style id="gs-direct-css">
+#gsTableBody{display:block!important;min-height:200px!important}
+#gsTableBody .gs-row{display:grid!important;grid-template-columns:1.6fr .55fr .75fr .8fr 1fr .55fr!important;gap:8px!important;align-items:center!important;padding:11px 14px!important;border-top:1px solid #ffffff0d!important;color:#fff!important;font-size:12px!important}
+.gs-person{display:flex!important;align-items:center!important;gap:10px!important;min-width:0!important}
+.gs-avatar{width:34px!important;height:34px!important;border-radius:50%!important;display:flex!important;align-items:center!important;justify-content:center!important;background:linear-gradient(145deg,#3b82f6,#7c3aed)!important;font-weight:900!important;color:#fff!important}
+.gs-name{font-weight:900!important;text-transform:uppercase!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.gs-sub{font-size:10px!important;color:#8d96b8!important;margin-top:3px!important}
+.gs-code{color:#f5c842!important;font-weight:900!important;font-size:15px!important}
+.gs-pass{display:inline-flex!important;align-items:center!important;gap:6px!important;background:#ffffff08!important;border:1px solid #ffffff12!important;border-radius:9px!important;padding:7px 10px!important}
+.gs-status{display:inline-flex!important;align-items:center!important;justify-content:center!important;border-radius:999px!important;font-size:10px!important;font-weight:900!important;padding:6px 9px!important;width:max-content!important}
+.gs-emuso{background:#0f513022!important;color:#35f080!important;border:1px solid #35f08033!important}
+.gs-livre{background:#6b728022!important;color:#cbd5e1!important;border:1px solid #cbd5e133!important}
+.gs-bloq{background:#6b450022!important;color:#f5c842!important;border:1px solid #f5c84244!important}
+.gs-date{font-size:11px!important;color:#cbd5e1!important;line-height:1.25!important}
+.gs-action{display:flex!important;gap:8px!important;justify-content:flex-end!important}
+.gs-btn{border:1px solid #d6a30066!important;background:#111827!important;color:#f5c842!important;border-radius:10px!important;padding:8px 9px!important;font-weight:900!important}
+.gs-btn.danger{border-color:#e74c3c66!important;color:#ff6b6b!important}
+.gs-btn.add{border-color:#35f08066!important;color:#35f080!important}
+
+</style>
+
+
+<style id="gs-scroll-back-fix-css">
+/* G's: sem barra de scroll visível e voltar destravado */
+html.gs-no-scrollbar,
+body.gs-open{
+  overflow:hidden!important;
+}
+#gsPanel.gs-fullscreen{
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  scrollbar-width:none!important;
+  -ms-overflow-style:none!important;
+}
+#gsPanel.gs-fullscreen::-webkit-scrollbar{
+  width:0!important;
+  height:0!important;
+  display:none!important;
+}
+#gsPanel .panel-header{
+  z-index:9999999!important;
+}
+</style>
+
+
+
+
+
+<style id="gs-mobile-list-css">
+@media (max-width: 760px){
+
+body.gs-open{
+overflow:hidden!important;
+}
+
+#gsPanel{
+position:fixed!important;
+inset:0!important;
+width:100%!important;
+height:100%!important;
+overflow-y:auto!important;
+background:#060816!important;
+z-index:999999!important;
+padding-bottom:90px!important;
+}
+
+#gsPanel .gs-wrap{
+padding:8px!important;
+}
+
+#gsPanel .gs-hero{
+padding:10px!important;
+border-radius:14px!important;
+margin-bottom:8px!important;
+}
+
+#gsPanel .gs-filters{
+display:grid!important;
+grid-template-columns:1fr!important;
+gap:8px!important;
+}
+
+#gsPanel .gs-table-head{
+display:none!important;
+}
+
+#gsPanel .gs-row{
+display:flex!important;
+flex-direction:row!important;
+align-items:center!important;
+justify-content:space-between!important;
+gap:8px!important;
+padding:10px 8px!important;
+border-bottom:1px solid rgba(255,255,255,.06)!important;
+min-height:auto!important;
+}
+
+#gsPanel .gs-person{
+display:flex!important;
+align-items:center!important;
+gap:8px!important;
+flex:1!important;
+min-width:0!important;
+}
+
+#gsPanel .gs-avatar{
+width:42px!important;
+height:42px!important;
+font-size:14px!important;
+flex-shrink:0!important;
+}
+
+#gsPanel .gs-name{
+font-size:14px!important;
+font-weight:700!important;
+line-height:1.1!important;
+white-space:nowrap!important;
+overflow:hidden!important;
+text-overflow:ellipsis!important;
+max-width:110px!important;
+}
+
+#gsPanel .gs-sub{
+font-size:11px!important;
+opacity:.7!important;
+}
+
+#gsPanel .gs-code{
+font-size:18px!important;
+font-weight:800!important;
+color:#ffcc2f!important;
+min-width:42px!important;
+text-align:center!important;
+}
+
+#gsPanel .gs-pass{
+font-size:12px!important;
+padding:6px 8px!important;
+border-radius:8px!important;
+white-space:nowrap!important;
+}
+
+#gsPanel .gs-status{
+font-size:10px!important;
+padding:5px 8px!important;
+border-radius:999px!important;
+white-space:nowrap!important;
+}
+
+#gsPanel .gs-date{
+display:none!important;
+}
+
+#gsPanel .gs-action{
+display:flex!important;
+gap:5px!important;
+}
+
+#gsPanel .gs-btn{
+width:34px!important;
+height:34px!important;
+padding:0!important;
+display:flex!important;
+align-items:center!important;
+justify-content:center!important;
+border-radius:10px!important;
+}
+}
+</style>
+
+<style id="fix-mobile-layout-gs-101">
+@media(max-width:760px){
+  html, body{
+    width:100%!important;
+    max-width:100%!important;
+    overflow-x:hidden!important;
+  }
+
+  body:not(.gs-open) #gsPanel{
+    display:none!important;
+  }
+
+  #gsPanel.gs-fullscreen{
+    position:fixed!important;
+    inset:0!important;
+    width:100vw!important;
+    max-width:100vw!important;
+    height:100dvh!important;
+    left:0!important;
+    top:0!important;
+    transform:none!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    scrollbar-width:none!important;
+    -ms-overflow-style:none!important;
+  }
+
+  #gsPanel.gs-fullscreen::-webkit-scrollbar{
+    display:none!important;
+    width:0!important;
+  }
+
+  #premiumDashboard{
+    max-width:100vw!important;
+    overflow-x:hidden!important;
+  }
+}
+</style>
+
 </head>
 <body class="home-active">
 <div class="toast" id="toast"></div>
@@ -431,10 +716,428 @@ body.home-active #premiumDashboard{display:block}
     <div class="dash-card c-purple" onclick="openPracasDiarias()"><span class="dash-badge" id="dashPracasBadge">Sorteio</span><div><div class="ic">🎲</div><h3>Praças<br>Diárias</h3><p>Sorteio de praças integrado ao mapa do dia.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-gold" onclick="openDashboardModule('funcionarios')"><div><div class="ic">👤</div><h3>Funcionários</h3><p>Cadastro e gestão de funcionários.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-orange" onclick="location.href='eventos.html'"><span class="dash-badge" id="dashEventosBadge">Premium</span><div><div class="ic">🥂</div><h3>Eventos</h3><p>Vendas, negociações, calendário, contratos e recuperação de clientes.</p></div><div class="go">Acessar ›</div></div>
+    <div class="dash-card c-gold" onclick="abrirGsTelaExclusiva()"><span class="dash-badge">Novo</span><div><div class="ic">🔐</div><h3>G\'s</h3><p>Gerencie códigos e senhas dos garçons.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-orange" onclick="openDashboardModule('fornecedores')"><div><div class="ic">🤝</div><h3>Fornecedores</h3><p>Prestadores de serviço e contatos.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-purple wide" onclick="openDashboardModule('relatorios')"><div><div class="ic">📊</div><h3>Relatórios / Exportar</h3><p>Visualize, filtre e exporte relatórios.</p></div><div class="go">Acessar ›</div></div>
   </div>
 </section>
+
+
+<!-- PAINEL G'S -->
+<div class="slide-panel" id="gsPanel">
+  <div class="panel-header">
+    <button class="panel-back" onclick="fecharGsTelaExclusiva()">←</button>
+    <div class="panel-title">🔐 G's</div>
+    <button class="panel-action" onclick="openGsHistory()" style="background:#3a2609;color:#f5c842;border:1px solid #d6a30077">Histórico</button>
+  </div>
+
+  <div class="gs-wrap">
+    <div class="gs-hero">
+      <div>
+        <h2>G's</h2>
+        <p>Gerencie códigos e senhas dos garçons. Apenas o nome é editável. Código e senha não podem ser alterados.</p>
+      </div>
+      <button class="gs-add" onclick="gsNovoLivre()">+ Novo Garçom</button>
+    </div>
+
+    <div class="gs-filters">
+      <input id="gsBusca" class="field-input" placeholder="🔎 Pesquisar por nome ou código..." oninput="renderGsTable()">
+      <select id="gsStatusFiltro" class="field-input" onchange="renderGsTable()">
+        <option value="">Todos os status</option>
+        <option value="EM_USO">Em uso</option>
+        <option value="BLOQUEADO">Bloqueado</option>
+        <option value="LIVRE">Livre</option>
+      </select>
+      <select id="gsCodigoFiltro" class="field-input" onchange="renderGsTable()">
+        <option value="">Todos os G's</option>
+      </select>
+    </div>
+
+    <div class="gs-table-card">
+      <div class="gs-table-head">
+        <div>GARÇOM</div><div>CÓDIGO</div><div>SENHA</div><div>STATUS</div><div>ÚLTIMA ALTERAÇÃO</div><div>AÇÃO</div>
+      </div>
+      <div id="gsTableBody">
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G1" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G1</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G1</div>
+      <div><span class="gs-pass">286511 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G1')">✏️</button><button class="gs-btn add" onclick="editarGs('G1')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="WILLIAN FRANCO" data-codigo="G2" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">WF</div><div><div class="gs-name">WILLIAN FRANCO</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G2</div>
+      <div><span class="gs-pass">744432 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G2')">✏️</button><button class="gs-btn danger" onclick="removerGs('G2')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="FABRICIO" data-codigo="G3" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">F</div><div><div class="gs-name">FABRICIO</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G3</div>
+      <div><span class="gs-pass">337700 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G3')">✏️</button><button class="gs-btn danger" onclick="removerGs('G3')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="IGOR FERREIRA" data-codigo="G4" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">IF</div><div><div class="gs-name">IGOR FERREIRA</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G4</div>
+      <div><span class="gs-pass">264684 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G4')">✏️</button><button class="gs-btn danger" onclick="removerGs('G4')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G5" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G5</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G5</div>
+      <div><span class="gs-pass">847551 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G5')">✏️</button><button class="gs-btn add" onclick="editarGs('G5')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G6" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G6</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G6</div>
+      <div><span class="gs-pass">820157 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G6')">✏️</button><button class="gs-btn add" onclick="editarGs('G6')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G7" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G7</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G7</div>
+      <div><span class="gs-pass">558311 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G7')">✏️</button><button class="gs-btn add" onclick="editarGs('G7')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G8" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G8</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G8</div>
+      <div><span class="gs-pass">008398 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G8')">✏️</button><button class="gs-btn add" onclick="editarGs('G8')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G9" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G9</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G9</div>
+      <div><span class="gs-pass">999556 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G9')">✏️</button><button class="gs-btn add" onclick="editarGs('G9')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G10" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G10</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G10</div>
+      <div><span class="gs-pass">375339 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G10')">✏️</button><button class="gs-btn add" onclick="editarGs('G10')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G11" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G11</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G11</div>
+      <div><span class="gs-pass">514736 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G11')">✏️</button><button class="gs-btn add" onclick="editarGs('G11')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G12" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G12</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G12</div>
+      <div><span class="gs-pass">848700 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G12')">✏️</button><button class="gs-btn add" onclick="editarGs('G12')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G13" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G13</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G13</div>
+      <div><span class="gs-pass">303665 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G13')">✏️</button><button class="gs-btn add" onclick="editarGs('G13')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G14" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G14</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G14</div>
+      <div><span class="gs-pass">895374 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G14')">✏️</button><button class="gs-btn add" onclick="editarGs('G14')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="KLEBER" data-codigo="G15" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">K</div><div><div class="gs-name">KLEBER</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G15</div>
+      <div><span class="gs-pass">873436 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G15')">✏️</button><button class="gs-btn danger" onclick="removerGs('G15')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="ANDRE" data-codigo="G16" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">A</div><div><div class="gs-name">ANDRE</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G16</div>
+      <div><span class="gs-pass">863621 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G16')">✏️</button><button class="gs-btn danger" onclick="removerGs('G16')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G17" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G17</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G17</div>
+      <div><span class="gs-pass">839542 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G17')">✏️</button><button class="gs-btn add" onclick="editarGs('G17')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="FABRICIA" data-codigo="G18" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">F</div><div><div class="gs-name">FABRICIA</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G18</div>
+      <div><span class="gs-pass">447782 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G18')">✏️</button><button class="gs-btn danger" onclick="removerGs('G18')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="ALEXANDRE" data-codigo="G19" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">A</div><div><div class="gs-name">ALEXANDRE</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G19</div>
+      <div><span class="gs-pass">274713 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G19')">✏️</button><button class="gs-btn danger" onclick="removerGs('G19')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="FABIALLY" data-codigo="G20" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">F</div><div><div class="gs-name">FABIALLY</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G20</div>
+      <div><span class="gs-pass">808791 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G20')">✏️</button><button class="gs-btn danger" onclick="removerGs('G20')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="ANA LUCIA" data-codigo="G21" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">AL</div><div><div class="gs-name">ANA LUCIA</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G21</div>
+      <div><span class="gs-pass">310815 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G21')">✏️</button><button class="gs-btn danger" onclick="removerGs('G21')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G22" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G22</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G22</div>
+      <div><span class="gs-pass">307658 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G22')">✏️</button><button class="gs-btn add" onclick="editarGs('G22')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="RICKSON" data-codigo="G23" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">R</div><div><div class="gs-name">RICKSON</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G23</div>
+      <div><span class="gs-pass">879566 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G23')">✏️</button><button class="gs-btn danger" onclick="removerGs('G23')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="PATRICIA" data-codigo="G24" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">P</div><div><div class="gs-name">PATRICIA</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G24</div>
+      <div><span class="gs-pass">825466 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G24')">✏️</button><button class="gs-btn danger" onclick="removerGs('G24')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="HELEN" data-codigo="G25" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">H</div><div><div class="gs-name">HELEN</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G25</div>
+      <div><span class="gs-pass">720093 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G25')">✏️</button><button class="gs-btn danger" onclick="removerGs('G25')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="MARINA" data-codigo="G26" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">M</div><div><div class="gs-name">MARINA</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G26</div>
+      <div><span class="gs-pass">826000 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G26')">✏️</button><button class="gs-btn danger" onclick="removerGs('G26')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="LEYREAN" data-codigo="G27" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">L</div><div><div class="gs-name">LEYREAN</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G27</div>
+      <div><span class="gs-pass">490507 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G27')">✏️</button><button class="gs-btn danger" onclick="removerGs('G27')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="PAULO" data-codigo="G28" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">P</div><div><div class="gs-name">PAULO</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G28</div>
+      <div><span class="gs-pass">408259 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G28')">✏️</button><button class="gs-btn danger" onclick="removerGs('G28')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="MIGUEL SEBASTIAN" data-codigo="G29" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">MS</div><div><div class="gs-name">MIGUEL SEBASTIAN</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G29</div>
+      <div><span class="gs-pass">151116 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G29')">✏️</button><button class="gs-btn danger" onclick="removerGs('G29')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G30" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G30</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G30</div>
+      <div><span class="gs-pass">180820 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G30')">✏️</button><button class="gs-btn add" onclick="editarGs('G30')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G31" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G31</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G31</div>
+      <div><span class="gs-pass">279629 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G31')">✏️</button><button class="gs-btn add" onclick="editarGs('G31')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G32" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G32</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G32</div>
+      <div><span class="gs-pass">252862 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G32')">✏️</button><button class="gs-btn add" onclick="editarGs('G32')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G33" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G33</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G33</div>
+      <div><span class="gs-pass">795893 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G33')">✏️</button><button class="gs-btn add" onclick="editarGs('G33')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G34" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G34</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G34</div>
+      <div><span class="gs-pass">188859 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G34')">✏️</button><button class="gs-btn add" onclick="editarGs('G34')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="CAMILA" data-codigo="G35" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">C</div><div><div class="gs-name">CAMILA</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G35</div>
+      <div><span class="gs-pass">187924 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G35')">✏️</button><button class="gs-btn danger" onclick="removerGs('G35')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="BAR" data-codigo="G36" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">B</div><div><div class="gs-name">BAR</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G36</div>
+      <div><span class="gs-pass">654536 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G36')">✏️</button><button class="gs-btn danger" onclick="removerGs('G36')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="SAMUEL OLIVEIRA" data-codigo="G37" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">SO</div><div><div class="gs-name">SAMUEL OLIVEIRA</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G37</div>
+      <div><span class="gs-pass">702444 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G37')">✏️</button><button class="gs-btn danger" onclick="removerGs('G37')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G38" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G38</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G38</div>
+      <div><span class="gs-pass">435622 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G38')">✏️</button><button class="gs-btn add" onclick="editarGs('G38')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G39" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G39</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G39</div>
+      <div><span class="gs-pass">533391 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G39')">✏️</button><button class="gs-btn add" onclick="editarGs('G39')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G40" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G40</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G40</div>
+      <div><span class="gs-pass">395385 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G40')">✏️</button><button class="gs-btn add" onclick="editarGs('G40')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="M01" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">M01</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">M01</div>
+      <div><span class="gs-pass">DIGITAL 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('M01')">✏️</button><button class="gs-btn add" onclick="editarGs('M01')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="THIAGO SANTOS" data-codigo="M02" data-status="EM USO">
+<div class="gs-row" data-gs-row="1" data-nome="WESLLEY JANUARIO" data-codigo="M03" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">WJ</div><div><div class="gs-name">WESLLEY JANUARIO</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">M03</div>
+      <div><span class="gs-pass">DIGITAL 🔒</span></div>
+      <div><span class="gs-status gs-uso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('M03')">✏️</button><button class="gs-btn danger">⊘</button></div>
+</div>
+
+<div class="gs-row" data-gs-row="1" data-nome="EDMAGNA" data-codigo="M04" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">E</div><div><div class="gs-name">EDMAGNA</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">M04</div>
+      <div><span class="gs-pass">DIGITAL 🔒</span></div>
+      <div><span class="gs-status gs-uso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('M04')">✏️</button><button class="gs-btn danger">⊘</button></div>
+</div>
+
+      <div class="gs-person"><div class="gs-avatar">TS</div><div><div class="gs-name">THIAGO SANTOS</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">M02</div>
+      <div><span class="gs-pass">DIGITAL 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('M02')">✏️</button><button class="gs-btn danger" onclick="removerGs('M02')">⊘</button></div>
+    </div>
+</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="gsEditModal" onclick="if(event.target===this)closeModal('gsEditModal')">
+  <div class="modal-box">
+    <div class="modal-title" id="gsEditTitle">Editar G</div>
+    <div class="field-wrap"><span class="field-label">Garçom</span><input class="field-input" id="gsNomeInput" placeholder="Nome do garçom"></div>
+    <div class="field-wrap"><span class="field-label">Código</span><input class="field-input" id="gsCodigoInput" disabled></div>
+    <div class="field-wrap"><span class="field-label">Senha</span><input class="field-input" id="gsSenhaInput" disabled></div>
+    <div class="field-wrap"><span class="field-label">Data da modificação</span><input class="field-input" id="gsDataInput" type="date"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('gsEditModal')">CANCELAR</button>
+      <button class="btn-confirm" onclick="salvarGsEdit()">💾 SALVAR</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="gsHistoryModal" onclick="if(event.target===this)closeModal('gsHistoryModal')">
+  <div class="modal-box" style="max-height:82vh;overflow:auto">
+    <div class="modal-title">🕘 Histórico de Alterações dos G's</div>
+    <div id="gsHistoryContent"></div>
+    <div class="modal-btns"><button class="btn-cancel" onclick="closeModal('gsHistoryModal')">FECHAR</button></div>
+  </div>
+</div>
 
 <!-- CENTRAL DE ALERTAS DO DASHBOARD -->
 <div class="modal-overlay" id="centralAlertasModal" onclick="if(event.target===this)closeModal('centralAlertasModal')">
@@ -1110,13 +1813,9 @@ body.home-active #premiumDashboard{display:block}
 <div class="modal-overlay" id="maisMenu" onclick="if(event.target===this)closeModal('maisMenu')">
   <div class="modal-box" style="padding:16px 16px 32px">
     <div class="modal-title">MAIS OPÇÕES</div>
-    <button class="export-btn" onclick="closeModal('maisMenu');showEquipe();setTimeout(abrirImportarEscala,400)" style="font-size:14px;padding:14px;background:#27ae6011;border-color:#27ae6044;color:#27ae60;font-weight:800">📥 IMPORTAR ESCALA DO SHEETS</button>
     <button class="export-btn" onclick="closeModal('maisMenu');setTimeout(atualizarFrequenciaAtual,300)" style="font-size:14px;padding:14px;background:#0B539411;border-color:#0B539466;color:#6CB6FF;font-weight:800">🔄 ATUALIZAR FREQUÊNCIA ATUAL</button>
     <button class="export-btn" onclick="closeModal('maisMenu');setTimeout(gerarNovaFrequencia,300)" style="font-size:14px;padding:14px;background:#D6A30011;border-color:#D6A30066;color:#D6A300;font-weight:800">🆕 GERAR NOVA FREQUÊNCIA</button>
-    <button class="export-btn" onclick="closeModal('maisMenu');showEquipe();setTimeout(importarEscalaLimpaDoOficial,400)" style="font-size:14px;padding:14px;background:#7A3F0011;border-color:#D6A30066;color:#D6A300;font-weight:800">☁️ IMPORTAR ESCALA DO OFICIAL</button>
-    <button class="export-btn" onclick="closeModal('maisMenu');openAgendaGerencial()" style="font-size:14px;padding:14px;background:#00b89411;border-color:#00b89455;color:#00d1a0;font-weight:800">🗓️ Agenda Gerencial</button>
-    <button class="export-btn" onclick="closeModal('maisMenu');openFornecedoresPanel()" style="font-size:14px;padding:14px;background:#2980b911;border-color:#2980b955;color:#6CB6FF;font-weight:800">🧰 Fornecedores / Prestadores</button>
-    <button class="export-btn" onclick="openFreelance()" style="font-size:14px;padding:14px;background:#a855f711;border-color:#a855f744;color:#a855f7;font-weight:800">🎯 FREELANCES</button>
+    <button class="export-btn" onclick="closeModal('maisMenu');showEquipe();setTimeout(importarEscalaLimpaDoOficial,400)" style="font-size:14px;padding:14px;background:#7A3F0011;border-color:#D6A30066;color:#D6A300;font-weight:800">☁️ IMPORTAR ESCALA DO DRIVE</button>
     <button class="export-btn" onclick="closeModal('maisMenu');openAtestados()" style="font-size:14px;padding:14px">🏥 Painel de Atestados</button>
     <button class="export-btn" onclick="closeModal('maisMenu');openDisciplinar()" style="font-size:14px;padding:14px">⚠️ Medidas Disciplinares</button>
     <button class="export-btn" onclick="closeModal('maisMenu');openBancoHoras()" style="font-size:14px;padding:14px;color:#00b894;border-color:#00b89444">⏱️ Banco de Horas</button>
@@ -1229,6 +1928,7 @@ const STATUS=[
   {id:'presente',      emoji:'✅', label:'Presente',         planilha:'PRESENTE',    color:'#27ae60'},
   {id:'falta',         emoji:'❌', label:'Falta',             planilha:'FALTA',       color:'#e74c3c'},
   {id:'atestado',      emoji:'🏥', label:'Atestado',          planilha:'ATESTADO',    color:'#2980b9'},
+  {id:'ferias',        emoji:'🌴', label:'Férias',            planilha:'FÉRIAS',      color:'#00b894'},
   {id:'troca-horario', emoji:'🔄', label:'Troca Horário',     planilha:'TROCA HOR.',  color:'#d35400'},
   {id:'troca-folga',   emoji:'📅', label:'Troca Folga',       planilha:'TROCA FOLGA', color:'#8e44ad'},
   {id:'medida',        emoji:'⚠️', label:'Medida Discipl.',   planilha:'MEDIDA DISC.',color:'#e84393'},
@@ -1704,13 +2404,13 @@ let EQUIPE = (()=>{
 function getTurnos(){
   const t={};
   EQUIPE.forEach(f=>{
-    const turnoKey=f.turno==='LICENÇA'?'LICENÇA':f.turno;
+    const turnoKey=(f.turno==='LICENÇA'||f.turno==='LICENCA')?'LICENÇA':((String(f.turno||'').toUpperCase()==='FERIAS'||String(f.turno||'').toUpperCase()==='FÉRIAS')?'FÉRIAS':f.turno);
     if(!t[turnoKey])t[turnoKey]={id:turnoKey.toLowerCase(),label:turnoKey,membros:[],horario:''};
     t[turnoKey].membros.push(f);
     if(f.horIni&&f.horFim)t[turnoKey].horario=f.horIni+' às '+f.horFim;
   });
-  const order=['ABERTURA','INTERCALADO','FECHAMENTO','ADMINISTRATIVO','LICENÇA'];
-  const colors={'ABERTURA':'#f5c842','INTERCALADO':'#3498db','FECHAMENTO':'#e74c3c','ADMINISTRATIVO':'#27ae60','LICENÇA':'#7f8c8d'};
+  const order=['ABERTURA','INTERCALADO','FECHAMENTO','ADMINISTRATIVO','FÉRIAS','LICENÇA'];
+  const colors={'ABERTURA':'#f5c842','INTERCALADO':'#3498db','FECHAMENTO':'#e74c3c','ADMINISTRATIVO':'#27ae60','FÉRIAS':'#00b894','LICENÇA':'#7f8c8d'};
   return order.filter(k=>t[k]).map(k=>({...t[k],color:colors[k]||'#888'}));
 }
 
@@ -2062,7 +2762,8 @@ function getDiaSemana(ano,mes,dia){
 function statusToCell(nome,dayOfMonth,ano,mes){
   const f=EQUIPE.find(x=>x.nome===nome);
   if(!f)return '';
-  if(f.turno==='LICENÇA')return 'LICENÇA';
+  if(f.turno==='LICENÇA'||f.turno==='LICENCA')return 'LICENÇA';
+  if(String(f.turno||'').toUpperCase()==='FERIAS'||String(f.turno||'').toUpperCase()==='FÉRIAS')return 'FÉRIAS';
   const diaSem=getDiaSemana(ano,mes,dayOfMonth);
   if(isFolgaSemanal(f,diaSem))return 'FOLGA';
 
@@ -2364,6 +3065,7 @@ async function _aplicarFormatacaoAba(sheetId, sorted, totalDias){
       cf('FALTA',rgb(255,80,80),white),
       cf('ATESTADO',rgb(255,235,156),rgb(120,80,0)),
       cf('FOLGA',rgb(200,200,200),rgb(60,60,60)),
+      cf('FERIAS',rgb(204,255,229),rgb(0,120,90)),
       cf('LICENCA',rgb(173,216,230),rgb(0,80,120)),
       cf('TROCA HOR.',rgb(189,215,238),rgb(0,70,127)),
       cf('TROCA FOLGA',rgb(218,190,255),rgb(80,0,160)),
@@ -2988,11 +3690,30 @@ function setRecByDate(nome,ano,mes,dia,status,extra){
 // ─── Bridge: quando selecionar status na semana atual, salva também por data ───
 function bridgeSaveByDate(nome,dayIdx,status,extra){
   const d=WEEK_DATES[dayIdx];
-  const key=`drec_${nome}_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  const val={status,extra,ts:Date.now()};
+  const iso=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const key=`drec_${nome}_${iso}`;
+  if(status===''){
+    localStorage.removeItem(key);
+    delete _fbCache[key];
+    if(fbDb&&fbConnected){
+      const wk=getWeekKeyByDate(new Date(iso+'T00:00:00'));
+      fbDb.ref('presenca/'+wk+'/'+fbEncode(key)).remove().catch(e=>console.warn('bridge remove:',e.message));
+    }
+    if(gToken&&SHEET_ID) triggerSheetsSync();
+    return;
+  }
+  const val={status,extra:extra||{},ts:Date.now()};
   save(key,val);
-  pushToFirebase(key, val);
-  if(gToken&&SHEET_ID) triggerSheetsSync(); // sync automático ao salvar
+  if(fbDb&&fbConnected){
+    const wk=getWeekKeyByDate(new Date(iso+'T00:00:00'));
+    _ignoringRemoteUpdate=true;
+    fbDb.ref('presenca/'+wk+'/'+fbEncode(key)).set(val)
+      .catch(e=>console.warn('bridgeSaveByDate:',e.message))
+      .finally(()=>setTimeout(()=>{_ignoringRemoteUpdate=false;},800));
+  }else{
+    pushToFirebase(key, val);
+  }
+  if(gToken&&SHEET_ID) triggerSheetsSync();
 }
 
 // ═══════════════════════════════════════════════════
@@ -3059,6 +3780,7 @@ function _mapCategoria(funcStr){
 // ── Detecta turno pelo horário de início ──
 function _detectTurno(horStr, funcao){
   const h = (horStr||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  if(h.includes('FERIAS')) return 'FÉRIAS';
   if(h.includes('LICENCA')||h.includes('LICENCA')) return 'LICENÇA';
   // Funções administrativas — folga sab+dom
   const admFuncs = ['LANCADOR','ASSISTENTE RH','ANALISTA DE RH','AUDITOR','COMPRADOR',
@@ -4111,6 +4833,7 @@ function buildSummary(){
     '<div class="scard"><div class="scard-num c-green">'+cnt.presente+'</div><div class="scard-lbl">Presente</div></div>'+
     '<div class="scard"><div class="scard-num c-red">'+cnt.falta+'</div><div class="scard-lbl">Falta</div></div>'+
     '<div class="scard"><div class="scard-num c-blue">'+cnt.atestado+'</div><div class="scard-lbl">Atestado</div></div>'+
+    '<div class="scard"><div class="scard-num" style="color:#00b894">'+cnt.ferias+'</div><div class="scard-lbl">Férias</div></div>'+
     '<div class="scard"><div class="scard-num c-orange">'+cnt['troca-horario']+'</div><div class="scard-lbl">Troca H.</div></div>'+
     '<div class="scard"><div class="scard-num c-purple">'+cnt['troca-folga']+'</div><div class="scard-lbl">Troca F.</div></div>'+
     '<div class="scard"><div class="scard-num c-pink">'+cnt.medida+'</div><div class="scard-lbl">Discipl.</div></div>'+
@@ -4245,8 +4968,8 @@ let EMP_SETOR='TODOS';
 function getSearchBoxHtml(){
   const setores=['TODOS', ...getTurnos().map(t=>t.label)];
   return `<div class="emp-search-wrap">
-    <div class="emp-search-box"><span class="icon">🔍</span><input class="emp-search-input" id="empSearchInput" placeholder="Buscar colaborador..." value="${String(EMP_SEARCH||'').replace(/"/g,'&quot;')}"></div>
-    <div class="emp-setor-box"><span class="icon">🏷️</span><select class="emp-setor-select" id="empSetorSelect">${setores.map(s=>`<option value="${s}"${EMP_SETOR===s?' selected':''}>${s==='TODOS'?'Todos os setores':s}</option>`).join('')}</select><span class="arrow">▾</span></div>
+    <div class="emp-search-box"><span class="icon">🔍</span><input class="emp-search-input" id="empSearchInput" placeholder="Buscar colaborador..." value="${String(EMP_SEARCH||'').replace(/"/g,'&quot;')}" oninput="EMP_SEARCH=this.value||'';renderEmployeeSections();" onkeyup="EMP_SEARCH=this.value||'';renderEmployeeSections();"></div>
+    <div class="emp-setor-box"><span class="icon">🏷️</span><select class="emp-setor-select" id="empSetorSelect" onchange="EMP_SETOR=this.value||'TODOS';renderEmployeeSections();">${setores.map(s=>`<option value="${s}"${EMP_SETOR===s?' selected':''}>${s==='TODOS'?'Todos os setores':s}</option>`).join('')}</select><span class="arrow">▾</span></div>
   </div>`;
 }
 
@@ -4364,7 +5087,8 @@ function buildTurno(t){
   const membros=t.membros.filter(f=>_matchesEmpFilter(f,t.label));
   if(!membros.length) return '';
   const cards=membros.map(f=>{
-    if(f.turno==='LICENÇA')return buildLicencaCard(f);
+    if(f.turno==='LICENÇA'||f.turno==='LICENCA')return buildLicencaCard(f);
+    if(String(f.turno||'').toUpperCase()==='FERIAS'||String(f.turno||'').toUpperCase()==='FÉRIAS')return buildFeriasCard(f);
 
     // Verifica se o dia atual é o dia de folga da pessoa
     if(isFolgaSemanal(f,DAYS[curDay])){
@@ -4456,7 +5180,7 @@ function buildFolgaCard(f, dayIdx){
 // Card para o dia de FOLGA compensatória (dia escolhido na troca)
 function buildTrocaFolgaCard(f, drRec){
   const extra=(drRec&&drRec.extra)||{};
-  const obs=extra.obs ? extra.obs : 'Folga por troca';
+  const obs=(extra.obs && String(extra.obs).toUpperCase().indexOf('TROCA FOLGA')===-1) ? extra.obs : '';
   const todayIso=WEEK_DATES[curDay].toISOString().split('T')[0];
   const trocaDe=extra.trocaDe || '';
   const trabalhouIso=extra.trabData || _ptBrToIso(trocaDe) || todayIso;
@@ -4473,7 +5197,7 @@ function buildTrocaFolgaCard(f, drRec){
         </button>
         <div class="emp-meta">${f.categoria}</div>
         <div style="font-size:10px;color:#1abc9c;margin-top:3px">🔄 TROCA FOLGA${trabalhouFmt?' · trabalhou em '+trabalhouFmt:''}</div>
-        <div style="font-size:10px;color:var(--sub);margin-top:2px">📝 ${obs}</div>
+        ${obs ? `<div style="font-size:10px;color:var(--sub);margin-top:2px">📝 ${obs}</div>` : ''}
       </div>
       <div class="emp-badges"><span class="badge badge-troca-dom">🔄 TROCA FOLGA</span></div>
     </div>
@@ -4637,6 +5361,10 @@ function buildLicencaCard(f){
   return '<div class="emp-card" style="opacity:.5;border-left:3px solid #2980b9"><div class="emp-top"><div><button class="emp-name-btn" onclick="openFicha(\''+f.nome.replace(/'/g,"\\'")+'\')"><div class="emp-name">'+f.nome+'</div></button><div class="emp-meta">'+f.categoria+'</div></div><div class="emp-badges"><span class="badge badge-licenca">🏥 LICENÇA</span></div></div></div>';
 }
 
+function buildFeriasCard(f){
+  return '<div class="emp-card" style="opacity:.55;border-left:3px solid #00b894"><div class="emp-top"><div><button class="emp-name-btn" onclick="openFicha(\''+f.nome.replace(/'/g,"\\'")+'\')"><div class="emp-name">'+f.nome+'</div></button><div class="emp-meta">'+f.categoria+'</div></div><div class="emp-badges"><span class="badge" style="background:#00b89422;color:#00b894;border:1px solid #00b89455">🌴 FÉRIAS</span></div></div></div>';
+}
+
 // Conta quantos dias consecutivos de falta o funcionário teve ANTES do dia atual
 function contarFaltasConsecutivas(nome){
   const hoje=new Date();
@@ -4714,10 +5442,11 @@ function buildCard(f){
   const atestadoSalvo   = st==='atestado'    && r.extra && (r.extra.ini || r.extra.obs);
   const faltaSalva      = st==='falta'       && r.extra && r.extra._saved;
   const trocaFolgaSalva = st==='troca-folga';
+  const feriasSalva     = st==='ferias'      && r.extra && (r.extra.ini || r.extra.fim || r.extra._saved);
 
-  if(atestadoSalvo || faltaSalva || trocaFolgaSalva){
-    const corBorda  = st==='atestado'?'#2980b9':st==='troca-folga'?'#8e44ad':'#e74c3c';
-    const badgeCls2 = st==='atestado'?'badge-atestado':st==='troca-folga'?'badge-troca-folga':'badge-falta';
+  if(atestadoSalvo || faltaSalva || trocaFolgaSalva || feriasSalva){
+    const corBorda  = st==='ferias'?'#00b894':st==='atestado'?'#2980b9':st==='troca-folga'?'#8e44ad':'#e74c3c';
+    const badgeCls2 = st==='ferias'?'badge-ferias':st==='atestado'?'badge-atestado':st==='troca-folga'?'badge-troca-folga':'badge-falta';
     const ex2 = (r.extra && typeof r.extra==='object') ? r.extra : {};
     const nomeSafe = f.nome.replace(/'/g,"\\'");
     const rawId = f.nome.replace(/ /g,'_').replace(/[^a-zA-Z0-9_]/g,'');
@@ -4758,6 +5487,11 @@ function buildCard(f){
           '<button onclick="cancelarTrocaFolga(\''+nomeSafe+'\')" style="width:100%;margin-top:6px;background:none;border:1.5px solid #e74c3c;color:#e74c3c;border-radius:9px;padding:8px;font-size:11px;font-weight:700;cursor:pointer">❌ Cancelar troca</button>'+
           '</div>';
       }
+    } else if(st==='ferias'){
+      let info='🌴 Férias';
+      if(ex2.ini || ex2.fim) info+='<br>📅 '+(_isoToPtBr(ex2.ini)||'?')+' até '+(_isoToPtBr(ex2.fim)||'?');
+      if(ex2.obs) info+='<br>📝 '+ex2.obs;
+      extraHtml='<div class="saved-info">'+info+editBtn2+'</div>';
     } else {
       extraHtml = buildExtra(f.nome,st,ex2);
     }
@@ -4861,6 +5595,20 @@ function buildExtra(name,st,ex){
     ${saveBtn}
   </div>`;
   if(st==='desligado')return '';
+  if(st==='ferias'){
+    if(ex && (ex._saved || ex.ini || ex.fim)){
+      let info='🌴 Férias';
+      if(ex.ini||ex.fim) info+='<br>📅 '+(ex.ini||'?')+' até '+(ex.fim||'?');
+      if(ex.obs) info+='<br>📝 '+ex.obs;
+      return '<div class="saved-info">'+info+editBtn+'</div>';
+    }
+    return '<div class="extra-fields">'+
+      '<div class="field-wrap"><span class="field-label">🌴 INÍCIO DAS FÉRIAS</span><input class="field-input" type="date" id="f_fe_ini_'+id+'" value="'+(ex.ini||'')+'"></div>'+
+      '<div class="field-wrap"><span class="field-label">🏁 FIM DAS FÉRIAS</span><input class="field-input" type="date" id="f_fe_fim_'+id+'" value="'+(ex.fim||'')+'"></div>'+
+      '<div class="field-wrap"><span class="field-label">📝 OBSERVAÇÃO</span><input class="field-input" id="f_fe_obs_'+id+'" placeholder="Opcional..." value="'+(ex.obs||'')+'"></div>'+
+      saveBtn+
+    '</div>';
+  }
   if(st==='banco-horas'){
     const hoje=new Date();
     const ano=hoje.getFullYear();
@@ -4960,18 +5708,19 @@ function buildSavedInfo(st,ex){
   // PRESENTE com troca de folga — mostra info da troca
   if(st==='presente'&&ex.domTipo==='troca'&&ex.folgaEm){
     lines.push('🔄 TROCA FOLGA — folga em '+ex.folgaEm);
-    if(ex.obs&&!ex.obs.startsWith('TROCA FOLGA'))lines.push('📝 '+ex.obs);
+    if(ex.obs && String(ex.obs).toUpperCase().indexOf('TROCA FOLGA')===-1)lines.push('📝 '+ex.obs);
   } else if(st==='presente'){
     return ''; // presente sem info extra → não mostra nada
   }
   if(st==='falta'&&ex.obs)lines.push('⚠️ '+ex.obs);
-  if(st==='atestado'){if(ex.ini||ex.fim)lines.push('📅 '+(ex.ini||'?')+' até '+(ex.fim||'?'));if(ex.dias)lines.push('🔢 '+ex.dias+' dia(s)');if(ex.obs)lines.push('📝 '+ex.obs);}
+  if(st==='atestado'){if(ex.ini||ex.fim)lines.push('📅 '+(ex.ini||'?')+' até '+(ex.fim||'?'));if(ex.dias)lines.push('🔢 '+ex.dias+' dia(s)');if(ex.obs && String(ex.obs).toUpperCase().indexOf('TROCA FOLGA')===-1)lines.push('📝 '+ex.obs);}
+  if(st==='ferias'){if(ex.ini||ex.fim)lines.push('🌴 Férias: '+(_isoToPtBr(ex.ini)||'?')+' até '+(_isoToPtBr(ex.fim)||'?'));if(ex.obs && String(ex.obs).toUpperCase().indexOf('TROCA FOLGA')===-1)lines.push('📝 '+ex.obs);}
   if(st==='troca-horario'){if(ex.ini||ex.fim)lines.push('🕐 '+(ex.ini||'?')+' às '+(ex.fim||'?'));if(ex.quem)lines.push('👤 '+ex.quem);}
   if(st==='troca-folga'){
     if(ex.trab)lines.push('📅 Trabalhou: '+ex.trab);
     if(ex.folga)lines.push('🏖️ Folga em: '+ex.folga);
     if(ex.quem)lines.push('👤 '+ex.quem);
-    if(ex.obs)lines.push('📝 '+ex.obs);
+    if(ex.obs && String(ex.obs).toUpperCase().indexOf('TROCA FOLGA')===-1)lines.push('📝 '+ex.obs);
   }
   if(st==='medida'){if(ex.motivo)lines.push('❌ '+ex.motivo);if(ex.acao)lines.push('⚠️ '+ex.acao);if(ex.resp)lines.push('👤 '+ex.resp);}
   if(st==='saida-antecipada'){
@@ -4979,12 +5728,17 @@ function buildSavedInfo(st,ex){
     if(ex.justificativa)lines.push('📝 '+ex.justificativa);
     if(ex.autorizadoPor)lines.push('👤 Auth: '+ex.autorizadoPor);
   }
+  if(st==='ferias'){
+    if(ex.ini||ex.fim)lines.push('🌴 Férias: '+(_isoToPtBr(ex.ini)||'?')+' até '+(_isoToPtBr(ex.fim)||'?'));
+    else lines.push('🌴 Férias');
+    if(ex.obs && String(ex.obs).toUpperCase().indexOf('TROCA FOLGA')===-1)lines.push('📝 '+ex.obs);
+  }
   if(st==='banco-horas'){
     if(ex.tipo&&ex.horas)lines.push((ex.tipo==='CRÉDITO'?'➕':'➖')+' '+ex.horas+'h — '+ex.tipo);
     if(ex.dataFormatada)lines.push('📅 '+ex.dataFormatada);
     if(ex.periodo)lines.push('🕐 '+ex.periodo);
     if(ex.horIni||ex.horFim)lines.push('⏰ '+(ex.horIni||'?')+' às '+(ex.horFim||'?'));
-    if(ex.obs)lines.push('📝 '+ex.obs);
+    if(ex.obs && String(ex.obs).toUpperCase().indexOf('TROCA FOLGA')===-1)lines.push('📝 '+ex.obs);
   }
   if(!lines.length)return '';
   return '<div class="saved-info">'+lines.map(l=>'<div>'+l+'</div>').join('')+'</div>';
@@ -5063,7 +5817,7 @@ function selectStatus(name,newSt){
     openTrocaFolgaFromCard(name);
     return;
   }
-  if(status==='falta'||status==='atestado'){
+  if(status==='falta'||status==='atestado'||status==='ferias'){
     const dadosExistentes = r.status===status ? r.extra||{} : {};
     setRec(curDay,name,status,dadosExistentes);
     buildMain();refreshPendBadge();
@@ -5108,6 +5862,13 @@ function saveRec(name,st){
   }
   if(st==='medida')           ex={motivo:v('f_med_mot_'+rawId),acao:v('f_med_acao_'+rawId),resp:v('f_med_resp_'+rawId)};
   if(st==='saida-antecipada') ex={horSaida:v('f_sa_hor_'+rawId),horPrev:v('f_sa_prev_'+rawId),justificativa:v('f_sa_just_'+rawId),autorizadoPor:v('f_sa_auth_'+rawId)};
+  if(st==='ferias'){
+    ex={ini:v('f_fe_ini_'+rawId),fim:v('f_fe_fim_'+rawId),obs:v('f_fe_obs_'+rawId),_saved:true};
+    if(!ex.ini || !ex.fim){
+      showToast('⚠️ Informe o início e o fim das férias');
+      return;
+    }
+  }
   if(st==='banco-horas'){
     const ini=v('f_bh_ini_'+rawId);
     const fim=v('f_bh_fim_'+rawId);
@@ -5126,6 +5887,24 @@ function saveRec(name,st){
   }
   setRec(curDay,name,st,ex);
   bridgeSaveByDate(name,curDay,st,ex);
+  // Se férias com período, marcar todos os dias do período no Firebase/cache
+  if(st==='ferias' && ex.ini && ex.fim){
+    const parseDate = s => { if(!s) return null; const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+    const iniDate = parseDate(ex.ini);
+    const fimDate = parseDate(ex.fim);
+    if(iniDate && fimDate){
+      const cur=new Date(iniDate);
+      while(cur<=fimDate){
+        setRecByDate(name, cur.getFullYear(), cur.getMonth()+1, cur.getDate(), 'ferias', ex);
+        // atualiza também a semana aberta na tela
+        WEEK_DATES.forEach((wd, di)=>{
+          const wdN=new Date(wd.getFullYear(),wd.getMonth(),wd.getDate());
+          if(wdN.getTime()===cur.getTime()) setRec(di,name,'ferias',ex);
+        });
+        cur.setDate(cur.getDate()+1);
+      }
+    }
+  }
   // Se atestado com período, marcar todos os dias da semana dentro do intervalo
   if(st==='atestado' && ex.ini && ex.fim){
     const parseDate = s => { if(!s) return null; const [y,m,d]=s.split('-'); return new Date(y,m-1,d); };
@@ -5157,7 +5936,7 @@ function saveRec(name,st){
       });
     }
   }
-  showToast('💾 Salvo!');buildMain();refreshPendBadge();
+  showToast('✅ Registro salvo!');buildMain();refreshPendBadge();buildSummary();
 }
 
 // ═══════════════════════════════════════════════════
@@ -5194,7 +5973,7 @@ function buildPendencias(filtro){
   const entradas = []; // {func, dateStr, dayIdx, iso}
 
   EQUIPE.forEach(func=>{
-    if(func.turno==='LICENÇA') return;
+    if(func.turno==='LICENÇA'||func.turno==='LICENCA'||String(func.turno||'').toUpperCase()==='FERIAS'||String(func.turno||'').toUpperCase()==='FÉRIAS') return;
 
     // Faltas da semana atual (no cache)
     const maxDay = f==='hoje' ? curDay : WEEK_DATES.length - 1;
@@ -5541,7 +6320,7 @@ async function exportToSheets(){
       ...dataRows.map((_,i)=>cr(5+i,6+i,0,9,i%2===0?rowAlt:white,black,false,10,'CENTER')),
       bd(3,5+dataRows.length,0,9),
       cf('OK',rgb(0,176,80),white),cf('FALTA',rgb(255,199,206),rgb(156,0,6)),cf('ATESTADO',rgb(255,235,156),rgb(156,87,0)),
-      cf('FOLGA',rgb(217,217,217),rgb(80,80,80)),cf('LICENÇA',rgb(189,215,238),rgb(0,70,127)),
+      cf('FOLGA',rgb(217,217,217),rgb(80,80,80)),cf('FÉRIAS',rgb(204,255,229),rgb(0,120,90)),cf('LICENÇA',rgb(189,215,238),rgb(0,70,127)),
       cf('TROCA H.',rgb(189,215,238),rgb(0,70,127)),cf('TROCA F.',rgb(218,190,255),rgb(80,0,160)),cf('MEDIDA',rgb(255,180,220),rgb(160,0,80)),
     ]});
     showToast('✅ Planilha atualizada!');
@@ -6049,6 +6828,7 @@ function _turnoClass(turno){
   if(turno==='ABERTURA') return 'row-ab';
   if(turno==='INTERCALADO') return 'row-int';
   if(turno==='FECHAMENTO') return 'row-fec';
+  if(turno==='FÉRIAS'||turno==='FERIAS') return 'row-lic';
   if(turno==='LICENÇA') return 'row-lic';
   return 'row-int';
 }
@@ -6100,6 +6880,7 @@ function _mapaStatusInfo(status, extra){
   const cfg = {
     'falta':            {txt:'FALTA', bg:'#e74c3c33', color:'#e74c3c', conta:false},
     'atestado':         {txt:'ATES.', bg:'#2980b933', color:'#2980b9', conta:false},
+    'ferias':           {txt:'FÉR.',  bg:'#00b89433', color:'#00b894', conta:false},
     'troca-horario':    {txt:'T.HOR', bg:'#d3540033', color:'#d35400', conta:true},
     'troca-folga':      {txt:'T.FOL', bg:'#8e44ad33', color:'#8e44ad', conta:false},
     'medida':           {txt:'DISC.', bg:'#e8439333', color:'#e84393', conta:false},
@@ -6113,6 +6894,9 @@ function _mapaStatusInfo(status, extra){
 }
 
 function _mapaCell(f, turno, di){
+  if(turno === 'FÉRIAS' || turno === 'FERIAS'){
+    return {html:`<td style="background:#00b89422;color:#00b894;font-size:7px;font-weight:900">FÉR.</td>`, conta:false};
+  }
   if(turno === 'LICENÇA' || turno === 'LICENCA'){
     return {html:`<td style="color:#5a6480;font-size:7px">LIC</td>`, conta:false};
   }
@@ -6141,6 +6925,7 @@ function _mapaCell(f, turno, di){
 
 function _mapaTrabalhaDia(f, di){
   const turno = String(f.turno || 'INTERCALADO').toUpperCase();
+  if(turno === 'FÉRIAS' || turno === 'FERIAS') return {trabalha:false, status:'FÉRIAS'};
   if(turno === 'LICENÇA' || turno === 'LICENCA') return {trabalha:false, status:'LICENÇA'};
   const rec = getRec(di, f.nome);
   const st = rec && rec.status ? String(rec.status).toLowerCase() : '';
@@ -6167,6 +6952,7 @@ function _setorOperacionalLabel(f){
 
 function _turnoOperacional(f){
   const t = String(f.turno || 'INTERCALADO').toUpperCase();
+  if(t === 'FERIAS') return 'FÉRIAS';
   if(t === 'LICENCA') return 'LICENÇA';
   if(t.includes('ABERT')) return 'ABERTURA';
   if(t.includes('FECHA')) return 'FECHAMENTO';
@@ -6295,12 +7081,13 @@ function _renderCountRow(label, counts, rowClass){
 
 function renderMapaEscala(funcs){
   const dates = getWeekDates();
-  const ordemTurno = ['ABERTURA','INTERCALADO','FECHAMENTO','LICENÇA','LICENCA','ADMINISTRATIVO'];
+  const ordemTurno = ['ABERTURA','INTERCALADO','FECHAMENTO','FÉRIAS','FERIAS','LICENÇA','LICENCA','ADMINISTRATIVO'];
   const grupos = {};
   ordemTurno.forEach(t => grupos[t]=[]);
 
   funcs.forEach(f=>{
     let t = String(f.turno || 'INTERCALADO').toUpperCase();
+    if(t === 'FERIAS') t = 'FÉRIAS';
     if(t === 'LICENCA') t = 'LICENÇA';
     if(!grupos[t]) grupos[t]=[];
     grupos[t].push(f);
@@ -7535,6 +8322,7 @@ function openDashboardModule(mod){
     if(mod==='pracas'){ if(typeof openPracasDiarias==='function') openPracasDiarias(); else showToast('Praças indisponível'); return; }
     if(mod==='funcionarios'){ showEquipe(); return; }
     if(mod==='eventos'){ if(typeof openCalendarioEventos==='function') openCalendarioEventos(); else showToast('Calendário de Eventos indisponível'); return; }
+    if(mod==='gs'){ abrirGsTelaExclusiva(); return; }
     if(mod==='fornecedores'){ if(typeof openFornecedoresPanel==='function') openFornecedoresPanel(); else showMais(); return; }
     if(mod==='relatorios'){ openReport(); return; }
   }catch(e){ console.warn('openDashboardModule',mod,e); showToast('⚠️ Não foi possível abrir este módulo'); }
@@ -7706,6 +8494,61 @@ document.addEventListener('DOMContentLoaded',()=>{try{showHomeDashboard();update
 
 <style>
 #gc-install-banner{position:fixed;left:14px;right:14px;bottom:14px;z-index:99999;display:none;align-items:center;gap:10px;background:linear-gradient(145deg,#171c2b,#0f1320);border:1px solid rgba(242,199,91,.45);border-radius:18px;padding:12px;box-shadow:0 16px 50px rgba(0,0,0,.55);color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif}#gc-install-banner.show{display:flex}#gc-install-banner div{flex:1}#gc-install-banner b{display:block;color:#f2c75b;font-size:14px}#gc-install-banner span{display:block;color:#b9c0d0;font-size:12px;margin-top:2px}#gc-install-banner button{border:0;border-radius:12px;background:#f2c75b;color:#111;padding:10px 12px;font-weight:900}#gc-install-banner .gc-close{background:#172033;color:#fff;border:1px solid #2a3145;width:38px;padding:10px 0}@media(max-width:520px){#gc-install-banner span{display:none}}
+
+/* ===== MÓDULO G'S ===== */
+.gs-wrap{padding:14px;background:radial-gradient(circle at 15% 0%,#25130d 0%,#11131d 40%,#070910 100%);min-height:100%}
+.gs-hero{border:1px solid #d6a30055;background:linear-gradient(145deg,#151823,#080b11);border-radius:18px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.gs-hero h2{margin:0;color:#f5c842;font-family:'Barlow Condensed',sans-serif;font-size:34px;line-height:1}
+.gs-hero p{margin:6px 0 0;color:#b7bfd8;font-size:12px}
+.gs-add{border:0;border-radius:14px;background:#f5c842;color:#090b13;font-weight:900;padding:12px 16px;white-space:nowrap}
+.gs-filters{display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:10px;margin-bottom:12px}
+.gs-table-card{border:1px solid #ffffff14;background:linear-gradient(145deg,#151823,#080b11);border-radius:18px;overflow:hidden}
+.gs-table-head,.gs-row{display:grid;grid-template-columns:1.6fr .55fr .75fr .8fr 1fr .55fr;gap:8px;align-items:center}
+.gs-table-head{padding:12px 14px;background:#ffffff08;color:#c9cede;font-size:10px;font-weight:900;text-transform:uppercase}
+.gs-row{padding:11px 14px;border-top:1px solid #ffffff0d;color:#fff;font-size:12px}
+.gs-person{display:flex;align-items:center;gap:10px;min-width:0}.gs-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#3b82f6,#7c3aed);font-weight:900;color:#fff}.gs-name{font-weight:900;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gs-sub{font-size:10px;color:#8d96b8;margin-top:3px}
+.gs-code{color:#f5c842;font-weight:900;font-size:15px}.gs-pass{display:inline-flex;align-items:center;gap:6px;background:#ffffff08;border:1px solid #ffffff12;border-radius:9px;padding:7px 10px}
+.gs-status{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;font-size:10px;font-weight:900;padding:6px 9px;width:max-content}.gs-emuso{background:#0f513022;color:#35f080;border:1px solid #35f08033}.gs-bloq{background:#6b450022;color:#f5c842;border:1px solid #f5c84244}.gs-livre{background:#6b728022;color:#cbd5e1;border:1px solid #cbd5e133}
+.gs-date{font-size:11px;color:#cbd5e1;line-height:1.25}.gs-alert{color:#f5c842;font-size:10px;font-weight:800;margin-top:3px}.gs-action{display:flex;gap:8px;justify-content:flex-end}.gs-btn{border:1px solid #d6a30066;background:#111827;color:#f5c842;border-radius:10px;padding:8px 9px;font-weight:900}.gs-btn.danger{border-color:#e74c3c66;color:#ff6b6b}.gs-btn.add{border-color:#35f08066;color:#35f080}
+.gs-hist-item{border:1px solid #ffffff14;background:#111827;border-radius:12px;padding:10px;margin-bottom:8px;color:#cbd5e1;font-size:12px}.gs-hist-item b{color:#fff}
+@media(max-width:760px){.gs-filters{grid-template-columns:1fr}.gs-table-head{display:none}.gs-row{grid-template-columns:1fr;gap:7px}.gs-action{justify-content:flex-start}.gs-hero{align-items:flex-start;flex-direction:column}.gs-add{width:100%}}
+
+
+/* ===== CORREÇÃO DEFINITIVA G'S: TELA EXCLUSIVA ===== */
+#gsPanel.gs-fullscreen{
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  height:100vh!important;
+  max-width:none!important;
+  transform:none!important;
+  left:0!important;
+  top:0!important;
+  z-index:999999!important;
+  display:block!important;
+  background:radial-gradient(circle at 15% 0%,#4a120f 0%,#11131d 38%,#070910 100%)!important;
+  border-left:0!important;
+  overflow:auto!important;
+}
+#gsPanel.gs-fullscreen .panel-header{
+  position:sticky!important;
+  top:0!important;
+  z-index:10!important;
+  background:#10131d!important;
+  border-bottom:1px solid #d6a30077!important;
+}
+body.gs-open #mainContent,
+body.gs-open .header,
+body.gs-open #syncBar,
+body.gs-open #sheetsBar,
+body.gs-open .date-bar,
+body.gs-open #summary{
+  display:none!important;
+}
+body.gs-open #premiumDashboard{
+  display:block!important;
+}
+
 </style>
 <div id="gc-install-banner"><div><b>Instalar Gestão Coco Bambu</b><span>Use como app em tela cheia no celular ou computador.</span></div><button id="gc-install-btn">Instalar</button><button class="gc-close" id="gc-install-close">×</button></div>
 <script>
@@ -7723,6 +8566,796 @@ document.addEventListener('DOMContentLoaded',()=>{try{showHomeDashboard();update
     alert('Android/Chrome: toque no menu do navegador e escolha Instalar app.\n\niPhone/Safari: toque em Compartilhar e depois em Adicionar à Tela de Início. No iPhone, a Apple não permite instalação automática, mas o app abre em tela cheia quando instalado.');
   });
   if(close)close.addEventListener('click',function(){ localStorage.setItem(key,'1'); if(banner)banner.classList.remove('show'); });
+})();
+</script>
+
+
+<script>
+/* ===== MÓDULO G'S — ISOLADO ===== */
+const GS_DEFAULT=[
+  ['', 'G1', '286511'],
+  ['WILLIAN FRANCO', 'G2', '744432'],
+  ['FABRICIO', 'G3', '337700'],
+  ['IGOR FERREIRA', 'G4', '264684'],
+  ['', 'G5', '847551'],
+  ['', 'G6', '820157'],
+  ['', 'G7', '558311'],
+  ['', 'G8', '008398'],
+  ['', 'G9', '999556'],
+  ['', 'G10', '375339'],
+  ['', 'G11', '514736'],
+  ['', 'G12', '848700'],
+  ['', 'G13', '303665'],
+  ['', 'G14', '895374'],
+  ['KLEBER', 'G15', '873436'],
+  ['ANDRE', 'G16', '863621'],
+  ['', 'G17', '839542'],
+  ['FABRICIA', 'G18', '447782'],
+  ['ALEXANDRE', 'G19', '274713'],
+  ['FABIALLY', 'G20', '808791'],
+  ['ANA LUCIA', 'G21', '310815'],
+  ['', 'G22', '307658'],
+  ['RICKSON', 'G23', '879566'],
+  ['PATRICIA', 'G24', '825466'],
+  ['HELEN', 'G25', '720093'],
+  ['MARINA', 'G26', '826000'],
+  ['LEYREAN', 'G27', '490507'],
+  ['PAULO', 'G28', '408259'],
+  ['MIGUEL SEBASTIAN', 'G29', '151116'],
+  ['', 'G30', '180820'],
+  ['', 'G31', '279629'],
+  ['', 'G32', '252862'],
+  ['', 'G33', '795893'],
+  ['', 'G34', '188859'],
+  ['CAMILA', 'G35', '187924'],
+  ['BAR', 'G36', '654536'],
+  ['SAMUEL OLIVEIRA', 'G37', '702444'],
+  ['', 'G38', '435622'],
+  ['', 'G39', '533391'],
+  ['', 'G40', '395385'],
+  ['', 'M01', 'DIGITAL'],
+  ['THIAGO SANTOS', 'M02', 'DIGITAL']
+];
+let gsEditCodigo=null;
+function _gsHojeIso(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function _gsPt(v){if(!v)return '-';if(/^\d{4}-\d{2}-\d{2}$/.test(v)){const [y,m,d]=v.split('-');return `${d}/${m}/${y}`}return v}
+function _gsDiasDesde(iso){if(!iso)return null;const d=new Date(iso+'T00:00:00');const h=new Date();h.setHours(0,0,0,0);return Math.floor((h-d)/86400000)}
+function _gsBloqAte(iso){if(!iso)return '';const d=new Date(iso+'T00:00:00');d.setDate(d.getDate()+30);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function _gsLoad(){
+  let arr=[];
+  try{arr=JSON.parse(localStorage.getItem('gs_registros')||'[]')}catch(e){arr=[]}
+  const byCode={};
+  (arr||[]).forEach(g=>{ if(g&&g.codigo) byCode[g.codigo]=g; });
+  let changed=false;
+  GS_DEFAULT.forEach(x=>{
+    if(!byCode[x[1]]){
+      byCode[x[1]]={nome:x[0],codigo:x[1],senha:x[2],ultimaAlteracao:'',bloqueadoAte:'',historico:[]};
+      changed=true;
+    }else{
+      byCode[x[1]].senha=x[2];
+      byCode[x[1]].codigo=x[1];
+      if(typeof byCode[x[1]].nome==='undefined') byCode[x[1]].nome=x[0];
+      if(!byCode[x[1]].historico) byCode[x[1]].historico=[];
+    }
+  });
+  arr=GS_DEFAULT.map(x=>byCode[x[1]]);
+  if(changed||!localStorage.getItem('gs_registros')) localStorage.setItem('gs_registros',JSON.stringify(arr));
+  return arr;
+}catch(e){};if(!arr.length){arr=GS_DEFAULT.map(x=>({nome:x[0],codigo:x[1],senha:x[2],ultimaAlteracao:'',bloqueadoAte:'',historico:[]}));localStorage.setItem('gs_registros',JSON.stringify(arr));}return arr}
+function _gsSave(arr){localStorage.setItem('gs_registros',JSON.stringify(arr));try{if(typeof fbDb!=='undefined'&&fbDb&&fbConnected)fbDb.ref('gs_registros').set(arr)}catch(e){console.warn('gs firebase',e)}}
+function _gsStatus(g){if(String(g.nome||'').trim())return 'EM_USO';if(g.bloqueadoAte){const hoje=_gsHojeIso();if(g.bloqueadoAte>=hoje)return 'BLOQUEADO'}return 'LIVRE'}
+function openGsPanel(){
+  try{
+    document.body.classList.add('home-active');
+    const dash=document.getElementById('premiumDashboard');
+    if(dash) dash.style.display='block';
+    const main=document.getElementById('mainContent');
+    if(main) main.style.display='none';
+  }catch(e){}
+  try{ closeAllPanels && closeAllPanels(); }catch(e){}
+  openPanel('gsPanel');
+  renderGsFiltroCodigos();
+  const st=document.getElementById('gsStatusFiltro'); if(st) st.value='';
+  renderGsTable();
+  try{
+    if(typeof fbDb!=='undefined'&&fbDb&&fbConnected){
+      fbDb.ref('gs_registros').once('value').then(s=>{
+        if(s.exists()){
+          localStorage.setItem('gs_registros',JSON.stringify(s.val()));
+          renderGsFiltroCodigos();
+          renderGsTable();
+        }
+      });
+    }
+  }catch(e){}
+}
+function editarGs(cod){const g=_gsLoad().find(x=>x.codigo===cod);if(!g)return;gsEditCodigo=cod;document.getElementById('gsEditTitle').textContent='Editar '+cod;document.getElementById('gsNomeInput').value=g.nome||'';document.getElementById('gsCodigoInput').value=g.codigo;document.getElementById('gsSenhaInput').value=g.senha;document.getElementById('gsDataInput').value=_gsHojeIso();openModal('gsEditModal')}
+function salvarGsEdit(){const arr=_gsLoad();const g=arr.find(x=>x.codigo===gsEditCodigo);if(!g)return;const novo=(document.getElementById('gsNomeInput').value||'').trim().toUpperCase();const data=document.getElementById('gsDataInput').value||_gsHojeIso();const antigo=g.nome||'';if(novo!==antigo){g.historico=g.historico||[];g.historico.push({data,anterior:antigo||'(vazio)',novo:novo||'(vazio)',tipo:novo?'TROCA/INCLUSÃO':'REMOÇÃO'});g.nome=novo;g.ultimaAlteracao=data;g.bloqueadoAte=novo?'':_gsBloqAte(data)}_gsSave(arr);closeModal('gsEditModal');renderGsFiltroCodigos();renderGsTable();showToast('✅ G salvo com sucesso')}
+function removerGs(cod){if(!confirm('Remover o garçom deste G e bloquear por 30 dias?'))return;const arr=_gsLoad();const g=arr.find(x=>x.codigo===cod);if(!g)return;const data=_gsHojeIso();g.historico=g.historico||[];g.historico.push({data,anterior:g.nome||'(vazio)',novo:'(vazio)',tipo:'REMOÇÃO'});g.nome='';g.ultimaAlteracao=data;g.bloqueadoAte=_gsBloqAte(data);_gsSave(arr);renderGsTable();showToast('✅ G removido e bloqueado por 30 dias')}
+function gsNovoLivre(){document.getElementById('gsStatusFiltro').value='LIVRE';renderGsTable();showToast('Selecione um G livre para cadastrar o garçom')}
+function openGsHistory(){const arr=_gsLoad();const hist=[];arr.forEach(g=>(g.historico||[]).forEach(h=>hist.push({...h,codigo:g.codigo})));hist.sort((a,b)=>String(b.data).localeCompare(String(a.data)));document.getElementById('gsHistoryContent').innerHTML=hist.map(h=>`<div class="gs-hist-item"><b>${h.codigo}</b> — ${h.tipo}<br>Data: ${_gsPt(h.data)}<br>De: ${h.anterior}<br>Para: ${h.novo}</div>`).join('')||'<div class="empty">Nenhuma alteração registrada.</div>';openModal('gsHistoryModal')}
+</script>
+
+
+<script>
+/* ===== CORREÇÃO DEFINITIVA DA ROTA G'S ===== */
+function abrirGsTelaExclusiva(){
+  try{
+    document.body.classList.add('home-active');
+    document.body.classList.add('gs-open');
+    const dash=document.getElementById('premiumDashboard');
+    if(dash) dash.style.display='block';
+
+    const main=document.getElementById('mainContent');
+    if(main) main.style.display='none';
+
+    const p=document.getElementById('gsPanel');
+    if(!p){
+      if(typeof showToast==='function') showToast("⚠️ Painel G's não encontrado");
+      return;
+    }
+
+    // fecha outros painéis sem chamar tela de frequência
+    document.querySelectorAll('.slide-panel.active').forEach(el=>{
+      if(el.id!=='gsPanel') el.classList.remove('active');
+    });
+
+    p.classList.add('active');
+    p.classList.add('gs-fullscreen');
+    p.style.display='block';
+    p.style.transform='none';
+    p.style.left='0';
+    p.style.width='100vw';
+
+    if(typeof renderGsFiltroCodigos==='function') renderGsFiltroCodigos();
+    const st=document.getElementById('gsStatusFiltro');
+    if(st) st.value='';
+    if(typeof renderGsTable==='function') renderGsTable();
+
+  }catch(e){
+    console.warn('abrirGsTelaExclusiva',e);
+    if(typeof showToast==='function') showToast("⚠️ Erro ao abrir G's");
+  }
+}
+function fecharGsTelaExclusiva(){
+  const p=document.getElementById('gsPanel');
+  if(p){
+    p.classList.remove('active');
+    p.classList.remove('gs-fullscreen');
+    p.style.display='';
+  }
+  document.body.classList.remove('gs-open');
+  document.body.classList.add('home-active');
+  const dash=document.getElementById('premiumDashboard');
+  if(dash) dash.style.display='block';
+}
+function openGsPanel(){ abrirGsTelaExclusiva(); }
+</script>
+
+
+
+
+
+<script id="gs-direct-js">
+(function(){
+  const GS_ROWS_DATA = [{'nome': '', 'codigo': 'G1', 'senha': '286511', 'status': 'LIVRE'}, {'nome': 'WILLIAN FRANCO', 'codigo': 'G2', 'senha': '744432', 'status': 'EM_USO'}, {'nome': 'FABRICIO', 'codigo': 'G3', 'senha': '337700', 'status': 'EM_USO'}, {'nome': 'IGOR FERREIRA', 'codigo': 'G4', 'senha': '264684', 'status': 'EM_USO'}, {'nome': '', 'codigo': 'G5', 'senha': '847551', 'status': 'LIVRE'}, {'nome': '', 'codigo': 'G6', 'senha': '820157', 'status': 'LIVRE'}, {'nome': '', 'codigo': 'G7', 'senha': '558311', 'status': 'LIVRE'}, {'nome': '', 'codigo': 'G8', 'senha': '008398', 'status': 'LIVRE'}, {'nome': '', 'codigo': 'G9', 'senha': '999556', 'status': 'LIVRE'}, {'nome': '', 'codigo': 'G10', 'senha': '375339', 'status': 'LIVRE'}, {'nome': '', 'codigo': 'G11', 'senha': '514736', 'status': 'LIVRE'}, {'nome': '', 'codigo': 'G12', 'senha': '848700', 'status': 'LIVRE'}, {'nome': '', 'codigo': 'G13', 'senha': '303665', 'status': 'LIVRE'}, {'nome': '', 'codigo': 'G14', 'senha': '895374', 'status': 'LIVRE'}, {'nome': 'KLEBER', 'codigo': 'G15', 'senha': '873436', 'status': 'EM_USO'}, {'nome': 'ANDRE', 'codigo': 'G16', 'senha': '863621', 'status': 'EM_USO'}, {'nome': '', 'codigo': 'G17', 'senha': '839542', 'status': 'LIVRE'}, {'nome': 'FABRICIA', 'codigo': 'G18', 'senha': '447782', 'status': 'EM_USO'}, {'nome': 'ALEXANDRE', 'codigo': 'G19', 'senha': '274713', 'status': 'EM_USO'}, {'nome': 'FABIALLY', 'codigo': 'G20', 'senha': '808791', 'status': 'EM_USO'}, {'nome': 'ANA LUCIA', 'codigo': 'G21', 'senha': '310815', 'status': 'EM_USO'}, {'nome': '', 'codigo': 'G22', 'senha': '307658', 'status': 'LIVRE'}, {'nome': 'RICKSON', 'codigo': 'G23', 'senha': '879566', 'status': 'EM_USO'}, {'nome': 'PATRICIA', 'codigo': 'G24', 'senha': '825466', 'status': 'EM_USO'}, {'nome': 'HELEN', 'codigo': 'G25', 'senha': '720093', 'status': 'EM_USO'}, {'nome': 'MARINA', 'codigo': 'G26', 'senha': '826000', 'status': 'EM_USO'}, {'nome': 'LEYREAN', 'codigo': 'G27', 'senha': '490507', 'status': 'EM_USO'}, {'nome': 'PAULO', 'codigo': 'G28', 'senha': '408259', 'status': 'EM_USO'}, {'nome': 'MIGUEL SEBASTIAN', 'codigo': 'G29', 'senha': '151116', 'status': 'EM_USO'}, {'nome': '', 'codigo': 'G30', 'senha': '180820', 'status': 'LIVRE'}, {'nome': '', 'codigo': 'G31', 'senha': '279629', 'status': 'LIVRE'}, {'nome': '', 'codigo': 'G32', 'senha': '252862', 'status': 'LIVRE'}, {'nome': '', 'codigo': 'G33', 'senha': '795893', 'status': 'LIVRE'}, {'nome': '', 'codigo': 'G34', 'senha': '188859', 'status': 'LIVRE'}, {'nome': 'CAMILA', 'codigo': 'G35', 'senha': '187924', 'status': 'EM_USO'}, {'nome': 'BAR', 'codigo': 'G36', 'senha': '654536', 'status': 'EM_USO'}, {'nome': 'SAMUEL OLIVEIRA', 'codigo': 'G37', 'senha': '702444', 'status': 'EM_USO'}, {'nome': '', 'codigo': 'G38', 'senha': '435622', 'status': 'LIVRE'}, {'nome': '', 'codigo': 'G39', 'senha': '533391', 'status': 'LIVRE'}, {'nome': '', 'codigo': 'G40', 'senha': '395385', 'status': 'LIVRE'}, {'nome': '', 'codigo': 'M01', 'senha': 'DIGITAL', 'status': 'LIVRE'}, {'nome': 'THIAGO SANTOS', 'codigo': 'M02', 'senha': 'DIGITAL', 'status': 'EM_USO'}];
+
+  function ensureRows(){
+    const body=document.getElementById('gsTableBody');
+    if(!body) return;
+    if(body.querySelector('[data-gs-row="1"]')) return;
+    body.innerHTML = `<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G1" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G1</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G1</div>
+      <div><span class="gs-pass">286511 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G1')">✏️</button><button class="gs-btn add" onclick="editarGs('G1')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="WILLIAN FRANCO" data-codigo="G2" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">WF</div><div><div class="gs-name">WILLIAN FRANCO</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G2</div>
+      <div><span class="gs-pass">744432 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G2')">✏️</button><button class="gs-btn danger" onclick="removerGs('G2')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="FABRICIO" data-codigo="G3" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">F</div><div><div class="gs-name">FABRICIO</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G3</div>
+      <div><span class="gs-pass">337700 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G3')">✏️</button><button class="gs-btn danger" onclick="removerGs('G3')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="IGOR FERREIRA" data-codigo="G4" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">IF</div><div><div class="gs-name">IGOR FERREIRA</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G4</div>
+      <div><span class="gs-pass">264684 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G4')">✏️</button><button class="gs-btn danger" onclick="removerGs('G4')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G5" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G5</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G5</div>
+      <div><span class="gs-pass">847551 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G5')">✏️</button><button class="gs-btn add" onclick="editarGs('G5')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G6" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G6</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G6</div>
+      <div><span class="gs-pass">820157 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G6')">✏️</button><button class="gs-btn add" onclick="editarGs('G6')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G7" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G7</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G7</div>
+      <div><span class="gs-pass">558311 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G7')">✏️</button><button class="gs-btn add" onclick="editarGs('G7')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G8" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G8</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G8</div>
+      <div><span class="gs-pass">008398 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G8')">✏️</button><button class="gs-btn add" onclick="editarGs('G8')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G9" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G9</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G9</div>
+      <div><span class="gs-pass">999556 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G9')">✏️</button><button class="gs-btn add" onclick="editarGs('G9')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G10" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G10</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G10</div>
+      <div><span class="gs-pass">375339 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G10')">✏️</button><button class="gs-btn add" onclick="editarGs('G10')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G11" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G11</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G11</div>
+      <div><span class="gs-pass">514736 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G11')">✏️</button><button class="gs-btn add" onclick="editarGs('G11')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G12" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G12</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G12</div>
+      <div><span class="gs-pass">848700 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G12')">✏️</button><button class="gs-btn add" onclick="editarGs('G12')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G13" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G13</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G13</div>
+      <div><span class="gs-pass">303665 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G13')">✏️</button><button class="gs-btn add" onclick="editarGs('G13')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G14" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G14</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G14</div>
+      <div><span class="gs-pass">895374 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G14')">✏️</button><button class="gs-btn add" onclick="editarGs('G14')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="KLEBER" data-codigo="G15" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">K</div><div><div class="gs-name">KLEBER</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G15</div>
+      <div><span class="gs-pass">873436 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G15')">✏️</button><button class="gs-btn danger" onclick="removerGs('G15')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="ANDRE" data-codigo="G16" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">A</div><div><div class="gs-name">ANDRE</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G16</div>
+      <div><span class="gs-pass">863621 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G16')">✏️</button><button class="gs-btn danger" onclick="removerGs('G16')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G17" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G17</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G17</div>
+      <div><span class="gs-pass">839542 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G17')">✏️</button><button class="gs-btn add" onclick="editarGs('G17')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="FABRICIA" data-codigo="G18" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">F</div><div><div class="gs-name">FABRICIA</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G18</div>
+      <div><span class="gs-pass">447782 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G18')">✏️</button><button class="gs-btn danger" onclick="removerGs('G18')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="ALEXANDRE" data-codigo="G19" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">A</div><div><div class="gs-name">ALEXANDRE</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G19</div>
+      <div><span class="gs-pass">274713 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G19')">✏️</button><button class="gs-btn danger" onclick="removerGs('G19')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="FABIALLY" data-codigo="G20" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">F</div><div><div class="gs-name">FABIALLY</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G20</div>
+      <div><span class="gs-pass">808791 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G20')">✏️</button><button class="gs-btn danger" onclick="removerGs('G20')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="ANA LUCIA" data-codigo="G21" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">AL</div><div><div class="gs-name">ANA LUCIA</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G21</div>
+      <div><span class="gs-pass">310815 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G21')">✏️</button><button class="gs-btn danger" onclick="removerGs('G21')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G22" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G22</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G22</div>
+      <div><span class="gs-pass">307658 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G22')">✏️</button><button class="gs-btn add" onclick="editarGs('G22')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="RICKSON" data-codigo="G23" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">R</div><div><div class="gs-name">RICKSON</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G23</div>
+      <div><span class="gs-pass">879566 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G23')">✏️</button><button class="gs-btn danger" onclick="removerGs('G23')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="PATRICIA" data-codigo="G24" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">P</div><div><div class="gs-name">PATRICIA</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G24</div>
+      <div><span class="gs-pass">825466 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G24')">✏️</button><button class="gs-btn danger" onclick="removerGs('G24')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="HELEN" data-codigo="G25" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">H</div><div><div class="gs-name">HELEN</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G25</div>
+      <div><span class="gs-pass">720093 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G25')">✏️</button><button class="gs-btn danger" onclick="removerGs('G25')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="MARINA" data-codigo="G26" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">M</div><div><div class="gs-name">MARINA</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G26</div>
+      <div><span class="gs-pass">826000 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G26')">✏️</button><button class="gs-btn danger" onclick="removerGs('G26')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="LEYREAN" data-codigo="G27" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">L</div><div><div class="gs-name">LEYREAN</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G27</div>
+      <div><span class="gs-pass">490507 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G27')">✏️</button><button class="gs-btn danger" onclick="removerGs('G27')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="PAULO" data-codigo="G28" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">P</div><div><div class="gs-name">PAULO</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G28</div>
+      <div><span class="gs-pass">408259 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G28')">✏️</button><button class="gs-btn danger" onclick="removerGs('G28')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="MIGUEL SEBASTIAN" data-codigo="G29" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">MS</div><div><div class="gs-name">MIGUEL SEBASTIAN</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G29</div>
+      <div><span class="gs-pass">151116 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G29')">✏️</button><button class="gs-btn danger" onclick="removerGs('G29')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G30" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G30</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G30</div>
+      <div><span class="gs-pass">180820 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G30')">✏️</button><button class="gs-btn add" onclick="editarGs('G30')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G31" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G31</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G31</div>
+      <div><span class="gs-pass">279629 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G31')">✏️</button><button class="gs-btn add" onclick="editarGs('G31')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G32" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G32</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G32</div>
+      <div><span class="gs-pass">252862 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G32')">✏️</button><button class="gs-btn add" onclick="editarGs('G32')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G33" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G33</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G33</div>
+      <div><span class="gs-pass">795893 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G33')">✏️</button><button class="gs-btn add" onclick="editarGs('G33')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G34" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G34</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G34</div>
+      <div><span class="gs-pass">188859 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G34')">✏️</button><button class="gs-btn add" onclick="editarGs('G34')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="CAMILA" data-codigo="G35" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">C</div><div><div class="gs-name">CAMILA</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G35</div>
+      <div><span class="gs-pass">187924 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G35')">✏️</button><button class="gs-btn danger" onclick="removerGs('G35')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="BAR" data-codigo="G36" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">B</div><div><div class="gs-name">BAR</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G36</div>
+      <div><span class="gs-pass">654536 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G36')">✏️</button><button class="gs-btn danger" onclick="removerGs('G36')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="SAMUEL OLIVEIRA" data-codigo="G37" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">SO</div><div><div class="gs-name">SAMUEL OLIVEIRA</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">G37</div>
+      <div><span class="gs-pass">702444 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G37')">✏️</button><button class="gs-btn danger" onclick="removerGs('G37')">⊘</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G38" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G38</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G38</div>
+      <div><span class="gs-pass">435622 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G38')">✏️</button><button class="gs-btn add" onclick="editarGs('G38')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G39" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G39</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G39</div>
+      <div><span class="gs-pass">533391 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G39')">✏️</button><button class="gs-btn add" onclick="editarGs('G39')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="G40" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">G40</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">G40</div>
+      <div><span class="gs-pass">395385 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('G40')">✏️</button><button class="gs-btn add" onclick="editarGs('G40')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="" data-codigo="M01" data-status="LIVRE">
+      <div class="gs-person"><div class="gs-avatar">--</div><div><div class="gs-name">M01</div><div class="gs-sub">(Disponível)</div></div></div>
+      <div class="gs-code">M01</div>
+      <div><span class="gs-pass">DIGITAL 🔒</span></div>
+      <div><span class="gs-status gs-livre">LIVRE</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('M01')">✏️</button><button class="gs-btn add" onclick="editarGs('M01')">+</button></div>
+    </div>
+<div class="gs-row" data-gs-row="1" data-nome="THIAGO SANTOS" data-codigo="M02" data-status="EM USO">
+<div class="gs-row" data-gs-row="1" data-nome="WESLLEY JANUARIO" data-codigo="M03" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">WJ</div><div><div class="gs-name">WESLLEY JANUARIO</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">M03</div>
+      <div><span class="gs-pass">DIGITAL 🔒</span></div>
+      <div><span class="gs-status gs-uso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('M03')">✏️</button><button class="gs-btn danger">⊘</button></div>
+</div>
+
+<div class="gs-row" data-gs-row="1" data-nome="EDMAGNA" data-codigo="M04" data-status="EM USO">
+      <div class="gs-person"><div class="gs-avatar">E</div><div><div class="gs-name">EDMAGNA</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">M04</div>
+      <div><span class="gs-pass">DIGITAL 🔒</span></div>
+      <div><span class="gs-status gs-uso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('M04')">✏️</button><button class="gs-btn danger">⊘</button></div>
+</div>
+
+      <div class="gs-person"><div class="gs-avatar">TS</div><div><div class="gs-name">THIAGO SANTOS</div><div class="gs-sub"></div></div></div>
+      <div class="gs-code">M02</div>
+      <div><span class="gs-pass">DIGITAL 🔒</span></div>
+      <div><span class="gs-status gs-emuso">EM USO</span></div>
+      <div class="gs-date">-<br><span style="color:#8d96b8">Nunca utilizado</span></div>
+      <div class="gs-action"><button class="gs-btn" onclick="editarGs('M02')">✏️</button><button class="gs-btn danger" onclick="removerGs('M02')">⊘</button></div>
+    </div>`;
+  }
+
+  function fillCodigoFiltroDireto(){
+    const sel=document.getElementById('gsCodigoFiltro');
+    if(!sel) return;
+    const old=sel.value || '';
+    sel.innerHTML='<option value="">Todos os G\'s</option>'+GS_ROWS_DATA.map(x=>`<option value="${x.codigo}">${x.codigo}</option>`).join('');
+    sel.value=old;
+  }
+
+  window.renderGsTable = function(){
+    ensureRows();
+    fillCodigoFiltroDireto();
+    const busca=(document.getElementById('gsBusca')?.value||'').toUpperCase().trim();
+    const st=(document.getElementById('gsStatusFiltro')?.value||'').toUpperCase();
+    const cod=(document.getElementById('gsCodigoFiltro')?.value||'').toUpperCase();
+    document.querySelectorAll('#gsTableBody [data-gs-row="1"]').forEach(row=>{
+      const nome=(row.getAttribute('data-nome')||'').toUpperCase();
+      const codigo=(row.getAttribute('data-codigo')||'').toUpperCase();
+      const status=(row.getAttribute('data-status')||'').toUpperCase();
+      const okBusca=!busca || nome.includes(busca) || codigo.includes(busca);
+      const okSt=!st || status===st;
+      const okCod=!cod || codigo===cod;
+      row.style.display=(okBusca&&okSt&&okCod)?'grid':'none';
+    });
+  };
+
+  window.renderGsFiltroCodigos = fillCodigoFiltroDireto;
+
+  window.abrirGsTelaExclusiva = function(){
+    document.body.classList.add('home-active');
+    document.body.classList.add('gs-open');
+    const dash=document.getElementById('premiumDashboard');
+    if(dash) dash.style.display='block';
+    const main=document.getElementById('mainContent');
+    if(main) main.style.display='none';
+    document.querySelectorAll('.slide-panel.active').forEach(el=>{if(el.id!=='gsPanel')el.classList.remove('active')});
+    const p=document.getElementById('gsPanel');
+    if(!p){alert("Painel G's não encontrado");return;}
+    p.classList.add('active','gs-fullscreen');
+    p.style.display='block';
+    p.style.transform='none';
+    p.style.left='0';
+    p.style.width='100vw';
+    const s=document.getElementById('gsStatusFiltro');
+    if(s) s.value='';
+    ensureRows();
+    fillCodigoFiltroDireto();
+    window.renderGsTable();
+  };
+
+  window.openGsPanel = window.abrirGsTelaExclusiva;
+
+  window.fecharGsTelaExclusiva = function(){
+    const p=document.getElementById('gsPanel');
+    if(p){p.classList.remove('active','gs-fullscreen');p.style.display='';}
+    document.body.classList.remove('gs-open');
+    document.body.classList.add('home-active');
+    const dash=document.getElementById('premiumDashboard');
+    if(dash) dash.style.display='block';
+  };
+
+  window.editarGs = function(codigo){
+    const row=document.querySelector(`#gsTableBody [data-codigo="${codigo}"]`);
+    if(!row) return;
+    const atual=row.getAttribute('data-nome')||'';
+    const novo=prompt('Editar nome do garçom para '+codigo+':', atual);
+    if(novo===null) return;
+    const nome=String(novo||'').trim().toUpperCase();
+    const old=atual;
+    row.setAttribute('data-nome', nome);
+    row.setAttribute('data-status', nome?'EM_USO':'LIVRE');
+    row.querySelector('.gs-name').textContent = nome || codigo;
+    row.querySelector('.gs-sub').textContent = nome ? '' : '(Disponível)';
+    const av=row.querySelector('.gs-avatar');
+    av.textContent = nome ? nome.split(' ').filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase() : '--';
+    const pill=row.querySelector('.gs-status');
+    pill.textContent=nome?'EM USO':'LIVRE';
+    pill.className='gs-status '+(nome?'gs-emuso':'gs-livre');
+    row.querySelector('.gs-date').innerHTML = new Date().toLocaleDateString('pt-BR')+'<br><span style="color:#8d96b8">hoje</span>';
+    const hist=JSON.parse(localStorage.getItem('gs_historico')||'[]');
+    hist.push({codigo, anterior:old||'(vazio)', novo:nome||'(vazio)', data:new Date().toISOString().slice(0,10)});
+    localStorage.setItem('gs_historico', JSON.stringify(hist));
+    window.renderGsTable();
+  };
+
+  window.removerGs = function(codigo){
+    if(!confirm('Remover o garçom deste G e bloquear por 30 dias?')) return;
+    const row=document.querySelector(`#gsTableBody [data-codigo="${codigo}"]`);
+    if(!row) return;
+    const antigo=row.getAttribute('data-nome')||'';
+    row.setAttribute('data-nome','');
+    row.setAttribute('data-status','BLOQUEADO');
+    row.querySelector('.gs-name').textContent=codigo;
+    row.querySelector('.gs-sub').textContent='(Disponível)';
+    row.querySelector('.gs-avatar').textContent='--';
+    const pill=row.querySelector('.gs-status');
+    pill.textContent='BLOQUEADO';
+    pill.className='gs-status gs-bloq';
+    const d=new Date(); const ate=new Date(); ate.setDate(ate.getDate()+30);
+    row.querySelector('.gs-date').innerHTML=d.toLocaleDateString('pt-BR')+'<br><span style="color:#8d96b8">hoje</span><div class="gs-alert">Bloqueado até '+ate.toLocaleDateString('pt-BR')+'</div>';
+    const hist=JSON.parse(localStorage.getItem('gs_historico')||'[]');
+    hist.push({codigo, anterior:antigo||'(vazio)', novo:'(vazio)', data:new Date().toISOString().slice(0,10)});
+    localStorage.setItem('gs_historico', JSON.stringify(hist));
+    window.renderGsTable();
+  };
+
+  window.gsNovoLivre=function(){
+    const s=document.getElementById('gsStatusFiltro');
+    if(s) s.value='LIVRE';
+    window.renderGsTable();
+  };
+
+  window.openGsHistory=function(){
+    const hist=JSON.parse(localStorage.getItem('gs_historico')||'[]');
+    const el=document.getElementById('gsHistoryContent');
+    if(el){
+      el.innerHTML=hist.slice().reverse().map(h=>`<div class="gs-hist-item"><b>${h.codigo}</b><br>Data: ${h.data.split('-').reverse().join('/')}<br>De: ${h.anterior}<br>Para: ${h.novo}</div>`).join('') || '<div class="empty">Nenhuma alteração registrada.</div>';
+    }
+    if(typeof openModal==='function') openModal('gsHistoryModal');
+  };
+})();
+</script>
+
+
+<script id="gs-scroll-back-fix-js">
+/* Correção final: voltar do G's e ocultar barra de scroll */
+(function(){
+  const oldOpenGs = window.abrirGsTelaExclusiva;
+  window.abrirGsTelaExclusiva = function(){
+    try{
+      document.documentElement.classList.add('gs-no-scrollbar');
+      document.body.classList.add('gs-open');
+    }catch(e){}
+    if(typeof oldOpenGs === 'function'){
+      oldOpenGs();
+    }else if(typeof openGsPanel === 'function'){
+      openGsPanel();
+    }
+    setTimeout(()=>{
+      const p=document.getElementById('gsPanel');
+      if(p){
+        p.classList.add('active','gs-fullscreen');
+        p.style.display='block';
+        p.style.transform='none';
+        p.style.left='0';
+        p.style.width='100vw';
+      }
+      if(typeof renderGsTable==='function') renderGsTable();
+    },50);
+  };
+
+  window.fecharGsTelaExclusiva = function(){
+    try{
+      const p=document.getElementById('gsPanel');
+      if(p){
+        p.classList.remove('active');
+        p.classList.remove('gs-fullscreen');
+        p.style.display='';
+        p.style.transform='';
+        p.style.left='';
+        p.style.width='';
+      }
+
+      document.body.classList.remove('gs-open');
+      document.documentElement.classList.remove('gs-no-scrollbar');
+      document.body.classList.add('home-active');
+
+      const dash=document.getElementById('premiumDashboard');
+      if(dash){
+        dash.style.display='block';
+        dash.scrollIntoView({block:'start'});
+      }
+
+      const main=document.getElementById('mainContent');
+      if(main) main.style.display='none';
+
+      if(typeof _premiumNavActive==='function') _premiumNavActive('navInicioPremium');
+    }catch(e){
+      console.warn('fecharGsTelaExclusiva', e);
+    }
+  };
+
+  document.addEventListener('click', function(ev){
+    const back = ev.target.closest && ev.target.closest('#gsPanel .panel-back');
+    if(back){
+      ev.preventDefault();
+      ev.stopPropagation();
+      window.fecharGsTelaExclusiva();
+    }
+  }, true);
+})();
+</script>
+
+
+<script id="fix-mobile-gs-reset-101">
+(function(){
+  function resetGsAoAbrir(){
+    try{
+      document.body.classList.remove('gs-open');
+      document.documentElement.classList.remove('gs-no-scrollbar');
+
+      const gs = document.getElementById('gsPanel');
+      if(gs){
+        gs.classList.remove('active');
+        gs.classList.remove('gs-fullscreen');
+        gs.style.display = '';
+        gs.style.transform = '';
+        gs.style.left = '';
+        gs.style.width = '';
+      }
+
+      if(window.innerWidth <= 760){
+        document.body.classList.add('home-active');
+
+        const dash = document.getElementById('premiumDashboard');
+        if(dash) dash.style.display = 'block';
+
+        const main = document.getElementById('mainContent');
+        if(main) main.style.display = 'none';
+      }
+    }catch(e){}
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', resetGsAoAbrir);
+  }else{
+    resetGsAoAbrir();
+  }
+
+  window.addEventListener('pageshow', resetGsAoAbrir);
+
+  window.fecharGsTelaExclusiva = function(){
+    try{
+      const gs = document.getElementById('gsPanel');
+      if(gs){
+        gs.classList.remove('active');
+        gs.classList.remove('gs-fullscreen');
+        gs.style.display = '';
+        gs.style.transform = '';
+        gs.style.left = '';
+        gs.style.width = '';
+      }
+
+      document.body.classList.remove('gs-open');
+      document.documentElement.classList.remove('gs-no-scrollbar');
+      document.body.classList.add('home-active');
+
+      const dash = document.getElementById('premiumDashboard');
+      if(dash){
+        dash.style.display = 'block';
+        dash.scrollIntoView({block:'start'});
+      }
+
+      const main = document.getElementById('mainContent');
+      if(main) main.style.display = 'none';
+    }catch(e){}
+  };
 })();
 </script>
 

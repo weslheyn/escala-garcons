@@ -633,6 +633,46 @@ border-radius:10px!important;
 }
 }
 </style>
+
+<style id="fix-mobile-layout-gs-101">
+@media(max-width:760px){
+  html, body{
+    width:100%!important;
+    max-width:100%!important;
+    overflow-x:hidden!important;
+  }
+
+  body:not(.gs-open) #gsPanel{
+    display:none!important;
+  }
+
+  #gsPanel.gs-fullscreen{
+    position:fixed!important;
+    inset:0!important;
+    width:100vw!important;
+    max-width:100vw!important;
+    height:100dvh!important;
+    left:0!important;
+    top:0!important;
+    transform:none!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    scrollbar-width:none!important;
+    -ms-overflow-style:none!important;
+  }
+
+  #gsPanel.gs-fullscreen::-webkit-scrollbar{
+    display:none!important;
+    width:0!important;
+  }
+
+  #premiumDashboard{
+    max-width:100vw!important;
+    overflow-x:hidden!important;
+  }
+}
+</style>
+
 </head>
 <body class="home-active">
 <div class="toast" id="toast"></div>
@@ -9249,6 +9289,73 @@ function openGsPanel(){ abrirGsTelaExclusiva(); }
       window.fecharGsTelaExclusiva();
     }
   }, true);
+})();
+</script>
+
+
+<script id="fix-mobile-gs-reset-101">
+(function(){
+  function resetGsAoAbrir(){
+    try{
+      document.body.classList.remove('gs-open');
+      document.documentElement.classList.remove('gs-no-scrollbar');
+
+      const gs = document.getElementById('gsPanel');
+      if(gs){
+        gs.classList.remove('active');
+        gs.classList.remove('gs-fullscreen');
+        gs.style.display = '';
+        gs.style.transform = '';
+        gs.style.left = '';
+        gs.style.width = '';
+      }
+
+      if(window.innerWidth <= 760){
+        document.body.classList.add('home-active');
+
+        const dash = document.getElementById('premiumDashboard');
+        if(dash) dash.style.display = 'block';
+
+        const main = document.getElementById('mainContent');
+        if(main) main.style.display = 'none';
+      }
+    }catch(e){}
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', resetGsAoAbrir);
+  }else{
+    resetGsAoAbrir();
+  }
+
+  window.addEventListener('pageshow', resetGsAoAbrir);
+
+  window.fecharGsTelaExclusiva = function(){
+    try{
+      const gs = document.getElementById('gsPanel');
+      if(gs){
+        gs.classList.remove('active');
+        gs.classList.remove('gs-fullscreen');
+        gs.style.display = '';
+        gs.style.transform = '';
+        gs.style.left = '';
+        gs.style.width = '';
+      }
+
+      document.body.classList.remove('gs-open');
+      document.documentElement.classList.remove('gs-no-scrollbar');
+      document.body.classList.add('home-active');
+
+      const dash = document.getElementById('premiumDashboard');
+      if(dash){
+        dash.style.display = 'block';
+        dash.scrollIntoView({block:'start'});
+      }
+
+      const main = document.getElementById('mainContent');
+      if(main) main.style.display = 'none';
+    }catch(e){}
+  };
 })();
 </script>
 

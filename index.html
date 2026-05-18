@@ -486,51 +486,153 @@ body.gs-open #premiumDashboard{display:block!important}
 </style>
 
 
-
-
-
-
-
-
-
-
-<style id="gs-mobile-trava-final-css">
-body:not(.gs-open) #gsPanel{display:none!important}
-body.gs-open{overflow:hidden!important}
-
+<style id="gs-scroll-back-fix-css">
+/* G's: sem barra de scroll visível e voltar destravado */
+html.gs-no-scrollbar,
+body.gs-open{
+  overflow:hidden!important;
+}
 #gsPanel.gs-fullscreen{
-  position:fixed!important;
-  inset:0!important;
-  width:100vw!important;
-  max-width:100vw!important;
-  height:100dvh!important;
-  left:0!important;
-  top:0!important;
-  transform:none!important;
-  z-index:999999!important;
-  display:block!important;
   overflow-y:auto!important;
   overflow-x:hidden!important;
   scrollbar-width:none!important;
   -ms-overflow-style:none!important;
-  background:radial-gradient(circle at 15% 0%,#4a120f 0%,#11131d 38%,#070910 100%)!important;
 }
-#gsPanel.gs-fullscreen::-webkit-scrollbar{display:none!important;width:0!important}
-
-@media(max-width:820px){
-  .dash-grid{
-    display:grid!important;
-    grid-template-columns:repeat(2,minmax(0,1fr))!important;
-    gap:12px!important;
-  }
-  .dash-card,.dash-card.wide{
-    grid-column:auto!important;
-    min-height:150px!important;
-  }
-  #gsPanel .gs-date{display:none!important}
+#gsPanel.gs-fullscreen::-webkit-scrollbar{
+  width:0!important;
+  height:0!important;
+  display:none!important;
+}
+#gsPanel .panel-header{
+  z-index:9999999!important;
 }
 </style>
 
+
+
+
+
+<style id="gs-mobile-list-css">
+@media (max-width: 760px){
+
+body.gs-open{
+overflow:hidden!important;
+}
+
+#gsPanel{
+position:fixed!important;
+inset:0!important;
+width:100%!important;
+height:100%!important;
+overflow-y:auto!important;
+background:#060816!important;
+z-index:999999!important;
+padding-bottom:90px!important;
+}
+
+#gsPanel .gs-wrap{
+padding:8px!important;
+}
+
+#gsPanel .gs-hero{
+padding:10px!important;
+border-radius:14px!important;
+margin-bottom:8px!important;
+}
+
+#gsPanel .gs-filters{
+display:grid!important;
+grid-template-columns:1fr!important;
+gap:8px!important;
+}
+
+#gsPanel .gs-table-head{
+display:none!important;
+}
+
+#gsPanel .gs-row{
+display:flex!important;
+flex-direction:row!important;
+align-items:center!important;
+justify-content:space-between!important;
+gap:8px!important;
+padding:10px 8px!important;
+border-bottom:1px solid rgba(255,255,255,.06)!important;
+min-height:auto!important;
+}
+
+#gsPanel .gs-person{
+display:flex!important;
+align-items:center!important;
+gap:8px!important;
+flex:1!important;
+min-width:0!important;
+}
+
+#gsPanel .gs-avatar{
+width:42px!important;
+height:42px!important;
+font-size:14px!important;
+flex-shrink:0!important;
+}
+
+#gsPanel .gs-name{
+font-size:14px!important;
+font-weight:700!important;
+line-height:1.1!important;
+white-space:nowrap!important;
+overflow:hidden!important;
+text-overflow:ellipsis!important;
+max-width:110px!important;
+}
+
+#gsPanel .gs-sub{
+font-size:11px!important;
+opacity:.7!important;
+}
+
+#gsPanel .gs-code{
+font-size:18px!important;
+font-weight:800!important;
+color:#ffcc2f!important;
+min-width:42px!important;
+text-align:center!important;
+}
+
+#gsPanel .gs-pass{
+font-size:12px!important;
+padding:6px 8px!important;
+border-radius:8px!important;
+white-space:nowrap!important;
+}
+
+#gsPanel .gs-status{
+font-size:10px!important;
+padding:5px 8px!important;
+border-radius:999px!important;
+white-space:nowrap!important;
+}
+
+#gsPanel .gs-date{
+display:none!important;
+}
+
+#gsPanel .gs-action{
+display:flex!important;
+gap:5px!important;
+}
+
+#gsPanel .gs-btn{
+width:34px!important;
+height:34px!important;
+padding:0!important;
+display:flex!important;
+align-items:center!important;
+justify-content:center!important;
+border-radius:10px!important;
+}
+}
+</style>
 </head>
 <body class="home-active">
 <div class="toast" id="toast"></div>
@@ -9081,93 +9183,66 @@ function openGsPanel(){ abrirGsTelaExclusiva(); }
 </script>
 
 
-
-
-
-<script id="gs-mobile-trava-final-js">
+<script id="gs-scroll-back-fix-js">
+/* Correção final: voltar do G's e ocultar barra de scroll */
 (function(){
-  function esconderGs(){
+  const oldOpenGs = window.abrirGsTelaExclusiva;
+  window.abrirGsTelaExclusiva = function(){
     try{
-      document.body.classList.remove('gs-open');
-      document.documentElement.classList.remove('gs-no-scrollbar');
-
-      var gs=document.getElementById('gsPanel');
-      if(gs){
-        gs.classList.remove('active');
-        gs.classList.remove('gs-fullscreen');
-        gs.style.display='';
-        gs.style.transform='';
-        gs.style.left='';
-        gs.style.width='';
+      document.documentElement.classList.add('gs-no-scrollbar');
+      document.body.classList.add('gs-open');
+    }catch(e){}
+    if(typeof oldOpenGs === 'function'){
+      oldOpenGs();
+    }else if(typeof openGsPanel === 'function'){
+      openGsPanel();
+    }
+    setTimeout(()=>{
+      const p=document.getElementById('gsPanel');
+      if(p){
+        p.classList.add('active','gs-fullscreen');
+        p.style.display='block';
+        p.style.transform='none';
+        p.style.left='0';
+        p.style.width='100vw';
       }
-
-      document.body.classList.add('home-active');
-
-      var dash=document.getElementById('premiumDashboard');
-      if(dash) dash.style.display='block';
-
-      var main=document.getElementById('mainContent');
-      if(main) main.style.display='none';
-    }catch(e){}
-  }
-
-  window.fecharGsTelaExclusiva=function(){
-    esconderGs();
-    try{
-      var dash=document.getElementById('premiumDashboard');
-      if(dash) dash.scrollIntoView({block:'start'});
-    }catch(e){}
+      if(typeof renderGsTable==='function') renderGsTable();
+    },50);
   };
 
-  window.abrirGsTelaExclusiva=function(){
+  window.fecharGsTelaExclusiva = function(){
     try{
-      document.body.classList.add('home-active');
-      document.body.classList.add('gs-open');
-
-      var dash=document.getElementById('premiumDashboard');
-      if(dash) dash.style.display='block';
-
-      var main=document.getElementById('mainContent');
-      if(main) main.style.display='none';
-
-      document.querySelectorAll('.slide-panel.active').forEach(function(p){
-        if(p.id!=='gsPanel') p.classList.remove('active');
-      });
-
-      var gs=document.getElementById('gsPanel');
-      if(!gs){
-        alert("Painel G's não encontrado");
-        return;
+      const p=document.getElementById('gsPanel');
+      if(p){
+        p.classList.remove('active');
+        p.classList.remove('gs-fullscreen');
+        p.style.display='';
+        p.style.transform='';
+        p.style.left='';
+        p.style.width='';
       }
 
-      gs.classList.add('active');
-      gs.classList.add('gs-fullscreen');
-      gs.style.display='block';
-      gs.style.transform='none';
-      gs.style.left='0';
-      gs.style.width='100vw';
+      document.body.classList.remove('gs-open');
+      document.documentElement.classList.remove('gs-no-scrollbar');
+      document.body.classList.add('home-active');
 
-      var st=document.getElementById('gsStatusFiltro');
-      if(st) st.value='';
+      const dash=document.getElementById('premiumDashboard');
+      if(dash){
+        dash.style.display='block';
+        dash.scrollIntoView({block:'start'});
+      }
 
-      if(typeof renderGsFiltroCodigos==='function') renderGsFiltroCodigos();
-      if(typeof renderGsTable==='function') renderGsTable();
+      const main=document.getElementById('mainContent');
+      if(main) main.style.display='none';
+
+      if(typeof _premiumNavActive==='function') _premiumNavActive('navInicioPremium');
     }catch(e){
-      console.warn('abrirGsTelaExclusiva', e);
+      console.warn('fecharGsTelaExclusiva', e);
     }
   };
 
-  window.openGsPanel=window.abrirGsTelaExclusiva;
-
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded', esconderGs);
-  }else{
-    esconderGs();
-  }
-  window.addEventListener('pageshow', esconderGs);
-
   document.addEventListener('click', function(ev){
-    var back=ev.target.closest && ev.target.closest('#gsPanel .panel-back');
+    const back = ev.target.closest && ev.target.closest('#gsPanel .panel-back');
     if(back){
       ev.preventDefault();
       ev.stopPropagation();

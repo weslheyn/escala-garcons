@@ -41,10 +41,14 @@ window.UniformesFirebase = {
   },
   listenFuncionarios(cb){
     if(!this.enabled || !this.db) return false;
-    this.db.ref('equipe_oficial/atual/funcionarios').on('value', snap=>{
-      const v=snap.val();
-      cb(Array.isArray(v) ? v : (v ? Object.values(v) : []));
-    });
+    const state = {escala:[], freelancers:[], freelances:[]};
+    const emit = () => {
+      const norm = (obj, fonte) => (Array.isArray(obj) ? obj : (obj ? Object.values(obj) : [])).map(x => Object.assign({}, x, {fonte}));
+      cb([...norm(state.escala,'escala'), ...norm(state.freelancers,'freelance'), ...norm(state.freelances,'freelance')]);
+    };
+    this.db.ref('equipe_oficial/atual/funcionarios').on('value', snap=>{ state.escala=snap.val()||[]; emit(); });
+    this.db.ref('freelancers').on('value', snap=>{ state.freelancers=snap.val()||[]; emit(); });
+    this.db.ref('freelances').on('value', snap=>{ state.freelances=snap.val()||{}; emit(); });
     return true;
   }
 };

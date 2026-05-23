@@ -7,6 +7,7 @@
     itens:{},
     movimentacoes:{},
     funcionarios:[],
+    funcionariosAvulsos:[],
     firebase:false,
     initialized:false
   };
@@ -39,6 +40,7 @@
     localStorage.setItem(LS_KEY, JSON.stringify({
       itens:state.itens,
       movimentacoes:state.movimentacoes,
+      funcionariosAvulsos:state.funcionariosAvulsos,
       atualizadoEm:new Date().toISOString()
     }));
   }
@@ -49,7 +51,8 @@
       try{
         await UniformesFirebase.saveState({
           itens:state.itens,
-          movimentacoes:state.movimentacoes
+          movimentacoes:state.movimentacoes,
+          funcionariosAvulsos:state.funcionariosAvulsos
         });
       }catch(e){ console.warn(e); }
     }
@@ -81,6 +84,7 @@
     $('#movSetor').innerHTML = `<option value="">Selecione</option>${opts}`;
     $('#filterSetor').innerHTML = `<option value="">Todos os setores</option>${opts}`;
     $('#filterFuncSetor').innerHTML = `<option value="">Todos os setores</option>${opts}`;
+    if($('#novoFuncSetor')) $('#novoFuncSetor').innerHTML = `<option value="">Selecione</option>${opts}`;
   }
 
   function fillItemsSelect(){
@@ -132,9 +136,46 @@
     return Math.max(0,total);
   }
 
+  function normalizeFuncionario(raw, fonte='escala'){
+    if(!raw) return null;
+    const nome = raw.nomeCompleto || raw.nome || raw.name || raw.NOME || raw.funcionario || raw.colaborador || '';
+    if(!nome) return null;
+    const setor = raw.setor || raw.categoria || raw.grupoEscala || raw.funcao || raw.cargo || raw.area || '';
+    return { nome:String(nome).trim(), setor:String(setor||'').trim(), fonte, id:raw.id || raw.key || uid('pessoa') };
+  }
+
+  function allFuncionarios(){
+    const fonte = $('#movFonte')?.value || 'todos';
+    const fixed = (state.funcionarios || []).map(f=>normalizeFuncionario(f, f.fonte || 'escala')).filter(Boolean);
+    const avulsos = (state.funcionariosAvulsos || []).map(f=>normalizeFuncionario(f, f.fonte || f.tipo || 'avulso')).filter(Boolean);
+    const merged = [...fixed, ...avulsos];
+    const by = new Map();
+    merged.forEach(f=>{
+      const k = norm(f.nome);
+      if(!by.has(k) || (!by.get(k).setor && f.setor)) by.set(k,f);
+    });
+    return [...by.values()].filter(f=> fonte==='todos' || f.fonte===fonte || (fonte==='freelance' && /free/i.test(f.fonte)) || (fonte==='avulso' && ['avulso','freelance_local'].includes(f.fonte)) );
+  }
+
+  function funcionarioSelecionado(){
+    const nome = $('#movFuncionario')?.value.trim() || '';
+    if(!nome) return null;
+    return allFuncionarios().find(f=>norm(f.nome)===norm(nome)) || null;
+  }
+
+  function syncFuncionarioSetor(){
+    const f = funcionarioSelecionado();
+    if(f && f.setor && !$('#movSetor').value){
+      const match = setores().find(s=>norm(s)===norm(f.setor) || norm(s).includes(norm(f.setor)) || norm(f.setor).includes(norm(s)));
+      if(match) $('#movSetor').value = match;
+    }
+    fillItemsSelect();
+  }
+
   function fillFuncionarios(){
     const dl = $('#funcionariosList');
-    dl.innerHTML = state.funcionarios.map(f => `<option value="${escapeHtml(f.nome||f.name||'')}">${escapeHtml(f.categoria||f.grupoEscala||'')}</option>`).join('');
+    if(!dl) return;
+    dl.innerHTML = allFuncionarios().map(f => `<option value="${escapeHtml(f.nome)}">${escapeHtml((f.setor||'Setor não informado')+' · '+(f.fonte||''))}</option>`).join('');
   }
 
   function renderDashboard(){
@@ -176,8 +217,8 @@
     $(target).innerHTML = movs.map(m=>`<tr>
       <td>${escapeHtml(m.dataTexto||'')}</td><td><span class="badge ${m.tipo}">${escapeHtml(m.tipo)}</span></td>
       <td>${escapeHtml(m.funcionario||'-')}</td><td>${escapeHtml(m.setor||'-')}</td><td>${escapeHtml(m.itemNome||'-')}</td>
-      <td>${m.qtd}</td><td>${escapeHtml(m.responsavel||'-')}</td>
-    </tr>`).join('') || `<tr><td colspan="7">Nenhuma movimentação registrada.</td></tr>`;
+      <td>${m.qtd}</td>
+    </tr>`).join('') || `<tr><td colspan="6">Nenhuma movimentação registrada.</td></tr>`;
   }
 
   function renderEstoque(){
@@ -186,10 +227,10 @@
     const rows=arrItens().filter(i=>(!setor||i.setor===setor)&&(!status||i.status===status)&&(!q||norm(`${i.setor} ${i.nome} ${i.tamanho} ${i.tipo}`).includes(q)));
     $('#estoqueBody').innerHTML = rows.map(i=>`<tr>
       <td>${escapeHtml(i.setor)}</td><td><b>${escapeHtml(i.nome)}</b><br><small>${escapeHtml(i.grupo||'')}</small></td><td>${escapeHtml(i.tamanho)}</td>
-      <td>${i.estoqueAtual}</td><td>${i.ideal}</td><td>${i.minimo}</td><td><b>${i.comprar}</b></td>
+      <td>${i.estoqueAtual}</td><td>${i.ideal}</td><td><b>${i.comprar}</b></td>
       <td><span class="badge ${i.status}">${i.status}</span></td>
       <td><button class="ghost mini" data-edit="${i.id}">Editar</button></td>
-    </tr>`).join('') || `<tr><td colspan="9">Nenhum item encontrado.</td></tr>`;
+    </tr>`).join('') || `<tr><td colspan="8">Nenhum item encontrado.</td></tr>`;
     $$('[data-edit]').forEach(b=>b.onclick=()=>openItemModal(b.dataset.edit));
   }
 
@@ -246,7 +287,7 @@
     $('#repRasgados').textContent = r.RASGADO || 0;
     $('#repOcorrencias').textContent = (r.PERDIDO||0)+(r.DANIFICADO||0)+(r.RASGADO||0);
     const rows = arrMov().filter(m=>['PERDIDO','DANIFICADO','RASGADO'].includes(m.tipo) || isOcorrencia(m));
-    $('#ocorrenciasBody').innerHTML = rows.map(m=>`<tr><td><span class="badge ${m.tipo}">${escapeHtml(m.condicao||m.tipo)}</span></td><td>${escapeHtml(m.funcionario||'-')}</td><td>${escapeHtml(m.setor||'-')}</td><td>${escapeHtml(m.itemNome||'-')}</td><td>${escapeHtml(m.tamanho||'-')}</td><td>${m.qtd}</td><td>${escapeHtml(m.dataTexto||'-')}</td><td>${escapeHtml(m.responsavel||'-')}</td><td>${escapeHtml(m.obs||'-')}</td></tr>`).join('') || `<tr><td colspan="9">Nenhuma ocorrência registrada.</td></tr>`;
+    $('#ocorrenciasBody').innerHTML = rows.map(m=>`<tr><td><span class="badge ${m.tipo}">${escapeHtml(m.condicao||m.tipo)}</span></td><td>${escapeHtml(m.funcionario||'-')}</td><td>${escapeHtml(m.setor||'-')}</td><td>${escapeHtml(m.itemNome||'-')}</td><td>${m.qtd}</td><td>${escapeHtml(m.dataTexto||'-')}</td><td>${escapeHtml(m.obs||'-')}</td></tr>`).join('') || `<tr><td colspan="7">Nenhuma ocorrência registrada.</td></tr>`;
   }
 
   function renderAll(){
@@ -430,14 +471,19 @@ ${sheets.map(sh=>`<Worksheet ss:Name="${esc(sh.name).slice(0,31)}"><Table>${rows
       $$('.tab').forEach(t=>t.classList.remove('active')); $('#'+btn.dataset.tab).classList.add('active');
       renderAll();
     });
-    $$('[data-open-mov]').forEach(b=>b.onclick=()=>{ $('.nav-btn[data-tab="movimentacao"]').click(); $('#movTipo').value=b.dataset.openMov; });
+    $$('[data-open-mov]').forEach(b=>b.onclick=()=>{ $('.nav-btn[data-tab="movimentacao"]').click(); $('#movTipo').value=b.dataset.openMov; fillItemsSelect(); });
+    $$('[data-tab-jump]').forEach(b=>b.onclick=()=>{ const t=b.dataset.tabJump; $(`.nav-btn[data-tab="${t}"]`)?.click(); });
     $('#movSetor').onchange=fillItemsSelect;
     $('#movTipo').onchange=fillItemsSelect;
-    $('#movFuncionario').oninput=fillItemsSelect;
+    $('#movFonte').onchange=()=>{fillFuncionarios(); syncFuncionarioSetor();};
+    $('#movFuncionario').oninput=syncFuncionarioSetor;
     $('#movForm').onsubmit=registrarMov;
     $('#btnNovoItem').onclick=()=>openItemModal('');
     $('#itemForm').onsubmit=saveItem;
     $('#modalClose').onclick=()=>$('#modal').classList.add('hidden');
+    $('#btnNovoFuncionario').onclick=()=>{ $('#novoFuncNome').value=$('#movFuncionario').value.trim(); $('#funcModal').classList.remove('hidden'); };
+    $('#funcModalClose').onclick=()=>$('#funcModal').classList.add('hidden');
+    $('#funcForm').onsubmit=async(e)=>{ e.preventDefault(); const f={id:uid('func'), nome:$('#novoFuncNome').value.trim(), setor:$('#novoFuncSetor').value, fonte:$('#novoFuncTipo').value==='freelance'?'freelance_local':'avulso', criadoEm:new Date().toISOString()}; if(!f.nome||!f.setor) return toast('Informe nome e setor.'); state.funcionariosAvulsos=state.funcionariosAvulsos||[]; state.funcionariosAvulsos.push(f); $('#movFuncionario').value=f.nome; $('#movSetor').value=f.setor; $('#funcModal').classList.add('hidden'); await persist(); toast('Funcionário cadastrado no módulo.'); };
     ['searchEstoque','filterSetor','filterStatus','searchFunc','filterFuncSetor','searchHist','filterHistTipo'].forEach(id=>$('#'+id).oninput=renderAll);
     $('#btnExportCsv').onclick=exportCsv;
     $('#btnExportExcel').onclick=gerarPlanilhaExcel;
@@ -452,7 +498,7 @@ ${sheets.map(sh=>`<Worksheet ss:Name="${esc(sh.name).slice(0,31)}"><Table>${rows
   async function init(){
     bind();
     const local = loadLocal();
-    if(local){ state.itens = local.itens || {}; state.movimentacoes = local.movimentacoes || {}; }
+    if(local){ state.itens = local.itens || {}; state.movimentacoes = local.movimentacoes || {}; state.funcionariosAvulsos = local.funcionariosAvulsos || []; }
     seedState(false);
 
     if(window.UniformesFirebase && await UniformesFirebase.init()){
@@ -463,6 +509,7 @@ ${sheets.map(sh=>`<Worksheet ss:Name="${esc(sh.name).slice(0,31)}"><Table>${rows
         if(remote && (remote.itens || remote.movimentacoes)){
           state.itens = remote.itens || state.itens;
           state.movimentacoes = remote.movimentacoes || state.movimentacoes;
+          state.funcionariosAvulsos = remote.funcionariosAvulsos || state.funcionariosAvulsos;
           saveLocal(); renderAll();
         }else{
           persist();

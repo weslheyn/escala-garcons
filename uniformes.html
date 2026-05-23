@@ -2,21 +2,18 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
   <title>Estoque de Uniformes | Coco Bambu</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="uniformes.css" />
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="side">
-      <div class="brand">
-        <div class="brand-mark">CB</div>
-        <div><strong>Uniformes</strong><span>Controle profissional</span></div>
-      </div>
-      <nav class="side-nav">
-        <button class="nav-btn active" data-tab="dashboard">Início</button>
-        <button class="nav-btn" data-tab="movimentacao">Entrega/Devolução</button>
+  <div class="uniform-app">
+    <aside class="sidebar">
+      <div class="brand"><span>CB</span><div><strong>Uniformes</strong><small>Controle profissional</small></div></div>
+      <nav class="nav">
+        <button class="nav-btn active" data-tab="dashboard">Dashboard</button>
+        <button class="nav-btn" data-tab="movimentacao">Entregar / Devolver</button>
         <button class="nav-btn" data-tab="estoque">Estoque</button>
         <button class="nav-btn" data-tab="funcionarios">Funcionários</button>
         <button class="nav-btn" data-tab="compras">Compras</button>
@@ -24,65 +21,136 @@
         <button class="nav-btn" data-tab="relatorios">Relatórios</button>
         <button class="nav-btn" data-tab="config">Config.</button>
       </nav>
-      <div class="sync-card"><span id="syncDot" class="dot"></span><div><b id="syncTitle">Modo local</b><small id="syncText">Abrindo módulo...</small></div></div>
+      <div class="sync-pill"><i id="syncDot"></i><b id="syncTitle">Modo local</b><small id="syncText">Inicializando...</small></div>
     </aside>
 
-    <main class="main">
-      <header class="topbar">
-        <div><p class="eyebrow">COCO BAMBU / VASTO</p><h1>Estoque de Uniformes</h1><p class="sub">Entregas, devoluções, perdas, estoque ideal e compras em um só lugar.</p></div>
-        <div class="top-actions"><button class="primary" data-open-mov="ENTREGA">Nova entrega</button><button class="ghost" data-tab-jump="config">Exportar / Config.</button></div>
+    <main class="content">
+      <header class="page-head">
+        <div>
+          <p>COCO BAMBU / VASTO</p>
+          <h1>Estoque de Uniformes</h1>
+          <span>Controle de entrega, devolução, perdas, estoque e compras.</span>
+        </div>
+        <button class="btn primary" data-open-mov="ENTREGA">+ Nova entrega</button>
       </header>
 
       <section id="dashboard" class="tab active">
-        <div class="hero-card">
-          <div><span class="hero-label">Resumo geral</span><strong id="heroStatus">Estoque sob atenção</strong><small id="heroText">Acompanhe os indicadores principais do módulo.</small></div>
-          <button class="primary small" data-open-mov="ENTREGA">Registrar entrega</button>
+        <div class="status-card">
+          <div><small>RESUMO DO ESTOQUE</small><strong id="heroStatus">Atenção necessária</strong><span id="heroText">Itens abaixo do ideal precisam de reposição.</span></div>
+          <button class="btn soft" data-tab-jump="compras">Ver compras</button>
         </div>
-        <div class="kpi-grid compact">
-          <article class="kpi"><span>Total</span><strong id="kpiEstoque">0</strong><em>em estoque</em></article>
-          <article class="kpi danger"><span>Zerados</span><strong id="kpiZerados">0</strong><em>sem estoque</em></article>
-          <article class="kpi warn"><span>Abaixo</span><strong id="kpiBaixo">0</strong><em>do ideal</em></article>
-          <article class="kpi buy"><span>Comprar</span><strong id="kpiComprar">0</strong><em>peças</em></article>
-          <article class="kpi loss"><span>Perdidos</span><strong id="kpiPerdidos">0</strong><em>mês/geral</em></article>
-          <article class="kpi damage"><span>Danos</span><strong id="kpiDanificados">0</strong><em>rasgados/danificados</em></article>
+        <div class="kpis">
+          <article><small>Total</small><strong id="kpiEstoque">0</strong><span>peças</span></article>
+          <article><small>Zerados</small><strong class="danger" id="kpiZerados">0</strong><span>itens</span></article>
+          <article><small>Abaixo</small><strong class="warn" id="kpiBaixo">0</strong><span>do ideal</span></article>
+          <article><small>Comprar</small><strong class="info" id="kpiComprar">0</strong><span>peças</span></article>
+          <article><small>Perdidos</small><strong class="orange" id="kpiPerdidos">0</strong><span>peças</span></article>
+          <article><small>Danos</small><strong class="pink" id="kpiDanificados">0</strong><span>peças</span></article>
         </div>
-        <div class="dash-grid">
-          <section class="panel"><div class="panel-head"><div><h2>Estoque por setor</h2><p>Atual comparado ao ideal.</p></div></div><div id="sectorBars" class="bar-list"></div></section>
-          <section class="panel"><div class="panel-head"><div><h2>Alertas críticos</h2><p>Prioridade de compra.</p></div></div><div id="alertList" class="alert-list"></div></section>
+        <div class="grid-2">
+          <section class="panel"><div class="panel-title"><h2>Estoque por setor</h2><span>Atual x ideal</span></div><div id="sectorBars" class="bars"></div></section>
+          <section class="panel"><div class="panel-title"><h2>Alertas críticos</h2><span>Prioridade de compra</span></div><div id="alertList" class="alerts"></div></section>
         </div>
-        <section class="panel"><div class="panel-head"><div><h2>Últimas movimentações</h2><p>Rastreabilidade recente.</p></div></div><div class="table-wrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Funcionário</th><th>Setor</th><th>Uniforme</th><th>Qtd.</th></tr></thead><tbody id="recentBody"></tbody></table></div></section>
+        <section class="panel"><div class="panel-title"><h2>Últimas movimentações</h2><span>Rastreio recente</span></div><div class="list-table" id="recentBody"></div></section>
       </section>
 
       <section id="movimentacao" class="tab">
-        <section class="panel form-panel">
-          <div class="panel-head"><div><h2>Entrega e devolução</h2><p>Busque funcionário da escala, freelance ou cadastre um avulso.</p></div></div>
-          <form id="movForm" class="smart-form">
-            <label>Tipo<select id="movTipo" required><option value="ENTREGA">Entrega ao funcionário</option><option value="DEVOLUCAO">Devolução do funcionário</option><option value="ENTRADA">Entrada de estoque</option><option value="AJUSTE">Ajuste manual</option></select></label>
-            <label>Base do funcionário<select id="movFonte"><option value="todos">Escala + Freelances + Avulsos</option><option value="escala">Somente escala importada</option><option value="freelance">Somente freelance</option><option value="avulso">Avulsos/cadastrados aqui</option></select></label>
-            <label class="span-2">Funcionário<div class="inline-field"><input id="movFuncionario" list="funcionariosList" placeholder="Digite para buscar o nome"><button type="button" class="ghost mini" id="btnNovoFuncionario">Cadastrar</button></div><small class="field-help">Ao selecionar um nome conhecido, o setor pode ser preenchido automaticamente.</small></label>
-            <label>Setor<select id="movSetor" required></select></label>
-            <label>Quantidade padrão<input id="movQtd" type="number" min="1" value="1" required></label>
-            <label class="span-2">Uniformes disponíveis do setor<div id="movItensChecklist" class="checklist"></div><small class="field-help">Selecione o setor para listar somente os uniformes daquele setor. Clique nos itens para adicionar à entrega/devolução.</small></label>
-            <label id="movCondicaoWrap">Condição da devolução<select id="movCondicao"><option value="BOM_ESTADO">Bom estado / volta para estoque</option><option value="USADO">Usado / volta para estoque</option><option value="DANIFICADO">Danificado / não volta para estoque</option><option value="RASGADO">Rasgado / não volta para estoque</option><option value="PERDIDO">Perdido / baixa definitiva</option></select></label>
-            <label>Responsável<input id="movResponsavel" placeholder="Quem está registrando"></label>
-            <label class="span-2">Observação<input id="movObs" placeholder="Ex: primeira entrega, troca de tamanho, reposição..."></label>
-            <button class="primary span-2" type="submit">Salvar movimentação</button>
+        <section class="panel form-card">
+          <div class="panel-title"><h2>Entrega e devolução</h2><span>Use funcionário da escala, freelance ou cadastro avulso</span></div>
+          <form id="movForm" class="form-grid">
+            <label>Tipo
+              <select id="movTipo" required>
+                <option value="ENTREGA">Entrega ao funcionário</option>
+                <option value="DEVOLUCAO">Devolução do funcionário</option>
+              </select>
+            </label>
+            <label>Base
+              <select id="movFonte">
+                <option value="todos">Escala + Freelances + Avulsos</option>
+                <option value="escala">Escala importada</option>
+                <option value="freelance">Freelances</option>
+                <option value="avulso">Avulsos</option>
+              </select>
+            </label>
+            <label class="span-2">Funcionário
+              <div class="searchbox">
+                <input id="movFuncionario" autocomplete="off" placeholder="Buscar funcionário...">
+                <button type="button" class="btn mini" id="btnNovoFuncionario">Cadastrar</button>
+                <div id="funcDropdown" class="dropdown hidden"></div>
+              </div>
+            </label>
+            <label>Setor
+              <select id="movSetor" required></select>
+            </label>
+            <label id="movCondicaoWrap">Condição da devolução
+              <select id="movCondicao">
+                <option value="BOM_ESTADO">Bom estado / volta ao estoque</option>
+                <option value="USADO">Usado / volta ao estoque</option>
+                <option value="DANIFICADO">Danificado / não volta</option>
+                <option value="RASGADO">Rasgado / não volta</option>
+                <option value="PERDIDO">Perdido / baixa definitiva</option>
+              </select>
+            </label>
+            <label class="span-2">Adicionar uniformes do setor
+              <div class="add-line">
+                <select id="itemPicker"><option value="">Selecione o setor primeiro</option></select>
+                <input id="itemQtd" type="number" min="1" value="1" inputmode="numeric">
+                <button type="button" class="btn soft" id="btnAddItem">Adicionar</button>
+              </div>
+              <small class="hint">A lista mostra somente uniformes do setor selecionado. Na devolução, mostra somente itens em posse do funcionário.</small>
+            </label>
+            <div class="span-2 selected-box">
+              <div class="selected-head"><strong>Itens selecionados</strong><span id="selectedCount">0 itens</span></div>
+              <div id="selectedItems" class="selected-list"></div>
+            </div>
+            <label>Responsável<input id="movResponsavel" placeholder="Nome do responsável"></label>
+            <label>Observação<input id="movObs" placeholder="Ex: troca de tamanho, primeira entrega..."></label>
+            <button class="btn primary span-2" type="submit">Salvar movimentação</button>
           </form>
         </section>
       </section>
 
-      <section id="estoque" class="tab"><section class="panel"><div class="panel-head between"><div><h2>Estoque cadastrado</h2><p>Itens por setor, tamanho, ideal e mínimo.</p></div><button class="primary small" id="btnNovoItem">Novo item</button></div><div class="filters"><input id="searchEstoque" placeholder="Buscar uniforme, setor, tamanho..."><select id="filterSetor"><option value="">Todos os setores</option></select><select id="filterStatus"><option value="">Todos</option><option value="OK">OK</option><option value="COMPRAR">Comprar</option><option value="ZERADO">Zerado</option></select></div><div class="table-wrap"><table><thead><tr><th>Setor</th><th>Uniforme</th><th>Tam.</th><th>Atual</th><th>Ideal</th><th>Comprar</th><th>Status</th><th></th></tr></thead><tbody id="estoqueBody"></tbody></table></div></section></section>
-      <section id="funcionarios" class="tab"><section class="panel"><div class="panel-head"><div><h2>Controle por funcionário</h2><p>Itens em posse de cada pessoa.</p></div></div><div class="filters"><input id="searchFunc" placeholder="Buscar funcionário..."><select id="filterFuncSetor"><option value="">Todos os setores</option></select></div><div id="funcCards" class="person-grid"></div></section></section>
-      <section id="compras" class="tab"><section class="panel"><div class="panel-head between"><div><h2>Lista automática de compra</h2><p>Quantidade ideal menos estoque atual.</p></div><button class="ghost small" id="btnCopiarCompras">Copiar</button></div><div class="table-wrap"><table><thead><tr><th>Setor</th><th>Uniforme</th><th>Tam.</th><th>Atual</th><th>Ideal</th><th>Comprar</th><th>Prioridade</th></tr></thead><tbody id="comprasBody"></tbody></table></div></section></section>
-      <section id="relatorios" class="tab"><section class="panel"><div class="panel-head between"><div><h2>Relatórios e estatísticas</h2><p>Perdidos, rasgados, danificados e ocorrências.</p></div><button class="primary small" id="btnExportExcel2">Baixar planilha</button></div><div class="report-grid"><div class="mini-report"><span>Perdidos</span><strong id="repPerdidos">0</strong></div><div class="mini-report"><span>Danificados</span><strong id="repDanificados">0</strong></div><div class="mini-report"><span>Rasgados</span><strong id="repRasgados">0</strong></div><div class="mini-report"><span>Ocorrências</span><strong id="repOcorrencias">0</strong></div></div><div class="table-wrap"><table><thead><tr><th>Tipo</th><th>Funcionário</th><th>Setor</th><th>Uniforme</th><th>Qtd.</th><th>Data</th><th>Obs.</th></tr></thead><tbody id="ocorrenciasBody"></tbody></table></div></section></section>
-      <section id="historico" class="tab"><section class="panel"><div class="panel-head"><div><h2>Histórico completo</h2><p>Todas as movimentações registradas.</p></div></div><div class="filters"><input id="searchHist" placeholder="Buscar histórico..."><select id="filterHistTipo"><option value="">Todos</option><option value="ENTREGA">Entregas</option><option value="DEVOLUCAO">Devoluções</option><option value="PERDIDO">Perdidos</option><option value="DANIFICADO">Danificados</option><option value="RASGADO">Rasgados</option><option value="ENTRADA">Entradas</option><option value="AJUSTE">Ajustes</option></select></div><div class="table-wrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Funcionário</th><th>Setor</th><th>Uniforme</th><th>Qtd.</th><th>Antes</th><th>Depois</th><th>Obs.</th></tr></thead><tbody id="historicoBody"></tbody></table></div></section></section>
-      <section id="config" class="tab"><section class="panel config-panel"><div class="panel-head"><div><h2>Configurações e exportações</h2><p>Ferramentas ficam aqui para não poluir entrega, devolução e dashboard.</p></div></div><div class="config-grid"><button class="primary" id="btnExportExcel">Gerar planilha completa</button><button class="ghost" id="btnExportCsv">Exportar CSV simples</button><button class="ghost" id="btnBackup">Baixar backup JSON</button><button class="ghost" id="btnSeed">Importar base da planilha</button><button class="ghost" id="btnSalvarFirebase">Forçar salvar no Firebase</button><button class="danger-btn" id="btnResetLocal">Resetar dados locais</button></div><div class="note big">Este módulo usa somente <b>/uniformes_estoque</b>. Nenhum dado de escala, eventos, frequência, freelances ou trocas é alterado.</div></section></section>
+      <section id="estoque" class="tab">
+        <div class="grid-2 estoque-layout">
+          <section class="panel form-card">
+            <div class="panel-title"><h2>Entrada de estoque</h2><span>Compra, recebimento ou ajuste de quantidade</span></div>
+            <form id="entradaForm" class="form-grid one-col">
+              <label>Setor<select id="entradaSetor"></select></label>
+              <label>Uniforme<select id="entradaItem"></select></label>
+              <label>Quantidade recebida<input id="entradaQtd" type="number" min="1" value="1"></label>
+              <label>Responsável<input id="entradaResp" placeholder="Quem recebeu"></label>
+              <label>Observação<input id="entradaObs" placeholder="Nota fiscal, fornecedor, compra..."></label>
+              <button class="btn primary" type="submit">Adicionar ao estoque</button>
+            </form>
+          </section>
+          <section class="panel form-card">
+            <div class="panel-title"><h2>Cadastrar item</h2><span>Use listas baseadas na planilha</span></div>
+            <form id="quickItemForm" class="form-grid one-col">
+              <label>Setor<select id="quickSetor"></select></label>
+              <label>Grupo<select id="quickGrupo"></select></label>
+              <label>Uniforme<select id="quickNome"></select></label>
+              <label>Tamanho<select id="quickTamanho"></select></label>
+              <div class="mini-grid"><label>Atual<input id="quickAtual" type="number" min="0" value="0"></label><label>Ideal<input id="quickIdeal" type="number" min="0" value="0"></label><label>Mínimo<input id="quickMinimo" type="number" min="0" value="0"></label></div>
+              <button class="btn soft" type="submit">Salvar novo item</button>
+            </form>
+          </section>
+        </div>
+        <section class="panel">
+          <div class="panel-title row"><div><h2>Estoque cadastrado</h2><span>Itens por setor, tamanho e status</span></div></div>
+          <div class="filters"><input id="searchEstoque" placeholder="Buscar..."><select id="filterSetor"></select><select id="filterStatus"><option value="">Todos</option><option value="OK">OK</option><option value="COMPRAR">Comprar</option><option value="ZERADO">Zerado</option></select></div>
+          <div id="estoqueBody" class="inventory-list"></div>
+        </section>
+      </section>
+
+      <section id="funcionarios" class="tab"><section class="panel"><div class="panel-title"><h2>Controle por funcionário</h2><span>Uniformes em posse</span></div><div class="filters"><input id="searchFunc" placeholder="Buscar funcionário..."><select id="filterFuncSetor"></select></div><div id="funcCards" class="person-grid"></div></section></section>
+      <section id="compras" class="tab"><section class="panel"><div class="panel-title row"><div><h2>Lista automática de compras</h2><span>Ideal menos estoque atual</span></div><button class="btn soft" id="btnCopiarCompras">Copiar lista</button></div><div id="comprasBody" class="buy-list"></div></section></section>
+      <section id="historico" class="tab"><section class="panel"><div class="panel-title"><h2>Histórico completo</h2><span>Entregas, devoluções, perdas e entradas</span></div><div class="filters"><input id="searchHist" placeholder="Buscar histórico..."><select id="filterHistTipo"><option value="">Todos</option><option value="ENTREGA">Entregas</option><option value="DEVOLUCAO">Devoluções</option><option value="PERDIDO">Perdidos</option><option value="DANIFICADO">Danificados</option><option value="RASGADO">Rasgados</option><option value="ENTRADA">Entradas</option><option value="AJUSTE">Ajustes</option></select></div><div class="list-table" id="historicoBody"></div></section></section>
+      <section id="relatorios" class="tab"><section class="panel"><div class="panel-title row"><div><h2>Relatórios e estatísticas</h2><span>Perdidos, rasgados e danificados</span></div><button class="btn soft" id="btnExportExcel2">Baixar planilha</button></div><div class="reports"><article><span>Perdidos</span><strong id="repPerdidos">0</strong></article><article><span>Danificados</span><strong id="repDanificados">0</strong></article><article><span>Rasgados</span><strong id="repRasgados">0</strong></article><article><span>Ocorrências</span><strong id="repOcorrencias">0</strong></article></div><div class="list-table" id="ocorrenciasBody"></div></section></section>
+      <section id="config" class="tab"><section class="panel config-panel"><div class="panel-title"><h2>Configurações e exportações</h2><span>Ferramentas administrativas concentradas aqui</span></div><div class="config-grid"><button class="btn primary" id="btnExportExcel">Gerar planilha completa</button><button class="btn soft" id="btnExportCsv">Exportar CSV simples</button><button class="btn soft" id="btnBackup">Baixar backup JSON</button><button class="btn soft" id="btnSeed">Importar base da planilha</button><button class="btn soft" id="btnSalvarFirebase">Forçar salvar no Firebase</button><button class="btn danger-btn" id="btnResetLocal">Resetar dados locais</button></div><p class="note">Este módulo usa somente <b>/uniformes_estoque</b>. Não altera escala, eventos, frequência, freelances ou trocas.</p></section></section>
     </main>
   </div>
 
-  <datalist id="funcionariosList"></datalist>
-  <div id="modal" class="modal hidden"><form id="itemForm" class="modal-box"><button type="button" id="modalClose" class="x">×</button><h2 id="modalTitle">Item</h2><input type="hidden" id="itemId"><label>Setor<input id="itemSetor" required></label><label>Grupo<input id="itemGrupo"></label><label>Nome<input id="itemNome" required></label><label>Tipo<input id="itemTipo"></label><label>Tamanho<input id="itemTamanho"></label><label>Estoque atual<input id="itemAtual" type="number"></label><label>Ideal<input id="itemIdeal" type="number"></label><label>Mínimo<input id="itemMinimo" type="number"></label><button class="primary" type="submit">Salvar item</button></form></div>
-  <div id="funcModal" class="modal hidden"><form id="funcForm" class="modal-box"><button type="button" id="funcModalClose" class="x">×</button><h2>Cadastrar funcionário/freelance</h2><label>Nome<input id="novoFuncNome" required></label><label>Setor<select id="novoFuncSetor" required></select></label><label>Tipo<select id="novoFuncTipo"><option value="avulso">Avulso</option><option value="freelance">Freelance</option></select></label><button class="primary" type="submit">Salvar cadastro</button></form></div>
+  <div id="funcModal" class="modal hidden"><form id="funcForm" class="modal-box"><button type="button" id="funcModalClose" class="x">×</button><h2>Cadastrar funcionário/freelance</h2><label>Nome<input id="novoFuncNome" required></label><label>Setor<select id="novoFuncSetor" required></select></label><label>Tipo<select id="novoFuncTipo"><option value="avulso">Avulso</option><option value="freelance">Freelance</option></select></label><button class="btn primary" type="submit">Salvar cadastro</button></form></div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>

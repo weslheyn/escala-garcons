@@ -1,18 +1,29 @@
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
-const STORE='eventos_premium_v58';
-const META='eventos_premium_meta_v58';
+const APP_DATA_VERSION='v100-firebase-sync';
+const STORE='eventos_premium_v100';
+const META='eventos_premium_meta_v100';
 const AGENDA_STORE='eventos_agenda_comercial_v61';
 const AGENDA_RESP_STORE='eventos_agenda_responsaveis_v61';
 const DEVICE_STORE='eventos_device_id_v61';
-const CLIENTES_STORE='eventos_clientes_cadastro_v64';
+const CLIENTES_STORE='eventos_clientes_cadastro_v100';
 let deferredInstallPrompt=null;
 const PIPELINE_STATUS=['Lead','Proposta enviada','Visita do espaço','Negociação 1','Negociação 2','Reunião de alinhamento','Contrato enviado','Assinatura cliente','Assinatura diretoria','Fechado','Realizado'];
 const RECOVERY_STATUS=['Recuperação','Sem resposta','Cancelado','Perdido','Perdido/Cancelado'];
 const STATUS=[...PIPELINE_STATUS,...RECOVERY_STATUS];
 const TABS=[['dashboard','Dashboard'],['funil','Funil'],['calendario','Calendário'],['vendas','Vendas'],['recuperacao','Recuperação'],['clientes','Clientes'],['pacotes','Pacotes'],['agenda','Agenda'],['sheets','Relatórios']];
 let state={tab:'dashboard',eventos:[],pacotes:window.EVENTOS_PACOTES||[],agenda:[],agendaResponsaveis:[],agendaFiltros:{criador:'',visibilidade:'',tipo:'',status:''},clientesView:'historico',clientesCadastros:[],meta:{metaMensal:150000},cal:{year:new Date().getFullYear(),month:new Date().getMonth()+1,view:'mes',day:new Date().getDate()}};
+function ensureFreshAppVersion(){
+  try{
+    const key='gestao_cb_eventos_app_version';
+    if(localStorage.getItem(key)!==APP_DATA_VERSION){
+      ['eventos_premium_v58','eventos_premium_meta_v58','eventos_clientes_cadastro_v64','eventos_premium_v95','eventos_premium_v96','eventos_premium_v97','dashboard_cache','dashboard','stats','metricas'].forEach(k=>localStorage.removeItem(k));
+      localStorage.setItem(key,APP_DATA_VERSION);
+    }
+  }catch(e){}
+}
+ensureFreshAppVersion();
 function brl(n){return (Number(n)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
 function dt(s){ const iso=parseDateAny(s); if(!iso) return ''; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`;}
 function dow(s){ const iso=parseDateAny(s); if(!iso) return ''; const d=new Date(iso+'T12:00:00'); return ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'][d.getDay()]||'';}
@@ -1006,4 +1017,206 @@ function boot(){
 });
 load();setupTabs();setupFilters();render(); if(window.EventosFirebase){EventosFirebase.init().then(ok=>{if(ok){EventosFirebase.listen(arr=>{if(Array.isArray(arr)){if(arr.length){mergeRemoteEventos(arr);}else{state.eventos=[];localStorage.setItem(STORE,JSON.stringify(state.eventos));}setupFilters();render();}}); if(EventosFirebase.listenClientes) EventosFirebase.listenClientes(arr=>{state.clientesCadastros=dedupeClientesCadastro(arr||[]);saveClientes(); if(state.tab==='clientes')renderClientes();});}});}}
 document.addEventListener('DOMContentLoaded',boot);
+})();
+
+
+
+/* =========================================================
+   CLIENTES - EDITAR / EXCLUIR SEM ALTERAR ESTRUTURA EXISTENTE
+   Patch isolado APP 101
+========================================================= */
+(function(){
+  if(window.__clientesEditPatch101) return;
+  window.__clientesEditPatch101 = true;
+
+  function normalizeText(v){
+    return String(v || '').trim();
+  }
+
+  function findClienteFromRow(row){
+    if(!row) return null;
+
+    const cells = Array.from(row.children || []);
+    const text = normalizeText(row.innerText);
+
+    // Tenta pegar por células da tabela visual
+    const nome = normalizeText(cells[0]?.innerText || '');
+    const telefone = normalizeText(cells[1]?.innerText || '');
+
+    return {
+      nome: nome || text.split('\n')[0] || '',
+      telefone: telefone || '',
+      row: row
+    };
+  }
+
+  function buildClienteModal(){
+    let modal = document.getElementById('clienteEditorModal101');
+    if(modal) return modal;
+
+    modal = document.createElement('div');
+    modal.id = 'clienteEditorModal101';
+    modal.className = 'cliente-editor-overlay-101';
+    modal.innerHTML = `
+      <div class="cliente-editor-box-101">
+        <div class="cliente-editor-header-101">
+          <div>
+            <div class="cliente-editor-kicker-101">CLIENTE</div>
+            <h2>Cadastro do Cliente</h2>
+            <p>Edite as informações do cadastro ou exclua o cliente.</p>
+          </div>
+          <button type="button" class="cliente-editor-close-101" onclick="fecharCadastroCliente101()">×</button>
+        </div>
+
+        <div class="cliente-editor-grid-101">
+          <label>
+            <span>Nome do cliente</span>
+            <input id="clienteEditNome101" type="text">
+          </label>
+          <label>
+            <span>Telefone</span>
+            <input id="clienteEditTelefone101" type="text">
+          </label>
+          <label>
+            <span>Total estimado</span>
+            <input id="clienteEditTotal101" type="text">
+          </label>
+          <label>
+            <span>Último evento</span>
+            <input id="clienteEditUltimo101" type="text">
+          </label>
+          <label class="full">
+            <span>Observações</span>
+            <textarea id="clienteEditObs101" rows="4" placeholder="Observações internas do cliente..."></textarea>
+          </label>
+        </div>
+
+        <div class="cliente-editor-actions-101">
+          <button type="button" class="btn-danger-101" onclick="excluirCadastroCliente101()">🗑 Excluir cadastro</button>
+          <div>
+            <button type="button" class="btn-cancel-101" onclick="fecharCadastroCliente101()">Cancelar</button>
+            <button type="button" class="btn-save-101" onclick="salvarCadastroCliente101()">💾 Salvar alterações</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    return modal;
+  }
+
+  window.abrirCadastroCliente101 = function(row){
+    const data = findClienteFromRow(row);
+    if(!data || !data.nome) return;
+
+    const cells = Array.from(row.children || []);
+    window.__clienteEditRow101 = row;
+    window.__clienteEditOriginalNome101 = data.nome;
+
+    const modal = buildClienteModal();
+    modal.style.display = 'flex';
+
+    document.getElementById('clienteEditNome101').value = data.nome || '';
+    document.getElementById('clienteEditTelefone101').value = normalizeText(cells[1]?.innerText || '');
+    document.getElementById('clienteEditTotal101').value = normalizeText(cells[3]?.innerText || '');
+    document.getElementById('clienteEditUltimo101').value = normalizeText(cells[4]?.innerText || '');
+    document.getElementById('clienteEditObs101').value = '';
+
+    setTimeout(()=>document.getElementById('clienteEditNome101')?.focus(),80);
+  };
+
+  window.fecharCadastroCliente101 = function(){
+    const modal = document.getElementById('clienteEditorModal101');
+    if(modal) modal.style.display = 'none';
+  };
+
+  window.salvarCadastroCliente101 = function(){
+    const row = window.__clienteEditRow101;
+    if(!row) return fecharCadastroCliente101();
+
+    const cells = Array.from(row.children || []);
+    const nome = normalizeText(document.getElementById('clienteEditNome101')?.value);
+    const telefone = normalizeText(document.getElementById('clienteEditTelefone101')?.value);
+    const total = normalizeText(document.getElementById('clienteEditTotal101')?.value);
+    const ultimo = normalizeText(document.getElementById('clienteEditUltimo101')?.value);
+
+    if(!nome){
+      alert('Informe o nome do cliente.');
+      return;
+    }
+
+    if(cells[0]) cells[0].textContent = nome;
+    if(cells[1]) cells[1].textContent = telefone;
+    if(cells[3]) cells[3].textContent = total;
+    if(cells[4]) cells[4].textContent = ultimo;
+
+    try{
+      const historico = JSON.parse(localStorage.getItem('eventos_clientes_editados_101') || '[]');
+      historico.push({
+        acao:'editar',
+        original: window.__clienteEditOriginalNome101 || '',
+        nome,
+        telefone,
+        total,
+        ultimo,
+        data: new Date().toISOString()
+      });
+      localStorage.setItem('eventos_clientes_editados_101', JSON.stringify(historico));
+    }catch(e){}
+
+    fecharCadastroCliente101();
+    if(typeof showToast === 'function') showToast('✅ Cliente atualizado');
+  };
+
+  window.excluirCadastroCliente101 = function(){
+    const row = window.__clienteEditRow101;
+    if(!row) return fecharCadastroCliente101();
+
+    const nome = normalizeText(document.getElementById('clienteEditNome101')?.value || window.__clienteEditOriginalNome101);
+    if(!confirm('Deseja excluir o cadastro de ' + nome + '?')) return;
+
+    try{
+      const historico = JSON.parse(localStorage.getItem('eventos_clientes_editados_101') || '[]');
+      historico.push({
+        acao:'excluir',
+        nome,
+        data: new Date().toISOString()
+      });
+      localStorage.setItem('eventos_clientes_editados_101', JSON.stringify(historico));
+    }catch(e){}
+
+    row.remove();
+    fecharCadastroCliente101();
+    if(typeof showToast === 'function') showToast('🗑 Cliente excluído');
+  };
+
+  // Delegação: funciona mesmo que a tabela seja renderizada depois.
+  document.addEventListener('click', function(ev){
+    const target = ev.target;
+    if(!target) return;
+
+    // Não interceptar botões/menus/sidebar
+    if(target.closest('button,a,input,select,textarea')) return;
+
+    const row = target.closest('tr, .cliente-row, .client-row, .crm-row, .table-row, [data-cliente], [data-client]');
+    if(!row) return;
+
+    const txt = normalizeText(row.innerText);
+    if(!txt) return;
+
+    // Detecta área de clientes pelo conteúdo/cabeçalho/tela atual
+    const inClientes =
+      document.body.innerText.includes('Histórico de Clientes') ||
+      document.body.innerText.includes('Cadastro de Clientes') ||
+      document.body.innerText.includes('CLIENTE') && document.body.innerText.includes('ÚLTIMO EVENTO');
+
+    if(!inClientes) return;
+
+    const firstCell = row.children && row.children[0];
+    if(!firstCell || !firstCell.innerText || firstCell.innerText.toUpperCase().includes('CLIENTE')) return;
+
+    ev.preventDefault();
+    ev.stopPropagation();
+    abrirCadastroCliente101(row);
+  }, true);
+
 })();

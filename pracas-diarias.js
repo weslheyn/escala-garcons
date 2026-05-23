@@ -87,8 +87,153 @@
     .pracas-mini-nav{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:10px 0 4px}.pracas-mini-nav button{background:#111827;border:1px solid #263149;color:#9ca9c7;border-radius:14px;padding:10px 6px;font-weight:900;font-size:11px}.pracas-mini-nav button.active{background:#f5c842;color:#111;border-color:#f5c842}.pracas-hidden{display:none!important}
 
     .pracas-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.pracas-config-option{border:1px solid #28364f;background:#0d1320;color:#dbe7ff;border-radius:16px;padding:14px;text-align:left;font-weight:900}.pracas-config-option.active{background:linear-gradient(135deg,#f5c842,#f7b816);color:#111;border-color:#f5c842}.pracas-print-box{background:#fff;color:#111;border-radius:12px;margin:14px 0;padding:10px;overflow:visible;width:100%;box-sizing:border-box}.pracas-print-title{background:#202020;color:#fff;text-align:center;font-weight:900;padding:6px;font-size:15px;letter-spacing:.5px}.pracas-meta-table,.pracas-escala-table{width:100%;max-width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;table-layout:fixed}.pracas-meta-table td{border:1px solid #cfcfcf;padding:4px;word-break:break-word}.pracas-escala-table th,.pracas-escala-table td{border:1px solid #111;padding:3px 2px;text-align:center;vertical-align:middle;white-space:normal;word-break:break-word;overflow-wrap:anywhere;line-height:1.12}.pracas-escala-table th{background:#f4f4f4}.pracas-area-row td{background:#242424!important;color:#fff!important;font-weight:900;text-align:center;padding:4px}.pracas-flag{background:#202020;color:#fff;font-weight:900;width:26px}.pracas-prnum{font-weight:900;width:30px}.pracas-mesas{font-weight:900}.pracas-print-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.pracas-escala-table col.pr-col-num{width:34px}.pracas-escala-table col.pr-col-flag{width:30px}.pracas-escala-table col.pr-col-mesa{width:34%}.pracas-escala-table col.pr-col-turno{width:26%}.pracas-spinner-card{background:linear-gradient(145deg,#151b29,#0b101a);border:1px solid #f5c84277;border-radius:18px;padding:16px;text-align:center;margin:12px 0}.pracas-spinner-num{font-size:58px;font-weight:900;color:#f5c842;text-shadow:0 0 18px #f5c84255}.pracas-ind-person{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border-bottom:1px solid #ffffff10;padding:10px 0}.pracas-ind-person:last-child{border-bottom:0}.pracas-small-btn{border:0;border-radius:12px;padding:10px 12px;font-weight:900;background:#f5c842;color:#111}.pracas-small-btn:disabled{opacity:.45;background:#344056;color:#94a3b8}
+
+    /* v107 - Sorteio compacto sem alterar Eventos */
+    @media (min-width: 900px){
+      .pracas-panel{overflow:hidden!important;padding-bottom:0!important;background:#070b13!important}
+      .pracas-head{padding:8px 12px!important;min-height:38px!important;border-bottom:1px solid #25324a!important}
+      .pracas-head>div[style*="font-size"]{display:none!important}
+      .pracas-title{font-size:21px!important;letter-spacing:.2px!important}
+      .pracas-help{display:none!important}
+      .pracas-wrap{max-width:none!important;width:100%!important;height:calc(100vh - 44px)!important;padding:6px 8px!important;box-sizing:border-box!important;overflow:hidden!important}
+      .pracas-seg,.pracas-info{display:none!important}
+      .pracas-mini-nav{grid-template-columns:repeat(5,1fr)!important;gap:8px!important;margin:0 0 8px!important;height:32px!important}
+      .pracas-mini-nav button{padding:7px 6px!important;border-radius:10px!important;font-size:11px!important}
+      #pracasViewSorteio,#pracasViewResultado{height:calc(100vh - 92px)!important;overflow:hidden!important}
+      .pracas-live-grid{display:grid!important;grid-template-columns:300px minmax(0,1fr)!important;gap:10px!important;height:100%!important;min-height:0!important}
+      .pracas-live-left{min-height:0!important;overflow:hidden!important;background:#0d1320;border:1px solid #22304a;border-radius:12px;padding:8px;box-sizing:border-box;display:flex;flex-direction:column}
+      .pracas-live-left .pracas-section-title{margin:0 0 6px!important;font-size:13px!important;flex:0 0 auto}
+      .pracas-live-list{overflow:hidden!important;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:2px}
+      .pracas-live-person{display:grid;grid-template-columns:32px 1fr 76px;gap:7px;align-items:center;padding:5px 0;border-bottom:1px solid #ffffff12;min-height:38px}
+      .pracas-live-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#17345f;color:#fff;font-weight:900;font-size:13px}
+      .pracas-live-name{font-weight:900;color:#fff;font-size:13px;line-height:1.02;white-space:normal;overflow:visible;word-break:normal}
+      .pracas-live-role{font-size:8px;color:#9eb6dd;line-height:1;text-transform:uppercase;margin-top:1px}
+      .pracas-live-btn{border:0;border-radius:10px;background:#f5c842;color:#111;font-weight:900;font-size:11px;padding:8px 6px;cursor:pointer}
+      .pracas-live-right{min-width:0;min-height:0;overflow:hidden!important;background:#0d1320;border:1px solid #22304a;border-radius:12px;padding:8px;box-sizing:border-box}
+      .pracas-live-right>.pracas-section-title{margin:0 0 4px!important;font-size:20px!important;line-height:1!important}
+      .pracas-live-right .pracas-count{font-size:10px!important;color:#33f17b!important;text-transform:none!important}
+      .pracas-bottom{display:none!important}
+      .pracas-print-actions{display:none!important}
+      .pracas-print-box{border-radius:4px!important;margin:0!important;padding:0!important;overflow:hidden!important;background:#fff!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important}
+      .pracas-print-title{font-size:13px!important;line-height:1!important;padding:3px!important;letter-spacing:.3px!important}
+      .pracas-meta-table{font-size:6.6px!important;line-height:1!important;table-layout:fixed!important;width:100%!important}
+      .pracas-meta-table td{padding:1px 3px!important;height:12px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important;word-break:normal!important}
+      .pracas-escala-table{font-size:7.4px!important;line-height:1!important;table-layout:fixed!important;width:100%!important;border-collapse:collapse!important}
+      .pracas-escala-table th,.pracas-escala-table td{padding:0 2px!important;height:13px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important;word-break:normal!important;overflow-wrap:normal!important}
+      .pracas-area-row td{padding:1px!important;height:12px!important;font-size:7.2px!important;line-height:1!important}
+      .pracas-flag{width:auto!important;background:#202020!important;color:#fff!important;font-weight:900!important}
+      .pracas-prnum{width:auto!important;font-weight:900!important}
+      .pracas-mesas{font-weight:900!important}
+      .pracas-escala-table col.pr-col-num{width:28px!important}
+      .pracas-escala-table col.pr-col-flag{width:32px!important}
+      .pracas-escala-table col.pr-col-almoco{width:132px!important}
+      .pracas-escala-table col.pr-col-mesa{width:auto!important}
+      .pracas-escala-table col.pr-col-jantar{width:132px!important}
+      .pracas-summary-fit{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:5px 2px 0;color:#f5c842;font-weight:900;font-size:12px}
+      .pracas-spinner-overlay{position:fixed;inset:0;z-index:10020;background:rgba(0,0,0,.68);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+      .pracas-spinner-modal{background:#0d1320;border:1px solid #f5c84277;border-radius:18px;min-width:290px;padding:22px;text-align:center;box-shadow:0 20px 60px #000}
+      .pracas-spinner-modal .n{font-size:58px;font-weight:900;color:#f5c842;text-shadow:0 0 20px #f5c84255;margin:10px 0}
+    }
+    @media (max-width: 899px){
+      .pracas-panel{overflow:auto!important;padding-bottom:70px!important}
+      .pracas-wrap{max-width:none!important;width:100%!important;padding:8px!important;box-sizing:border-box!important}
+      .pracas-seg,.pracas-info{display:none!important}
+      .pracas-mini-nav{grid-template-columns:repeat(5,1fr)!important;gap:5px!important;margin:0 0 8px!important}
+      .pracas-mini-nav button{font-size:10px!important;padding:8px 3px!important;border-radius:9px!important}
+      .pracas-live-grid{display:block!important}
+      .pracas-live-left{background:#0d1320;border:1px solid #22304a;border-radius:12px;padding:8px;margin-bottom:8px;max-height:36vh;overflow:hidden;display:flex;flex-direction:column}
+      .pracas-live-list{overflow:hidden;display:flex;flex-direction:column;gap:2px}
+      .pracas-live-person{display:grid;grid-template-columns:28px 1fr 72px;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid #ffffff12;min-height:34px}
+      .pracas-live-avatar{width:27px;height:27px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#17345f;color:#fff;font-weight:900;font-size:11px}
+      .pracas-live-name{font-weight:900;color:#fff;font-size:11px;line-height:1.02;white-space:normal;overflow:visible}
+      .pracas-live-role{font-size:7px;color:#9eb6dd;text-transform:uppercase;line-height:1}
+      .pracas-live-btn{border:0;border-radius:9px;background:#f5c842;color:#111;font-weight:900;font-size:10px;padding:7px 5px}
+      .pracas-live-right{background:#0d1320;border:1px solid #22304a;border-radius:12px;padding:6px;overflow:hidden!important}
+      .pracas-live-right>.pracas-section-title{margin:0 0 4px!important;font-size:15px!important}
+      .pracas-print-box{border-radius:3px!important;margin:0!important;padding:0!important;overflow:hidden!important;width:100%!important;max-width:100%!important}
+      .pracas-print-title{font-size:9px!important;padding:2px!important;line-height:1!important}
+      .pracas-meta-table{font-size:4.5px!important;line-height:1!important;table-layout:fixed!important;width:100%!important}
+      .pracas-meta-table td{padding:0 1px!important;height:8px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;word-break:normal!important}
+      .pracas-escala-table{font-size:4.9px!important;line-height:1!important;table-layout:fixed!important;width:100%!important}
+      .pracas-escala-table th,.pracas-escala-table td{padding:0 1px!important;height:8px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;word-break:normal!important;overflow-wrap:normal!important}
+      .pracas-area-row td{height:8px!important;padding:0!important;font-size:4.8px!important}
+      .pracas-escala-table col.pr-col-num{width:18px!important}
+      .pracas-escala-table col.pr-col-flag{width:20px!important}
+      .pracas-escala-table col.pr-col-almoco{width:52px!important}
+      .pracas-escala-table col.pr-col-mesa{width:auto!important}
+      .pracas-escala-table col.pr-col-jantar{width:52px!important}
+    }
+
     @media print{body>*:not(#pracasPrintArea){display:none!important}#pracasPrintArea{display:block!important;position:static!important;background:#fff!important;color:#000!important}.no-print{display:none!important}.pracas-print-box{border-radius:0;margin:0;padding:0}.pracas-print-title{font-size:16px}.pracas-meta-table,.pracas-escala-table{font-size:11px}}
     @media(max-width:420px){.pracas-title{font-size:22px}.pracas-info{grid-template-columns:1fr}.pracas-result-card{grid-template-columns:36px 1fr}.pracas-assigned{text-align:left;grid-column:2}.pracas-bottom{grid-template-columns:1fr 1fr}.pracas-bottom .share{grid-column:span 2}.pracas-wrap{padding:10px}.pracas-card{padding:11px}.pracas-print-box{padding:6px;border-radius:10px}.pracas-print-title{font-size:12px;padding:5px}.pracas-meta-table,.pracas-escala-table{font-size:8px}.pracas-meta-table td{padding:2px}.pracas-escala-table th,.pracas-escala-table td{padding:2px 1px}.pracas-escala-table col.pr-col-num{width:26px}.pracas-escala-table col.pr-col-flag{width:24px}.pracas-escala-table col.pr-col-mesa{width:30%}.pracas-escala-table col.pr-col-turno{width:27%}}
+
+    /* AJUSTE v108: escala proporcional no formato original, sem campos exagerados */
+    @media (min-width: 900px){
+      .pracas-live-right{display:flex!important;flex-direction:column!important;align-items:stretch!important;overflow:hidden!important}
+      .pracas-live-right .pracas-print-box{width:100%!important;max-width:860px!important;margin:0 auto!important;align-self:center!important;overflow:hidden!important}
+      .pracas-live-right .pracas-meta-table,.pracas-live-right .pracas-escala-table{width:100%!important;max-width:100%!important;table-layout:fixed!important}
+      .pracas-live-right .pracas-meta-table{font-size:6.2px!important}
+      .pracas-live-right .pracas-meta-table td{height:10px!important;padding:1px 3px!important;line-height:1!important}
+      .pracas-live-right .pracas-print-title{font-size:12px!important;padding:2px!important;line-height:1!important}
+      .pracas-live-right .pracas-escala-table{font-size:6.9px!important;line-height:1!important}
+      .pracas-live-right .pracas-escala-table th,.pracas-live-right .pracas-escala-table td{height:11px!important;padding:0 1px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important}
+      .pracas-live-right .pracas-area-row td{height:10px!important;padding:0!important;font-size:6.7px!important;line-height:1!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-num{width:6%!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-flag{width:6%!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-almoco{width:24%!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-mesa{width:34%!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-jantar{width:30%!important}
+      .pracas-summary-fit{max-width:860px!important;margin:0 auto!important;width:100%!important;box-sizing:border-box!important}
+    }
+    @media (max-width: 899px){
+      .pracas-live-right .pracas-print-box{max-width:100%!important;margin:0 auto!important;transform:none!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-num{width:6%!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-flag{width:6%!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-almoco{width:24%!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-mesa{width:34%!important}
+      .pracas-live-right .pracas-escala-table col.pr-col-jantar{width:30%!important}
+    }
+
+
+
+    /* AJUSTE v109: escala mais estreita horizontalmente e mais alta verticalmente */
+    @media (min-width: 900px){
+      .pracas-live-right{align-items:center!important;}
+      .pracas-live-right .pracas-print-box{
+        width:76vw!important;
+        max-width:760px!important;
+        min-width:700px!important;
+        margin:0 auto!important;
+        transform:none!important;
+      }
+      .pracas-live-right .pracas-print-title{font-size:13px!important;padding:3px!important;line-height:1.05!important;}
+      .pracas-live-right .pracas-meta-table{font-size:6.8px!important;}
+      .pracas-live-right .pracas-meta-table td{height:12px!important;padding:1px 3px!important;line-height:1.05!important;}
+      .pracas-live-right .pracas-escala-table{font-size:7.3px!important;line-height:1.05!important;}
+      .pracas-live-right .pracas-escala-table th,
+      .pracas-live-right .pracas-escala-table td{
+        height:13px!important;
+        padding:1px 2px!important;
+        line-height:1.05!important;
+        white-space:nowrap!important;
+        overflow:hidden!important;
+        text-overflow:clip!important;
+      }
+      .pracas-live-right .pracas-area-row td{height:12px!important;padding:1px!important;font-size:7.2px!important;line-height:1.05!important;}
+      .pracas-live-right .pracas-escala-table col.pr-col-num{width:7%!important;}
+      .pracas-live-right .pracas-escala-table col.pr-col-flag{width:7%!important;}
+      .pracas-live-right .pracas-escala-table col.pr-col-almoco{width:22%!important;}
+      .pracas-live-right .pracas-escala-table col.pr-col-mesa{width:40%!important;}
+      .pracas-live-right .pracas-escala-table col.pr-col-jantar{width:24%!important;}
+      .pracas-summary-fit{max-width:760px!important;width:76vw!important;margin:0 auto!important;font-size:12px!important;padding-top:6px!important;}
+    }
+    @media (max-width: 899px){
+      .pracas-live-right .pracas-print-box{width:100%!important;max-width:100%!important;}
+      .pracas-live-right .pracas-escala-table th,
+      .pracas-live-right .pracas-escala-table td{height:9px!important;line-height:1.02!important;}
+      .pracas-live-right .pracas-area-row td{height:9px!important;}
+    }
+
     .pracas-modal-back{position:fixed;inset:0;background:#000a;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}.pracas-modal{width:min(520px,96vw);max-height:88vh;overflow:auto;background:#0d1320;border:1px solid #33415e;border-radius:20px;padding:16px;color:#fff;box-shadow:0 20px 60px #000}.pracas-modal h3{margin:0 0 12px;font-family:'Barlow Condensed',Inter,sans-serif;font-size:24px;text-transform:uppercase}.pracas-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.pracas-select,.pracas-text{width:100%;background:#090e18;border:1px solid #33415e;border-radius:12px;color:#fff;padding:11px;font-weight:800;margin:6px 0 10px}.pracas-textarea{min-height:70px}.pracas-danger{color:#ff7777}.pracas-gold{color:#f5c842}
     `;
     const style=document.createElement('style'); style.id='pracasDiariasStyle'; style.textContent=css; document.head.appendChild(style);
@@ -372,36 +517,25 @@
 
   function renderResultado(){
     const el=document.getElementById('pracasViewResultado'); if(!el) return;
-    el.innerHTML=`
-      <div class="pracas-section-title"><span>Escala de praças dos garçons</span><span class="pracas-count">visão completa sem arrastar</span></div>
-      ${renderEscalaPracas(true, 'resultado')}
-    `;
+    el.innerHTML=`<div class="pracas-live-right" style="height:100%;overflow:hidden"><div class="pracas-section-title"><span>Escala de praças dos garçons</span><span class="pracas-count">completa sem arrastar</span></div>${renderEscalaPracas(true, 'resultado')}</div>`;
   }
 
   function renderSorteio(){
     const el=document.getElementById('pracasViewSorteio'); if(!el) return;
-    const escalaAbaixo = `<div class="pracas-section-title"><span>Escala de praças dos garçons</span><span class="pracas-count">atualiza ao vivo conforme o sorteio</span></div>${renderEscalaPracas(true, 'sorteio')}`;
-    if(!st.resultado){
-      if(st.tipoSorteio==='individual'){
-        el.innerHTML=`<div class="pracas-section-title"><span>Sorteio individual</span><span class="pracas-count">toque em Sortear na pessoa</span></div>${renderSorteioIndividual()}${escalaAbaixo}`;
-      } else {
-        el.innerHTML=`<div class="pracas-empty">Nenhum sorteio realizado ainda. Selecione a equipe e toque em Sortear.</div><div class="pracas-actions"><button class="pracas-btn primary" onclick="sortearPracasDiarias()">🎲 Sortear</button><button class="pracas-btn" onclick="setPracasView('config')">⚙️ Configurações</button></div>${escalaAbaixo}`;
-      }
-      return;
-    }
-    const r=st.resultado;
-    el.innerHTML=`
-      <div id="pracasSuccess" class="pracas-success show"><span>✅ Sorteio realizado com sucesso!<br><small>${fmtBR(r.data)} • ${st.turno==='almoco'?'Almoço':'Jantar'}</small></span><button class="pracas-pill" onclick="refazerPracasDiarias()">Refazer</button></div>
-      <div class="pracas-section-title"><span>Resultado do sorteio</span><span class="pracas-count">${(r.normal||[]).length} praças</span></div>
-      ${(r.normal||[]).map(x=>resultCard(x,'garcons')).join('') || '<div class="pracas-empty">Nenhuma praça normal atribuída.</div>'}
-      <div class="pracas-section-title" style="color:#d49bff"><span>👑 Chefe de fila (CF)</span><span class="pracas-count">${(r.cf||[]).length}</span></div>
-      ${(r.cf||[]).map(x=>resultCard(x,'cf')).join('') || '<div class="pracas-empty">Nenhum CF atribuído.</div>'}
-      <div class="pracas-section-title" style="color:#77c7ff"><span>🔒 Fechamento (F/)</span><span class="pracas-count">${(r.fechamento||[]).length}</span></div>
-      ${(r.fechamento||[]).map(x=>resultCard(x,'fechamento')).join('') || '<div class="pracas-empty">Sem praças F/ neste turno.</div>'}
-      ${renderSobraram(r)}
-      ${st.tipoSorteio==='individual' ? renderSorteioIndividual() : ''}
-      ${escalaAbaixo}
-    `;
+    const pessoas = pessoasPorGrupoParaSorteio();
+    const lista = [...pessoas.garcons, ...pessoas.cf, ...pessoas.fechamento].filter(p=>p && p.nome);
+    const disponiveis = totalPracasDisponiveisAgora();
+    const left = `<div class="pracas-live-left">
+      <div class="pracas-section-title"><span>Sorteio de praças</span><span class="pracas-count">${disponiveis} disponíveis</span></div>
+      <div class="pracas-live-list">${lista.map((p,i)=>{
+        const ini=(p.nome||'?').split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+        const grupo = pessoas.cf.some(x=>x.id===p.id) ? 'cf' : (pessoas.fechamento.some(x=>x.id===p.id) ? 'fechamento' : 'garcons');
+        return `<div class="pracas-live-person"><div class="pracas-live-avatar">${ini}</div><div><div class="pracas-live-name">${p.nome}</div><div class="pracas-live-role">${grupo==='cf'?'Chefe de fila':'Garçom'}</div></div><button class="pracas-live-btn" onclick="sortearPracaIndividual('${grupo}','${encodeURIComponent(p.id)}')">🎲 Sortear</button></div>`;
+      }).join('') || '<div class="pracas-empty">Nenhum garçom disponível no dia.</div>'}</div>
+      <div class="pracas-actions" style="grid-template-columns:1fr 1fr;margin:8px 0 0"><button class="pracas-btn purple" onclick="setPracasView('equipe')">👥 Equipe</button><button class="pracas-btn" onclick="setPracasView('config')">⚙️ Configurar</button></div>
+    </div>`;
+    const right = `<div class="pracas-live-right"><div class="pracas-section-title"><span>Escala de praças dos garçons</span><span class="pracas-count">• atualizado ao vivo</span></div>${renderEscalaPracas(true, 'sorteio')}</div>`;
+    el.innerHTML = `<div class="pracas-live-grid">${left}${right}</div>`;
   }
 
   function resultCard(x,grupo){
@@ -614,14 +748,14 @@
     const qtdJantar=st.resultadosTurnos.jantar?resultadoArrayFrom(st.resultadosTurnos.jantar).filter(x=>x.pessoa&&x.pessoa.nome).length:0;
     const qtd=(qtdAlmoco||qtdJantar) ? `${qtdAlmoco||'-'} / ${qtdJantar||'-'}` : '';
     const groups=areaRows();
-    const rowsHtml = groups.length ? groups.map(g=>`<tr class="pracas-area-row"><td colspan="5">${g.area}</td></tr>${g.rows.map(p=>`<tr><td class="pracas-prnum">${p.numero}º</td><td class="pracas-flag">${p.tipo==='F'?'F/':(p.tipo==='CF'?'CF':'')}</td><td class="pracas-mesas">${p.mesas}</td><td>${nomePorPracaTurno('almoco',p.id)||'-'}</td><td>${nomePorPracaTurno('jantar',p.id)||'-'}</td></tr>`).join('')}`).join('') : '<tr><td colspan="5">Nenhuma praça disponível conforme as configurações atuais.</td></tr>';
+    const rowsHtml = groups.length ? groups.map(g=>`<tr class="pracas-area-row"><td colspan="5">${g.area}</td></tr>${g.rows.map(p=>`<tr><td class="pracas-prnum">${p.numero}º</td><td class="pracas-flag">${p.tipo==='F'?'F/':(p.tipo==='CF'?'CF':'')}</td><td>${nomePorPracaTurno('almoco',p.id)||''}</td><td class="pracas-mesas">${p.mesas}</td><td>${nomePorPracaTurno('jantar',p.id)||''}</td></tr>`).join('')}`).join('') : '<tr><td colspan="5">Nenhuma praça disponível conforme as configurações atuais.</td></tr>';
     return `<div id="pracasPrintArea" class="pracas-print-box ${contexto==='resultado'?'pracas-print-compact':''}">
       <div class="pracas-print-title">ESCALA DE PRAÇAS DOS GARÇONS</div>
       <table class="pracas-meta-table"><tr><td rowspan="3" style="width:82px;text-align:center;font-weight:900;color:#8b5a24">COCO<br>BAMBU</td><td>DATA: <b>${data}</b></td><td>TURNO: <b>ALMOÇO / JANTAR</b></td></tr><tr><td>DIA DA SEMANA: <b>${diaSemana}</b></td><td>QUANT. GARÇOM: <b>${qtd}</b></td></tr><tr><td>MAITRE: ____________________</td><td></td></tr></table>
-      <table class="pracas-escala-table"><colgroup><col class="pr-col-num"><col class="pr-col-flag"><col class="pr-col-mesa"><col class="pr-col-turno"><col class="pr-col-turno"></colgroup><thead><tr><th></th><th></th><th>Nº DA MESA</th><th>ALMOÇO</th><th>JANTAR</th></tr></thead><tbody>
+      <table class="pracas-escala-table"><colgroup><col class="pr-col-num"><col class="pr-col-flag"><col class="pr-col-almoco"><col class="pr-col-mesa"><col class="pr-col-jantar"></colgroup><thead><tr><th></th><th></th><th>ALMOÇO</th><th>Nº DA MESA</th><th>JANTAR</th></tr></thead><tbody>
       ${rowsHtml}
       </tbody></table>
-    </div>${showActions?`<div class="pracas-print-actions no-print"><button class="pracas-btn" onclick="imprimirEscalaPracas()">🖨️ Imprimir / PDF</button><button class="pracas-btn green" onclick="abrirCompartilharPracas()">📤 Compartilhar</button></div>`:''}`;
+    </div><div class="pracas-summary-fit no-print"><span>Garçons/pracas: ${qtd || '0 / '+getPracas().filter(isPracaDisponivelTurno).length}</span><span>Total de praças: ${getPracas().filter(isPracaDisponivelTurno).length}</span><span>Preenchidas: ${resultadoArrayAtual().length}</span></div>${showActions?`<div class="pracas-print-actions no-print"><button class="pracas-btn" onclick="imprimirEscalaPracas()">🖨️ Imprimir / PDF</button><button class="pracas-btn green" onclick="abrirCompartilharPracas()">📤 Compartilhar</button></div>`:''}`;
   }
   function resultadoArrayFrom(r){ return [...(r.normal||[]),...(r.cf||[]),...(r.fechamento||[])]; }
   function textoEscalaTabela(){
@@ -650,7 +784,7 @@
     st.data = st.data || todayISO();
     document.getElementById('pracasDiariasPanel').classList.add('open');
     try{ document.body.classList.remove('home-active'); }catch(e){}
-    ensureSelected(); renderAll(); setView('equipe');
+    ensureSelected(); renderAll(); setView('sorteio');
     await carregarAmbosTurnos();
     carregarHistorico();
   };
@@ -671,11 +805,34 @@
   window.toggleSalaoPracas = function(encodedArea){ const area=decodeURIComponent(encodedArea); st.saloesAtivos[area]=!isSalaoAtivo(area); salvarConfigLocal(); renderAll(); toast((st.saloesAtivos[area]?'✅ ':'🚫 ')+area); };
   window.toggleBloqueioPraca = function(pracaId){ if(st.pracasBloqueadas[pracaId]) delete st.pracasBloqueadas[pracaId]; else st.pracasBloqueadas[pracaId]=true; salvarConfigLocal(); renderPracas(); renderConfig(); renderResultado(); renderSorteio(); };
   window.limparBloqueiosPracas = function(){ if(confirm('Liberar todas as praças bloqueadas?')){st.pracasBloqueadas={}; salvarConfigLocal(); renderAll(); toast('✅ Praças liberadas');} };
+
+  function mostrarAnimacaoPraca(disponiveis, escolhida, pessoa, cb){
+    const old=document.getElementById('pracasAnimacaoSorteio'); if(old) old.remove();
+    const d=document.createElement('div'); d.id='pracasAnimacaoSorteio'; d.className='pracas-spinner-overlay';
+    d.innerHTML=`<div class="pracas-spinner-modal"><div class="pracas-label">Sorteando praça para</div><div class="pracas-name" style="font-size:18px;margin-top:4px">${pessoa?.nome||''}</div><div class="n" id="pracasAnimNum">--</div><div class="pracas-sub">Números passando até cair na praça final</div></div>`;
+    document.body.appendChild(d);
+    const num=d.querySelector('#pracasAnimNum');
+    let ticks=0;
+    const timer=setInterval(()=>{
+      const p=disponiveis[Math.floor(Math.random()*disponiveis.length)];
+      if(num) num.textContent=String(p.numero).padStart(2,'0');
+      ticks++;
+      if(ticks>=22){
+        clearInterval(timer);
+        if(num) num.textContent=String(escolhida.numero).padStart(2,'0');
+        setTimeout(()=>{ d.remove(); if(typeof cb==='function') cb(); },650);
+      }
+    },70);
+  }
   window.sortearPracaIndividual = function(grupo, encodedId){
     const id=decodeURIComponent(encodedId); const pessoa=selectedList(grupo).find(p=>p.id===id); if(!pessoa) return toast('Pessoa não encontrada');
     const disponiveis=pracaElegivelIndividual(grupo); if(!disponiveis.length) return toast('Não há praça disponível para este grupo');
-    const sp=document.getElementById('pracasSpinner'), num=document.getElementById('pracasSpinnerNum'); if(sp) sp.classList.remove('pracas-hidden');
-    let ticks=0; const timer=setInterval(()=>{ const p=disponiveis[Math.floor(Math.random()*disponiveis.length)]; if(num) num.textContent=p.numero; ticks++; if(ticks>18){ clearInterval(timer); const escolhida=disponiveis[Math.floor(Math.random()*disponiveis.length)]; if(num) num.textContent=escolhida.numero; pushResultadoIndividual(grupo,pessoa,escolhida); setTimeout(()=>{if(sp) sp.classList.add('pracas-hidden'); renderSorteio(); renderResultado(); renderConfig(); toast(`🎲 ${pessoa.nome} caiu na Praça ${escolhida.numero}`);},500); } },80);
+    const escolhida=disponiveis[Math.floor(Math.random()*disponiveis.length)];
+    mostrarAnimacaoPraca(disponiveis, escolhida, pessoa, ()=>{
+      pushResultadoIndividual(grupo,pessoa,escolhida);
+      renderSorteio(); renderResultado(); renderConfig();
+      toast(`🎲 ${pessoa.nome} caiu na Praça ${escolhida.numero}`);
+    });
   };
 
   function modalPracas(html){
@@ -869,4 +1026,308 @@
     const eq=equipeDoMapa(); el.textContent=(eq.garcons.length+eq.cf.length+eq.fechamento.length)+' elegíveis';
   };
   setInterval(()=>{ try{ window.updatePracasDashboardBadge(); }catch(e){} }, 4000);
+})();
+
+/* AJUSTE v110: manter escala estreita, aumentar altura vertical e liberar scroll */
+(function(){
+  if(document.getElementById('pracasV110VerticalFit')) return;
+  const st=document.createElement('style');
+  st.id='pracasV110VerticalFit';
+  st.textContent=`
+    @media (min-width: 900px){
+      .pracas-panel{overflow:auto!important;padding-bottom:18px!important;}
+      .pracas-wrap{height:auto!important;min-height:calc(100vh - 44px)!important;overflow:visible!important;}
+      #pracasViewSorteio,#pracasViewResultado{height:auto!important;min-height:calc(100vh - 92px)!important;overflow:visible!important;}
+      .pracas-live-grid{min-height:calc(100vh - 98px)!important;height:auto!important;align-items:stretch!important;}
+      .pracas-live-left{max-height:calc(100vh - 112px)!important;overflow:auto!important;}
+      .pracas-live-list{overflow:auto!important;}
+      .pracas-live-right{min-height:calc(100vh - 112px)!important;overflow:auto!important;align-items:center!important;justify-content:flex-start!important;}
+      .pracas-live-right .pracas-print-box{
+        width:76vw!important;
+        max-width:760px!important;
+        min-width:700px!important;
+        margin:0 auto!important;
+      }
+      .pracas-live-right .pracas-print-title{font-size:14px!important;padding:4px!important;line-height:1.05!important;}
+      .pracas-live-right .pracas-meta-table{font-size:7.2px!important;line-height:1.05!important;}
+      .pracas-live-right .pracas-meta-table td{height:14px!important;padding:1px 3px!important;line-height:1.05!important;}
+      .pracas-live-right .pracas-escala-table{font-size:7.8px!important;line-height:1.05!important;}
+      .pracas-live-right .pracas-escala-table th,
+      .pracas-live-right .pracas-escala-table td{
+        height:17px!important;
+        padding:1px 2px!important;
+        line-height:1.05!important;
+        white-space:nowrap!important;
+        overflow:hidden!important;
+        text-overflow:clip!important;
+      }
+      .pracas-live-right .pracas-area-row td{height:15px!important;padding:1px!important;font-size:7.8px!important;line-height:1.05!important;}
+      .pracas-summary-fit{max-width:760px!important;width:76vw!important;margin:0 auto!important;font-size:13px!important;padding-top:8px!important;}
+    }
+    @media (max-width: 899px){
+      .pracas-panel{overflow:auto!important;}
+      .pracas-live-right{overflow:auto!important;}
+      .pracas-live-right .pracas-escala-table th,
+      .pracas-live-right .pracas-escala-table td{height:10px!important;}
+      .pracas-live-right .pracas-area-row td{height:10px!important;}
+    }
+  `;
+  document.head.appendChild(st);
+})();
+
+
+/* AJUSTE v111: painel da escala ocupa a altura até a área inferior marcada, mantendo largura controlada */
+(function(){
+  if(document.getElementById('pracasV111PainelAlto')) return;
+  const st=document.createElement('style');
+  st.id='pracasV111PainelAlto';
+  st.textContent=`
+    @media (min-width: 900px){
+      .pracas-panel{
+        overflow:hidden!important;
+        padding-bottom:0!important;
+      }
+      .pracas-wrap{
+        height:calc(100vh - 44px)!important;
+        min-height:calc(100vh - 44px)!important;
+        overflow:hidden!important;
+        padding-bottom:6px!important;
+      }
+      #pracasViewSorteio,#pracasViewResultado{
+        height:calc(100vh - 90px)!important;
+        min-height:calc(100vh - 90px)!important;
+        overflow:hidden!important;
+      }
+      .pracas-live-grid{
+        height:100%!important;
+        min-height:0!important;
+        align-items:stretch!important;
+      }
+      .pracas-live-left{
+        height:100%!important;
+        max-height:none!important;
+        overflow:hidden!important;
+      }
+      .pracas-live-list{
+        overflow:auto!important;
+        min-height:0!important;
+      }
+      .pracas-live-right{
+        height:100%!important;
+        min-height:0!important;
+        max-height:none!important;
+        overflow:auto!important;
+        display:flex!important;
+        flex-direction:column!important;
+        align-items:center!important;
+        justify-content:flex-start!important;
+        padding:8px 10px 12px!important;
+        box-sizing:border-box!important;
+      }
+      .pracas-live-right .pracas-print-box{
+        width:74vw!important;
+        max-width:790px!important;
+        min-width:700px!important;
+        margin:0 auto!important;
+        flex:0 0 auto!important;
+      }
+      .pracas-live-right .pracas-print-title{
+        font-size:14px!important;
+        padding:4px!important;
+        line-height:1.08!important;
+      }
+      .pracas-live-right .pracas-meta-table{
+        font-size:7.3px!important;
+        line-height:1.08!important;
+      }
+      .pracas-live-right .pracas-meta-table td{
+        height:14px!important;
+        padding:1px 3px!important;
+        line-height:1.08!important;
+      }
+      .pracas-live-right .pracas-escala-table{
+        font-size:8px!important;
+        line-height:1.08!important;
+      }
+      .pracas-live-right .pracas-escala-table th,
+      .pracas-live-right .pracas-escala-table td{
+        height:18px!important;
+        padding:1px 2px!important;
+        line-height:1.08!important;
+        white-space:nowrap!important;
+        overflow:hidden!important;
+        text-overflow:clip!important;
+      }
+      .pracas-live-right .pracas-area-row td{
+        height:16px!important;
+        padding:1px!important;
+        font-size:8px!important;
+        line-height:1.08!important;
+      }
+      .pracas-summary-fit{
+        max-width:790px!important;
+        width:74vw!important;
+        margin:0 auto!important;
+        font-size:13px!important;
+        padding:8px 0 0!important;
+        flex:0 0 auto!important;
+      }
+    }
+  `;
+  document.head.appendChild(st);
+})();
+
+/* AJUSTE v112: a própria tabela da escala cresce verticalmente até a área inferior marcada */
+(function(){
+  if(document.getElementById('pracasV112TabelaAlta')) return;
+  const st=document.createElement('style');
+  st.id='pracasV112TabelaAlta';
+  st.textContent=`
+    @media (min-width: 900px){
+      .pracas-panel{
+        overflow:hidden!important;
+        padding-bottom:0!important;
+      }
+      .pracas-wrap{
+        height:calc(100vh - 44px)!important;
+        min-height:calc(100vh - 44px)!important;
+        overflow:hidden!important;
+        padding:6px 8px!important;
+      }
+      #pracasViewSorteio,#pracasViewResultado{
+        height:calc(100vh - 90px)!important;
+        min-height:calc(100vh - 90px)!important;
+        overflow:hidden!important;
+      }
+      .pracas-live-grid{
+        height:100%!important;
+        min-height:0!important;
+        align-items:stretch!important;
+        grid-template-columns:300px minmax(0,1fr)!important;
+      }
+      .pracas-live-left{
+        height:100%!important;
+        max-height:none!important;
+        overflow:hidden!important;
+      }
+      .pracas-live-list{
+        overflow:auto!important;
+        min-height:0!important;
+      }
+      .pracas-live-right{
+        height:100%!important;
+        min-height:0!important;
+        overflow:hidden!important;
+        display:flex!important;
+        flex-direction:column!important;
+        align-items:center!important;
+        justify-content:flex-start!important;
+        padding:8px 10px 10px!important;
+        box-sizing:border-box!important;
+      }
+      .pracas-live-right>.pracas-section-title{
+        flex:0 0 auto!important;
+        margin:0 0 4px!important;
+        font-size:22px!important;
+        line-height:1!important;
+      }
+      .pracas-live-right .pracas-print-box{
+        width:74vw!important;
+        max-width:790px!important;
+        min-width:700px!important;
+        height:calc(100% - 42px)!important;
+        max-height:calc(100% - 42px)!important;
+        margin:0 auto!important;
+        padding:0!important;
+        border-radius:4px!important;
+        display:flex!important;
+        flex-direction:column!important;
+        overflow:hidden!important;
+        box-sizing:border-box!important;
+        flex:1 1 auto!important;
+      }
+      .pracas-live-right .pracas-print-title{
+        flex:0 0 18px!important;
+        height:18px!important;
+        font-size:14px!important;
+        padding:2px!important;
+        line-height:14px!important;
+        box-sizing:border-box!important;
+      }
+      .pracas-live-right .pracas-meta-table{
+        flex:0 0 44px!important;
+        height:44px!important;
+        font-size:7.2px!important;
+        line-height:1!important;
+        table-layout:fixed!important;
+      }
+      .pracas-live-right .pracas-meta-table td{
+        height:13px!important;
+        padding:1px 3px!important;
+        line-height:1!important;
+      }
+      .pracas-live-right .pracas-escala-table{
+        flex:1 1 auto!important;
+        height:auto!important;
+        min-height:0!important;
+        width:100%!important;
+        font-size:8.8px!important;
+        line-height:1.08!important;
+        table-layout:fixed!important;
+      }
+      .pracas-live-right .pracas-escala-table th,
+      .pracas-live-right .pracas-escala-table td{
+        height:auto!important;
+        padding:1px 2px!important;
+        line-height:1.08!important;
+        white-space:nowrap!important;
+        overflow:hidden!important;
+        text-overflow:clip!important;
+        box-sizing:border-box!important;
+      }
+      .pracas-live-right .pracas-area-row td{
+        height:auto!important;
+        padding:1px!important;
+        font-size:8.8px!important;
+        line-height:1.08!important;
+      }
+      .pracas-live-right .pracas-escala-table col.pr-col-num{width:8%!important;}
+      .pracas-live-right .pracas-escala-table col.pr-col-flag{width:8%!important;}
+      .pracas-live-right .pracas-escala-table col.pr-col-almoco{width:18%!important;}
+      .pracas-live-right .pracas-escala-table col.pr-col-mesa{width:42%!important;}
+      .pracas-live-right .pracas-escala-table col.pr-col-jantar{width:24%!important;}
+      .pracas-summary-fit{
+        width:74vw!important;
+        max-width:790px!important;
+        min-width:700px!important;
+        margin:0 auto!important;
+        padding:4px 0 0!important;
+        font-size:13px!important;
+        flex:0 0 auto!important;
+      }
+    }
+  `;
+  document.head.appendChild(st);
+})();
+
+
+/* v113 - garante rolagem funcional com barra invisível */
+(function(){
+  if(document.getElementById('pracasHideScrollbarsV113')) return;
+  const st=document.createElement('style');
+  st.id='pracasHideScrollbarsV113';
+  st.textContent=`
+    html,body,.app,.main,.pracas-panel,.pracas-wrap,#pracasViewSorteio,#pracasViewResultado,.pracas-live-left,.pracas-live-list,.pracas-live-right{
+      -ms-overflow-style:none!important;
+      scrollbar-width:none!important;
+    }
+    html::-webkit-scrollbar,body::-webkit-scrollbar,.app::-webkit-scrollbar,.main::-webkit-scrollbar,.pracas-panel::-webkit-scrollbar,.pracas-wrap::-webkit-scrollbar,#pracasViewSorteio::-webkit-scrollbar,#pracasViewResultado::-webkit-scrollbar,.pracas-live-left::-webkit-scrollbar,.pracas-live-list::-webkit-scrollbar,.pracas-live-right::-webkit-scrollbar{
+      width:0!important;height:0!important;display:none!important;
+    }
+    body{overflow-y:auto!important;overflow-x:hidden!important;}
+    .pracas-panel{overflow-y:auto!important;overflow-x:hidden!important;}
+    .pracas-live-left,.pracas-live-list{overflow-y:auto!important;overflow-x:hidden!important;}
+    .pracas-live-right{overflow-y:auto!important;overflow-x:hidden!important;}
+  `;
+  document.head.appendChild(st);
 })();

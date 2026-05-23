@@ -10,7 +10,21 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.png">
 <title>Gestão Coco Bambu</title>
-<link rel="stylesheet" href="eventos.css">
+<link rel="stylesheet" href="eventos.css?v=100">
+<script>
+(function(){
+  var APP_VERSION='v100-firebase-sync';
+  try{
+    var key='gestao_cb_eventos_app_version';
+    if(localStorage.getItem(key)!==APP_VERSION){
+      ['eventos_premium_v58','eventos_premium_meta_v58','eventos_clientes_cadastro_v64','eventos_premium_v95','eventos_premium_v96','eventos_premium_v97','dashboard_cache','dashboard','stats','metricas'].forEach(function(k){localStorage.removeItem(k);});
+      localStorage.setItem(key,APP_VERSION);
+    }
+    if('caches' in window){caches.keys().then(function(keys){return Promise.all(keys.map(function(k){return caches.delete(k);}));});}
+  }catch(e){}
+})();
+</script>
+
 </head>
 <body>
 <button class="mobile-menu-fixed" aria-label="Abrir menu" onclick="document.body.classList.toggle('menu-open')"><span></span><span></span><span></span></button>
@@ -121,8 +135,25 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-<script src="eventos-seed.js"></script>
-<script src="eventos-firebase.js"></script>
-<script src="eventos.js"></script>
+<script src="eventos-seed.js?v=100"></script>
+<script src="eventos-firebase.js?v=100"></script>
+<script src="eventos.js?v=100"></script>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(function(regs){
+    return Promise.all(regs.map(function(r){ return r.unregister(); }));
+  }).then(function(){
+    return navigator.serviceWorker.register('./sw.js?v=100', {updateViaCache:'none'});
+  }).then(function(reg){
+    if(reg && reg.update) reg.update();
+  }).catch(function(e){ console.warn('SW update erro:', e); });
+  navigator.serviceWorker.addEventListener('message', function(ev){
+    if(ev.data && ev.data.type==='APP_CACHE_CLEARED' && !sessionStorage.getItem('swReloadedV100')){
+      sessionStorage.setItem('swReloadedV100','1');
+      location.reload();
+    }
+  });
+}
+</script>
 </body>
 </html>

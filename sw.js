@@ -1,16 +1,24 @@
-const CACHE='gestao-coco-bambu-v84-funil-drag-livre-definitivo';
-self.addEventListener('install', e => {
+const CACHE_VERSION = 'gestao-coco-bambu-v100-force-network';
+
+self.addEventListener('install', event => {
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./manifest.json','./icon.png','./index.html','./eventos.html','./eventos.css','./eventos.js','./eventos-seed.js','./eventos-firebase.js']).catch(()=>{})));
 });
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
+
+self.addEventListener('activate', event => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.map(key => caches.delete(key)));
+    await self.clients.claim();
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of clients) {
+      try {
+        client.postMessage({ type: 'APP_CACHE_CLEARED', version: CACHE_VERSION });
+      } catch (e) {}
+    }
+  })());
 });
-self.addEventListener('fetch', e => {
-  const req = e.request;
-  if(req.mode === 'navigate' || (req.headers.get('accept')||'').includes('text/html')){
-    e.respondWith(fetch(req).catch(()=>caches.match(req)));
-    return;
-  }
-  e.respondWith(fetch(req).catch(()=>caches.match(req)));
+
+self.addEventListener('fetch', event => {
+  // Sempre tenta rede primeiro e não guarda HTML/JS/CSS em cache.
+  event.respondWith(fetch(event.request, { cache: 'no-store' }).catch(() => caches.match(event.request)));
 });

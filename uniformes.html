@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Estoque de Uniformes | Coco Bambu</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="uniformes.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="side">
+      <div class="brand">
+        <div class="brand-mark">CB</div>
+        <div>
+          <strong>Uniformes</strong>
+          <span>Controle de Estoque</span>
+        </div>
+      </div>
+      <nav class="side-nav">
+        <button class="nav-btn active" data-tab="dashboard">Dashboard</button>
+        <button class="nav-btn" data-tab="movimentacao">Movimentar</button>
+        <button class="nav-btn" data-tab="estoque">Estoque</button>
+        <button class="nav-btn" data-tab="funcionarios">Funcionários</button>
+        <button class="nav-btn" data-tab="compras">Comprar</button>
+        <button class="nav-btn" data-tab="historico">Histórico</button>
+        <button class="nav-btn" data-tab="relatorios">Relatórios</button>
+        <button class="nav-btn" data-tab="config">Config.</button>
+      </nav>
+      <div class="sync-card">
+        <span id="syncDot" class="dot"></span>
+        <div>
+          <b id="syncTitle">Modo local</b>
+          <small id="syncText">Abrindo módulo...</small>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Coco Bambu / Vasto</p>
+          <h1>Estoque de Uniformes</h1>
+          <p class="sub">Controle profissional de entregas, devoluções, estoque ideal e necessidade de compra.</p>
+        </div>
+        <div class="top-actions">
+          <button class="ghost" id="btnExportCsv">Exportar CSV</button>
+          <button class="primary" id="btnExportExcel">Gerar planilha</button>
+          <button class="primary" data-open-mov="ENTREGA">Nova entrega</button>
+        </div>
+      </header>
+
+      <section id="dashboard" class="tab active">
+        <div class="kpi-grid">
+          <article class="kpi"><span>Total em estoque</span><strong id="kpiEstoque">0</strong><em>peças disponíveis</em></article>
+          <article class="kpi danger"><span>Zerados</span><strong id="kpiZerados">0</strong><em>itens sem estoque</em></article>
+          <article class="kpi warn"><span>Abaixo do ideal</span><strong id="kpiBaixo">0</strong><em>itens para atenção</em></article>
+          <article class="kpi buy"><span>Precisa comprar</span><strong id="kpiComprar">0</strong><em>peças para completar</em></article>
+          <article class="kpi loss"><span>Perdidos</span><strong id="kpiPerdidos">0</strong><em>peças não devolvidas</em></article>
+          <article class="kpi damage"><span>Danificados/Rasgados</span><strong id="kpiDanificados">0</strong><em>peças baixadas</em></article>
+        </div>
+
+        <div class="dash-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <div><h2>Visão por setor</h2><p>Comparativo entre estoque atual e quantidade ideal.</p></div>
+            </div>
+            <div id="sectorBars" class="bar-list"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-head">
+              <div><h2>Alertas críticos</h2><p>Itens zerados ou abaixo do mínimo.</p></div>
+            </div>
+            <div id="alertList" class="alert-list"></div>
+          </section>
+        </div>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div><h2>Últimas movimentações</h2><p>Entrega, devolução, entrada e ajustes.</p></div>
+          </div>
+          <div class="table-wrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Funcionário</th><th>Setor</th><th>Uniforme</th><th>Qtd.</th><th>Responsável</th></tr></thead><tbody id="recentBody"></tbody></table></div>
+        </section>
+      </section>
+
+      <section id="movimentacao" class="tab">
+        <section class="panel form-panel">
+          <div class="panel-head">
+            <div><h2>Registrar movimentação</h2><p>Dê baixa em entregas, devoluções, entradas de compra ou ajustes de inventário.</p></div>
+          </div>
+          <form id="movForm" class="smart-form">
+            <label>Tipo de movimentação
+              <select id="movTipo" required>
+                <option value="ENTREGA">Entrega ao funcionário</option>
+                <option value="DEVOLUCAO">Devolução do funcionário</option>
+                <option value="ENTRADA">Entrada de estoque</option>
+                <option value="AJUSTE">Ajuste manual</option>
+              </select>
+            </label>
+            <label>Funcionário
+              <input id="movFuncionario" list="funcionariosList" placeholder="Digite ou selecione o funcionário">
+            </label>
+            <label>Setor
+              <select id="movSetor"></select>
+            </label>
+            <label class="span-2">Uniformes do setor
+              <div id="movItensChecklist" class="checklist"></div>
+              <small class="field-help">Na entrega aparecem só os uniformes do setor selecionado. Na devolução, aparecem os uniformes em posse do funcionário.</small>
+            </label>
+            <label>Quantidade padrão
+              <input id="movQtd" type="number" min="1" value="1" required>
+            </label>
+            <label id="movCondicaoWrap">Condição na devolução
+              <select id="movCondicao">
+                <option value="BOM_ESTADO">Bom estado / volta para estoque</option>
+                <option value="USADO">Usado / volta para estoque</option>
+                <option value="DANIFICADO">Danificado / não volta para estoque</option>
+                <option value="RASGADO">Rasgado / não volta para estoque</option>
+                <option value="PERDIDO">Perdido / baixa definitiva</option>
+              </select>
+            </label>
+            <label>Responsável
+              <input id="movResponsavel" placeholder="Quem está registrando">
+            </label>
+            <label class="span-2">Observação
+              <input id="movObs" placeholder="Ex: troca de tamanho, primeira entrega, reposição, etc.">
+            </label>
+            <button class="primary span-2" type="submit">Salvar movimentação</button>
+          </form>
+        </section>
+      </section>
+
+      <section id="estoque" class="tab">
+        <section class="panel">
+          <div class="panel-head between">
+            <div><h2>Estoque cadastrado</h2><p>Itens importados da planilha, com edição e cálculo automático de compra.</p></div>
+            <button class="primary" id="btnNovoItem">Novo item</button>
+          </div>
+          <div class="filters">
+            <input id="searchEstoque" placeholder="Buscar uniforme, setor, tamanho...">
+            <select id="filterSetor"><option value="">Todos os setores</option></select>
+            <select id="filterStatus"><option value="">Todos os status</option><option value="OK">OK</option><option value="COMPRAR">Comprar</option><option value="ZERADO">Zerado</option></select>
+          </div>
+          <div class="table-wrap"><table><thead><tr><th>Setor</th><th>Uniforme</th><th>Tam.</th><th>Atual</th><th>Ideal</th><th>Mín.</th><th>Comprar</th><th>Status</th><th>Ação</th></tr></thead><tbody id="estoqueBody"></tbody></table></div>
+        </section>
+      </section>
+
+      <section id="funcionarios" class="tab">
+        <section class="panel">
+          <div class="panel-head">
+            <div><h2>Controle por funcionário</h2><p>Veja tudo que cada colaborador pegou e devolveu.</p></div>
+          </div>
+          <div class="filters">
+            <input id="searchFunc" placeholder="Buscar funcionário...">
+            <select id="filterFuncSetor"><option value="">Todos os setores</option></select>
+          </div>
+          <div id="funcCards" class="person-grid"></div>
+        </section>
+      </section>
+
+      <section id="compras" class="tab">
+        <section class="panel">
+          <div class="panel-head between">
+            <div><h2>Lista automática de compra</h2><p>Baseada em quantidade ideal menos estoque atual.</p></div>
+            <button class="ghost" id="btnCopiarCompras">Copiar lista</button>
+          </div>
+          <div class="table-wrap"><table><thead><tr><th>Setor</th><th>Uniforme</th><th>Tam.</th><th>Atual</th><th>Ideal</th><th>Comprar</th><th>Prioridade</th></tr></thead><tbody id="comprasBody"></tbody></table></div>
+        </section>
+      </section>
+
+      <section id="relatorios" class="tab">
+        <section class="panel">
+          <div class="panel-head between">
+            <div><h2>Relatórios e estatísticas</h2><p>Resumo de perdas, danos, compras e movimentações com exportação em planilha.</p></div>
+            <button class="primary" id="btnExportExcel2">Baixar planilha completa</button>
+          </div>
+          <div class="report-grid">
+            <div class="mini-report"><span>Uniformes perdidos</span><strong id="repPerdidos">0</strong></div>
+            <div class="mini-report"><span>Uniformes danificados</span><strong id="repDanificados">0</strong></div>
+            <div class="mini-report"><span>Uniformes rasgados</span><strong id="repRasgados">0</strong></div>
+            <div class="mini-report"><span>Total de ocorrências</span><strong id="repOcorrencias">0</strong></div>
+          </div>
+          <div class="table-wrap"><table><thead><tr><th>Tipo</th><th>Funcionário</th><th>Setor</th><th>Uniforme</th><th>Tam.</th><th>Qtd.</th><th>Data</th><th>Responsável</th><th>Obs.</th></tr></thead><tbody id="ocorrenciasBody"></tbody></table></div>
+        </section>
+      </section>
+
+      <section id="historico" class="tab">
+        <section class="panel">
+          <div class="panel-head"><div><h2>Histórico completo</h2><p>Rastreabilidade de todas as movimentações.</p></div></div>
+          <div class="filters">
+            <input id="searchHist" placeholder="Buscar por funcionário, uniforme, responsável...">
+            <select id="filterHistTipo"><option value="">Todos os tipos</option><option>ENTREGA</option><option>DEVOLUCAO</option><option>ENTRADA</option><option>AJUSTE</option><option>PERDIDO</option><option>DANIFICADO</option><option>RASGADO</option></select>
+          </div>
+          <div class="table-wrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Funcionário</th><th>Setor</th><th>Uniforme</th><th>Qtd.</th><th>Antes</th><th>Depois</th><th>Obs.</th></tr></thead><tbody id="historicoBody"></tbody></table></div>
+        </section>
+      </section>
+
+      <section id="config" class="tab">
+        <section class="panel">
+          <div class="panel-head"><div><h2>Configuração segura</h2><p>Ferramentas de inicialização e manutenção do módulo isolado.</p></div></div>
+          <div class="config-grid">
+            <button class="primary" id="btnSeed">Importar base da planilha</button>
+            <button class="ghost" id="btnSalvarFirebase">Forçar salvar no Firebase</button>
+            <button class="ghost" id="btnBackup">Baixar backup JSON</button>
+            <button class="danger-btn" id="btnResetLocal">Resetar apenas dados locais</button>
+          </div>
+          <p class="note">Este módulo usa o caminho <b>/uniformes_estoque</b>. Nenhum dado de escala, eventos, frequência, freelances ou trocas é alterado.</p>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <datalist id="funcionariosList"></datalist>
+  <div id="modal" class="modal hidden">
+    <div class="modal-card">
+      <button class="modal-close" id="modalClose">×</button>
+      <h2 id="modalTitle">Editar item</h2>
+      <form id="itemForm" class="smart-form">
+        <input type="hidden" id="itemId">
+        <label>Setor <input id="itemSetor" required></label>
+        <label>Grupo <input id="itemGrupo"></label>
+        <label>Nome do uniforme <input id="itemNome" required></label>
+        <label>Tipo <input id="itemTipo"></label>
+        <label>Tamanho <input id="itemTamanho" required></label>
+        <label>Estoque atual <input id="itemAtual" type="number" min="0" required></label>
+        <label>Quantidade ideal <input id="itemIdeal" type="number" min="0" required></label>
+        <label>Quantidade mínima <input id="itemMinimo" type="number" min="0" required></label>
+        <button class="primary span-2" type="submit">Salvar item</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="uniformes-firebase.js"></script>
+  <script src="uniformes-seed.js"></script>
+  <script src="uniformes.js"></script>
+</body>
+</html>

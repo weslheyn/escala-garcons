@@ -486,181 +486,85 @@ body.gs-open #premiumDashboard{display:block!important}
 </style>
 
 
-<style id="gs-scroll-back-fix-css">
-/* G's: sem barra de scroll visível e voltar destravado */
-html.gs-no-scrollbar,
-body.gs-open{
-  overflow:hidden!important;
+
+
+
+
+
+
+
+
+
+
+
+<style id="home-gs-isolado-fix-101">
+body.home-active #mainContent,
+body.home-active .header,
+body.home-active #installBanner,
+body.home-active #iosBanner,
+body.home-active #syncBar,
+body.home-active #sheetsBar,
+body.home-active .date-bar,
+body.home-active #summary{
+  display:none!important;
 }
+body.home-active #premiumDashboard{display:block!important}
+body:not(.gs-open) #gsPanel{display:none!important}
+body.gs-open{overflow:hidden!important}
 #gsPanel.gs-fullscreen{
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  max-width:100vw!important;
+  height:100dvh!important;
+  left:0!important;
+  top:0!important;
+  transform:none!important;
+  z-index:999999!important;
+  display:block!important;
   overflow-y:auto!important;
   overflow-x:hidden!important;
   scrollbar-width:none!important;
   -ms-overflow-style:none!important;
+  background:radial-gradient(circle at 15% 0%,#4a120f 0%,#11131d 38%,#070910 100%)!important;
 }
-#gsPanel.gs-fullscreen::-webkit-scrollbar{
-  width:0!important;
-  height:0!important;
-  display:none!important;
-}
-#gsPanel .panel-header{
-  z-index:9999999!important;
-}
-</style>
-
-
-
-
-
-<style id="gs-mobile-list-css">
-@media (max-width: 760px){
-
-body.gs-open{
-overflow:hidden!important;
-}
-
-#gsPanel{
-position:fixed!important;
-inset:0!important;
-width:100%!important;
-height:100%!important;
-overflow-y:auto!important;
-background:#060816!important;
-z-index:999999!important;
-padding-bottom:90px!important;
-}
-
-#gsPanel .gs-wrap{
-padding:8px!important;
-}
-
-#gsPanel .gs-hero{
-padding:10px!important;
-border-radius:14px!important;
-margin-bottom:8px!important;
-}
-
-#gsPanel .gs-filters{
-display:grid!important;
-grid-template-columns:repeat(2,minmax(0,1fr))!important;
-gap:8px!important;
-}
-
-#gsPanel .gs-table-head{
-display:none!important;
-}
-
-#gsPanel .gs-row{
-display:flex!important;
-flex-direction:row!important;
-align-items:center!important;
-justify-content:space-between!important;
-gap:8px!important;
-padding:10px 8px!important;
-border-bottom:1px solid rgba(255,255,255,.06)!important;
-min-height:auto!important;
-}
-
-#gsPanel .gs-person{
-display:flex!important;
-align-items:center!important;
-gap:8px!important;
-flex:1!important;
-min-width:0!important;
-}
-
-#gsPanel .gs-avatar{
-width:42px!important;
-height:42px!important;
-font-size:14px!important;
-flex-shrink:0!important;
-}
-
-#gsPanel .gs-name{
-font-size:14px!important;
-font-weight:700!important;
-line-height:1.1!important;
-white-space:nowrap!important;
-overflow:hidden!important;
-text-overflow:ellipsis!important;
-max-width:110px!important;
-}
-
-#gsPanel .gs-sub{
-font-size:11px!important;
-opacity:.7!important;
-}
-
-#gsPanel .gs-code{
-font-size:18px!important;
-font-weight:800!important;
-color:#ffcc2f!important;
-min-width:42px!important;
-text-align:center!important;
-}
-
-#gsPanel .gs-pass{
-font-size:12px!important;
-padding:6px 8px!important;
-border-radius:8px!important;
-white-space:nowrap!important;
-}
-
-#gsPanel .gs-status{
-font-size:10px!important;
-padding:5px 8px!important;
-border-radius:999px!important;
-white-space:nowrap!important;
-}
-
-#gsPanel .gs-date{
-display:none!important;
-}
-
-#gsPanel .gs-action{
-display:flex!important;
-gap:5px!important;
-}
-
-#gsPanel .gs-btn{
-width:34px!important;
-height:34px!important;
-padding:0!important;
-display:flex!important;
-align-items:center!important;
-justify-content:center!important;
-border-radius:10px!important;
-}
-}
-</style>
-
-<style id="mobile-dashboard-grid-fix">
-@media screen and (max-width: 820px){
-  .dash-grid{
-    display:grid!important;
-    grid-template-columns:repeat(2,minmax(0,1fr))!important;
-    gap:12px!important;
-    align-items:stretch!important;
+#gsPanel.gs-fullscreen::-webkit-scrollbar{display:none!important;width:0!important}
+@media(max-width:820px){
+  #gsPanel .gs-date{display:none!important}
+  #gsPanel .gs-table-head{display:none!important}
+  #gsPanel .gs-row{
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:7px!important;
+    width:100%!important;
+    box-sizing:border-box!important;
+    padding:9px 7px!important;
   }
-
-  .dash-card{
-    min-height:180px!important;
-    height:auto!important;
+  #gsPanel .gs-person{flex:1 1 auto!important;min-width:0!important;max-width:42%!important}
+  #gsPanel .gs-name{
+    font-size:13px!important;
+    line-height:1.05!important;
+    max-width:100%!important;
+    white-space:normal!important;
+    overflow:hidden!important;
+    display:-webkit-box!important;
+    -webkit-line-clamp:2!important;
+    -webkit-box-orient:vertical!important;
   }
-
-  .dash-card h3,
-  .dash-card .card-title{
-    font-size:15px!important;
-    line-height:1.1!important;
-  }
-
-  .dash-card p{
-    font-size:11px!important;
-  }
-
-  .dash-card .acessar-btn,
-  .dash-card a{
-    font-size:12px!important;
+  #gsPanel .gs-code{min-width:34px!important;font-size:13px!important;text-align:center!important}
+  #gsPanel .gs-pass{font-size:11px!important;padding:5px 6px!important;white-space:nowrap!important}
+  #gsPanel .gs-status{font-size:9px!important;padding:5px 6px!important}
+  #gsPanel .gs-action{display:flex!important;gap:4px!important;flex:0 0 auto!important}
+  #gsPanel .gs-btn{
+    width:30px!important;
+    height:30px!important;
+    min-width:30px!important;
+    padding:0!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
   }
 }
 </style>
@@ -708,7 +612,8 @@ border-radius:10px!important;
     <div class="dash-card c-purple" onclick="openPracasDiarias()"><span class="dash-badge" id="dashPracasBadge">Sorteio</span><div><div class="ic">🎲</div><h3>Praças<br>Diárias</h3><p>Sorteio de praças integrado ao mapa do dia.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-gold" onclick="openDashboardModule('funcionarios')"><div><div class="ic">👤</div><h3>Funcionários</h3><p>Cadastro e gestão de funcionários.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-orange" onclick="location.href='eventos.html'"><span class="dash-badge" id="dashEventosBadge">Premium</span><div><div class="ic">🥂</div><h3>Eventos</h3><p>Vendas, negociações, calendário, contratos e recuperação de clientes.</p></div><div class="go">Acessar ›</div></div>
-    <div class="dash-card c-gold" onclick="abrirGsTelaExclusiva()"><span class="dash-badge">Novo</span><div><div class="ic">🔐</div><h3>G\'s</h3><p>Gerencie códigos e senhas dos garçons.</p></div><div class="go">Acessar ›</div></div>
+    <div class="dash-card c-gold" onclick="abrirGsTelaExclusiva()"><span class="dash-badge">Novo</span><div><div class="ic">🔐</div><h3>G's</h3><p>Gerencie códigos e senhas dos garçons.</p></div><div class="go">Acessar ›</div></div>
+    <div class="dash-card c-green" onclick="location.href='uniformes.html'"><span class="dash-badge" id="dashUniformesBadge">Novo</span><div><div class="ic">👕</div><h3>Estoque de<br>Uniformes</h3><p>Controle completo de estoque, entregas, devoluções e compras.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-orange" onclick="openDashboardModule('fornecedores')"><div><div class="ic">🤝</div><h3>Fornecedores</h3><p>Prestadores de serviço e contatos.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-purple wide" onclick="openDashboardModule('relatorios')"><div><div class="ic">📊</div><h3>Relatórios / Exportar</h3><p>Visualize, filtre e exporte relatórios.</p></div><div class="go">Acessar ›</div></div>
   </div>
@@ -9096,7 +9001,7 @@ function openGsPanel(){ abrirGsTelaExclusiva(); }
     const sel=document.getElementById('gsCodigoFiltro');
     if(!sel) return;
     const old=sel.value || '';
-    sel.innerHTML='<option value="">Todos os G\'s</option>'+GS_ROWS_DATA.map(x=>`<option value="${x.codigo}">${x.codigo}</option>`).join('');
+    sel.innerHTML='<option value="">Todos os G's</option>'+GS_ROWS_DATA.map(x=>`<option value="${x.codigo}">${x.codigo}</option>`).join('');
     sel.value=old;
   }
 
@@ -9215,72 +9120,98 @@ function openGsPanel(){ abrirGsTelaExclusiva(); }
 </script>
 
 
-<script id="gs-scroll-back-fix-js">
-/* Correção final: voltar do G's e ocultar barra de scroll */
+
+
+
+
+
+
+<script id="home-gs-isolado-fix-101-js">
 (function(){
-  const oldOpenGs = window.abrirGsTelaExclusiva;
-  window.abrirGsTelaExclusiva = function(){
+  function mostrarHomeLimpa(){
     try{
-      document.documentElement.classList.add('gs-no-scrollbar');
-      document.body.classList.add('gs-open');
-    }catch(e){}
-    if(typeof oldOpenGs === 'function'){
-      oldOpenGs();
-    }else if(typeof openGsPanel === 'function'){
-      openGsPanel();
-    }
-    setTimeout(()=>{
-      const p=document.getElementById('gsPanel');
-      if(p){
-        p.classList.add('active','gs-fullscreen');
-        p.style.display='block';
-        p.style.transform='none';
-        p.style.left='0';
-        p.style.width='100vw';
-      }
-      if(typeof renderGsTable==='function') renderGsTable();
-    },50);
-  };
-
-  window.fecharGsTelaExclusiva = function(){
-    try{
-      const p=document.getElementById('gsPanel');
-      if(p){
-        p.classList.remove('active');
-        p.classList.remove('gs-fullscreen');
-        p.style.display='';
-        p.style.transform='';
-        p.style.left='';
-        p.style.width='';
-      }
-
       document.body.classList.remove('gs-open');
       document.documentElement.classList.remove('gs-no-scrollbar');
       document.body.classList.add('home-active');
 
-      const dash=document.getElementById('premiumDashboard');
-      if(dash){
-        dash.style.display='block';
-        dash.scrollIntoView({block:'start'});
+      var gs=document.getElementById('gsPanel');
+      if(gs){
+        gs.classList.remove('active');
+        gs.classList.remove('gs-fullscreen');
+        gs.style.display='';
+        gs.style.transform='';
+        gs.style.left='';
+        gs.style.width='';
       }
 
-      const main=document.getElementById('mainContent');
+      var dash=document.getElementById('premiumDashboard');
+      if(dash) dash.style.display='block';
+
+      var main=document.getElementById('mainContent');
       if(main) main.style.display='none';
 
-      if(typeof _premiumNavActive==='function') _premiumNavActive('navInicioPremium');
+      ['syncBar','sheetsBar','summary'].forEach(function(id){
+        var el=document.getElementById(id);
+        if(el) el.style.display='none';
+      });
+    }catch(e){}
+  }
+
+  window.fecharGsTelaExclusiva=function(){
+    mostrarHomeLimpa();
+    try{
+      var dash=document.getElementById('premiumDashboard');
+      if(dash) dash.scrollIntoView({block:'start'});
+    }catch(e){}
+  };
+
+  window.abrirGsTelaExclusiva=function(){
+    try{
+      document.body.classList.add('home-active');
+      document.body.classList.add('gs-open');
+
+      var dash=document.getElementById('premiumDashboard');
+      if(dash) dash.style.display='block';
+
+      var main=document.getElementById('mainContent');
+      if(main) main.style.display='none';
+
+      document.querySelectorAll('.slide-panel.active').forEach(function(p){
+        if(p.id!=='gsPanel') p.classList.remove('active');
+      });
+
+      var gs=document.getElementById('gsPanel');
+      if(!gs){
+        alert("Painel G's não encontrado");
+        return;
+      }
+
+      gs.classList.add('active','gs-fullscreen');
+      gs.style.display='block';
+      gs.style.transform='none';
+      gs.style.left='0';
+      gs.style.width='100vw';
+
+      var st=document.getElementById('gsStatusFiltro');
+      if(st) st.value='';
+
+      if(typeof renderGsFiltroCodigos==='function') renderGsFiltroCodigos();
+      if(typeof renderGsTable==='function') renderGsTable();
     }catch(e){
-      console.warn('fecharGsTelaExclusiva', e);
+      console.warn('abrirGsTelaExclusiva',e);
     }
   };
 
-  document.addEventListener('click', function(ev){
-    const back = ev.target.closest && ev.target.closest('#gsPanel .panel-back');
+  window.openGsPanel=window.abrirGsTelaExclusiva;
+
+  document.addEventListener('click',function(ev){
+    var back=ev.target.closest && ev.target.closest('#gsPanel .panel-back');
     if(back){
       ev.preventDefault();
       ev.stopPropagation();
       window.fecharGsTelaExclusiva();
     }
-  }, true);
+  },true);
 })();
 </script>
 

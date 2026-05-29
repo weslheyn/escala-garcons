@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Central Operacional de Uniformes</title>
+  <link rel="stylesheet" href="uniformes.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">👔</div>
+        <div>
+          <h1>Uniformes</h1>
+          <span>Controle operacional</span>
+        </div>
+      </div>
+      <nav class="nav-list">
+        <button class="nav-item active" data-page="resumo">Resumo</button>
+        <button class="nav-item" data-page="movimentacoes">Entregar / Devolver</button>
+        <button class="nav-item" data-page="estoque">Estoque</button>
+        <button class="nav-item" data-page="lavanderia">Lavanderia</button>
+        <button class="nav-item" data-page="funcionarios">Funcionários</button>
+        <button class="nav-item" data-page="compras">Compras</button>
+        <button class="nav-item" data-page="historico">Histórico</button>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div>
+          <span class="eyebrow">Coco Bambu • Anápolis</span>
+          <h2>Central de Uniformes</h2>
+          <p>Itens cadastrados a partir da planilha oficial UNIFORMES ANAPOLIS 2026.</p>
+        </div>
+        <div class="sync-pill" id="syncStatus">Modo local</div>
+      </header>
+
+      <section class="page active" id="resumo">
+        <div class="kpi-grid">
+          <article class="kpi"><span>Peças em estoque</span><strong id="kpiEstoque">0</strong></article>
+          <article class="kpi"><span>Com colaboradores</span><strong id="kpiUso">0</strong></article>
+          <article class="kpi"><span>Na lavanderia</span><strong id="kpiLavanderia">0</strong></article>
+          <article class="kpi danger"><span>Comprar</span><strong id="kpiComprar">0</strong></article>
+        </div>
+        <div class="grid-2">
+          <section class="panel compact">
+            <div class="panel-head"><h3>Resumo por setor</h3><small id="totalItensResumo">0 itens cadastrados</small></div>
+            <div class="setor-list" id="resumoSetores"></div>
+          </section>
+          <section class="panel compact">
+            <div class="panel-head"><h3>Alertas de compra</h3><small>Itens críticos</small></div>
+            <div class="alert-list" id="alertasCompra"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="page" id="movimentacoes">
+        <section class="panel">
+          <div class="panel-head"><h3>Entrega e devolução de uniformes</h3><small>Baixa automática no estoque</small></div>
+          <div class="form-grid">
+            <label>Tipo de movimentação<select id="movTipo"><option value="ENTREGA">Entrega ao colaborador</option><option value="DEVOLUÇÃO">Devolução para estoque</option><option value="AJUSTE">Ajuste de estoque</option></select></label>
+            <label>Setor<select id="movSetor"></select></label>
+            <label>Buscar colaborador<input id="movColaborador" list="listaColaboradores" placeholder="Digite o nome"></label>
+            <label>Uniforme<select id="movUniforme"></select></label>
+            <label>Quantidade<input id="movQtd" type="number" min="1" value="1"></label>
+            <label>Observação<input id="movObs" placeholder="Opcional"></label>
+          </div>
+          <button class="primary-btn" id="btnRegistrarMov">Registrar movimentação</button>
+        </section>
+      </section>
+
+      <section class="page" id="estoque">
+        <section class="panel">
+          <div class="panel-head"><h3>Estoque cadastrado</h3><small>Todos os itens da planilha</small></div>
+          <div class="toolbar"><select id="filtroSetor"></select><input id="buscaItem" placeholder="Buscar item, grupo ou tamanho"></div>
+          <div class="table-wrap"><table><thead><tr><th>Setor</th><th>Grupo</th><th>Item</th><th>Ideal</th><th>Estoque</th><th>Uso</th><th>Lav.</th><th>Comprar</th><th>Status</th></tr></thead><tbody id="tabelaEstoque"></tbody></table></div>
+        </section>
+      </section>
+
+      <section class="page" id="lavanderia">
+        <section class="panel">
+          <div class="panel-head"><h3>Lavanderia</h3><small>Envio e retorno de peças</small></div>
+          <div class="form-grid">
+            <label>Ação<select id="lavAcao"><option value="ENVIAR_LAVANDERIA">Enviar para lavanderia</option><option value="RETORNO_LAVANDERIA">Receber retorno</option></select></label>
+            <label>Setor<select id="lavSetor"></select></label>
+            <label>Uniforme<select id="lavUniforme"></select></label>
+            <label>Quantidade<input id="lavQtd" type="number" min="1" value="1"></label>
+            <label>Lavanderia / Fornecedor<input id="lavFornecedor" placeholder="Nome da lavanderia"></label>
+            <label>Retorno previsto<input id="lavPrevisao" type="date"></label>
+          </div>
+          <button class="primary-btn" id="btnRegistrarLav">Registrar lavanderia</button>
+          <div class="table-wrap mt"><table><thead><tr><th>Item</th><th>Setor</th><th>Qtd na lavanderia</th><th>Estoque</th><th>Comprar</th></tr></thead><tbody id="tabelaLavanderia"></tbody></table></div>
+        </section>
+      </section>
+
+      <section class="page" id="funcionarios">
+        <section class="panel">
+          <div class="panel-head"><h3>Funcionários</h3><small>Controle do que cada pessoa recebeu</small></div>
+          <input class="full-search" id="buscaFuncionario" placeholder="Buscar funcionário">
+          <div id="listaFuncionarios" class="func-list"></div>
+        </section>
+      </section>
+
+      <section class="page" id="compras">
+        <section class="panel">
+          <div class="panel-head"><h3>Lista automática de compras</h3><small>Ideal - estoque disponível</small></div>
+          <button class="secondary-btn" id="btnCopiarCompras">Copiar lista para WhatsApp</button>
+          <div class="table-wrap mt"><table><thead><tr><th>Setor</th><th>Item</th><th>Estoque</th><th>Ideal</th><th>Comprar</th></tr></thead><tbody id="tabelaCompras"></tbody></table></div>
+        </section>
+      </section>
+
+      <section class="page" id="historico">
+        <section class="panel">
+          <div class="panel-head"><h3>Histórico</h3><small>Últimas movimentações</small></div>
+          <div class="history" id="historicoLista"></div>
+        </section>
+      </section>
+    </main>
+
+    <nav class="mobile-nav">
+      <button data-page="resumo">Resumo</button>
+      <button data-page="movimentacoes">Mov.</button>
+      <button data-page="estoque">Estoque</button>
+      <button data-page="lavanderia">Lav.</button>
+      <button data-page="compras">Compras</button>
+    </nav>
+  </div>
+
+  <datalist id="listaColaboradores"></datalist>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="uniformes-firebase.js"></script>
+  <script src="uniformes-seed.js"></script>
+  <script src="uniformes.js"></script>
+</body>
+</html>

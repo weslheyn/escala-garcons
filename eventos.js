@@ -1,13 +1,13 @@
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_DATA_VERSION='v100-firebase-sync';
-const STORE='eventos_premium_v100';
+const APP_DATA_VERSION='v101-eventos-sem-calendario-planilha';
+const STORE='eventos_premium_v101';
 const META='eventos_premium_meta_v100';
 const AGENDA_STORE='eventos_agenda_comercial_v61';
 const AGENDA_RESP_STORE='eventos_agenda_responsaveis_v61';
 const DEVICE_STORE='eventos_device_id_v61';
-const CLIENTES_STORE='eventos_clientes_cadastro_v100';
+const CLIENTES_STORE='eventos_clientes_cadastro_v101';
 let deferredInstallPrompt=null;
 const PIPELINE_STATUS=['Lead','Proposta enviada','Visita do espaço','Negociação 1','Negociação 2','Reunião de alinhamento','Contrato enviado','Assinatura cliente','Assinatura diretoria','Fechado','Realizado'];
 const RECOVERY_STATUS=['Recuperação','Sem resposta','Cancelado','Perdido','Perdido/Cancelado'];
@@ -18,7 +18,7 @@ function ensureFreshAppVersion(){
   try{
     const key='gestao_cb_eventos_app_version';
     if(localStorage.getItem(key)!==APP_DATA_VERSION){
-      ['eventos_premium_v58','eventos_premium_meta_v58','eventos_clientes_cadastro_v64','eventos_premium_v95','eventos_premium_v96','eventos_premium_v97','dashboard_cache','dashboard','stats','metricas'].forEach(k=>localStorage.removeItem(k));
+      ['eventos_premium_v58','eventos_premium_meta_v58','eventos_clientes_cadastro_v64','eventos_premium_v95','eventos_premium_v96','eventos_premium_v97','eventos_premium_v100','dashboard_cache','dashboard','stats','metricas'].forEach(k=>localStorage.removeItem(k));
       localStorage.setItem(key,APP_DATA_VERSION);
     }
   }catch(e){}
@@ -66,11 +66,11 @@ function eventoRecency(e){
   const atualizado=parseTimestampBR(e.atualizadoEm||e.updatedAt);
   const form=isGoogleFormsEvento(e);
   if(form){
-    // Leads vindos do Google Forms devem ficar sempre acima dos eventos importados da planilha.
+    // Leads vindos do Google Forms devem ficar sempre acima dos demais eventos.
     return Math.max(criado,atualizado,0)+9000000000000000;
   }
   if(criado||atualizado) return Math.max(criado,atualizado);
-  // Eventos antigos/importados sem data de criação não devem superar leads novos apenas pela data futura do evento.
+  // Eventos sem data de criação não devem superar leads novos apenas pela data futura do evento.
   return 0;
 }
 function sortEventosRecentes(arr){return [...(arr||[])].sort((a,b)=>eventoRecency(b)-eventoRecency(a)||String(b.criadoEm||b.atualizadoEm||b.id||'').localeCompare(String(a.criadoEm||a.atualizadoEm||a.id||'')));}
@@ -107,7 +107,7 @@ function uid(){return 'ev_'+Date.now().toString(36)+'_'+Math.random().toString(3
 function agendaUid(){return 'ag_evt_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)}
 function deviceId(){let id=localStorage.getItem(DEVICE_STORE); if(!id){id='dev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9); localStorage.setItem(DEVICE_STORE,id)} return id;}
 function saveAgenda(){localStorage.setItem(AGENDA_STORE,JSON.stringify(state.agenda));localStorage.setItem(AGENDA_RESP_STORE,JSON.stringify(state.agendaResponsaveis));}
-function save(){localStorage.setItem(STORE,JSON.stringify(state.eventos));localStorage.setItem(META,JSON.stringify(state.meta)); if(window.EventosFirebase&&EventosFirebase.enabled) EventosFirebase.saveAll(state.eventos).catch(()=>{});}
+function save(){localStorage.setItem(STORE,JSON.stringify(state.eventos));localStorage.setItem(META,JSON.stringify(state.meta));}
 function saveClientes(){localStorage.setItem(CLIENTES_STORE,JSON.stringify(state.clientesCadastros||[]));}
 function clienteCadastroMatch(nome,telefone){
   const n=norm(nome||''), tel=String(telefone||'').replace(/\D/g,'');
@@ -767,10 +767,15 @@ function eventFinancialValuesFromFields(){
   const servicoA=baseA*(taxa/100);
   const totalA=baseA+servicoA;
 
-  const extra1=parseNum($('f_extra1')?.value);
-  const extra2=parseNum($('f_extra2')?.value);
-  const extra3=parseNum($('f_extra3')?.value);
-  const totalB=extra1+extra2+extra3;
+  const extraInputs=Array.from(document.querySelectorAll('.extra-consumo-input'));
+  const extrasItens=extraInputs.map(el=>parseNum(el.value));
+  const extra1=extrasItens[0]||0;
+  const extra2=extrasItens[1]||0;
+  const extra3=extrasItens[2]||0;
+  const taxaExtras=parseNum($('f_taxaExtras')?.value || $('f_taxa')?.value || 13);
+  const baseB=extrasItens.reduce((sum,v)=>sum+(Number(v)||0),0);
+  const servicoB=baseB*(taxaExtras/100);
+  const totalB=baseB+servicoB;
 
   const pessoasExcedentes=parseNum($('f_pessoasExcedentes')?.value);
   const valorPessoaExcedente=parseNum($('f_valorPessoaExcedente')?.value);
@@ -779,9 +784,9 @@ function eventFinancialValuesFromFields(){
   const servicoC=baseC*(taxaExcedente/100);
   const totalC=baseC+servicoC;
 
-  const gorjeta=servicoA+servicoC;
+  const gorjeta=servicoA+servicoB+servicoC;
   const valorTotal=totalA+totalB+totalC;
-  return {pessoas,valorPessoa,taxa,baseA,servicoA,totalA,extra1,extra2,extra3,totalB,pessoasExcedentes,valorPessoaExcedente,taxaExcedente,baseC,servicoC,totalC,gorjeta,valorTotal};
+  return {pessoas,valorPessoa,taxa,baseA,servicoA,totalA,extra1,extra2,extra3,extrasItens,taxaExtras,baseB,servicoB,totalB,pessoasExcedentes,valorPessoaExcedente,taxaExcedente,baseC,servicoC,totalC,gorjeta,valorTotal};
 }
 function setText(id,value){const el=$(id); if(el)el.textContent=value;}
 function setVal(id,value){const el=$(id); if(el)el.value=value;}
@@ -793,6 +798,8 @@ function calcEventFinancialsFromFields(){
   setText('fin_extra1',fmtMoney(f.extra1));
   setText('fin_extra2',fmtMoney(f.extra2));
   setText('fin_extra3',fmtMoney(f.extra3));
+  setText('fin_baseB',fmtMoney(f.baseB));
+  setText('fin_servicoB',fmtMoney(f.servicoB));
   setText('fin_totalB',fmtMoney(f.totalB));
   setText('fin_baseC',fmtMoney(f.baseC));
   setText('fin_servicoC',fmtMoney(f.servicoC));
@@ -802,63 +809,102 @@ function calcEventFinancialsFromFields(){
   setText('fin_resumo_totalB',fmtMoney(f.totalB));
   setText('fin_resumo_totalC',fmtMoney(f.totalC));
   setText('fin_resumo_servicoA',fmtMoney(f.servicoA));
+  setText('fin_resumo_servicoB',fmtMoney(f.servicoB));
   setText('fin_resumo_servicoC',fmtMoney(f.servicoC));
   setVal('f_gorjeta',f.gorjeta?f.gorjeta.toFixed(2):'0.00');
   setVal('f_valorEstimado',f.valorTotal?f.valorTotal.toFixed(2):'0.00');
 }
 function setupEventFinancials(){
-  ['f_pessoas','f_valorPessoa','f_taxa','f_extra1','f_extra2','f_extra3','f_pessoasExcedentes','f_valorPessoaExcedente','f_taxaExcedente'].forEach(id=>{
+  ['f_pessoas','f_valorPessoa','f_taxa','f_taxaExtras','f_pessoasExcedentes','f_valorPessoaExcedente','f_taxaExcedente'].forEach(id=>{
     const el=$(id); if(!el)return;
+    el.addEventListener('input',calcEventFinancialsFromFields);
+    el.addEventListener('change',calcEventFinancialsFromFields);
+  });
+  document.querySelectorAll('.extra-consumo-input').forEach(el=>{
     el.addEventListener('input',calcEventFinancialsFromFields);
     el.addEventListener('change',calcEventFinancialsFromFields);
   });
   calcEventFinancialsFromFields();
 }
+function refreshExtraLabels(){
+  const wrap=$('extrasRows');
+  if(!wrap)return;
+  Array.from(wrap.querySelectorAll('.extra-row')).forEach((row,i)=>{
+    const label=row.querySelector('.extra-label');
+    if(label)label.textContent='Consumo extra '+(i+1);
+  });
+}
+function createExtraRow(valor=''){
+  const row=document.createElement('div');
+  row.className='extra-row';
+  row.innerHTML=`<label class="extra-label">Consumo extra</label><input class="field extra-consumo-input" type="text" inputmode="decimal" value="${esc(moneyInputValue(parseNum(valor)))}"><button type="button" class="btn-remove-extra" title="Remover consumo" onclick="EVENTOS.removeExtraConsumo(this)">×</button>`;
+  const input=row.querySelector('.extra-consumo-input');
+  input.addEventListener('input',calcEventFinancialsFromFields);
+  input.addEventListener('change',calcEventFinancialsFromFields);
+  return row;
+}
+function addExtraConsumo(valor=''){
+  const wrap=$('extrasRows');
+  if(!wrap)return;
+  const row=createExtraRow(valor);
+  wrap.appendChild(row);
+  refreshExtraLabels();
+  calcEventFinancialsFromFields();
+  row.querySelector('.extra-consumo-input')?.focus();
+}
+function removeExtraConsumo(btn){
+  const row=btn?.closest?.('.extra-row');
+  if(row)row.remove();
+  refreshExtraLabels();
+  calcEventFinancialsFromFields();
+}
 function financialHtml(e={}){
+  const extrasOrigem=Array.isArray(e.extrasItens)?e.extrasItens:Array.isArray(e.consumosExtras)?e.consumosExtras:null;
   const ex1=e.extra1??e.consumoExtra1??e.extras1??e.extras??0;
   const ex2=e.extra2??e.consumoExtra2??e.extras2??0;
   const ex3=e.extra3??e.consumoExtra3??e.extras3??0;
+  let extrasLista=(extrasOrigem&&extrasOrigem.length?extrasOrigem:[ex1,ex2,ex3]).map(v=>Number(v)||0);
+  while(extrasLista.length<2)extrasLista.push(0);
+  while(extrasLista.length>2 && !extrasLista[extrasLista.length-1])extrasLista.pop();
   const qtdExc=e.pessoasExcedentes??e.qtdExcedente??e.quantidadeExcedente??0;
   const valExc=e.valorPessoaExcedente??e.valorExcedente??0;
   const taxaExc=e.taxaExcedentePct??e.taxaExcedente??e.taxaServicoPct??13;
+  const taxaExtras=e.taxaExtrasPct??e.taxaExtras??e.taxaServicoExtrasPct??e.taxaServicoPct??13;
   return `<div class="finance-layout span4">
     <div class="finance-left">
-      <section class="finance-card">
+      <section class="finance-card finance-card-premium">
         <h3><span class="finance-badge">A</span> CONTRATO (VALORES BASE)</h3>
         <div class="finance-table">
-          <label>Quantidade de pessoas</label><input class="field" type="number" id="f_pessoas" value="${e.pessoas||''}">
+          <label>Quantidade de pessoas</label><input class="field" type="text" inputmode="numeric" id="f_pessoas" value="${e.pessoas||''}">
           <label>Valor por pessoa - sem taxa</label><input class="field" type="text" inputmode="decimal" id="f_valorPessoa" value="${moneyInputValue(e.valorPessoa||0)}">
           <label>Taxa de serviço (%)</label><input class="field" type="text" inputmode="decimal" id="f_taxa" value="${String(e.taxaServicoPct??13).replace('.',',')}">
           <label>Total contrato (A)</label><strong id="fin_totalA">R$ 0,00</strong>
         </div>
-        <p class="finance-note">Fórmula: (valor por pessoa × quantidade de pessoas) + taxa de serviço.</p>
       </section>
-      <section class="finance-card">
-        <h3><span class="finance-badge">B</span> MESA EXTRA / CONSUMOS (SEM TAXA)</h3>
+      <section class="finance-card finance-card-premium">
+        <h3><span class="finance-badge">B</span> PESSOAS EXCEDENTES</h3>
         <div class="finance-table">
-          <label>Consumo extra 1</label><input class="field" type="text" inputmode="decimal" id="f_extra1" value="${moneyInputValue(ex1)}">
-          <label>Consumo extra 2</label><input class="field" type="text" inputmode="decimal" id="f_extra2" value="${moneyInputValue(ex2)}">
-          <label>Consumo extra 3</label><input class="field" type="text" inputmode="decimal" id="f_extra3" value="${moneyInputValue(ex3)}">
-          <label>Total extras (B)</label><strong id="fin_totalB">R$ 0,00</strong>
-        </div>
-        <p class="finance-note">Valores informados aqui não recebem taxa de serviço.</p>
-      </section>
-      <section class="finance-card">
-        <h3><span class="finance-badge">C</span> PESSOAS EXCEDENTES</h3>
-        <div class="finance-table">
-          <label>Quantidade de pessoas excedentes</label><input class="field" type="number" id="f_pessoasExcedentes" value="${qtdExc||''}">
+          <label>Quantidade de pessoas excedentes</label><input class="field" type="text" inputmode="numeric" id="f_pessoasExcedentes" value="${qtdExc||''}">
           <label>Valor por pessoa excedente - sem taxa</label><input class="field" type="text" inputmode="decimal" id="f_valorPessoaExcedente" value="${moneyInputValue(valExc)}">
           <label>Taxa de serviço (%)</label><input class="field" type="text" inputmode="decimal" id="f_taxaExcedente" value="${String(taxaExc).replace('.',',')}">
-          <label>Total excedentes (C)</label><strong id="fin_totalC">R$ 0,00</strong>
+          <label>Total excedentes (B)</label><strong id="fin_totalC">R$ 0,00</strong>
         </div>
-        <p class="finance-note">Fórmula: (valor por pessoa excedente × quantidade excedente) + taxa de serviço.</p>
+      </section>
+      <section class="finance-card finance-card-premium finance-card-extras">
+        <h3><span class="finance-badge">C</span> EXTRAS (MESA EXTRA / CONSUMOS)</h3>
+        <div class="finance-table finance-table-extras">
+          <div id="extrasRows" class="extras-rows">${extrasLista.map((valor,i)=>`<div class="extra-row"><label class="extra-label">Consumo extra ${i+1}</label><input class="field extra-consumo-input" type="text" inputmode="decimal" value="${moneyInputValue(valor)}"><button type="button" class="btn-remove-extra" title="Remover consumo" onclick="EVENTOS.removeExtraConsumo(this)">×</button></div>`).join('')}</div>
+          <label>Taxa de serviço (%)</label><input class="field" type="text" inputmode="decimal" id="f_taxaExtras" value="${String(taxaExtras).replace('.',',')}">
+          <label>Total extras (C)</label><strong id="fin_totalB">R$ 0,00</strong>
+        </div>
+        <button type="button" class="btn-add-extra-icon" title="Adicionar consumo" onclick="EVENTOS.addExtraConsumo()">+</button>
       </section>
     </div>
     <aside class="finance-summary">
       <h3>RESUMO FINANCEIRO</h3>
       <div class="finance-summary-block"><h4><span class="finance-badge">A</span> CONTRATO</h4><p><span>Total sem taxa</span><strong id="fin_baseA">R$ 0,00</strong></p><p><span>Taxa de serviço</span><strong id="fin_resumo_servicoA">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total contrato (A)</span><strong id="fin_resumo_totalA">R$ 0,00</strong></p></div>
-      <div class="finance-summary-block"><h4><span class="finance-badge">B</span> EXTRAS (SEM TAXA)</h4><p><span>Consumo extra 1</span><strong id="fin_extra1">R$ 0,00</strong></p><p><span>Consumo extra 2</span><strong id="fin_extra2">R$ 0,00</strong></p><p><span>Consumo extra 3</span><strong id="fin_extra3">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total extras (B)</span><strong id="fin_resumo_totalB">R$ 0,00</strong></p></div>
-      <div class="finance-summary-block"><h4><span class="finance-badge">C</span> EXCEDENTES</h4><p><span>Total sem taxa</span><strong id="fin_baseC">R$ 0,00</strong></p><p><span>Taxa de serviço</span><strong id="fin_resumo_servicoC">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total excedentes (C)</span><strong id="fin_resumo_totalC">R$ 0,00</strong></p></div>
+      <div class="finance-summary-block"><h4><span class="finance-badge">B</span> EXCEDENTES</h4><p><span>Total sem taxa</span><strong id="fin_baseC">R$ 0,00</strong></p><p><span>Taxa de serviço</span><strong id="fin_resumo_servicoC">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total excedentes (B)</span><strong id="fin_resumo_totalC">R$ 0,00</strong></p></div>
+      <div class="finance-summary-block"><h4><span class="finance-badge">C</span> EXTRAS</h4><p><span>Subtotal extras</span><strong id="fin_baseB">R$ 0,00</strong></p><p><span>Taxa de serviço</span><strong id="fin_resumo_servicoB">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total extras (C)</span><strong id="fin_resumo_totalB">R$ 0,00</strong></p></div>
       <div class="finance-grand"><span>TOTAL GERAL (A + B + C)</span><strong id="fin_grand">R$ 0,00</strong></div>
       <input type="hidden" id="f_gorjeta" value="${e.gorjeta||0}">
       <input type="hidden" id="f_valorEstimado" value="${e.valorTotal||e.valorEstimado||0}">
@@ -868,7 +914,30 @@ function financialHtml(e={}){
 function formHtml(e={}){
   const packs=['A definir',...new Set(state.pacotes.map(p=>p.nome.replace('Menu ','')))];
   const clienteOptions=clientesDatalistHtml();
-  return `${clienteOptions}<div class="form-grid event-form-premium"><div><label>Cliente</label><input class="field" id="f_cliente" list="clientesCadastroOptions" value="${esc(e.cliente||'')}" oninput="EVENTOS.applyClienteLookup()" onchange="EVENTOS.applyClienteLookup()"><small class="muted">Digite e selecione um cliente já cadastrado.</small></div><div><label>Telefone</label><input class="field" id="f_telefone" value="${esc(e.telefone||'')}" onchange="EVENTOS.applyClienteLookup()"></div><div><label>Data</label><input class="field" type="date" id="f_data" value="${e.data||''}"></div><div><label>Horário</label><input class="field" type="time" id="f_horario" value="${e.horario||''}"></div><div><label>Status</label><select class="field" id="f_status">${STATUS.map(st=>`<option ${st===(e.status||'Lead')?'selected':''}>${st}</option>`).join('')}</select></div><div><label>Origem</label><select class="field" id="f_origem"><option>${e.origem||'WhatsApp'}</option><option>Instagram</option><option>Telefone</option><option>Anúncio</option><option>Indicação</option><option>Presencial</option><option>Google Forms</option></select></div><div><label>Tipo</label><input class="field" id="f_tipo" value="${esc(e.tipo||'Evento')}"></div><div><label>Turno</label><select class="field" id="f_turno">${['Almoço','Jantar','Ambos','A definir'].map(st=>`<option ${st===(e.turno||'A definir')?'selected':''}>${st}</option>`).join('')}</select></div><div><label>Pacote</label><select class="field" id="f_pacote">${packs.map(p=>`<option ${p===(e.pacote||'A definir')?'selected':''}>${p}</option>`).join('')}</select></div><div class="span2"><label>Salão</label><select class="field" id="f_unidade">${['Salão Vasto','Salão Barra','Salão Beira Mar','Varanda','Salão Barra + Beira Mar + Varanda','A definir'].map(st=>`<option ${st===(e.unidade||'A definir')?'selected':''}>${st}</option>`).join('')}</select></div><div class="span4"><label>Observações / andamento</label><textarea class="field" id="f_obs">${esc(e.observacoes||'')}</textarea></div>${financialHtml(e)}<div class="span4 directors-box"><label>Assinatura da diretoria</label>${[0,1,2].map(i=>{const d=(e.diretores||[])[i]||{};return `<div class="director-row"><input class="field" id="f_dir_nome_${i}" placeholder="Nome do diretor" value="${esc(d.nome||'')}"><span>Assinou?</span><input type="checkbox" id="f_dir_ok_${i}" ${d.assinado?'checked':''}></div>`}).join('')}<p class="muted" style="margin:8px 0 0;font-size:11px">Marque cada diretor que assinou. Quando todos estiverem OK, o evento pode avançar para Fechado.</p></div></div><div class="divider"></div><div class="modal-actions"><button class="btn alt" onclick="EVENTOS.closeModal&&EVENTOS.closeModal()">Cancelar</button><button class="btn" onclick="EVENTOS.saveForm('${e.id||''}')">Salvar alterações</button></div>`
+  return `${clienteOptions}<div class="form-grid event-form-premium event-form-compact">
+    <div class="span4 event-top-compact">
+      <section class="event-data-card event-compact-card">
+        <div class="event-data-grid">
+          <div><label>Cliente</label><input class="field" id="f_cliente" list="clientesCadastroOptions" value="${esc(e.cliente||'')}" oninput="EVENTOS.applyClienteLookup()" onchange="EVENTOS.applyClienteLookup()"><small class="muted">Digite e selecione um cliente já cadastrado.</small></div>
+          <div><label>Telefone</label><input class="field" id="f_telefone" value="${esc(e.telefone||'')}" onchange="EVENTOS.applyClienteLookup()"></div>
+          <div><label>Data</label><input class="field" type="date" id="f_data" value="${e.data||''}"></div>
+          <div><label>Horário</label><input class="field" type="time" id="f_horario" value="${e.horario||''}"></div>
+          <div><label>Status</label><select class="field" id="f_status">${STATUS.map(st=>`<option ${st===(e.status||'Lead')?'selected':''}>${st}</option>`).join('')}</select></div>
+          <div><label>Origem</label><select class="field" id="f_origem"><option>${e.origem||'WhatsApp'}</option><option>Instagram</option><option>Telefone</option><option>Anúncio</option><option>Indicação</option><option>Presencial</option><option>Google Forms</option></select></div>
+          <div><label>Tipo</label><input class="field" id="f_tipo" value="${esc(e.tipo||'Evento')}"></div>
+          <div><label>Turno</label><select class="field" id="f_turno">${['Almoço','Jantar','Ambos','A definir'].map(st=>`<option ${st===(e.turno||'A definir')?'selected':''}>${st}</option>`).join('')}</select></div>
+          <div><label>Pacote</label><select class="field" id="f_pacote">${packs.map(p=>`<option ${p===(e.pacote||'A definir')?'selected':''}>${p}</option>`).join('')}</select></div>
+          <div class="event-data-wide"><label>Salão</label><select class="field" id="f_unidade">${['Salão Vasto','Salão Barra','Salão Beira Mar','Varanda','Salão Barra + Beira Mar + Varanda','A definir'].map(st=>`<option ${st===(e.unidade||'A definir')?'selected':''}>${st}</option>`).join('')}</select></div>
+        </div>
+      </section>
+      <section class="event-notes-card event-compact-card">
+        <label>Observações / andamento</label>
+        <textarea class="field" id="f_obs">${esc(e.observacoes||'')}</textarea>
+      </section>
+    </div>
+    ${financialHtml(e)}
+    <div class="span4 directors-box"><label>Assinatura da diretoria</label>${[0,1,2].map(i=>{const d=(e.diretores||[])[i]||{};return `<div class="director-row"><input class="field" id="f_dir_nome_${i}" placeholder="Nome do diretor" value="${esc(d.nome||'')}"><span>Assinou?</span><input type="checkbox" id="f_dir_ok_${i}" ${d.assinado?'checked':''}></div>`}).join('')}<p class="muted" style="margin:8px 0 0;font-size:11px">Marque cada diretor que assinou. Quando todos estiverem OK, o evento pode avançar para Fechado.</p></div>
+  </div><div class="divider"></div><div class="modal-actions modal-actions-evento"><div class="modal-actions-left">${e.id?`<button class="btn danger btn-delete-evento" onclick="EVENTOS.deleteEvento('${e.id}')">Excluir evento</button>`:''}</div><div class="modal-actions-right"><button class="btn alt" onclick="EVENTOS.closeModal&&EVENTOS.closeModal()">Cancelar</button><button class="btn" onclick="EVENTOS.saveForm('${e.id||''}')">Salvar alterações</button></div></div>`
 }
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function collect(id){
@@ -899,9 +968,14 @@ function collect(id){
     extra1:f.extra1,
     extra2:f.extra2,
     extra3:f.extra3,
+    extrasItens:f.extrasItens||[],
+    consumosExtras:f.extrasItens||[],
     consumoExtra1:f.extra1,
     consumoExtra2:f.extra2,
     consumoExtra3:f.extra3,
+    taxaExtrasPct:f.taxaExtras,
+    extrasBase:f.baseB,
+    extrasServico:f.servicoB,
     extras:f.totalB,
     totalExtras:f.totalB,
     pessoasExcedentes:f.pessoasExcedentes,
@@ -933,6 +1007,27 @@ function persistEvento(e){
       if(EventosFirebase.saveEvento) return EventosFirebase.saveEvento(e).catch(()=>EventosFirebase.saveAll(state.eventos).catch(()=>{}));
       return EventosFirebase.saveAll(state.eventos).catch(()=>{});
     }catch(_){ }
+  }
+}
+function persistDeleteEvento(id){
+  if(!id)return;
+  id=String(id);
+  __pendingEventoWrites.delete(id);
+  localStorage.setItem(STORE,JSON.stringify(state.eventos));
+  try{
+    (state.clientesCadastros||[]).forEach(c=>{
+      if(c&&String(c.eventoId||'')===id){
+        delete c.eventoId;
+        c.atualizadoEm=new Date().toISOString();
+        if(window.EventosFirebase&&EventosFirebase.enabled&&EventosFirebase.saveClienteCadastro){
+          EventosFirebase.saveClienteCadastro(c).catch(()=>{});
+        }
+      }
+    });
+    saveClientes();
+  }catch(_){ }
+  if(window.EventosFirebase&&EventosFirebase.enabled&&EventosFirebase.deleteEvento){
+    return EventosFirebase.deleteEvento(id).catch(()=>{});
   }
 }
 function mergeRemoteEventos(arr){
@@ -995,15 +1090,18 @@ window.EVENTOS={
   setMeta(v){state.meta.metaMensal=Number(v)||0;save();render()},
   openForm(){ $('modalTitle').textContent='Novo Evento'; $('modalBody').innerHTML=formHtml(); $('modal').classList.add('open'); setupEventFinancials();},
   applyClienteLookup(){applyClienteCadastroToEvento();},
-  edit(id){const e=state.eventos.find(x=>x.id===id); if(!e)return; $('modalTitle').textContent='Editar Evento'; $('modalBody').innerHTML=formHtml(e); $('modal').classList.add('open'); setupEventFinancials();},
+  edit(id){const e=state.eventos.find(x=>String(x.id)===String(id)); if(!e)return; $('modalTitle').textContent='Editar Evento'; $('modalBody').innerHTML=formHtml(e); $('modal').classList.add('open'); setupEventFinancials();},
+  deleteEvento(id){const e=state.eventos.find(x=>String(x.id)===String(id)); if(!e)return toast('Evento não encontrado'); const nome=e.cliente||'este evento'; if(!confirm('Excluir definitivamente o evento de '+nome+'?\n\nIsso remove do funil, calendário e dashboard do módulo Eventos.'))return; state.eventos=state.eventos.filter(x=>String(x.id)!==String(id)); persistDeleteEvento(id); $('modal').classList.remove('open'); toast('Evento excluído'); render();},
   saveForm(id){if(!id&&!clienteCadastroMatch($('f_cliente')?.value,$('f_telefone')?.value)){toast('Cliente não cadastrado. Cadastre o cliente antes de criar o evento.');return;} const e=collect(id); const idx=state.eventos.findIndex(x=>String(x.id)===String(e.id)); const antigo=idx>=0?state.eventos[idx]:null; const agora=new Date().toISOString(); if(antigo){e.criadoEm=antigo.criadoEm||e.criadoEm||agora; if((antigo.status||'')!==(e.status||'')){e.movidoEm=agora;e.statusAtualizadoEm=agora;e.observacoes=(e.observacoes||'')+`\n\n[FUNIL] Status alterado manualmente de ${antigo.status||'Sem status'} para ${e.status} em ${new Date().toLocaleString('pt-BR')}`;} state.eventos[idx]=Object.assign({},antigo,e,{atualizadoEm:agora});} else {state.eventos.unshift(Object.assign({},e,{criadoEm:agora,atualizadoEm:agora}));} persistEvento(state.eventos[idx>=0?idx:0]); $('modal').classList.remove('open'); toast('Evento salvo'); render();},
-  view(id){const e=state.eventos.find(x=>x.id===id); if(!e)return; const wa=e.telefone?`<a class="whats" target="_blank" href="https://wa.me/${String(e.telefone).replace(/\D/g,'')}">Abrir WhatsApp</a>`:''; $('modalTitle').textContent=e.cliente; $('modalBody').innerHTML=`<div class="kpi-grid"><div class="kpi"><div class="label">Data</div><div class="value">${dow(e.data)} ${shortDate(e.data)}<br><span style="font-size:16px;color:var(--sub)">${horario(e)}</span></div></div><div class="kpi"><div class="label">Valor total</div><div class="value">${brl(e.valorEstimado)}</div></div><div class="kpi"><div class="label">Pessoas</div><div class="value">${e.pessoas||'-'}</div></div><div class="kpi"><div class="label">Status</div><div class="value" style="font-size:20px">${e.status}</div></div></div><div class="panel" style="margin-top:14px"><p><b>Telefone:</b> ${e.telefone||'-'} ${wa}</p><p><b>Tipo:</b> ${e.tipo} · <b>Turno:</b> ${e.turno} · <b>Pacote:</b> ${e.pacote}</p><p><b>Unidade/Salão:</b> ${e.unidade||'-'}</p><p><b>Origem:</b> ${e.origem||e.origemPlanilha||'-'}</p><p><b>Diretoria:</b> ${(e.diretores&&e.diretores.length)?e.diretores.map(d=>`${esc(d.nome)} ${d.assinado?'✅':'⏳'}`).join(' · '):'Não cadastrada'}</p><div class="divider"></div><p style="white-space:pre-wrap">${esc(e.observacoes||'')}</p></div><br><button class="btn" onclick="EVENTOS.edit('${e.id}')">Editar</button>`; $('modal').classList.add('open');},
+  view(id){const e=state.eventos.find(x=>x.id===id); if(!e)return; const wa=e.telefone?`<a class="whats" target="_blank" href="https://wa.me/${String(e.telefone).replace(/\D/g,'')}">Abrir WhatsApp</a>`:''; $('modalTitle').textContent=e.cliente; $('modalBody').innerHTML=`<div class="kpi-grid"><div class="kpi"><div class="label">Data</div><div class="value">${dow(e.data)} ${shortDate(e.data)}<br><span style="font-size:16px;color:var(--sub)">${horario(e)}</span></div></div><div class="kpi"><div class="label">Valor total</div><div class="value">${brl(e.valorEstimado)}</div></div><div class="kpi"><div class="label">Pessoas</div><div class="value">${e.pessoas||'-'}</div></div><div class="kpi"><div class="label">Status</div><div class="value" style="font-size:20px">${e.status}</div></div></div><div class="panel" style="margin-top:14px"><p><b>Telefone:</b> ${e.telefone||'-'} ${wa}</p><p><b>Tipo:</b> ${e.tipo} · <b>Turno:</b> ${e.turno} · <b>Pacote:</b> ${e.pacote}</p><p><b>Unidade/Salão:</b> ${e.unidade||'-'}</p><p><b>Origem:</b> ${e.origem||'-'}</p><p><b>Diretoria:</b> ${(e.diretores&&e.diretores.length)?e.diretores.map(d=>`${esc(d.nome)} ${d.assinado?'✅':'⏳'}`).join(' · '):'Não cadastrada'}</p><div class="divider"></div><p style="white-space:pre-wrap">${esc(e.observacoes||'')}</p></div><br><button class="btn" onclick="EVENTOS.edit('${e.id}')">Editar</button>`; $('modal').classList.add('open');},
   closeModal(){ $('modal').classList.remove('open');},
   movePipeline(id,status){const e=state.eventos.find(x=>String(x.id)===String(id)); if(!e)return toast('Evento não encontrado'); if(!canMovePipeline(e.status,status))return toast('Etapa inválida'); if(e.status===status)return toast('Card já está nesta etapa'); const kanban=document.querySelector('#funil .pipeline-kanban'); if(kanban)__pipelineScrollLeft=kanban.scrollLeft; const antigo=e.status; const agora=new Date().toISOString(); e.status=status; e.movidoEm=agora; e.statusAtualizadoEm=agora; e.atualizadoEm=agora; e.criadoEm=e.criadoEm||agora; e.observacoes=(e.observacoes||'')+`\n\n[FUNIL] Movido de ${antigo||'Sem status'} para ${status} em ${new Date().toLocaleString('pt-BR')}`; persistEvento(e); toast(`Movido para ${status}`); render(); requestAnimationFrame(()=>{const k=document.querySelector('#funil .pipeline-kanban');if(k)k.scrollLeft=__pipelineScrollLeft||0;});},
   markRecuperado(id){const e=state.eventos.find(x=>x.id===id); if(e){e.status='Proposta enviada';e.movidoEm=new Date().toISOString();e.statusAtualizadoEm=e.movidoEm;e.observacoes=(e.observacoes||'')+'\n\n[RECUPERAÇÃO] Cliente reativado em '+new Date().toLocaleDateString('pt-BR');save();toast('Cliente movido para proposta');render();}},
   whats(id){const e=state.eventos.find(x=>x.id===id); if(!e||!e.telefone)return toast('Telefone não cadastrado'); window.open(`https://wa.me/${String(e.telefone).replace(/\D/g,'')}?text=${encodeURIComponent('Olá, tudo bem? Estou entrando em contato sobre sua proposta de evento no Coco Bambu.')}`,'_blank');},
-  seedReset(){if(confirm('Recarregar a base importada da planilha? Eventos cadastrados manualmente serão mantidos.')){const manual=state.eventos.filter(e=>!e.importado);state.eventos=dedupeEventos([...(window.EVENTOS_SEED||[]).map(e=>({...e,importado:true})),...manual]);save();toast('Base 2026/2027 recarregada');setupFilters();render();}},
-  exportCSV(){const cols=['data','horario','cliente','telefone','unidade','tipo','turno','pessoas','pacote','status','valorPessoa','extras','taxaServicoPct','valorEstimado','gorjeta','origemPlanilha','observacoes'];const csv=[cols.join(';')].concat(state.eventos.map(e=>cols.map(c=>'"'+String(e[c]??'').replace(/"/g,'""').replace(/\n/g,' | ')+'"').join(';'))).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='eventos_premium_export.csv';a.click();URL.revokeObjectURL(a.href);},
+  seedReset(){toast('Importação da planilha 2026/2027 foi removida. Use cadastro no app ou Google Forms.');},
+  addExtraConsumo,
+  removeExtraConsumo,
+  exportCSV(){const cols=['data','horario','cliente','telefone','unidade','tipo','turno','pessoas','pacote','status','valorPessoa','extras','taxaServicoPct','valorEstimado','gorjeta','origem','observacoes'];const csv=[cols.join(';')].concat(state.eventos.map(e=>cols.map(c=>'"'+String(e[c]??'').replace(/"/g,'""').replace(/\n/g,' | ')+'"').join(';'))).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='eventos_premium_export.csv';a.click();URL.revokeObjectURL(a.href);},
   async firebaseSync(){if(!window.EventosFirebase)return toast('Firebase não carregado'); const ok=await EventosFirebase.init(); if(!ok)return toast('Firebase indisponível nesta abertura'); await EventosFirebase.saveAll(state.eventos); toast('Eventos enviados para /eventos_premium');},
 };
 function boot(){

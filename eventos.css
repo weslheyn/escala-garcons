@@ -810,3 +810,542 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, .app::-webkit-scrollbar, .main
   .cliente-editor-actions-101{flex-direction:column}
   .cliente-editor-actions-101 div{flex-direction:column}
 }
+
+/* v102: exclusão segura de evento no modal de edição */
+.modal-actions-evento{justify-content:space-between!important;align-items:center!important;gap:14px!important}
+.modal-actions-evento .modal-actions-left,.modal-actions-evento .modal-actions-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.btn-delete-evento{min-width:150px!important}
+@media(max-width:620px){.modal-actions-evento{align-items:stretch!important}.modal-actions-evento .modal-actions-left,.modal-actions-evento .modal-actions-right{width:100%;flex-direction:column}.modal-actions-evento .btn{width:100%!important}}
+
+/* =========================================================
+   V103 - Eventos: visual premium financeiro + scroll invisível
+   Ajuste cirúrgico apenas no módulo Eventos
+========================================================= */
+textarea,
+.funil-scroll,
+.pipeline-strip,
+.pipeline-kanban,
+.kanban,
+.modal-box,
+.finance-summary,
+.finance-left,
+.week-scroll{
+  -ms-overflow-style:none!important;
+  scrollbar-width:none!important;
+}
+textarea::-webkit-scrollbar,
+.funil-scroll::-webkit-scrollbar,
+.pipeline-strip::-webkit-scrollbar,
+.pipeline-kanban::-webkit-scrollbar,
+.kanban::-webkit-scrollbar,
+.modal-box::-webkit-scrollbar,
+.finance-summary::-webkit-scrollbar,
+.finance-left::-webkit-scrollbar,
+.week-scroll::-webkit-scrollbar{
+  width:0!important;
+  height:0!important;
+  display:none!important;
+}
+
+.event-form-premium textarea#f_obs{
+  min-height:88px!important;
+  max-height:130px!important;
+  resize:vertical;
+  line-height:1.45!important;
+  background:linear-gradient(145deg,rgba(19,26,42,.96),rgba(9,13,22,.96))!important;
+}
+
+.event-form-premium .finance-layout{
+  align-items:stretch!important;
+}
+.event-form-premium .finance-left{
+  align-items:stretch!important;
+}
+.event-form-premium .finance-card-premium{
+  min-height:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:space-between!important;
+  background:linear-gradient(145deg,rgba(18,24,39,.98),rgba(7,10,17,.98))!important;
+  border-color:rgba(242,199,91,.35)!important;
+}
+.event-form-premium .finance-card-premium h3{
+  display:flex!important;
+  align-items:center!important;
+  gap:9px!important;
+}
+.finance-help{
+  margin-left:auto;
+  width:24px;
+  height:24px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.04);
+  color:#cbd4e6;
+  font-weight:950;
+  cursor:help;
+}
+.finance-table{
+  overflow:hidden!important;
+}
+.finance-table .field{
+  text-align:right!important;
+}
+.finance-table label,
+.finance-table strong,
+.finance-table .field{
+  border-color:rgba(255,255,255,.055)!important;
+}
+.finance-summary{
+  overflow:auto!important;
+  background:linear-gradient(145deg,rgba(16,24,39,.98),rgba(6,9,15,.98))!important;
+}
+.btn-delete-evento{
+  background:linear-gradient(135deg,#9c111b,#5c0b12)!important;
+  border-color:rgba(255,80,80,.45)!important;
+  color:#fff!important;
+  font-weight:950!important;
+}
+.btn-delete-evento::before{
+  content:'🗑️';
+  margin-right:8px;
+}
+@media (min-width:901px){
+  .event-form-premium .finance-left{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+  .event-form-premium .finance-card-premium{
+    min-height:250px!important;
+  }
+}
+@media (max-width:900px){
+  .event-form-premium .finance-layout{
+    grid-template-columns:1fr!important;
+  }
+  .event-form-premium .finance-left{
+    grid-template-columns:1fr!important;
+  }
+  .finance-summary{
+    max-height:none!important;
+  }
+}
+
+/* V104 - Limpeza visual do financeiro: sem ícone de ajuda, sem fórmulas e cards mais compactos */
+.event-form-premium .finance-help,
+.event-form-premium .finance-note{
+  display:none!important;
+}
+.event-form-premium .finance-card-premium{
+  min-height:0!important;
+  padding-bottom:14px!important;
+}
+.event-form-premium .finance-card-premium h3{
+  padding-right:0!important;
+  margin-bottom:10px!important;
+}
+.event-form-premium .finance-table{
+  margin-top:0!important;
+}
+.event-form-premium .finance-left{
+  align-items:start!important;
+}
+
+/* V105 - Financeiro Eventos: cards alinhados, extras dinâmicos e inputs numéricos limpos */
+.event-form-premium input[type=number]::-webkit-inner-spin-button,
+.event-form-premium input[type=number]::-webkit-outer-spin-button{
+  -webkit-appearance:none!important;
+  margin:0!important;
+}
+.event-form-premium input[type=number]{
+  -moz-appearance:textfield!important;
+  appearance:textfield!important;
+}
+.event-form-premium .finance-left{
+  align-items:stretch!important;
+}
+.event-form-premium .finance-card-premium{
+  min-height:212px!important;
+  height:100%!important;
+  justify-content:flex-start!important;
+}
+.event-form-premium .finance-table-extras{
+  display:grid!important;
+  grid-template-columns:1fr 210px!important;
+}
+.event-form-premium .extras-rows{
+  display:contents!important;
+}
+.event-form-premium .btn-add-extra{
+  grid-column:1 / -1;
+  min-height:34px;
+  border:1px dashed rgba(242,199,91,.35);
+  background:rgba(242,199,91,.08);
+  color:#ffd45a;
+  font-weight:950;
+  font-size:12px;
+  cursor:pointer;
+  border-radius:0;
+  text-align:center;
+}
+.event-form-premium .btn-add-extra:hover{
+  background:rgba(242,199,91,.14);
+}
+@media(max-width:900px){
+  .event-form-premium .finance-table-extras{grid-template-columns:1fr 150px!important;}
+}
+@media(max-width:620px){
+  .event-form-premium .finance-table-extras{grid-template-columns:1fr 128px!important;}
+}
+
+/* V105 - Financeiro Eventos: cards alinhados, extras dinâmicos e inputs numéricos limpos */
+.event-form-premium input[type=number]::-webkit-inner-spin-button,
+.event-form-premium input[type=number]::-webkit-outer-spin-button{
+  -webkit-appearance:none!important;
+  margin:0!important;
+}
+.event-form-premium input[type=number]{
+  -moz-appearance:textfield!important;
+  appearance:textfield!important;
+}
+.event-form-premium .finance-left{
+  align-items:stretch!important;
+}
+.event-form-premium .finance-card-premium{
+  min-height:212px!important;
+  height:100%!important;
+  justify-content:flex-start!important;
+}
+.event-form-premium .finance-table-extras{
+  display:grid!important;
+  grid-template-columns:1fr 210px!important;
+}
+.event-form-premium .extras-rows{
+  display:contents!important;
+}
+.event-form-premium .btn-add-extra{
+  grid-column:1 / -1;
+  min-height:34px;
+  border:1px dashed rgba(242,199,91,.35);
+  background:rgba(242,199,91,.08);
+  color:#ffd45a;
+  font-weight:950;
+  font-size:12px;
+  cursor:pointer;
+  border-radius:0;
+  text-align:center;
+}
+.event-form-premium .btn-add-extra:hover{
+  background:rgba(242,199,91,.14);
+}
+@media(max-width:900px){
+  .event-form-premium .finance-table-extras{grid-template-columns:1fr 150px!important;}
+}
+@media(max-width:620px){
+  .event-form-premium .finance-table-extras{grid-template-columns:1fr 128px!important;}
+}
+
+/* V106 - Extras limpos: botão + lateral, remoção por item e alinhamento premium */
+.event-form-premium .finance-left{
+  align-items:stretch!important;
+}
+.event-form-premium .finance-card-premium{
+  min-height:244px!important;
+  display:flex!important;
+  flex-direction:column!important;
+}
+.event-form-premium .finance-card-premium .finance-table{
+  margin-top:12px!important;
+}
+.event-form-premium .finance-table-extras{
+  position:relative!important;
+  display:grid!important;
+  grid-template-columns:1fr 42px!important;
+  gap:0!important;
+}
+.event-form-premium .extras-rows{
+  grid-column:1 / -1!important;
+  display:flex!important;
+  flex-direction:column!important;
+  gap:0!important;
+}
+.event-form-premium .extra-row{
+  display:grid!important;
+  grid-template-columns:minmax(130px,1fr) minmax(120px,170px) 30px!important;
+  align-items:center!important;
+  min-height:37px!important;
+  border-bottom:1px solid rgba(255,255,255,.055)!important;
+}
+.event-form-premium .extra-label{
+  min-width:0!important;
+  overflow:visible!important;
+  white-space:normal!important;
+  line-height:1.1!important;
+  padding-left:10px!important;
+  padding-right:8px!important;
+}
+.event-form-premium .extra-row .extra-consumo-input{
+  width:100%!important;
+  min-width:0!important;
+  text-align:right!important;
+}
+.event-form-premium .btn-remove-extra{
+  width:22px!important;
+  height:22px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border:1px solid rgba(255,255,255,.12)!important;
+  border-radius:50%!important;
+  background:rgba(255,255,255,.04)!important;
+  color:#dbe7ff!important;
+  font-weight:900!important;
+  font-size:14px!important;
+  line-height:1!important;
+  cursor:pointer!important;
+  margin-left:6px!important;
+}
+.event-form-premium .btn-remove-extra:hover{
+  background:rgba(190,30,45,.18)!important;
+  border-color:rgba(255,82,96,.55)!important;
+  color:#ffb3bc!important;
+}
+.event-form-premium .btn-add-extra,
+.event-form-premium .btn-add-extra-icon{
+  width:26px!important;
+  height:26px!important;
+  min-height:26px!important;
+  padding:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  grid-column:2!important;
+  justify-self:end!important;
+  margin:7px 4px 7px 0!important;
+  border:1px solid rgba(242,199,91,.45)!important;
+  border-radius:50%!important;
+  background:rgba(242,199,91,.10)!important;
+  color:#ffd45a!important;
+  font-size:18px!important;
+  font-weight:950!important;
+  line-height:1!important;
+  cursor:pointer!important;
+  text-indent:0!important;
+}
+.event-form-premium .btn-add-extra:hover,
+.event-form-premium .btn-add-extra-icon:hover{
+  background:rgba(242,199,91,.20)!important;
+  transform:translateY(-1px);
+}
+.event-form-premium .finance-table-extras > label,
+.event-form-premium .finance-table-extras > strong,
+.event-form-premium .finance-table-extras > input.field{
+  grid-column:auto!important;
+}
+@media(max-width:900px){
+  .event-form-premium .extra-row{
+    grid-template-columns:minmax(118px,1fr) minmax(100px,145px) 28px!important;
+  }
+}
+@media(max-width:620px){
+  .event-form-premium .extra-row{
+    grid-template-columns:1fr 112px 26px!important;
+  }
+}
+
+/* V107 - Eventos: B Excedentes, C Extras, plus discreto e rodapé compacto */
+.event-form-premium .finance-card-extras{
+  position:relative!important;
+  overflow:visible!important;
+}
+.event-form-premium .finance-card-extras .finance-table-extras{
+  overflow:visible!important;
+  padding-bottom:0!important;
+}
+.event-form-premium .finance-card-extras .extras-rows{
+  grid-column:1 / -1!important;
+}
+.event-form-premium .finance-card-extras .extra-row{
+  grid-template-columns:minmax(120px,1fr) minmax(100px,132px) 24px!important;
+  column-gap:5px!important;
+  padding-right:2px!important;
+}
+.event-form-premium .finance-card-extras .extra-label{
+  padding-left:10px!important;
+  padding-right:5px!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.05!important;
+}
+.event-form-premium .finance-card-extras .extra-row .extra-consumo-input{
+  height:32px!important;
+  min-height:32px!important;
+  border-radius:10px!important;
+  padding-right:9px!important;
+}
+.event-form-premium .finance-card-extras .btn-remove-extra{
+  width:19px!important;
+  height:19px!important;
+  min-width:19px!important;
+  flex:0 0 19px!important;
+  margin:0!important;
+  font-size:12px!important;
+  line-height:18px!important;
+  padding:0!important;
+  transform:none!important;
+  position:relative!important;
+  right:auto!important;
+  top:auto!important;
+}
+.event-form-premium .finance-card-extras .btn-add-extra-icon{
+  position:absolute!important;
+  right:12px!important;
+  bottom:10px!important;
+  width:20px!important;
+  height:20px!important;
+  min-height:20px!important;
+  border-radius:50%!important;
+  margin:0!important;
+  padding:0!important;
+  font-size:15px!important;
+  opacity:.82!important;
+  z-index:3!important;
+  box-shadow:none!important;
+}
+.event-form-premium .finance-card-extras .btn-add-extra-icon:hover{
+  opacity:1!important;
+  transform:none!important;
+}
+.event-form-premium .finance-card-premium{
+  min-height:218px!important;
+}
+.modal-actions-evento{
+  padding-top:8px!important;
+  padding-bottom:4px!important;
+}
+.modal-actions-evento .btn{
+  min-width:124px!important;
+  padding:8px 13px!important;
+  border-radius:13px!important;
+  font-size:13px!important;
+}
+.modal-actions-evento .btn-delete-evento{
+  min-width:138px!important;
+}
+@media(max-width:900px){
+  .event-form-premium .finance-card-extras .extra-row{
+    grid-template-columns:minmax(110px,1fr) minmax(86px,120px) 23px!important;
+  }
+}
+@media(max-width:620px){
+  .event-form-premium .finance-card-extras .extra-row{
+    grid-template-columns:1fr 100px 22px!important;
+  }
+  .modal-actions-evento .btn{
+    min-width:0!important;
+    width:100%!important;
+  }
+}
+
+/* V108 - Topo compacto: dados do evento + observações à direita com rolagem interna */
+.event-form-premium.event-form-compact{
+  gap:10px!important;
+}
+.event-form-premium .event-top-compact{
+  display:grid!important;
+  grid-template-columns:minmax(0,2.35fr) minmax(260px,.9fr)!important;
+  gap:14px!important;
+  align-items:stretch!important;
+  margin-bottom:2px!important;
+}
+.event-form-premium .event-compact-card{
+  background:linear-gradient(145deg,rgba(18,24,39,.94),rgba(7,10,17,.96))!important;
+  border:1px solid rgba(242,199,91,.25)!important;
+  border-radius:16px!important;
+  padding:12px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.03)!important;
+}
+.event-form-premium .event-data-grid{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:9px 12px!important;
+  align-items:start!important;
+}
+.event-form-premium .event-data-grid label,
+.event-form-premium .event-notes-card label{
+  font-size:10px!important;
+  line-height:1!important;
+  margin-bottom:4px!important;
+  color:#c8d4ef!important;
+  text-transform:uppercase!important;
+  letter-spacing:.35px!important;
+  font-weight:950!important;
+}
+.event-form-premium .event-data-grid .field{
+  height:38px!important;
+  min-height:38px!important;
+  padding:8px 11px!important;
+  border-radius:11px!important;
+}
+.event-form-premium .event-data-grid small.muted{
+  display:block!important;
+  margin-top:4px!important;
+  font-size:10px!important;
+  line-height:1.1!important;
+}
+.event-form-premium .event-data-wide{
+  grid-column:span 2!important;
+}
+.event-form-premium .event-notes-card{
+  display:flex!important;
+  flex-direction:column!important;
+  min-height:146px!important;
+}
+.event-form-premium .event-notes-card textarea#f_obs{
+  flex:1 1 auto!important;
+  min-height:112px!important;
+  max-height:150px!important;
+  height:100%!important;
+  resize:none!important;
+  overflow:auto!important;
+  line-height:1.35!important;
+  padding:10px 12px!important;
+  border-radius:12px!important;
+  -ms-overflow-style:none!important;
+  scrollbar-width:none!important;
+}
+.event-form-premium .event-notes-card textarea#f_obs::-webkit-scrollbar{
+  width:0!important;
+  height:0!important;
+  display:none!important;
+}
+.event-form-premium.event-form-compact .finance-layout{
+  margin-top:2px!important;
+}
+.event-form-premium.event-form-compact .directors-box{
+  margin-top:0!important;
+}
+@media(max-width:980px){
+  .event-form-premium .event-top-compact{
+    grid-template-columns:1fr!important;
+  }
+  .event-form-premium .event-data-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  .event-form-premium .event-data-wide{
+    grid-column:auto!important;
+  }
+  .event-form-premium .event-notes-card textarea#f_obs{
+    min-height:100px!important;
+    max-height:160px!important;
+  }
+}
+@media(max-width:620px){
+  .event-form-premium .event-data-grid{
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+  }
+  .event-form-premium .event-data-grid .field{
+    height:40px!important;
+    min-height:40px!important;
+  }
+}

@@ -1,0 +1,25 @@
+INTEGRAÇÃO SEGURA DO MÓDULO DE UNIFORMES
+
+Não alterei index.html nem script.js para evitar quebrar módulos existentes.
+
+Quando quiser exibir no menu principal do app, incluir apenas um card/link apontando para:
+
+uniformes.html
+
+Sugestão de card:
+
+<a class="module-card" href="uniformes.html">
+  <div class="module-icon">👔</div>
+  <div>
+    <h3>Estoque de Uniformes</h3>
+    <p>Controle de entrega, devolução, estoque ideal e lista de compras.</p>
+  </div>
+</a>
+
+Caminho Firebase usado:
+uniformes_estoque
+
+Leitura opcional de funcionários:
+equipe_oficial/atual/funcionarios
+
+Nenhum caminho antigo é sobrescrito.

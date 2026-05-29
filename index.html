@@ -613,6 +613,7 @@ body.gs-open{overflow:hidden!important}
     <div class="dash-card c-gold" onclick="openDashboardModule('funcionarios')"><div><div class="ic">👤</div><h3>Funcionários</h3><p>Cadastro e gestão de funcionários.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-orange" onclick="location.href='eventos.html'"><span class="dash-badge" id="dashEventosBadge">Premium</span><div><div class="ic">🥂</div><h3>Eventos</h3><p>Vendas, negociações, calendário, contratos e recuperação de clientes.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-gold" onclick="abrirGsTelaExclusiva()"><span class="dash-badge">Novo</span><div><div class="ic">🔐</div><h3>G's</h3><p>Gerencie códigos e senhas dos garçons.</p></div><div class="go">Acessar ›</div></div>
+    <div class="dash-card c-green" onclick="location.href='uniformes.html'"><span class="dash-badge" id="dashUniformesBadge">Novo</span><div><div class="ic">👕</div><h3>Estoque de<br>Uniformes</h3><p>Controle completo de estoque, entregas, devoluções e compras.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-orange" onclick="openDashboardModule('fornecedores')"><div><div class="ic">🤝</div><h3>Fornecedores</h3><p>Prestadores de serviço e contatos.</p></div><div class="go">Acessar ›</div></div>
     <div class="dash-card c-purple wide" onclick="openDashboardModule('relatorios')"><div><div class="ic">📊</div><h3>Relatórios / Exportar</h3><p>Visualize, filtre e exporte relatórios.</p></div><div class="go">Acessar ›</div></div>
   </div>
@@ -8385,7 +8386,6 @@ setInterval(()=>{try{if(fbDb&&fbConnected)__iniciarSyncGlobalEscalaOficial();}ca
 document.addEventListener('DOMContentLoaded',()=>{try{showHomeDashboard();updateDashboardPremium();}catch(e){}setInterval(_dashFmtDate,30000);});
 
 </script>
-<script src="calendario-eventos.js?v=32.0"></script>
 <script src="pracas-diarias.js?v=38.0"></script>
 
 <style>

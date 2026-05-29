@@ -1,5 +1,5 @@
 /* Eventos Firebase — módulo isolado.
-   Não altera a estrutura antiga do app. Só usa o caminho /eventos_premium quando Firebase compat estiver disponível. */
+   Não altera a estrutura antiga do app. Só usa o caminho oficial /eventos_premium quando Firebase compat estiver disponível. */
 window.EVENTOS_FB_CONFIG = {
   apiKey: "AIzaSyDN1vAjDz3snXGWTSMbMWz1XDPovyc8ufXw",
   authDomain: "coco-bambu-presenca.firebaseapp.com",
@@ -32,6 +32,7 @@ window.EventosFirebase = {
     await this.db.ref('eventos_premium/eventos/'+evento.id).update(evento);
     return true;
   },
+
   listen(cb){
     if(!this.enabled||!this.db) return false;
     this.db.ref('eventos_premium/eventos').on('value',snap=>{
@@ -56,6 +57,11 @@ window.EventosFirebase = {
   async deleteClienteCadastro(id){
     if(!this.enabled||!this.db||!id) return false;
     await this.db.ref('clientes_cadastro/'+id).remove();
+    return true;
+  },
+  async deleteEvento(id){
+    if(!this.enabled||!this.db||!id) return false;
+    await this.db.ref('eventos_premium/eventos/'+id).remove();
     return true;
   }
 };

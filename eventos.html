@@ -10,14 +10,14 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.png">
 <title>Gestão Coco Bambu</title>
-<link rel="stylesheet" href="eventos.css?v=100">
+<link rel="stylesheet" href="eventos.css?v=101">
 <script>
 (function(){
-  var APP_VERSION='v100-firebase-sync';
+  var APP_VERSION='v101-eventos-sem-calendario-planilha';
   try{
     var key='gestao_cb_eventos_app_version';
     if(localStorage.getItem(key)!==APP_VERSION){
-      ['eventos_premium_v58','eventos_premium_meta_v58','eventos_clientes_cadastro_v64','eventos_premium_v95','eventos_premium_v96','eventos_premium_v97','dashboard_cache','dashboard','stats','metricas'].forEach(function(k){localStorage.removeItem(k);});
+      ['eventos_premium_v58','eventos_premium_meta_v58','eventos_clientes_cadastro_v64','eventos_premium_v95','eventos_premium_v96','eventos_premium_v97','eventos_premium_v100','dashboard_cache','dashboard','stats','metricas'].forEach(function(k){localStorage.removeItem(k);});
       localStorage.setItem(key,APP_VERSION);
     }
     if('caches' in window){caches.keys().then(function(keys){return Promise.all(keys.map(function(k){return caches.delete(k);}));});}
@@ -118,7 +118,6 @@
   <div class="sheet-card">
     <div class="sheet-head"><h3>Configurações</h3><button class="close mini-close" onclick="EVENTOS.toggleConfig(false)">×</button></div>
     <button class="menu-action" onclick="EVENTOS.exportCSV();EVENTOS.toggleConfig(false)">Exportar CSV</button>
-    <button class="menu-action" onclick="EVENTOS.seedReset();EVENTOS.toggleConfig(false)">Recarregar planilha 2026/2027</button>
     <button class="menu-action" onclick="EVENTOS.showInstallHelp();EVENTOS.toggleConfig(false)">Instalar Gestão Coco Bambu</button>
     <button class="menu-action" onclick="EVENTOS.firebaseSync();EVENTOS.toggleConfig(false)">Sincronizar Firebase</button>
   </div>
@@ -135,21 +134,21 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-<script src="eventos-seed.js?v=100"></script>
-<script src="eventos-firebase.js?v=100"></script>
-<script src="eventos.js?v=100"></script>
+<script src="eventos-seed.js?v=101"></script>
+<script src="eventos-firebase.js?v=101"></script>
+<script src="eventos.js?v=101"></script>
 <script>
 if('serviceWorker' in navigator){
   navigator.serviceWorker.getRegistrations().then(function(regs){
     return Promise.all(regs.map(function(r){ return r.unregister(); }));
   }).then(function(){
-    return navigator.serviceWorker.register('./sw.js?v=100', {updateViaCache:'none'});
+    return navigator.serviceWorker.register('./sw.js?v=101', {updateViaCache:'none'});
   }).then(function(reg){
     if(reg && reg.update) reg.update();
   }).catch(function(e){ console.warn('SW update erro:', e); });
   navigator.serviceWorker.addEventListener('message', function(ev){
-    if(ev.data && ev.data.type==='APP_CACHE_CLEARED' && !sessionStorage.getItem('swReloadedV100')){
-      sessionStorage.setItem('swReloadedV100','1');
+    if(ev.data && ev.data.type==='APP_CACHE_CLEARED' && !sessionStorage.getItem('swReloadedV101')){
+      sessionStorage.setItem('swReloadedV101','1');
       location.reload();
     }
   });

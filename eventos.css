@@ -1151,3 +1151,97 @@ textarea::-webkit-scrollbar,
     grid-template-columns:1fr 112px 26px!important;
   }
 }
+
+/* V107 - Eventos: B Excedentes, C Extras, plus discreto e rodapé compacto */
+.event-form-premium .finance-card-extras{
+  position:relative!important;
+  overflow:visible!important;
+}
+.event-form-premium .finance-card-extras .finance-table-extras{
+  overflow:visible!important;
+  padding-bottom:0!important;
+}
+.event-form-premium .finance-card-extras .extras-rows{
+  grid-column:1 / -1!important;
+}
+.event-form-premium .finance-card-extras .extra-row{
+  grid-template-columns:minmax(120px,1fr) minmax(100px,132px) 24px!important;
+  column-gap:5px!important;
+  padding-right:2px!important;
+}
+.event-form-premium .finance-card-extras .extra-label{
+  padding-left:10px!important;
+  padding-right:5px!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.05!important;
+}
+.event-form-premium .finance-card-extras .extra-row .extra-consumo-input{
+  height:32px!important;
+  min-height:32px!important;
+  border-radius:10px!important;
+  padding-right:9px!important;
+}
+.event-form-premium .finance-card-extras .btn-remove-extra{
+  width:19px!important;
+  height:19px!important;
+  min-width:19px!important;
+  flex:0 0 19px!important;
+  margin:0!important;
+  font-size:12px!important;
+  line-height:18px!important;
+  padding:0!important;
+  transform:none!important;
+  position:relative!important;
+  right:auto!important;
+  top:auto!important;
+}
+.event-form-premium .finance-card-extras .btn-add-extra-icon{
+  position:absolute!important;
+  right:12px!important;
+  bottom:10px!important;
+  width:20px!important;
+  height:20px!important;
+  min-height:20px!important;
+  border-radius:50%!important;
+  margin:0!important;
+  padding:0!important;
+  font-size:15px!important;
+  opacity:.82!important;
+  z-index:3!important;
+  box-shadow:none!important;
+}
+.event-form-premium .finance-card-extras .btn-add-extra-icon:hover{
+  opacity:1!important;
+  transform:none!important;
+}
+.event-form-premium .finance-card-premium{
+  min-height:218px!important;
+}
+.modal-actions-evento{
+  padding-top:8px!important;
+  padding-bottom:4px!important;
+}
+.modal-actions-evento .btn{
+  min-width:124px!important;
+  padding:8px 13px!important;
+  border-radius:13px!important;
+  font-size:13px!important;
+}
+.modal-actions-evento .btn-delete-evento{
+  min-width:138px!important;
+}
+@media(max-width:900px){
+  .event-form-premium .finance-card-extras .extra-row{
+    grid-template-columns:minmax(110px,1fr) minmax(86px,120px) 23px!important;
+  }
+}
+@media(max-width:620px){
+  .event-form-premium .finance-card-extras .extra-row{
+    grid-template-columns:1fr 100px 22px!important;
+  }
+  .modal-actions-evento .btn{
+    min-width:0!important;
+    width:100%!important;
+  }
+}

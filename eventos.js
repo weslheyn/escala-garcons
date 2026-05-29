@@ -882,29 +882,29 @@ function financialHtml(e={}){
         </div>
       </section>
       <section class="finance-card finance-card-premium">
-        <h3><span class="finance-badge">B</span> EXTRAS (MESA EXTRA / CONSUMOS)</h3>
-        <div class="finance-table finance-table-extras">
-          <div id="extrasRows" class="extras-rows">${extrasLista.map((valor,i)=>`<div class="extra-row"><label class="extra-label">Consumo extra ${i+1}</label><input class="field extra-consumo-input" type="text" inputmode="decimal" value="${moneyInputValue(valor)}"><button type="button" class="btn-remove-extra" title="Remover consumo" onclick="EVENTOS.removeExtraConsumo(this)">×</button></div>`).join('')}</div>
-          <button type="button" class="btn-add-extra-icon" title="Adicionar consumo" onclick="EVENTOS.addExtraConsumo()">+</button>
-          <label>Taxa de serviço (%)</label><input class="field" type="text" inputmode="decimal" id="f_taxaExtras" value="${String(taxaExtras).replace('.',',')}">
-          <label>Total extras (B)</label><strong id="fin_totalB">R$ 0,00</strong>
-        </div>
-      </section>
-      <section class="finance-card finance-card-premium">
-        <h3><span class="finance-badge">C</span> PESSOAS EXCEDENTES</h3>
+        <h3><span class="finance-badge">B</span> PESSOAS EXCEDENTES</h3>
         <div class="finance-table">
           <label>Quantidade de pessoas excedentes</label><input class="field" type="text" inputmode="numeric" id="f_pessoasExcedentes" value="${qtdExc||''}">
           <label>Valor por pessoa excedente - sem taxa</label><input class="field" type="text" inputmode="decimal" id="f_valorPessoaExcedente" value="${moneyInputValue(valExc)}">
           <label>Taxa de serviço (%)</label><input class="field" type="text" inputmode="decimal" id="f_taxaExcedente" value="${String(taxaExc).replace('.',',')}">
-          <label>Total excedentes (C)</label><strong id="fin_totalC">R$ 0,00</strong>
+          <label>Total excedentes (B)</label><strong id="fin_totalC">R$ 0,00</strong>
         </div>
+      </section>
+      <section class="finance-card finance-card-premium finance-card-extras">
+        <h3><span class="finance-badge">C</span> EXTRAS (MESA EXTRA / CONSUMOS)</h3>
+        <div class="finance-table finance-table-extras">
+          <div id="extrasRows" class="extras-rows">${extrasLista.map((valor,i)=>`<div class="extra-row"><label class="extra-label">Consumo extra ${i+1}</label><input class="field extra-consumo-input" type="text" inputmode="decimal" value="${moneyInputValue(valor)}"><button type="button" class="btn-remove-extra" title="Remover consumo" onclick="EVENTOS.removeExtraConsumo(this)">×</button></div>`).join('')}</div>
+          <label>Taxa de serviço (%)</label><input class="field" type="text" inputmode="decimal" id="f_taxaExtras" value="${String(taxaExtras).replace('.',',')}">
+          <label>Total extras (C)</label><strong id="fin_totalB">R$ 0,00</strong>
+        </div>
+        <button type="button" class="btn-add-extra-icon" title="Adicionar consumo" onclick="EVENTOS.addExtraConsumo()">+</button>
       </section>
     </div>
     <aside class="finance-summary">
       <h3>RESUMO FINANCEIRO</h3>
       <div class="finance-summary-block"><h4><span class="finance-badge">A</span> CONTRATO</h4><p><span>Total sem taxa</span><strong id="fin_baseA">R$ 0,00</strong></p><p><span>Taxa de serviço</span><strong id="fin_resumo_servicoA">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total contrato (A)</span><strong id="fin_resumo_totalA">R$ 0,00</strong></p></div>
-      <div class="finance-summary-block"><h4><span class="finance-badge">B</span> EXTRAS</h4><p><span>Subtotal extras</span><strong id="fin_baseB">R$ 0,00</strong></p><p><span>Taxa de serviço</span><strong id="fin_resumo_servicoB">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total extras (B)</span><strong id="fin_resumo_totalB">R$ 0,00</strong></p></div>
-      <div class="finance-summary-block"><h4><span class="finance-badge">C</span> EXCEDENTES</h4><p><span>Total sem taxa</span><strong id="fin_baseC">R$ 0,00</strong></p><p><span>Taxa de serviço</span><strong id="fin_resumo_servicoC">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total excedentes (C)</span><strong id="fin_resumo_totalC">R$ 0,00</strong></p></div>
+      <div class="finance-summary-block"><h4><span class="finance-badge">B</span> EXCEDENTES</h4><p><span>Total sem taxa</span><strong id="fin_baseC">R$ 0,00</strong></p><p><span>Taxa de serviço</span><strong id="fin_resumo_servicoC">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total excedentes (B)</span><strong id="fin_resumo_totalC">R$ 0,00</strong></p></div>
+      <div class="finance-summary-block"><h4><span class="finance-badge">C</span> EXTRAS</h4><p><span>Subtotal extras</span><strong id="fin_baseB">R$ 0,00</strong></p><p><span>Taxa de serviço</span><strong id="fin_resumo_servicoB">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total extras (C)</span><strong id="fin_resumo_totalB">R$ 0,00</strong></p></div>
       <div class="finance-grand"><span>TOTAL GERAL (A + B + C)</span><strong id="fin_grand">R$ 0,00</strong></div>
       <input type="hidden" id="f_gorjeta" value="${e.gorjeta||0}">
       <input type="hidden" id="f_valorEstimado" value="${e.valorTotal||e.valorEstimado||0}">

@@ -56,6 +56,27 @@
     const items=state.itens.filter(i=>!setor||setor==='TODOS'||i.setor===setor).sort((a,b)=>`${a.grupo} ${a.nome}`.localeCompare(`${b.grupo} ${b.nome}`,'pt-BR'));
     el.innerHTML=items.map(i=>`<option value="${i.id}">${i.nome} • ${i.grupo} • estoque ${i.estoqueAtual}</option>`).join('');
   }
+  function uniformeOptionsBySetor(setor, selected=''){
+    const items=state.itens.filter(i=>!setor||setor==='TODOS'||i.setor===setor).sort((a,b)=>`${a.grupo} ${a.nome}`.localeCompare(`${b.grupo} ${b.nome}`,'pt-BR'));
+    return items.map(i=>`<option value="${i.id}" ${i.id===selected?'selected':''}>${i.nome} • ${i.grupo} • estoque ${i.estoqueAtual}</option>`).join('');
+  }
+  function addMovItemRow(selected='', qtd=1){
+    const box=$('#movItensLista'); if(!box) return;
+    const setor=$('#movSetor')?.value || '';
+    const row=document.createElement('div'); row.className='mov-item-row';
+    row.innerHTML=`<select class="movUniformeItem">${uniformeOptionsBySetor(setor, selected)}</select><input class="movQtdItem" type="number" min="1" value="${qtd}"><button class="remove-item-btn" type="button" title="Remover">×</button>`;
+    row.querySelector('.remove-item-btn').addEventListener('click',()=>{ if($$('.mov-item-row').length>1){ row.remove(); } });
+    box.appendChild(row);
+  }
+  function refreshMovItemRows(){
+    const rows=$$('.mov-item-row');
+    if(!rows.length){ addMovItemRow(); return; }
+    const setor=$('#movSetor')?.value || '';
+    rows.forEach(row=>{ const sel=row.querySelector('.movUniformeItem'); const current=sel?.value||''; if(sel) sel.innerHTML=uniformeOptionsBySetor(setor,current); });
+  }
+  function getMovItems(){
+    return $$('.mov-item-row').map(row=>({id:row.querySelector('.movUniformeItem')?.value, qtd:Math.max(1,parseInt(row.querySelector('.movQtdItem')?.value||'1',10))})).filter(x=>x.id);
+  }
   function populateFuncionarios(){
     const dl=$('#listaColaboradores'); if(!dl) return;
     const nomes=Object.values(state.funcionarios||{}).map(f=>f.nome||f.name||f).filter(Boolean).sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
@@ -85,15 +106,28 @@
   function renderAll(){ populateSetorSelect('#movSetor'); populateSetorSelect('#lavSetor'); populateSetorSelect('#filtroSetor',true); populateUniformeSelect('#movSetor','#movUniforme'); populateUniformeSelect('#lavSetor','#lavUniforme'); populateFuncionarios(); renderResumo(); renderEstoque(); renderCompras(); renderLavanderia(); renderHistorico(); renderFuncionarios(); }
 
   function registerMovement(){
-    const tipo=$('#movTipo').value, id=$('#movUniforme').value, item=itemById(id), qtd=Math.max(1,parseInt($('#movQtd').value||'1',10)); if(!item) return alert('Selecione um uniforme.');
-    const col=$('#movColaborador').value.trim(); if(tipo!=='AJUSTE' && !col) return alert('Informe o colaborador.');
-    if(tipo==='ENTREGA' && item.estoqueAtual<qtd) return alert('Estoque insuficiente para esta entrega.');
-    if(tipo==='ENTREGA'){ item.estoqueAtual-=qtd; item.emUso+=qtd; }
-    if(tipo==='DEVOLUÇÃO'){ item.estoqueAtual+=qtd; item.emUso=Math.max(item.emUso-qtd,0); }
-    if(tipo==='AJUSTE'){ item.estoqueAtual+=qtd; }
-    calcItem(item);
-    state.movimentos.push({id:'mov_'+Date.now(),tipo,data:now(),itemId:item.id,itemNome:item.nome,setor:item.setor,qtd,colaborador:col,obs:$('#movObs').value.trim()});
-    persist(); alert('Movimentação registrada.');
+    const tipo=$('#movTipo').value;
+    const col=$('#movColaborador').value.trim();
+    const obs=$('#movObs').value.trim();
+    const itensMov=getMovItems();
+    if(!itensMov.length) return alert('Acrescente pelo menos um uniforme.');
+    if(tipo!=='AJUSTE' && !col) return alert('Informe o colaborador.');
+    for(const mov of itensMov){
+      const item=itemById(mov.id);
+      if(!item) return alert('Selecione todos os uniformes.');
+      if(tipo==='ENTREGA' && item.estoqueAtual<mov.qtd) return alert(`Estoque insuficiente para ${item.nome}. Estoque atual: ${item.estoqueAtual}`);
+    }
+    const loteId='lote_'+Date.now();
+    itensMov.forEach((mov,idx)=>{
+      const item=itemById(mov.id); const qtd=mov.qtd;
+      if(tipo==='ENTREGA'){ item.estoqueAtual-=qtd; item.emUso+=qtd; }
+      if(tipo==='DEVOLUÇÃO'){ item.estoqueAtual+=qtd; item.emUso=Math.max(item.emUso-qtd,0); }
+      if(tipo==='AJUSTE'){ item.estoqueAtual+=qtd; }
+      calcItem(item);
+      state.movimentos.push({id:'mov_'+Date.now()+'_'+idx,loteId,tipo,data:now(),itemId:item.id,itemNome:item.nome,setor:item.setor,qtd,colaborador:col,obs});
+    });
+    persist();
+    alert(itensMov.length>1 ? 'Movimentação registrada com vários uniformes.' : 'Movimentação registrada.');
   }
   function registerLaundry(){
     const tipo=$('#lavAcao').value, id=$('#lavUniforme').value, item=itemById(id), qtd=Math.max(1,parseInt($('#lavQtd').value||'1',10)); if(!item) return alert('Selecione um uniforme.');
@@ -111,12 +145,14 @@
   }
   function bind(){
     $$('[data-page]').forEach(btn=>btn.addEventListener('click',()=>{ $$('.page').forEach(p=>p.classList.remove('active')); $('#'+btn.dataset.page)?.classList.add('active'); $$('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===btn.dataset.page)); window.scrollTo({top:0,behavior:'smooth'}); }));
-    ['#movSetor','#lavSetor'].forEach(sel=>$(sel)?.addEventListener('change',()=>populateUniformeSelect(sel, sel==='#movSetor'?'#movUniforme':'#lavUniforme')));
+    $('#movSetor')?.addEventListener('change',refreshMovItemRows);
+    $('#lavSetor')?.addEventListener('change',()=>populateUniformeSelect('#lavSetor','#lavUniforme'));
     $('#filtroSetor')?.addEventListener('change',renderEstoque); $('#buscaItem')?.addEventListener('input',renderEstoque); $('#buscaFuncionario')?.addEventListener('input',renderFuncionarios);
+    $('#btnAddMovItem')?.addEventListener('click',()=>addMovItemRow());
     $('#btnRegistrarMov')?.addEventListener('click',registerMovement); $('#btnRegistrarLav')?.addEventListener('click',registerLaundry); $('#btnCopiarCompras')?.addEventListener('click',copyCompras);
   }
   async function init(){
-    const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); state=normalizeState(local); bind(); renderAll();
+    const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); state=normalizeState(local); bind(); renderAll(); refreshMovItemRows();
     if(window.UniformesFirebase && await window.UniformesFirebase.init()){
       firebaseReady=true; $('#syncStatus').textContent='Sincronizado Firebase';
       window.UniformesFirebase.listenState(remote=>{ if(remote && !saving){ state=normalizeState(remote); saveLocal(); renderAll(); } else if(!remote){ window.UniformesFirebase.saveState(state); } });

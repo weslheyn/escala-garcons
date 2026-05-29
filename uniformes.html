@@ -63,11 +63,15 @@
             <label>Tipo de movimentação<select id="movTipo"><option value="ENTREGA">Entrega ao colaborador</option><option value="DEVOLUÇÃO">Devolução para estoque</option><option value="AJUSTE">Ajuste de estoque</option></select></label>
             <label>Setor<select id="movSetor"></select></label>
             <label>Buscar colaborador<input id="movColaborador" list="listaColaboradores" placeholder="Digite o nome"></label>
-            <label>Uniforme<select id="movUniforme"></select></label>
-            <label>Quantidade<input id="movQtd" type="number" min="1" value="1"></label>
-            <label>Observação<input id="movObs" placeholder="Opcional"></label>
+            <label class="span-3">Itens da entrega / devolução
+              <div class="multi-items" id="movItensLista"></div>
+            </label>
+            <label class="span-3">Observação<input id="movObs" placeholder="Opcional"></label>
           </div>
-          <button class="primary-btn" id="btnRegistrarMov">Registrar movimentação</button>
+          <div class="action-row">
+            <button class="secondary-btn no-margin" id="btnAddMovItem" type="button">+ Acrescentar uniforme</button>
+            <button class="primary-btn no-margin" id="btnRegistrarMov" type="button">Registrar movimentação</button>
+          </div>
         </section>
       </section>
 

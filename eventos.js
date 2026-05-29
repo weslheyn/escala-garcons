@@ -767,11 +767,13 @@ function eventFinancialValuesFromFields(){
   const servicoA=baseA*(taxa/100);
   const totalA=baseA+servicoA;
 
-  const extra1=parseNum($('f_extra1')?.value);
-  const extra2=parseNum($('f_extra2')?.value);
-  const extra3=parseNum($('f_extra3')?.value);
+  const extraInputs=Array.from(document.querySelectorAll('.extra-consumo-input'));
+  const extrasItens=extraInputs.map(el=>parseNum(el.value));
+  const extra1=extrasItens[0]||0;
+  const extra2=extrasItens[1]||0;
+  const extra3=extrasItens[2]||0;
   const taxaExtras=parseNum($('f_taxaExtras')?.value || $('f_taxa')?.value || 13);
-  const baseB=extra1+extra2+extra3;
+  const baseB=extrasItens.reduce((sum,v)=>sum+(Number(v)||0),0);
   const servicoB=baseB*(taxaExtras/100);
   const totalB=baseB+servicoB;
 
@@ -784,7 +786,7 @@ function eventFinancialValuesFromFields(){
 
   const gorjeta=servicoA+servicoB+servicoC;
   const valorTotal=totalA+totalB+totalC;
-  return {pessoas,valorPessoa,taxa,baseA,servicoA,totalA,extra1,extra2,extra3,taxaExtras,baseB,servicoB,totalB,pessoasExcedentes,valorPessoaExcedente,taxaExcedente,baseC,servicoC,totalC,gorjeta,valorTotal};
+  return {pessoas,valorPessoa,taxa,baseA,servicoA,totalA,extra1,extra2,extra3,extrasItens,taxaExtras,baseB,servicoB,totalB,pessoasExcedentes,valorPessoaExcedente,taxaExcedente,baseC,servicoC,totalC,gorjeta,valorTotal};
 }
 function setText(id,value){const el=$(id); if(el)el.textContent=value;}
 function setVal(id,value){const el=$(id); if(el)el.value=value;}
@@ -813,17 +815,43 @@ function calcEventFinancialsFromFields(){
   setVal('f_valorEstimado',f.valorTotal?f.valorTotal.toFixed(2):'0.00');
 }
 function setupEventFinancials(){
-  ['f_pessoas','f_valorPessoa','f_taxa','f_extra1','f_extra2','f_extra3','f_taxaExtras','f_pessoasExcedentes','f_valorPessoaExcedente','f_taxaExcedente'].forEach(id=>{
+  ['f_pessoas','f_valorPessoa','f_taxa','f_taxaExtras','f_pessoasExcedentes','f_valorPessoaExcedente','f_taxaExcedente'].forEach(id=>{
     const el=$(id); if(!el)return;
+    el.addEventListener('input',calcEventFinancialsFromFields);
+    el.addEventListener('change',calcEventFinancialsFromFields);
+  });
+  document.querySelectorAll('.extra-consumo-input').forEach(el=>{
     el.addEventListener('input',calcEventFinancialsFromFields);
     el.addEventListener('change',calcEventFinancialsFromFields);
   });
   calcEventFinancialsFromFields();
 }
+function addExtraConsumo(valor=''){
+  const wrap=$('extrasRows');
+  if(!wrap)return;
+  const idx=wrap.querySelectorAll('.extra-consumo-input').length+1;
+  const label=document.createElement('label');
+  label.textContent='Consumo extra '+idx;
+  const input=document.createElement('input');
+  input.className='field extra-consumo-input';
+  input.type='text';
+  input.inputMode='decimal';
+  input.value=valor||'';
+  input.addEventListener('input',calcEventFinancialsFromFields);
+  input.addEventListener('change',calcEventFinancialsFromFields);
+  wrap.appendChild(label);
+  wrap.appendChild(input);
+  calcEventFinancialsFromFields();
+  input.focus();
+}
 function financialHtml(e={}){
+  const extrasOrigem=Array.isArray(e.extrasItens)?e.extrasItens:Array.isArray(e.consumosExtras)?e.consumosExtras:null;
   const ex1=e.extra1??e.consumoExtra1??e.extras1??e.extras??0;
   const ex2=e.extra2??e.consumoExtra2??e.extras2??0;
   const ex3=e.extra3??e.consumoExtra3??e.extras3??0;
+  let extrasLista=(extrasOrigem&&extrasOrigem.length?extrasOrigem:[ex1,ex2,ex3]).map(v=>Number(v)||0);
+  while(extrasLista.length<2)extrasLista.push(0);
+  while(extrasLista.length>2 && !extrasLista[extrasLista.length-1])extrasLista.pop();
   const qtdExc=e.pessoasExcedentes??e.qtdExcedente??e.quantidadeExcedente??0;
   const valExc=e.valorPessoaExcedente??e.valorExcedente??0;
   const taxaExc=e.taxaExcedentePct??e.taxaExcedente??e.taxaServicoPct??13;
@@ -841,10 +869,9 @@ function financialHtml(e={}){
       </section>
       <section class="finance-card finance-card-premium">
         <h3><span class="finance-badge">B</span> EXTRAS (MESA EXTRA / CONSUMOS)</h3>
-        <div class="finance-table">
-          <label>Consumo extra 1</label><input class="field" type="text" inputmode="decimal" id="f_extra1" value="${moneyInputValue(ex1)}">
-          <label>Consumo extra 2</label><input class="field" type="text" inputmode="decimal" id="f_extra2" value="${moneyInputValue(ex2)}">
-          <label>Consumo extra 3</label><input class="field" type="text" inputmode="decimal" id="f_extra3" value="${moneyInputValue(ex3)}">
+        <div class="finance-table finance-table-extras">
+          <div id="extrasRows" class="extras-rows">${extrasLista.map((valor,i)=>`<label>Consumo extra ${i+1}</label><input class="field extra-consumo-input" type="text" inputmode="decimal" value="${moneyInputValue(valor)}">`).join('')}</div>
+          <button type="button" class="btn-add-extra" onclick="EVENTOS.addExtraConsumo()">+ Adicionar consumo</button>
           <label>Taxa de serviço (%)</label><input class="field" type="text" inputmode="decimal" id="f_taxaExtras" value="${String(taxaExtras).replace('.',',')}">
           <label>Total extras (B)</label><strong id="fin_totalB">R$ 0,00</strong>
         </div>
@@ -904,6 +931,8 @@ function collect(id){
     extra1:f.extra1,
     extra2:f.extra2,
     extra3:f.extra3,
+    extrasItens:f.extrasItens||[],
+    consumosExtras:f.extrasItens||[],
     consumoExtra1:f.extra1,
     consumoExtra2:f.extra2,
     consumoExtra3:f.extra3,
@@ -1033,6 +1062,7 @@ window.EVENTOS={
   markRecuperado(id){const e=state.eventos.find(x=>x.id===id); if(e){e.status='Proposta enviada';e.movidoEm=new Date().toISOString();e.statusAtualizadoEm=e.movidoEm;e.observacoes=(e.observacoes||'')+'\n\n[RECUPERAÇÃO] Cliente reativado em '+new Date().toLocaleDateString('pt-BR');save();toast('Cliente movido para proposta');render();}},
   whats(id){const e=state.eventos.find(x=>x.id===id); if(!e||!e.telefone)return toast('Telefone não cadastrado'); window.open(`https://wa.me/${String(e.telefone).replace(/\D/g,'')}?text=${encodeURIComponent('Olá, tudo bem? Estou entrando em contato sobre sua proposta de evento no Coco Bambu.')}`,'_blank');},
   seedReset(){toast('Importação da planilha 2026/2027 foi removida. Use cadastro no app ou Google Forms.');},
+  addExtraConsumo,
   exportCSV(){const cols=['data','horario','cliente','telefone','unidade','tipo','turno','pessoas','pacote','status','valorPessoa','extras','taxaServicoPct','valorEstimado','gorjeta','origem','observacoes'];const csv=[cols.join(';')].concat(state.eventos.map(e=>cols.map(c=>'"'+String(e[c]??'').replace(/"/g,'""').replace(/\n/g,' | ')+'"').join(';'))).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='eventos_premium_export.csv';a.click();URL.revokeObjectURL(a.href);},
   async firebaseSync(){if(!window.EventosFirebase)return toast('Firebase não carregado'); const ok=await EventosFirebase.init(); if(!ok)return toast('Firebase indisponível nesta abertura'); await EventosFirebase.saveAll(state.eventos); toast('Eventos enviados para /eventos_premium');},
 };

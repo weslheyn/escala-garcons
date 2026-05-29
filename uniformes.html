@@ -65,13 +65,23 @@
             <label>Buscar colaborador<input id="movColaborador" list="listaColaboradores" placeholder="Digite o nome"></label>
             <label>Responsável pela entrega<input id="movResponsavel" list="listaResponsaveisEntrega" placeholder="Quem está entregando"></label>
             <datalist id="listaResponsaveisEntrega"></datalist>
-            <label class="span-3">Itens da entrega / devolução
+            <div class="span-3 item-picker-block">
+              <label>Buscar uniforme
+                <div class="picker-row">
+                  <input id="movBuscaUniforme" list="listaUniformesMov" placeholder="Pesquisar uniforme para adicionar...">
+                  <input id="movBuscaQtd" type="number" min="1" value="1" title="Quantidade">
+                  <button class="secondary-btn no-margin" id="btnAddMovItem" type="button">+ Adicionar</button>
+                </div>
+              </label>
+              <datalist id="listaUniformesMov"></datalist>
+              <div class="hint-line">Digite e escolha o uniforme. Ele só entra na entrega depois de clicar em adicionar.</div>
+              <div class="cart-title">Itens da entrega / devolução</div>
               <div class="multi-items" id="movItensLista"></div>
-            </label>
+              <div class="mov-summary" id="movResumoEntrega">Nenhum uniforme adicionado.</div>
+            </div>
             <label class="span-3">Observação<input id="movObs" placeholder="Opcional"></label>
           </div>
           <div class="action-row">
-            <button class="secondary-btn no-margin" id="btnAddMovItem" type="button">+ Acrescentar uniforme</button>
             <button class="primary-btn no-margin" id="btnRegistrarMov" type="button">Registrar movimentação</button>
           </div>
         </section>

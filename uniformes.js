@@ -58,26 +58,66 @@
     const items=state.itens.filter(i=>!setor||setor==='TODOS'||i.setor===setor).sort((a,b)=>`${a.grupo} ${a.nome}`.localeCompare(`${b.grupo} ${b.nome}`,'pt-BR'));
     el.innerHTML=items.map(i=>`<option value="${i.id}">${i.nome} • ${i.grupo} • estoque ${i.estoqueAtual}</option>`).join('');
   }
-  function uniformeOptionsBySetor(setor, selected=''){
-    const items=state.itens.filter(i=>!setor||setor==='TODOS'||i.setor===setor).sort((a,b)=>`${a.grupo} ${a.nome}`.localeCompare(`${b.grupo} ${b.nome}`,'pt-BR'));
-    return items.map(i=>`<option value="${i.id}" ${i.id===selected?'selected':''}>${i.nome} • ${i.grupo} • estoque ${i.estoqueAtual}</option>`).join('');
-  }
-  function addMovItemRow(selected='', qtd=1){
-    const box=$('#movItensLista'); if(!box) return;
+  function uniformeLabel(i){ return `${i.nome} • ${i.grupo} • estoque ${i.estoqueAtual}`; }
+  function uniformesFiltradosMov(){
     const setor=$('#movSetor')?.value || '';
-    const row=document.createElement('div'); row.className='mov-item-row';
-    row.innerHTML=`<select class="movUniformeItem">${uniformeOptionsBySetor(setor, selected)}</select><input class="movQtdItem" type="number" min="1" value="${qtd}"><button class="remove-item-btn" type="button" title="Remover">×</button>`;
-    row.querySelector('.remove-item-btn').addEventListener('click',()=>{ if($$('.mov-item-row').length>1){ row.remove(); } });
+    return state.itens.filter(i=>!setor||setor==='TODOS'||i.setor===setor)
+      .sort((a,b)=>`${a.grupo} ${a.nome}`.localeCompare(`${b.grupo} ${b.nome}`,'pt-BR'));
+  }
+  function populateUniformeBusca(){
+    const dl=$('#listaUniformesMov'); if(!dl) return;
+    dl.innerHTML=uniformesFiltradosMov().map(i=>`<option value="${uniformeLabel(i).replace(/"/g,'&quot;')}"></option>`).join('');
+  }
+  function findUniformeFromBusca(){
+    const raw=cleanName($('#movBuscaUniforme')?.value||'');
+    if(!raw) return null;
+    const key=nameKey(raw);
+    const items=uniformesFiltradosMov();
+    return items.find(i=>nameKey(uniformeLabel(i))===key) ||
+           items.find(i=>nameKey(`${i.nome} ${i.grupo} ${i.tamanho}`).includes(key) || key.includes(nameKey(i.nome)));
+  }
+  function renderMovResumo(){
+    const box=$('#movResumoEntrega'); if(!box) return;
+    const itens=getMovItems();
+    if(!itens.length){ box.textContent='Nenhum uniforme adicionado.'; return; }
+    const total=itens.reduce((a,i)=>a+i.qtd,0);
+    box.innerHTML=`<strong>Resumo:</strong> ${itens.map(m=>{ const it=itemById(m.id); return `${m.qtd} ${it?.nome||'Uniforme'}`; }).join(' • ')} <span class="summary-total">Total: ${total} peça${total>1?'s':''}</span>`;
+  }
+  function addMovItemToCart(id, qtd=1){
+    const box=$('#movItensLista'); if(!box) return;
+    const item=itemById(id); if(!item) return alert('Selecione um uniforme válido.');
+    qtd=Math.max(1,parseInt(qtd||'1',10));
+    const existing=box.querySelector(`.mov-item-row[data-item-id="${CSS.escape(id)}"]`);
+    if(existing){
+      const inp=existing.querySelector('.movQtdItem');
+      inp.value=Math.max(1,parseInt(inp.value||'0',10))+qtd;
+      renderMovResumo();
+      return;
+    }
+    const row=document.createElement('div'); row.className='mov-item-row'; row.dataset.itemId=id;
+    row.innerHTML=`<div class="cart-item-name"><strong>${item.nome}</strong><span>${item.grupo} • ${item.setor} • estoque ${item.estoqueAtual}</span></div><input class="movQtdItem" type="number" min="1" value="${qtd}"><button class="remove-item-btn" type="button" title="Remover">×</button>`;
+    row.querySelector('.remove-item-btn').addEventListener('click',()=>{ row.remove(); renderMovResumo(); });
+    row.querySelector('.movQtdItem').addEventListener('input',renderMovResumo);
     box.appendChild(row);
+    renderMovResumo();
+  }
+  function addBuscaUniforme(){
+    const item=findUniformeFromBusca();
+    const qtd=$('#movBuscaQtd')?.value||1;
+    if(!item) return alert('Digite e selecione um uniforme da lista.');
+    addMovItemToCart(item.id,qtd);
+    if($('#movBuscaUniforme')) $('#movBuscaUniforme').value='';
+    if($('#movBuscaQtd')) $('#movBuscaQtd').value='1';
   }
   function refreshMovItemRows(){
-    const rows=$$('.mov-item-row');
-    if(!rows.length){ addMovItemRow(); return; }
+    populateUniformeBusca();
     const setor=$('#movSetor')?.value || '';
-    rows.forEach(row=>{ const sel=row.querySelector('.movUniformeItem'); const current=sel?.value||''; if(sel) sel.innerHTML=uniformeOptionsBySetor(setor,current); });
+    // Ao trocar setor, mantém no carrinho apenas itens compatíveis com o setor selecionado.
+    $$('.mov-item-row').forEach(row=>{ const it=itemById(row.dataset.itemId); if(it && setor && setor!=='TODOS' && it.setor!==setor) row.remove(); });
+    renderMovResumo();
   }
   function getMovItems(){
-    return $$('.mov-item-row').map(row=>({id:row.querySelector('.movUniformeItem')?.value, qtd:Math.max(1,parseInt(row.querySelector('.movQtdItem')?.value||'1',10))})).filter(x=>x.id);
+    return $$('.mov-item-row').map(row=>({id:row.dataset.itemId, qtd:Math.max(1,parseInt(row.querySelector('.movQtdItem')?.value||'1',10))})).filter(x=>x.id);
   }
   function populateFuncionarios(){
     const dl=$('#listaColaboradores'); if(!dl) return;
@@ -133,9 +173,10 @@
   function resetMovForm(){
     const box=$('#movItensLista');
     if(box) box.innerHTML='';
-    addMovItemRow();
-    const qtd=$('.movQtdItem'); if(qtd) qtd.value='1';
+    if($('#movBuscaUniforme')) $('#movBuscaUniforme').value='';
+    if($('#movBuscaQtd')) $('#movBuscaQtd').value='1';
     if($('#movObs')) $('#movObs').value='';
+    renderMovResumo();
   }
 
   function registerMovement(){
@@ -188,11 +229,11 @@
     $('#movSetor')?.addEventListener('change',refreshMovItemRows);
     $('#lavSetor')?.addEventListener('change',()=>populateUniformeSelect('#lavSetor','#lavUniforme'));
     $('#filtroSetor')?.addEventListener('change',renderEstoque); $('#buscaItem')?.addEventListener('input',renderEstoque); $('#buscaFuncionario')?.addEventListener('input',renderFuncionarios);
-    $('#btnAddMovItem')?.addEventListener('click',()=>addMovItemRow());
+    $('#btnAddMovItem')?.addEventListener('click',addBuscaUniforme); $('#movBuscaUniforme')?.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); addBuscaUniforme(); } });
     $('#btnRegistrarMov')?.addEventListener('click',registerMovement); $('#btnRegistrarLav')?.addEventListener('click',registerLaundry); $('#btnCopiarCompras')?.addEventListener('click',copyCompras);
   }
   async function init(){
-    const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); state=normalizeState(local); bind(); renderAll(); refreshMovItemRows();
+    const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); state=normalizeState(local); bind(); renderAll(); refreshMovItemRows(); renderMovResumo();
     if(window.UniformesFirebase && await window.UniformesFirebase.init()){
       firebaseReady=true; $('#syncStatus').textContent='Sincronizado Firebase';
       window.UniformesFirebase.listenState(remote=>{ if(remote && !saving){ state=normalizeState(remote); saveLocal(); renderAll(); } else if(!remote){ window.UniformesFirebase.saveState(state); } });

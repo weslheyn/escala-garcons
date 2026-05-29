@@ -831,17 +831,16 @@ function financialHtml(e={}){
   return `<div class="finance-layout span4">
     <div class="finance-left">
       <section class="finance-card finance-card-premium">
-        <h3><span class="finance-badge">A</span> CONTRATO (VALORES BASE)<button type="button" class="finance-help" title="Como calcular">ⓘ</button></h3>
+        <h3><span class="finance-badge">A</span> CONTRATO (VALORES BASE)</h3>
         <div class="finance-table">
           <label>Quantidade de pessoas</label><input class="field" type="number" id="f_pessoas" value="${e.pessoas||''}">
           <label>Valor por pessoa - sem taxa</label><input class="field" type="text" inputmode="decimal" id="f_valorPessoa" value="${moneyInputValue(e.valorPessoa||0)}">
           <label>Taxa de serviço (%)</label><input class="field" type="text" inputmode="decimal" id="f_taxa" value="${String(e.taxaServicoPct??13).replace('.',',')}">
           <label>Total contrato (A)</label><strong id="fin_totalA">R$ 0,00</strong>
         </div>
-        <p class="finance-note">Fórmula: (valor por pessoa × quantidade de pessoas) + taxa de serviço.</p>
       </section>
       <section class="finance-card finance-card-premium">
-        <h3><span class="finance-badge">B</span> EXTRAS (MESA EXTRA / CONSUMOS)<button type="button" class="finance-help" title="Como calcular">ⓘ</button></h3>
+        <h3><span class="finance-badge">B</span> EXTRAS (MESA EXTRA / CONSUMOS)</h3>
         <div class="finance-table">
           <label>Consumo extra 1</label><input class="field" type="text" inputmode="decimal" id="f_extra1" value="${moneyInputValue(ex1)}">
           <label>Consumo extra 2</label><input class="field" type="text" inputmode="decimal" id="f_extra2" value="${moneyInputValue(ex2)}">
@@ -849,17 +848,15 @@ function financialHtml(e={}){
           <label>Taxa de serviço (%)</label><input class="field" type="text" inputmode="decimal" id="f_taxaExtras" value="${String(taxaExtras).replace('.',',')}">
           <label>Total extras (B)</label><strong id="fin_totalB">R$ 0,00</strong>
         </div>
-        <p class="finance-note">Fórmula: (soma dos extras) + taxa de serviço.</p>
       </section>
       <section class="finance-card finance-card-premium">
-        <h3><span class="finance-badge">C</span> PESSOAS EXCEDENTES<button type="button" class="finance-help" title="Como calcular">ⓘ</button></h3>
+        <h3><span class="finance-badge">C</span> PESSOAS EXCEDENTES</h3>
         <div class="finance-table">
           <label>Quantidade de pessoas excedentes</label><input class="field" type="number" id="f_pessoasExcedentes" value="${qtdExc||''}">
           <label>Valor por pessoa excedente - sem taxa</label><input class="field" type="text" inputmode="decimal" id="f_valorPessoaExcedente" value="${moneyInputValue(valExc)}">
           <label>Taxa de serviço (%)</label><input class="field" type="text" inputmode="decimal" id="f_taxaExcedente" value="${String(taxaExc).replace('.',',')}">
           <label>Total excedentes (C)</label><strong id="fin_totalC">R$ 0,00</strong>
         </div>
-        <p class="finance-note">Fórmula: (valor por pessoa excedente × quantidade excedente) + taxa de serviço.</p>
       </section>
     </div>
     <aside class="finance-summary">

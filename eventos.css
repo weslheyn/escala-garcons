@@ -929,3 +929,23 @@ textarea::-webkit-scrollbar,
     max-height:none!important;
   }
 }
+
+/* V104 - Limpeza visual do financeiro: sem ícone de ajuda, sem fórmulas e cards mais compactos */
+.event-form-premium .finance-help,
+.event-form-premium .finance-note{
+  display:none!important;
+}
+.event-form-premium .finance-card-premium{
+  min-height:0!important;
+  padding-bottom:14px!important;
+}
+.event-form-premium .finance-card-premium h3{
+  padding-right:0!important;
+  margin-bottom:10px!important;
+}
+.event-form-premium .finance-table{
+  margin-top:0!important;
+}
+.event-form-premium .finance-left{
+  align-items:start!important;
+}

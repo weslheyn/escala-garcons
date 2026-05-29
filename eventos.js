@@ -1,13 +1,13 @@
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_DATA_VERSION='v100-firebase-sync';
-const STORE='eventos_premium_v100';
+const APP_DATA_VERSION='v101-eventos-sem-calendario-planilha';
+const STORE='eventos_premium_v101';
 const META='eventos_premium_meta_v100';
 const AGENDA_STORE='eventos_agenda_comercial_v61';
 const AGENDA_RESP_STORE='eventos_agenda_responsaveis_v61';
 const DEVICE_STORE='eventos_device_id_v61';
-const CLIENTES_STORE='eventos_clientes_cadastro_v100';
+const CLIENTES_STORE='eventos_clientes_cadastro_v101';
 let deferredInstallPrompt=null;
 const PIPELINE_STATUS=['Lead','Proposta enviada','Visita do espaço','Negociação 1','Negociação 2','Reunião de alinhamento','Contrato enviado','Assinatura cliente','Assinatura diretoria','Fechado','Realizado'];
 const RECOVERY_STATUS=['Recuperação','Sem resposta','Cancelado','Perdido','Perdido/Cancelado'];
@@ -18,7 +18,7 @@ function ensureFreshAppVersion(){
   try{
     const key='gestao_cb_eventos_app_version';
     if(localStorage.getItem(key)!==APP_DATA_VERSION){
-      ['eventos_premium_v58','eventos_premium_meta_v58','eventos_clientes_cadastro_v64','eventos_premium_v95','eventos_premium_v96','eventos_premium_v97','dashboard_cache','dashboard','stats','metricas'].forEach(k=>localStorage.removeItem(k));
+      ['eventos_premium_v58','eventos_premium_meta_v58','eventos_clientes_cadastro_v64','eventos_premium_v95','eventos_premium_v96','eventos_premium_v97','eventos_premium_v100','dashboard_cache','dashboard','stats','metricas'].forEach(k=>localStorage.removeItem(k));
       localStorage.setItem(key,APP_DATA_VERSION);
     }
   }catch(e){}
@@ -66,11 +66,11 @@ function eventoRecency(e){
   const atualizado=parseTimestampBR(e.atualizadoEm||e.updatedAt);
   const form=isGoogleFormsEvento(e);
   if(form){
-    // Leads vindos do Google Forms devem ficar sempre acima dos eventos importados da planilha.
+    // Leads vindos do Google Forms devem ficar sempre acima dos demais eventos.
     return Math.max(criado,atualizado,0)+9000000000000000;
   }
   if(criado||atualizado) return Math.max(criado,atualizado);
-  // Eventos antigos/importados sem data de criação não devem superar leads novos apenas pela data futura do evento.
+  // Eventos sem data de criação não devem superar leads novos apenas pela data futura do evento.
   return 0;
 }
 function sortEventosRecentes(arr){return [...(arr||[])].sort((a,b)=>eventoRecency(b)-eventoRecency(a)||String(b.criadoEm||b.atualizadoEm||b.id||'').localeCompare(String(a.criadoEm||a.atualizadoEm||a.id||'')));}
@@ -107,7 +107,7 @@ function uid(){return 'ev_'+Date.now().toString(36)+'_'+Math.random().toString(3
 function agendaUid(){return 'ag_evt_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)}
 function deviceId(){let id=localStorage.getItem(DEVICE_STORE); if(!id){id='dev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9); localStorage.setItem(DEVICE_STORE,id)} return id;}
 function saveAgenda(){localStorage.setItem(AGENDA_STORE,JSON.stringify(state.agenda));localStorage.setItem(AGENDA_RESP_STORE,JSON.stringify(state.agendaResponsaveis));}
-function save(){localStorage.setItem(STORE,JSON.stringify(state.eventos));localStorage.setItem(META,JSON.stringify(state.meta)); if(window.EventosFirebase&&EventosFirebase.enabled) EventosFirebase.saveAll(state.eventos).catch(()=>{});}
+function save(){localStorage.setItem(STORE,JSON.stringify(state.eventos));localStorage.setItem(META,JSON.stringify(state.meta));}
 function saveClientes(){localStorage.setItem(CLIENTES_STORE,JSON.stringify(state.clientesCadastros||[]));}
 function clienteCadastroMatch(nome,telefone){
   const n=norm(nome||''), tel=String(telefone||'').replace(/\D/g,'');
@@ -997,13 +997,13 @@ window.EVENTOS={
   applyClienteLookup(){applyClienteCadastroToEvento();},
   edit(id){const e=state.eventos.find(x=>x.id===id); if(!e)return; $('modalTitle').textContent='Editar Evento'; $('modalBody').innerHTML=formHtml(e); $('modal').classList.add('open'); setupEventFinancials();},
   saveForm(id){if(!id&&!clienteCadastroMatch($('f_cliente')?.value,$('f_telefone')?.value)){toast('Cliente não cadastrado. Cadastre o cliente antes de criar o evento.');return;} const e=collect(id); const idx=state.eventos.findIndex(x=>String(x.id)===String(e.id)); const antigo=idx>=0?state.eventos[idx]:null; const agora=new Date().toISOString(); if(antigo){e.criadoEm=antigo.criadoEm||e.criadoEm||agora; if((antigo.status||'')!==(e.status||'')){e.movidoEm=agora;e.statusAtualizadoEm=agora;e.observacoes=(e.observacoes||'')+`\n\n[FUNIL] Status alterado manualmente de ${antigo.status||'Sem status'} para ${e.status} em ${new Date().toLocaleString('pt-BR')}`;} state.eventos[idx]=Object.assign({},antigo,e,{atualizadoEm:agora});} else {state.eventos.unshift(Object.assign({},e,{criadoEm:agora,atualizadoEm:agora}));} persistEvento(state.eventos[idx>=0?idx:0]); $('modal').classList.remove('open'); toast('Evento salvo'); render();},
-  view(id){const e=state.eventos.find(x=>x.id===id); if(!e)return; const wa=e.telefone?`<a class="whats" target="_blank" href="https://wa.me/${String(e.telefone).replace(/\D/g,'')}">Abrir WhatsApp</a>`:''; $('modalTitle').textContent=e.cliente; $('modalBody').innerHTML=`<div class="kpi-grid"><div class="kpi"><div class="label">Data</div><div class="value">${dow(e.data)} ${shortDate(e.data)}<br><span style="font-size:16px;color:var(--sub)">${horario(e)}</span></div></div><div class="kpi"><div class="label">Valor total</div><div class="value">${brl(e.valorEstimado)}</div></div><div class="kpi"><div class="label">Pessoas</div><div class="value">${e.pessoas||'-'}</div></div><div class="kpi"><div class="label">Status</div><div class="value" style="font-size:20px">${e.status}</div></div></div><div class="panel" style="margin-top:14px"><p><b>Telefone:</b> ${e.telefone||'-'} ${wa}</p><p><b>Tipo:</b> ${e.tipo} · <b>Turno:</b> ${e.turno} · <b>Pacote:</b> ${e.pacote}</p><p><b>Unidade/Salão:</b> ${e.unidade||'-'}</p><p><b>Origem:</b> ${e.origem||e.origemPlanilha||'-'}</p><p><b>Diretoria:</b> ${(e.diretores&&e.diretores.length)?e.diretores.map(d=>`${esc(d.nome)} ${d.assinado?'✅':'⏳'}`).join(' · '):'Não cadastrada'}</p><div class="divider"></div><p style="white-space:pre-wrap">${esc(e.observacoes||'')}</p></div><br><button class="btn" onclick="EVENTOS.edit('${e.id}')">Editar</button>`; $('modal').classList.add('open');},
+  view(id){const e=state.eventos.find(x=>x.id===id); if(!e)return; const wa=e.telefone?`<a class="whats" target="_blank" href="https://wa.me/${String(e.telefone).replace(/\D/g,'')}">Abrir WhatsApp</a>`:''; $('modalTitle').textContent=e.cliente; $('modalBody').innerHTML=`<div class="kpi-grid"><div class="kpi"><div class="label">Data</div><div class="value">${dow(e.data)} ${shortDate(e.data)}<br><span style="font-size:16px;color:var(--sub)">${horario(e)}</span></div></div><div class="kpi"><div class="label">Valor total</div><div class="value">${brl(e.valorEstimado)}</div></div><div class="kpi"><div class="label">Pessoas</div><div class="value">${e.pessoas||'-'}</div></div><div class="kpi"><div class="label">Status</div><div class="value" style="font-size:20px">${e.status}</div></div></div><div class="panel" style="margin-top:14px"><p><b>Telefone:</b> ${e.telefone||'-'} ${wa}</p><p><b>Tipo:</b> ${e.tipo} · <b>Turno:</b> ${e.turno} · <b>Pacote:</b> ${e.pacote}</p><p><b>Unidade/Salão:</b> ${e.unidade||'-'}</p><p><b>Origem:</b> ${e.origem||'-'}</p><p><b>Diretoria:</b> ${(e.diretores&&e.diretores.length)?e.diretores.map(d=>`${esc(d.nome)} ${d.assinado?'✅':'⏳'}`).join(' · '):'Não cadastrada'}</p><div class="divider"></div><p style="white-space:pre-wrap">${esc(e.observacoes||'')}</p></div><br><button class="btn" onclick="EVENTOS.edit('${e.id}')">Editar</button>`; $('modal').classList.add('open');},
   closeModal(){ $('modal').classList.remove('open');},
   movePipeline(id,status){const e=state.eventos.find(x=>String(x.id)===String(id)); if(!e)return toast('Evento não encontrado'); if(!canMovePipeline(e.status,status))return toast('Etapa inválida'); if(e.status===status)return toast('Card já está nesta etapa'); const kanban=document.querySelector('#funil .pipeline-kanban'); if(kanban)__pipelineScrollLeft=kanban.scrollLeft; const antigo=e.status; const agora=new Date().toISOString(); e.status=status; e.movidoEm=agora; e.statusAtualizadoEm=agora; e.atualizadoEm=agora; e.criadoEm=e.criadoEm||agora; e.observacoes=(e.observacoes||'')+`\n\n[FUNIL] Movido de ${antigo||'Sem status'} para ${status} em ${new Date().toLocaleString('pt-BR')}`; persistEvento(e); toast(`Movido para ${status}`); render(); requestAnimationFrame(()=>{const k=document.querySelector('#funil .pipeline-kanban');if(k)k.scrollLeft=__pipelineScrollLeft||0;});},
   markRecuperado(id){const e=state.eventos.find(x=>x.id===id); if(e){e.status='Proposta enviada';e.movidoEm=new Date().toISOString();e.statusAtualizadoEm=e.movidoEm;e.observacoes=(e.observacoes||'')+'\n\n[RECUPERAÇÃO] Cliente reativado em '+new Date().toLocaleDateString('pt-BR');save();toast('Cliente movido para proposta');render();}},
   whats(id){const e=state.eventos.find(x=>x.id===id); if(!e||!e.telefone)return toast('Telefone não cadastrado'); window.open(`https://wa.me/${String(e.telefone).replace(/\D/g,'')}?text=${encodeURIComponent('Olá, tudo bem? Estou entrando em contato sobre sua proposta de evento no Coco Bambu.')}`,'_blank');},
-  seedReset(){if(confirm('Recarregar a base importada da planilha? Eventos cadastrados manualmente serão mantidos.')){const manual=state.eventos.filter(e=>!e.importado);state.eventos=dedupeEventos([...(window.EVENTOS_SEED||[]).map(e=>({...e,importado:true})),...manual]);save();toast('Base 2026/2027 recarregada');setupFilters();render();}},
-  exportCSV(){const cols=['data','horario','cliente','telefone','unidade','tipo','turno','pessoas','pacote','status','valorPessoa','extras','taxaServicoPct','valorEstimado','gorjeta','origemPlanilha','observacoes'];const csv=[cols.join(';')].concat(state.eventos.map(e=>cols.map(c=>'"'+String(e[c]??'').replace(/"/g,'""').replace(/\n/g,' | ')+'"').join(';'))).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='eventos_premium_export.csv';a.click();URL.revokeObjectURL(a.href);},
+  seedReset(){toast('Importação da planilha 2026/2027 foi removida. Use cadastro no app ou Google Forms.');},
+  exportCSV(){const cols=['data','horario','cliente','telefone','unidade','tipo','turno','pessoas','pacote','status','valorPessoa','extras','taxaServicoPct','valorEstimado','gorjeta','origem','observacoes'];const csv=[cols.join(';')].concat(state.eventos.map(e=>cols.map(c=>'"'+String(e[c]??'').replace(/"/g,'""').replace(/\n/g,' | ')+'"').join(';'))).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='eventos_premium_export.csv';a.click();URL.revokeObjectURL(a.href);},
   async firebaseSync(){if(!window.EventosFirebase)return toast('Firebase não carregado'); const ok=await EventosFirebase.init(); if(!ok)return toast('Firebase indisponível nesta abertura'); await EventosFirebase.saveAll(state.eventos); toast('Eventos enviados para /eventos_premium');},
 };
 function boot(){

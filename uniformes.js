@@ -5,6 +5,8 @@
   const moneyless=n=>Number(n||0);
   const now=()=>new Date().toISOString();
   const fmtDate=iso=>{try{return new Date(iso).toLocaleString('pt-BR')}catch(e){return iso||''}};
+  const cleanName=v=>String(v||'').replace(/\s+/g,' ').trim();
+  const nameKey=v=>cleanName(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
 
   let state={itens:[], movimentos:[], funcionarios:{}, atualizadoEm:null};
   let firebaseReady=false;
@@ -79,8 +81,25 @@
   }
   function populateFuncionarios(){
     const dl=$('#listaColaboradores'); if(!dl) return;
-    const nomes=Object.values(state.funcionarios||{}).map(f=>f.nome||f.name||f).filter(Boolean).sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
+    const mapa=new Map();
+    Object.values(state.funcionarios||{}).forEach(f=>{
+      const nome=cleanName(f?.nome||f?.name||f?.NOME||f?.colaborador||f);
+      if(nome && !mapa.has(nameKey(nome))) mapa.set(nameKey(nome), nome);
+    });
+    // também considera nomes que já aparecem no histórico, sem duplicar ANA/BRUNA repetidos
+    (state.movimentos||[]).forEach(m=>{
+      const nome=cleanName(m.colaborador);
+      if(nome && !mapa.has(nameKey(nome))) mapa.set(nameKey(nome), nome);
+    });
+    const nomes=[...mapa.values()].sort((a,b)=>a.localeCompare(b,'pt-BR'));
     dl.innerHTML=nomes.map(n=>`<option value="${String(n).replace(/"/g,'&quot;')}"></option>`).join('');
+
+    const resp=$('#listaResponsaveisEntrega');
+    if(resp){
+      const responsaveis=new Map();
+      (state.movimentos||[]).forEach(m=>{ const r=cleanName(m.responsavelEntrega); if(r && !responsaveis.has(nameKey(r))) responsaveis.set(nameKey(r), r); });
+      resp.innerHTML=[...responsaveis.values()].sort((a,b)=>a.localeCompare(b,'pt-BR')).map(n=>`<option value="${String(n).replace(/"/g,'&quot;')}"></option>`).join('');
+    }
   }
 
   function renderResumo(){
@@ -101,14 +120,29 @@
   }
   function renderCompras(){ const tb=$('#tabelaCompras'); if(!tb) return; const rows=state.itens.filter(i=>i.comprar>0).sort((a,b)=>b.comprar-a.comprar); tb.innerHTML=rows.map(i=>`<tr><td>${i.setor}</td><td><strong>${i.nome}</strong><div class="muted">${i.grupo}</div></td><td>${i.estoqueAtual}</td><td>${i.ideal}</td><td><strong>${i.comprar}</strong></td></tr>`).join('')||'<tr><td colspan="5" class="empty">Nenhuma compra necessária.</td></tr>'; }
   function renderLavanderia(){ const tb=$('#tabelaLavanderia'); if(!tb) return; const rows=state.itens.filter(i=>i.lavanderia>0).sort((a,b)=>b.lavanderia-a.lavanderia); tb.innerHTML=rows.map(i=>`<tr><td><strong>${i.nome}</strong><div class="muted">${i.grupo}</div></td><td>${i.setor}</td><td>${i.lavanderia}</td><td>${i.estoqueAtual}</td><td>${i.comprar}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">Nenhuma peça na lavanderia.</td></tr>'; }
-  function renderHistorico(){ const el=$('#historicoLista'); if(!el) return; const rows=[...state.movimentos].slice(-80).reverse(); el.innerHTML=rows.map(m=>`<div class="history-row"><div><strong>${m.tipo}</strong><div class="muted">${fmtDate(m.data)} • ${m.itemNome||''} • Qtd ${m.qtd}</div></div><div class="muted">${m.colaborador||m.fornecedor||''}<br>${m.obs||''}</div></div>`).join('')||'<div class="empty">Sem movimentações.</div>'; }
+  function renderHistorico(){ const el=$('#historicoLista'); if(!el) return; const rows=[...state.movimentos].slice(-80).reverse(); el.innerHTML=rows.map(m=>`<div class="history-row"><div><strong>${m.tipo}</strong><div class="muted">${fmtDate(m.data)} • ${m.itemNome||''} • Qtd ${m.qtd}</div></div><div class="muted">${m.colaborador||m.fornecedor||''}${m.responsavelEntrega?'<br>Resp.: '+m.responsavelEntrega:''}<br>${m.obs||''}</div></div>`).join('')||'<div class="empty">Sem movimentações.</div>'; }
   function renderFuncionarios(){ const el=$('#listaFuncionarios'); if(!el) return; const busca=($('#buscaFuncionario')?.value||'').toUpperCase(); const posse={}; state.movimentos.forEach(m=>{ if(!m.colaborador) return; posse[m.colaborador]=posse[m.colaborador]||{}; if(m.tipo==='ENTREGA') posse[m.colaborador][m.itemNome]=(posse[m.colaborador][m.itemNome]||0)+m.qtd; if(m.tipo==='DEVOLUÇÃO') posse[m.colaborador][m.itemNome]=(posse[m.colaborador][m.itemNome]||0)-m.qtd; }); const nomes=Object.keys(posse).filter(n=>n.toUpperCase().includes(busca)).sort(); el.innerHTML=nomes.map(n=>{const itens=Object.entries(posse[n]).filter(([,q])=>q>0).map(([item,q])=>`${item}: ${q}`).join(' • ')||'Sem peças em aberto'; return `<div class="func-row"><strong>${n}</strong><div class="muted">${itens}</div></div>`}).join('')||'<div class="empty">Nenhum funcionário com peça registrada ainda.</div>'; }
   function renderAll(){ populateSetorSelect('#movSetor'); populateSetorSelect('#lavSetor'); populateSetorSelect('#filtroSetor',true); populateUniformeSelect('#movSetor','#movUniforme'); populateUniformeSelect('#lavSetor','#lavUniforme'); populateFuncionarios(); renderResumo(); renderEstoque(); renderCompras(); renderLavanderia(); renderHistorico(); renderFuncionarios(); }
 
+  function openPage(pageId){
+    $$('.page').forEach(p=>p.classList.remove('active'));
+    $('#'+pageId)?.classList.add('active');
+    $$('.nav-item,.mobile-nav button').forEach(n=>n.classList.toggle('active',n.dataset.page===pageId));
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  function resetMovForm(){
+    const box=$('#movItensLista');
+    if(box) box.innerHTML='';
+    addMovItemRow();
+    const qtd=$('.movQtdItem'); if(qtd) qtd.value='1';
+    if($('#movObs')) $('#movObs').value='';
+  }
+
   function registerMovement(){
     const tipo=$('#movTipo').value;
-    const col=$('#movColaborador').value.trim();
+    const col=cleanName($('#movColaborador').value);
     const obs=$('#movObs').value.trim();
+    const responsavel=cleanName($('#movResponsavel')?.value||'');
     const itensMov=getMovItems();
     if(!itensMov.length) return alert('Acrescente pelo menos um uniforme.');
     if(tipo!=='AJUSTE' && !col) return alert('Informe o colaborador.');
@@ -124,10 +158,16 @@
       if(tipo==='DEVOLUÇÃO'){ item.estoqueAtual+=qtd; item.emUso=Math.max(item.emUso-qtd,0); }
       if(tipo==='AJUSTE'){ item.estoqueAtual+=qtd; }
       calcItem(item);
-      state.movimentos.push({id:'mov_'+Date.now()+'_'+idx,loteId,tipo,data:now(),itemId:item.id,itemNome:item.nome,setor:item.setor,qtd,colaborador:col,obs});
+      state.movimentos.push({id:'mov_'+Date.now()+'_'+idx,loteId,tipo,data:now(),itemId:item.id,itemNome:item.nome,setor:item.setor,qtd,colaborador:col,responsavelEntrega:responsavel,obs});
     });
     persist();
-    alert(itensMov.length>1 ? 'Movimentação registrada com vários uniformes.' : 'Movimentação registrada.');
+    const resumo = itensMov.map(m=>{ const it=itemById(m.id); return `${it?.nome||'Uniforme'} (${m.qtd})`; }).join(' • ');
+    resetMovForm();
+    openPage('funcionarios');
+    setTimeout(()=>{
+      alert(`Movimentação registrada com sucesso para ${col||'estoque'}.\n${resumo}`);
+      const busca=$('#buscaFuncionario'); if(busca && col){ busca.value=col; renderFuncionarios(); }
+    },80);
   }
   function registerLaundry(){
     const tipo=$('#lavAcao').value, id=$('#lavUniforme').value, item=itemById(id), qtd=Math.max(1,parseInt($('#lavQtd').value||'1',10)); if(!item) return alert('Selecione um uniforme.');

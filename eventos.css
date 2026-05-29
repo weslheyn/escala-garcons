@@ -816,3 +816,116 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, .app::-webkit-scrollbar, .main
 .modal-actions-evento .modal-actions-left,.modal-actions-evento .modal-actions-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .btn-delete-evento{min-width:150px!important}
 @media(max-width:620px){.modal-actions-evento{align-items:stretch!important}.modal-actions-evento .modal-actions-left,.modal-actions-evento .modal-actions-right{width:100%;flex-direction:column}.modal-actions-evento .btn{width:100%!important}}
+
+/* =========================================================
+   V103 - Eventos: visual premium financeiro + scroll invisível
+   Ajuste cirúrgico apenas no módulo Eventos
+========================================================= */
+textarea,
+.funil-scroll,
+.pipeline-strip,
+.pipeline-kanban,
+.kanban,
+.modal-box,
+.finance-summary,
+.finance-left,
+.week-scroll{
+  -ms-overflow-style:none!important;
+  scrollbar-width:none!important;
+}
+textarea::-webkit-scrollbar,
+.funil-scroll::-webkit-scrollbar,
+.pipeline-strip::-webkit-scrollbar,
+.pipeline-kanban::-webkit-scrollbar,
+.kanban::-webkit-scrollbar,
+.modal-box::-webkit-scrollbar,
+.finance-summary::-webkit-scrollbar,
+.finance-left::-webkit-scrollbar,
+.week-scroll::-webkit-scrollbar{
+  width:0!important;
+  height:0!important;
+  display:none!important;
+}
+
+.event-form-premium textarea#f_obs{
+  min-height:88px!important;
+  max-height:130px!important;
+  resize:vertical;
+  line-height:1.45!important;
+  background:linear-gradient(145deg,rgba(19,26,42,.96),rgba(9,13,22,.96))!important;
+}
+
+.event-form-premium .finance-layout{
+  align-items:stretch!important;
+}
+.event-form-premium .finance-left{
+  align-items:stretch!important;
+}
+.event-form-premium .finance-card-premium{
+  min-height:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:space-between!important;
+  background:linear-gradient(145deg,rgba(18,24,39,.98),rgba(7,10,17,.98))!important;
+  border-color:rgba(242,199,91,.35)!important;
+}
+.event-form-premium .finance-card-premium h3{
+  display:flex!important;
+  align-items:center!important;
+  gap:9px!important;
+}
+.finance-help{
+  margin-left:auto;
+  width:24px;
+  height:24px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.04);
+  color:#cbd4e6;
+  font-weight:950;
+  cursor:help;
+}
+.finance-table{
+  overflow:hidden!important;
+}
+.finance-table .field{
+  text-align:right!important;
+}
+.finance-table label,
+.finance-table strong,
+.finance-table .field{
+  border-color:rgba(255,255,255,.055)!important;
+}
+.finance-summary{
+  overflow:auto!important;
+  background:linear-gradient(145deg,rgba(16,24,39,.98),rgba(6,9,15,.98))!important;
+}
+.btn-delete-evento{
+  background:linear-gradient(135deg,#9c111b,#5c0b12)!important;
+  border-color:rgba(255,80,80,.45)!important;
+  color:#fff!important;
+  font-weight:950!important;
+}
+.btn-delete-evento::before{
+  content:'🗑️';
+  margin-right:8px;
+}
+@media (min-width:901px){
+  .event-form-premium .finance-left{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+  .event-form-premium .finance-card-premium{
+    min-height:250px!important;
+  }
+}
+@media (max-width:900px){
+  .event-form-premium .finance-layout{
+    grid-template-columns:1fr!important;
+  }
+  .event-form-premium .finance-left{
+    grid-template-columns:1fr!important;
+  }
+  .finance-summary{
+    max-height:none!important;
+  }
+}

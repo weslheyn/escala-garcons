@@ -770,7 +770,10 @@ function eventFinancialValuesFromFields(){
   const extra1=parseNum($('f_extra1')?.value);
   const extra2=parseNum($('f_extra2')?.value);
   const extra3=parseNum($('f_extra3')?.value);
-  const totalB=extra1+extra2+extra3;
+  const taxaExtras=parseNum($('f_taxaExtras')?.value || $('f_taxa')?.value || 13);
+  const baseB=extra1+extra2+extra3;
+  const servicoB=baseB*(taxaExtras/100);
+  const totalB=baseB+servicoB;
 
   const pessoasExcedentes=parseNum($('f_pessoasExcedentes')?.value);
   const valorPessoaExcedente=parseNum($('f_valorPessoaExcedente')?.value);
@@ -779,9 +782,9 @@ function eventFinancialValuesFromFields(){
   const servicoC=baseC*(taxaExcedente/100);
   const totalC=baseC+servicoC;
 
-  const gorjeta=servicoA+servicoC;
+  const gorjeta=servicoA+servicoB+servicoC;
   const valorTotal=totalA+totalB+totalC;
-  return {pessoas,valorPessoa,taxa,baseA,servicoA,totalA,extra1,extra2,extra3,totalB,pessoasExcedentes,valorPessoaExcedente,taxaExcedente,baseC,servicoC,totalC,gorjeta,valorTotal};
+  return {pessoas,valorPessoa,taxa,baseA,servicoA,totalA,extra1,extra2,extra3,taxaExtras,baseB,servicoB,totalB,pessoasExcedentes,valorPessoaExcedente,taxaExcedente,baseC,servicoC,totalC,gorjeta,valorTotal};
 }
 function setText(id,value){const el=$(id); if(el)el.textContent=value;}
 function setVal(id,value){const el=$(id); if(el)el.value=value;}
@@ -793,6 +796,8 @@ function calcEventFinancialsFromFields(){
   setText('fin_extra1',fmtMoney(f.extra1));
   setText('fin_extra2',fmtMoney(f.extra2));
   setText('fin_extra3',fmtMoney(f.extra3));
+  setText('fin_baseB',fmtMoney(f.baseB));
+  setText('fin_servicoB',fmtMoney(f.servicoB));
   setText('fin_totalB',fmtMoney(f.totalB));
   setText('fin_baseC',fmtMoney(f.baseC));
   setText('fin_servicoC',fmtMoney(f.servicoC));
@@ -802,12 +807,13 @@ function calcEventFinancialsFromFields(){
   setText('fin_resumo_totalB',fmtMoney(f.totalB));
   setText('fin_resumo_totalC',fmtMoney(f.totalC));
   setText('fin_resumo_servicoA',fmtMoney(f.servicoA));
+  setText('fin_resumo_servicoB',fmtMoney(f.servicoB));
   setText('fin_resumo_servicoC',fmtMoney(f.servicoC));
   setVal('f_gorjeta',f.gorjeta?f.gorjeta.toFixed(2):'0.00');
   setVal('f_valorEstimado',f.valorTotal?f.valorTotal.toFixed(2):'0.00');
 }
 function setupEventFinancials(){
-  ['f_pessoas','f_valorPessoa','f_taxa','f_extra1','f_extra2','f_extra3','f_pessoasExcedentes','f_valorPessoaExcedente','f_taxaExcedente'].forEach(id=>{
+  ['f_pessoas','f_valorPessoa','f_taxa','f_extra1','f_extra2','f_extra3','f_taxaExtras','f_pessoasExcedentes','f_valorPessoaExcedente','f_taxaExcedente'].forEach(id=>{
     const el=$(id); if(!el)return;
     el.addEventListener('input',calcEventFinancialsFromFields);
     el.addEventListener('change',calcEventFinancialsFromFields);
@@ -821,10 +827,11 @@ function financialHtml(e={}){
   const qtdExc=e.pessoasExcedentes??e.qtdExcedente??e.quantidadeExcedente??0;
   const valExc=e.valorPessoaExcedente??e.valorExcedente??0;
   const taxaExc=e.taxaExcedentePct??e.taxaExcedente??e.taxaServicoPct??13;
+  const taxaExtras=e.taxaExtrasPct??e.taxaExtras??e.taxaServicoExtrasPct??e.taxaServicoPct??13;
   return `<div class="finance-layout span4">
     <div class="finance-left">
-      <section class="finance-card">
-        <h3><span class="finance-badge">A</span> CONTRATO (VALORES BASE)</h3>
+      <section class="finance-card finance-card-premium">
+        <h3><span class="finance-badge">A</span> CONTRATO (VALORES BASE)<button type="button" class="finance-help" title="Como calcular">ⓘ</button></h3>
         <div class="finance-table">
           <label>Quantidade de pessoas</label><input class="field" type="number" id="f_pessoas" value="${e.pessoas||''}">
           <label>Valor por pessoa - sem taxa</label><input class="field" type="text" inputmode="decimal" id="f_valorPessoa" value="${moneyInputValue(e.valorPessoa||0)}">
@@ -833,18 +840,19 @@ function financialHtml(e={}){
         </div>
         <p class="finance-note">Fórmula: (valor por pessoa × quantidade de pessoas) + taxa de serviço.</p>
       </section>
-      <section class="finance-card">
-        <h3><span class="finance-badge">B</span> MESA EXTRA / CONSUMOS (SEM TAXA)</h3>
+      <section class="finance-card finance-card-premium">
+        <h3><span class="finance-badge">B</span> EXTRAS (MESA EXTRA / CONSUMOS)<button type="button" class="finance-help" title="Como calcular">ⓘ</button></h3>
         <div class="finance-table">
           <label>Consumo extra 1</label><input class="field" type="text" inputmode="decimal" id="f_extra1" value="${moneyInputValue(ex1)}">
           <label>Consumo extra 2</label><input class="field" type="text" inputmode="decimal" id="f_extra2" value="${moneyInputValue(ex2)}">
           <label>Consumo extra 3</label><input class="field" type="text" inputmode="decimal" id="f_extra3" value="${moneyInputValue(ex3)}">
+          <label>Taxa de serviço (%)</label><input class="field" type="text" inputmode="decimal" id="f_taxaExtras" value="${String(taxaExtras).replace('.',',')}">
           <label>Total extras (B)</label><strong id="fin_totalB">R$ 0,00</strong>
         </div>
-        <p class="finance-note">Valores informados aqui não recebem taxa de serviço.</p>
+        <p class="finance-note">Fórmula: (soma dos extras) + taxa de serviço.</p>
       </section>
-      <section class="finance-card">
-        <h3><span class="finance-badge">C</span> PESSOAS EXCEDENTES</h3>
+      <section class="finance-card finance-card-premium">
+        <h3><span class="finance-badge">C</span> PESSOAS EXCEDENTES<button type="button" class="finance-help" title="Como calcular">ⓘ</button></h3>
         <div class="finance-table">
           <label>Quantidade de pessoas excedentes</label><input class="field" type="number" id="f_pessoasExcedentes" value="${qtdExc||''}">
           <label>Valor por pessoa excedente - sem taxa</label><input class="field" type="text" inputmode="decimal" id="f_valorPessoaExcedente" value="${moneyInputValue(valExc)}">
@@ -857,7 +865,7 @@ function financialHtml(e={}){
     <aside class="finance-summary">
       <h3>RESUMO FINANCEIRO</h3>
       <div class="finance-summary-block"><h4><span class="finance-badge">A</span> CONTRATO</h4><p><span>Total sem taxa</span><strong id="fin_baseA">R$ 0,00</strong></p><p><span>Taxa de serviço</span><strong id="fin_resumo_servicoA">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total contrato (A)</span><strong id="fin_resumo_totalA">R$ 0,00</strong></p></div>
-      <div class="finance-summary-block"><h4><span class="finance-badge">B</span> EXTRAS (SEM TAXA)</h4><p><span>Consumo extra 1</span><strong id="fin_extra1">R$ 0,00</strong></p><p><span>Consumo extra 2</span><strong id="fin_extra2">R$ 0,00</strong></p><p><span>Consumo extra 3</span><strong id="fin_extra3">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total extras (B)</span><strong id="fin_resumo_totalB">R$ 0,00</strong></p></div>
+      <div class="finance-summary-block"><h4><span class="finance-badge">B</span> EXTRAS</h4><p><span>Subtotal extras</span><strong id="fin_baseB">R$ 0,00</strong></p><p><span>Taxa de serviço</span><strong id="fin_resumo_servicoB">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total extras (B)</span><strong id="fin_resumo_totalB">R$ 0,00</strong></p></div>
       <div class="finance-summary-block"><h4><span class="finance-badge">C</span> EXCEDENTES</h4><p><span>Total sem taxa</span><strong id="fin_baseC">R$ 0,00</strong></p><p><span>Taxa de serviço</span><strong id="fin_resumo_servicoC">R$ 0,00</strong></p><div class="finance-line"></div><p class="finance-total"><span>Total excedentes (C)</span><strong id="fin_resumo_totalC">R$ 0,00</strong></p></div>
       <div class="finance-grand"><span>TOTAL GERAL (A + B + C)</span><strong id="fin_grand">R$ 0,00</strong></div>
       <input type="hidden" id="f_gorjeta" value="${e.gorjeta||0}">
@@ -902,6 +910,9 @@ function collect(id){
     consumoExtra1:f.extra1,
     consumoExtra2:f.extra2,
     consumoExtra3:f.extra3,
+    taxaExtrasPct:f.taxaExtras,
+    extrasBase:f.baseB,
+    extrasServico:f.servicoB,
     extras:f.totalB,
     totalExtras:f.totalB,
     pessoasExcedentes:f.pessoasExcedentes,

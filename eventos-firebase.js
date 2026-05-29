@@ -58,5 +58,10 @@ window.EventosFirebase = {
     if(!this.enabled||!this.db||!id) return false;
     await this.db.ref('clientes_cadastro/'+id).remove();
     return true;
+  },
+  async deleteEvento(id){
+    if(!this.enabled||!this.db||!id) return false;
+    await this.db.ref('eventos_premium/eventos/'+id).remove();
+    return true;
   }
 };

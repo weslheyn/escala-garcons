@@ -810,3 +810,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, .app::-webkit-scrollbar, .main
   .cliente-editor-actions-101{flex-direction:column}
   .cliente-editor-actions-101 div{flex-direction:column}
 }
+
+/* v102: exclusão segura de evento no modal de edição */
+.modal-actions-evento{justify-content:space-between!important;align-items:center!important;gap:14px!important}
+.modal-actions-evento .modal-actions-left,.modal-actions-evento .modal-actions-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.btn-delete-evento{min-width:150px!important}
+@media(max-width:620px){.modal-actions-evento{align-items:stretch!important}.modal-actions-evento .modal-actions-left,.modal-actions-evento .modal-actions-right{width:100%;flex-direction:column}.modal-actions-evento .btn{width:100%!important}}

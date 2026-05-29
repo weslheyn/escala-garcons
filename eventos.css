@@ -1043,3 +1043,111 @@ textarea::-webkit-scrollbar,
 @media(max-width:620px){
   .event-form-premium .finance-table-extras{grid-template-columns:1fr 128px!important;}
 }
+
+/* V106 - Extras limpos: botão + lateral, remoção por item e alinhamento premium */
+.event-form-premium .finance-left{
+  align-items:stretch!important;
+}
+.event-form-premium .finance-card-premium{
+  min-height:244px!important;
+  display:flex!important;
+  flex-direction:column!important;
+}
+.event-form-premium .finance-card-premium .finance-table{
+  margin-top:12px!important;
+}
+.event-form-premium .finance-table-extras{
+  position:relative!important;
+  display:grid!important;
+  grid-template-columns:1fr 42px!important;
+  gap:0!important;
+}
+.event-form-premium .extras-rows{
+  grid-column:1 / -1!important;
+  display:flex!important;
+  flex-direction:column!important;
+  gap:0!important;
+}
+.event-form-premium .extra-row{
+  display:grid!important;
+  grid-template-columns:minmax(130px,1fr) minmax(120px,170px) 30px!important;
+  align-items:center!important;
+  min-height:37px!important;
+  border-bottom:1px solid rgba(255,255,255,.055)!important;
+}
+.event-form-premium .extra-label{
+  min-width:0!important;
+  overflow:visible!important;
+  white-space:normal!important;
+  line-height:1.1!important;
+  padding-left:10px!important;
+  padding-right:8px!important;
+}
+.event-form-premium .extra-row .extra-consumo-input{
+  width:100%!important;
+  min-width:0!important;
+  text-align:right!important;
+}
+.event-form-premium .btn-remove-extra{
+  width:22px!important;
+  height:22px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border:1px solid rgba(255,255,255,.12)!important;
+  border-radius:50%!important;
+  background:rgba(255,255,255,.04)!important;
+  color:#dbe7ff!important;
+  font-weight:900!important;
+  font-size:14px!important;
+  line-height:1!important;
+  cursor:pointer!important;
+  margin-left:6px!important;
+}
+.event-form-premium .btn-remove-extra:hover{
+  background:rgba(190,30,45,.18)!important;
+  border-color:rgba(255,82,96,.55)!important;
+  color:#ffb3bc!important;
+}
+.event-form-premium .btn-add-extra,
+.event-form-premium .btn-add-extra-icon{
+  width:26px!important;
+  height:26px!important;
+  min-height:26px!important;
+  padding:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  grid-column:2!important;
+  justify-self:end!important;
+  margin:7px 4px 7px 0!important;
+  border:1px solid rgba(242,199,91,.45)!important;
+  border-radius:50%!important;
+  background:rgba(242,199,91,.10)!important;
+  color:#ffd45a!important;
+  font-size:18px!important;
+  font-weight:950!important;
+  line-height:1!important;
+  cursor:pointer!important;
+  text-indent:0!important;
+}
+.event-form-premium .btn-add-extra:hover,
+.event-form-premium .btn-add-extra-icon:hover{
+  background:rgba(242,199,91,.20)!important;
+  transform:translateY(-1px);
+}
+.event-form-premium .finance-table-extras > label,
+.event-form-premium .finance-table-extras > strong,
+.event-form-premium .finance-table-extras > input.field{
+  grid-column:auto!important;
+}
+@media(max-width:900px){
+  .event-form-premium .extra-row{
+    grid-template-columns:minmax(118px,1fr) minmax(100px,145px) 28px!important;
+  }
+}
+@media(max-width:620px){
+  .event-form-premium .extra-row{
+    grid-template-columns:1fr 112px 26px!important;
+  }
+}

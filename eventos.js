@@ -826,23 +826,37 @@ function setupEventFinancials(){
   });
   calcEventFinancialsFromFields();
 }
+function refreshExtraLabels(){
+  const wrap=$('extrasRows');
+  if(!wrap)return;
+  Array.from(wrap.querySelectorAll('.extra-row')).forEach((row,i)=>{
+    const label=row.querySelector('.extra-label');
+    if(label)label.textContent='Consumo extra '+(i+1);
+  });
+}
+function createExtraRow(valor=''){
+  const row=document.createElement('div');
+  row.className='extra-row';
+  row.innerHTML=`<label class="extra-label">Consumo extra</label><input class="field extra-consumo-input" type="text" inputmode="decimal" value="${esc(moneyInputValue(parseNum(valor)))}"><button type="button" class="btn-remove-extra" title="Remover consumo" onclick="EVENTOS.removeExtraConsumo(this)">×</button>`;
+  const input=row.querySelector('.extra-consumo-input');
+  input.addEventListener('input',calcEventFinancialsFromFields);
+  input.addEventListener('change',calcEventFinancialsFromFields);
+  return row;
+}
 function addExtraConsumo(valor=''){
   const wrap=$('extrasRows');
   if(!wrap)return;
-  const idx=wrap.querySelectorAll('.extra-consumo-input').length+1;
-  const label=document.createElement('label');
-  label.textContent='Consumo extra '+idx;
-  const input=document.createElement('input');
-  input.className='field extra-consumo-input';
-  input.type='text';
-  input.inputMode='decimal';
-  input.value=valor||'';
-  input.addEventListener('input',calcEventFinancialsFromFields);
-  input.addEventListener('change',calcEventFinancialsFromFields);
-  wrap.appendChild(label);
-  wrap.appendChild(input);
+  const row=createExtraRow(valor);
+  wrap.appendChild(row);
+  refreshExtraLabels();
   calcEventFinancialsFromFields();
-  input.focus();
+  row.querySelector('.extra-consumo-input')?.focus();
+}
+function removeExtraConsumo(btn){
+  const row=btn?.closest?.('.extra-row');
+  if(row)row.remove();
+  refreshExtraLabels();
+  calcEventFinancialsFromFields();
 }
 function financialHtml(e={}){
   const extrasOrigem=Array.isArray(e.extrasItens)?e.extrasItens:Array.isArray(e.consumosExtras)?e.consumosExtras:null;
@@ -861,7 +875,7 @@ function financialHtml(e={}){
       <section class="finance-card finance-card-premium">
         <h3><span class="finance-badge">A</span> CONTRATO (VALORES BASE)</h3>
         <div class="finance-table">
-          <label>Quantidade de pessoas</label><input class="field" type="number" id="f_pessoas" value="${e.pessoas||''}">
+          <label>Quantidade de pessoas</label><input class="field" type="text" inputmode="numeric" id="f_pessoas" value="${e.pessoas||''}">
           <label>Valor por pessoa - sem taxa</label><input class="field" type="text" inputmode="decimal" id="f_valorPessoa" value="${moneyInputValue(e.valorPessoa||0)}">
           <label>Taxa de serviço (%)</label><input class="field" type="text" inputmode="decimal" id="f_taxa" value="${String(e.taxaServicoPct??13).replace('.',',')}">
           <label>Total contrato (A)</label><strong id="fin_totalA">R$ 0,00</strong>
@@ -870,8 +884,8 @@ function financialHtml(e={}){
       <section class="finance-card finance-card-premium">
         <h3><span class="finance-badge">B</span> EXTRAS (MESA EXTRA / CONSUMOS)</h3>
         <div class="finance-table finance-table-extras">
-          <div id="extrasRows" class="extras-rows">${extrasLista.map((valor,i)=>`<label>Consumo extra ${i+1}</label><input class="field extra-consumo-input" type="text" inputmode="decimal" value="${moneyInputValue(valor)}">`).join('')}</div>
-          <button type="button" class="btn-add-extra" onclick="EVENTOS.addExtraConsumo()">+ Adicionar consumo</button>
+          <div id="extrasRows" class="extras-rows">${extrasLista.map((valor,i)=>`<div class="extra-row"><label class="extra-label">Consumo extra ${i+1}</label><input class="field extra-consumo-input" type="text" inputmode="decimal" value="${moneyInputValue(valor)}"><button type="button" class="btn-remove-extra" title="Remover consumo" onclick="EVENTOS.removeExtraConsumo(this)">×</button></div>`).join('')}</div>
+          <button type="button" class="btn-add-extra-icon" title="Adicionar consumo" onclick="EVENTOS.addExtraConsumo()">+</button>
           <label>Taxa de serviço (%)</label><input class="field" type="text" inputmode="decimal" id="f_taxaExtras" value="${String(taxaExtras).replace('.',',')}">
           <label>Total extras (B)</label><strong id="fin_totalB">R$ 0,00</strong>
         </div>
@@ -879,7 +893,7 @@ function financialHtml(e={}){
       <section class="finance-card finance-card-premium">
         <h3><span class="finance-badge">C</span> PESSOAS EXCEDENTES</h3>
         <div class="finance-table">
-          <label>Quantidade de pessoas excedentes</label><input class="field" type="number" id="f_pessoasExcedentes" value="${qtdExc||''}">
+          <label>Quantidade de pessoas excedentes</label><input class="field" type="text" inputmode="numeric" id="f_pessoasExcedentes" value="${qtdExc||''}">
           <label>Valor por pessoa excedente - sem taxa</label><input class="field" type="text" inputmode="decimal" id="f_valorPessoaExcedente" value="${moneyInputValue(valExc)}">
           <label>Taxa de serviço (%)</label><input class="field" type="text" inputmode="decimal" id="f_taxaExcedente" value="${String(taxaExc).replace('.',',')}">
           <label>Total excedentes (C)</label><strong id="fin_totalC">R$ 0,00</strong>
@@ -1063,6 +1077,7 @@ window.EVENTOS={
   whats(id){const e=state.eventos.find(x=>x.id===id); if(!e||!e.telefone)return toast('Telefone não cadastrado'); window.open(`https://wa.me/${String(e.telefone).replace(/\D/g,'')}?text=${encodeURIComponent('Olá, tudo bem? Estou entrando em contato sobre sua proposta de evento no Coco Bambu.')}`,'_blank');},
   seedReset(){toast('Importação da planilha 2026/2027 foi removida. Use cadastro no app ou Google Forms.');},
   addExtraConsumo,
+  removeExtraConsumo,
   exportCSV(){const cols=['data','horario','cliente','telefone','unidade','tipo','turno','pessoas','pacote','status','valorPessoa','extras','taxaServicoPct','valorEstimado','gorjeta','origem','observacoes'];const csv=[cols.join(';')].concat(state.eventos.map(e=>cols.map(c=>'"'+String(e[c]??'').replace(/"/g,'""').replace(/\n/g,' | ')+'"').join(';'))).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='eventos_premium_export.csv';a.click();URL.revokeObjectURL(a.href);},
   async firebaseSync(){if(!window.EventosFirebase)return toast('Firebase não carregado'); const ok=await EventosFirebase.init(); if(!ok)return toast('Firebase indisponível nesta abertura'); await EventosFirebase.saveAll(state.eventos); toast('Eventos enviados para /eventos_premium');},
 };

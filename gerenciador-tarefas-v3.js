@@ -80,7 +80,16 @@ function saveLocalAlarms(map){localStorage.setItem(LOCAL_ALARMS_KEY,JSON.stringi
 function getLocalAlarm(cardId){return loadLocalAlarms()[cardId]||null;}
 function setLocalAlarm(cardId,cfg){const map=loadLocalAlarms(); if(!cfg||!cfg.enabled) delete map[cardId]; else map[cardId]=Object.assign({scope:'local',deviceId,enabled:true},cfg); saveLocalAlarms(map);}
 function removeLocalAlarm(cardId){const map=loadLocalAlarms(); delete map[cardId]; saveLocalAlarms(map);}
-function effectiveAlarm(c){const local=getLocalAlarm(c.id); if(local&&local.enabled) return Object.assign({scope:'local',soundId:local.soundId||'default'},local); if(c.sharedAlarmEnabled&&c.sharedAlarmTime) return {scope:'shared',enabled:true,time:c.sharedAlarmTime,advance:Number(c.sharedAlarmAdvance||0),vibrate:c.sharedAlarmVibrate!==false,sound:c.sharedAlarmSound!==false,soundId:c.sharedAlarmSoundId||'default'}; return null;}
+function getDeviceAlarmFromCard(c){return (c&&c.deviceAlarms&&c.deviceAlarms[deviceId])?c.deviceAlarms[deviceId]:null;}
+function setDeviceAlarmOnCard(c,cfg){ if(!c||!c.id)return; c.deviceAlarms=c.deviceAlarms||{}; if(!cfg||!cfg.enabled){ delete c.deviceAlarms[deviceId]; removeLocalAlarm(c.id); } else { const clean=Object.assign({scope:'local',deviceId,enabled:true},cfg); c.deviceAlarms[deviceId]=clean; setLocalAlarm(c.id,clean); } }
+function removeDeviceAlarmOnCard(c){ if(!c||!c.id)return; if(c.deviceAlarms) delete c.deviceAlarms[deviceId]; removeLocalAlarm(c.id); }
+function effectiveAlarm(c){
+ const cardDevice=getDeviceAlarmFromCard(c);
+ const local=getLocalAlarm(c.id)||cardDevice;
+ if(local&&local.enabled) return Object.assign({scope:'local',soundId:local.soundId||'default'},local);
+ if(c.sharedAlarmEnabled&&c.sharedAlarmTime) return {scope:'shared',enabled:true,time:c.sharedAlarmTime,advance:Number(c.sharedAlarmAdvance||0),vibrate:c.sharedAlarmVibrate!==false,sound:c.sharedAlarmSound!==false,soundId:c.sharedAlarmSoundId||'default'};
+ return null;
+}
 function migrateOldPersonalAlarms(){let changed=false; Object.values(state.cards||{}).forEach(c=>{ if(c.alarmEnabled&&c.alarmTime&&!c.sharedAlarmEnabled){setLocalAlarm(c.id,{enabled:true,time:c.alarmTime,advance:Number(c.alarmAdvance||0),vibrate:c.alarmVibrate!==false,sound:c.alarmSound!==false,soundId:c.alarmSoundId||'default'}); delete c.alarmEnabled; delete c.alarmTime; delete c.alarmAdvance; delete c.alarmVibrate; delete c.alarmSound; changed=true;} }); return changed;}
 function sanitizeStateForCloud(data){const clean=JSON.parse(JSON.stringify(data||{})); delete clean.notificationLog; if(clean.cards){Object.values(clean.cards).forEach(c=>{delete c.alarmEnabled; delete c.alarmTime; delete c.alarmAdvance; delete c.alarmVibrate; delete c.alarmSound;});} return clean;}
 function saveCloudDebounced(){ if(cloudApplying||!cloudReady||!window.GerenciadorTarefasFirebase?.enabled) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(()=>{window.GerenciadorTarefasFirebase.saveAll(sanitizeStateForCloud(state)).catch(e=>console.warn('GT Firebase save',e));},350);}
@@ -160,6 +169,8 @@ function normalizeLegacyFirebaseState(input){
             sharedAlarmAdvance: Number(c.sharedAlarmAdvance||0),
             sharedAlarmVibrate: c.sharedAlarmVibrate!==false,
             sharedAlarmSound: c.sharedAlarmSound!==false,
+            sharedAlarmSoundId: c.sharedAlarmSoundId || 'default',
+            deviceAlarms: (c.deviceAlarms&&typeof c.deviceAlarms==='object')?c.deviceAlarms:{},
             checklist: Array.isArray(c.checklist)?c.checklist:[],
             comments: Array.isArray(c.comments)?c.comments:[],
             createdAt: c.createdAt || c.criadoEm || new Date().toISOString(),
@@ -218,6 +229,8 @@ function normalizeCardForModal(c, cardId){
   c.sharedAlarmAdvance=Number(c.sharedAlarmAdvance||0);
   c.sharedAlarmVibrate=c.sharedAlarmVibrate!==false;
   c.sharedAlarmSound=c.sharedAlarmSound!==false;
+  c.sharedAlarmSoundId=c.sharedAlarmSoundId||'default';
+  c.deviceAlarms=(c.deviceAlarms&&typeof c.deviceAlarms==='object')?c.deviceAlarms:{};
   return c;
 }
 function repairStateLinks(){
@@ -295,7 +308,35 @@ function shouldShowRecurring(c,iso){const d=new Date(iso+'T12:00:00'); if(c.recu
 function runRecurring(iso){Object.values(state.cards).forEach(c=>{if(c.recurrence&&c.recurrence!=='none'&&shouldShowRecurring(c,iso)){ if(c.done && (c.completedAt||'').slice(0,10)<iso){ c.done=false; c.due=iso; } }}); save();}
 
 function alarmLabel(c){const a=effectiveAlarm(c); return a?`Alarme ${a.scope==='shared'?'compartilhado':'deste aparelho'}: ${a.time}`:'Adicionar alarme'}
-function chooseAlarm(c){const a=effectiveAlarm(c)||{scope:'local',enabled:false,time:'09:00',advance:0,vibrate:true,sound:true,soundId:'default'}; modalForm('Despertador / notificação',`<label class="gt-check-line"><input id="alarmEnabled" type="checkbox" ${a.enabled?'checked':''}> Ativar lembrete para este card</label><div class="gt-field"><label>Tipo de alarme</label><select id="alarmScope"><option value="local">Somente neste dispositivo</option><option value="shared">Compartilhado para todos</option></select><small>Local toca apenas no celular/computador que configurou. Compartilhado sincroniza no Firebase e toca para todos com o app aberto e permissão ativa.</small></div><div class="gt-field"><label>Data do prazo</label><input id="alarmDue" type="date" value="${c.due||todayISO()}"></div><div class="gt-field"><label>Horário do alarme</label><input id="alarmTime" type="time" value="${a.time||'09:00'}"></div><div class="gt-field"><label>Quando avisar</label><select id="alarmAdvance"><option value="0">Na hora</option><option value="5">5 minutos antes</option><option value="10">10 minutos antes</option><option value="15">15 minutos antes</option><option value="30">30 minutos antes</option><option value="60">1 hora antes</option></select></div><div class="gt-field"><label>Toque do alarme</label><select id="alarmSoundId">${alarmSoundOptions(a.soundId||'default')}</select><small>Os toques ficam salvos na pasta assets/sounds do módulo. Não é necessário procurar arquivo no celular.</small></div><label class="gt-check-line"><input id="alarmVibrate" type="checkbox" ${a.vibrate!==false?'checked':''}> Vibrar no celular quando possível</label><label class="gt-check-line"><input id="alarmSound" type="checkbox" ${a.sound!==false?'checked':''}> Tocar som no navegador</label><p class="gt-muted">Para tocar/notificar, o navegador precisa permitir notificações. No iPhone, funciona melhor com o app instalado na tela inicial.</p><button type="button" class="gt-secondary" id="alarmPermission">Permitir notificações</button><button type="button" class="gt-secondary" id="alarmTest">Testar toque selecionado</button>`,()=>{const enabled=$('#alarmEnabled').checked; const scope=$('#alarmScope').value; c.due=$('#alarmDue').value; const cfg={enabled,time:$('#alarmTime').value,advance:Number($('#alarmAdvance').value||0),vibrate:$('#alarmVibrate').checked,sound:$('#alarmSound').checked,soundId:$('#alarmSoundId').value||'default'}; if(scope==='local'){ setLocalAlarm(c.id,cfg); c.sharedAlarmEnabled=false; c.sharedAlarmTime=''; c.sharedAlarmSoundId=''; }else{ removeLocalAlarm(c.id); c.sharedAlarmEnabled=enabled; c.sharedAlarmTime=cfg.time; c.sharedAlarmAdvance=cfg.advance; c.sharedAlarmVibrate=cfg.vibrate; c.sharedAlarmSound=cfg.sound; c.sharedAlarmSoundId=cfg.soundId; } c.updatedAt=new Date().toISOString(); if(enabled) requestNotifyPermission(); save(); closeModals(); renderBoard();}); setTimeout(()=>{$('#alarmScope').value=a.scope||'local'; $('#alarmAdvance').value=String(a.advance||0); $('#alarmSoundId').value=a.soundId||'default'; $('#alarmPermission').onclick=requestNotifyPermission; $('#alarmTest').onclick=()=>playAlarmSound($('#alarmSoundId').value||'default');},20)}
+function chooseAlarm(c){
+ const a=effectiveAlarm(c)||{scope:'local',enabled:false,time:'09:00',advance:0,vibrate:true,sound:true,soundId:'default'};
+ modalForm('Despertador / notificação',`<label class="gt-check-line"><input id="alarmEnabled" type="checkbox" ${a.enabled?'checked':''}> Ativar lembrete para este card</label><div class="gt-field"><label>Tipo de alarme</label><select id="alarmScope"><option value="local">Somente neste dispositivo</option><option value="shared">Compartilhado para todos</option></select><small>Local fica gravado para este aparelho usando o ID deste dispositivo. Compartilhado sincroniza no Firebase e pode tocar para todos com permissão ativa.</small></div><div class="gt-field"><label>Data do prazo</label><input id="alarmDue" type="date" value="${c.due||todayISO()}"></div><div class="gt-field"><label>Horário do alarme</label><input id="alarmTime" type="time" value="${a.time||'09:00'}"></div><div class="gt-field"><label>Quando avisar</label><select id="alarmAdvance"><option value="0">Na hora</option><option value="5">5 minutos antes</option><option value="10">10 minutos antes</option><option value="15">15 minutos antes</option><option value="30">30 minutos antes</option><option value="60">1 hora antes</option></select></div><div class="gt-field"><label>Toque do alarme</label><select id="alarmSoundId">${alarmSoundOptions(a.soundId||'default')}</select><small>Os toques ficam salvos na pasta assets/sounds do módulo.</small></div><label class="gt-check-line"><input id="alarmVibrate" type="checkbox" ${a.vibrate!==false?'checked':''}> Vibrar no celular quando possível</label><label class="gt-check-line"><input id="alarmSound" type="checkbox" ${a.sound!==false?'checked':''}> Tocar som no navegador</label><p class="gt-muted">Para notificar minimizado, instale como PWA e permita notificações. Som e vibração em segundo plano dependem do Android/iPhone e do navegador.</p><button type="button" class="gt-secondary" id="alarmPermission">Permitir notificações</button><button type="button" class="gt-secondary" id="alarmTest">Testar alarme selecionado</button>`,()=>{
+  const enabled=$('#alarmEnabled').checked;
+  const scope=$('#alarmScope').value;
+  c.due=$('#alarmDue').value;
+  const cfg={enabled,time:$('#alarmTime').value,advance:Number($('#alarmAdvance').value||0),vibrate:$('#alarmVibrate').checked,sound:$('#alarmSound').checked,soundId:$('#alarmSoundId').value||'default'};
+  if(scope==='local'){
+    setDeviceAlarmOnCard(c,cfg);
+    c.sharedAlarmEnabled=false; c.sharedAlarmTime=''; c.sharedAlarmAdvance=0; c.sharedAlarmSoundId='default';
+  }else{
+    removeDeviceAlarmOnCard(c);
+    c.sharedAlarmEnabled=enabled; c.sharedAlarmTime=enabled?cfg.time:''; c.sharedAlarmAdvance=cfg.advance; c.sharedAlarmVibrate=cfg.vibrate; c.sharedAlarmSound=cfg.sound; c.sharedAlarmSoundId=cfg.soundId;
+  }
+  c.updatedAt=new Date().toISOString();
+  if(enabled) requestNotifyPermission();
+  save();
+  closeModals();
+  renderBoard();
+  toast(enabled?'Alarme salvo.':'Alarme removido.');
+ });
+ setTimeout(()=>{
+  $('#alarmScope').value=a.scope||'local';
+  $('#alarmAdvance').value=String(a.advance||0);
+  $('#alarmSoundId').value=a.soundId||'default';
+  $('#alarmPermission').onclick=requestNotifyPermission;
+  $('#alarmTest').onclick=()=>{const cfg={scope:$('#alarmScope').value,enabled:true,time:$('#alarmTime').value,advance:Number($('#alarmAdvance').value||0),vibrate:$('#alarmVibrate').checked,sound:$('#alarmSound').checked,soundId:$('#alarmSoundId').value||'default'}; requestNotifyPermission().then(()=>fireCardAlarm(Object.assign({},c,{title:c.title||'Teste de alarme'}),true,cfg));};
+ },20)
+}
 async function ensureServiceWorker(){
  try{
   if(!('serviceWorker' in navigator)) return null;
@@ -346,8 +387,8 @@ function alarmDateForCard(c,iso=todayISO()){ const a=effectiveAlarm(c); if(!a||!
 function alarmKey(c,iso=todayISO()){const a=effectiveAlarm(c)||{}; return `${c.id}|${a.scope||'none'}|${iso}|${a.time||''}|${a.advance||0}`}
 function beep(){try{const C=window.AudioContext||window.webkitAudioContext; const ctx=new C(); const osc=ctx.createOscillator(); const gain=ctx.createGain(); osc.frequency.value=880; gain.gain.value=0.09; osc.connect(gain); gain.connect(ctx.destination); osc.start(); setTimeout(()=>{osc.stop(); ctx.close();},520);}catch(e){}}
 function playAlarmSound(soundId='default'){const item=getAlarmSound(soundId); if(!item||!item.file){beep(); return;} try{const audio=new Audio(item.file); audio.volume=0.95; const p=audio.play(); if(p&&p.catch)p.catch(()=>beep()); setTimeout(()=>{try{audio.pause(); audio.currentTime=0;}catch(e){}},15000);}catch(e){beep();}}
-function fireCardAlarm(c,test=false){
- const a=effectiveAlarm(c)||{sound:true,vibrate:true,scope:'local',time:'',soundId:'default'};
+function fireCardAlarm(c,test=false,overrideAlarm=null){
+ const a=overrideAlarm||effectiveAlarm(c)||{sound:true,vibrate:true,scope:'local',time:'',soundId:'default'};
  if(a.sound!==false) playAlarmSound(a.soundId||'default');
  if(a.vibrate!==false && navigator.vibrate) navigator.vibrate([450,180,450,180,700]);
  showPwaNotification(c,a,test).then(ok=>{ if(!ok) toast('⏰ '+c.title); });

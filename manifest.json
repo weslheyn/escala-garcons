@@ -1,0 +1,70 @@
+{
+  "name": "Gestão Coco Bambu",
+  "short_name": "Gestão CB",
+  "description": "Sistema de gestão Coco Bambu com Gerenciador de Tarefas PWA e alarmes.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d0f17",
+  "theme_color": "#5c160f",
+  "lang": "pt-BR",
+  "categories": [
+    "productivity",
+    "business",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Gerenciador de Tarefas",
+      "short_name": "Tarefas",
+      "description": "Abrir Gerenciador de Tarefas",
+      "url": "./gerenciador-tarefas-v3.html",
+      "icons": [
+        {
+          "src": "icon.png",
+          "sizes": "512x512",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Eventos & Vendas",
+      "short_name": "Eventos",
+      "description": "Abrir módulo de eventos",
+      "url": "./eventos.html",
+      "icons": [
+        {
+          "src": "icon.png",
+          "sizes": "512x512"
+        }
+      ]
+    },
+    {
+      "name": "Início",
+      "short_name": "Início",
+      "description": "Abrir início do app",
+      "url": "./index.html",
+      "icons": [
+        {
+          "src": "icon.png",
+          "sizes": "512x512"
+        }
+      ]
+    }
+  ],
+  "id": "./index.html",
+  "display_override": [
+    "standalone",
+    "minimal-ui",
+    "browser"
+  ]
+}

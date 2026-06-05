@@ -6,6 +6,7 @@ const LOCAL_ALARMS_KEY='gt_trello_local_alarms_v1';
 const DEVICE_ID_KEY='gt_trello_device_id_v1';
 let cloudReady=false, cloudApplying=false, cloudTimer=null;
 let pwaReg=null, alarmWakeLock=null;
+let alarmAudioCtx=null, alarmAudioBuffers={}, alarmPlayingSources=[];
 const deviceId=(()=>{let id=localStorage.getItem(DEVICE_ID_KEY); if(!id){id='dev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8); localStorage.setItem(DEVICE_ID_KEY,id);} return id;})();
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const uid=p=>(p||'id')+'_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7);
@@ -204,9 +205,10 @@ function boardTile(b){let el=document.createElement('button'); el.className='gt-
 function openBoard(id){const b=state.boards[id]; if(!b)return; current.boardId=id; current.workspaceId=b.workspaceId; state.recent=[id,...(state.recent||[]).filter(x=>x!==id)].slice(0,8); save(); showView('board');}
 function renderBoard(){repairStateLinks(); const b=board(); if(!b){showHome();return;} setBg($('.gt-board-bg'),b.background); $('#gtBoardTitleBtn').textContent=b.title; $('#gtWorkspaceBtn').textContent=workspace()?.name||'Área'; $('#gtFavoriteBtn').textContent=b.favorite?'★':'☆'; const wrap=$('#gtBoardLists'); wrap.innerHTML=''; (b.lists||[]).forEach(listId=>{const l=state.lists[listId]; if(l) wrap.appendChild(renderList(l));}); const add=document.createElement('button'); add.className='gt-add-list'; add.textContent='+ Adicionar outra lista'; add.onclick=()=>openListForm(); wrap.appendChild(add); }
 function renderList(l){const el=document.createElement('div'); el.className='gt-list'; el.dataset.listId=l.id; const cardIds=(l.cards||[]).filter(id=>state.cards[id]); const cards=cardIds.map(id=>normalizeCardForModal(state.cards[id],id)).filter(Boolean); el.innerHTML=`<div class="gt-list-head"><input class="gt-list-title" value="${escAttr(l.title)}"><span class="gt-list-count">${cards.length}</span><button class="gt-list-menu">•••</button></div><div class="gt-cards"></div><button class="gt-add-card">+ Adicionar um cartão</button>`; const title=el.querySelector('.gt-list-title'); title.onchange=()=>{l.title=title.value.trim()||'Lista'; save(); renderBoard()}; const cont=el.querySelector('.gt-cards'); cards.forEach(c=>cont.appendChild(renderCard(c,l.id))); el.querySelector('.gt-add-card').onclick=()=>openCardForm(l.id); el.querySelector('.gt-list-menu').onclick=()=>openListMenu(l.id); makeDrop(cont,l.id); return el;}
-function renderCard(c,listId){const el=document.createElement('div'); el.className='gt-card'+(c.done?' done':''); el.draggable=true; el.dataset.cardId=c.id; el.innerHTML=`${labelsHtml(c.labels)}<div class="gt-row"><span class="gt-check-dot ${c.done?'checked':''}" title="Concluir">${c.done?'✓':''}</span><div class="gt-card-title">${esc(c.title)}</div></div><div class="gt-card-meta">${c.due?'📅 '+fmtDateBR(c.due):''}${effectiveAlarm(c)?' ⏰ '+effectiveAlarm(c).time+(effectiveAlarm(c).scope==='shared'?' 🌐':' 📱'):''}${c.recurrence&&c.recurrence!=='none'?' 🔁 '+recName(c.recurrence):''}${(c.checklist||[]).length?' ☑ '+doneCount(c)+'/'+c.checklist.length:''}</div>`; el.onclick=(e)=>{ if(e.target.classList.contains('gt-check-dot')){toggleDone(c.id); e.stopPropagation();return;} openCardModal(c.id);}; el.ondragstart=e=>{e.dataTransfer.setData('text/plain',JSON.stringify({cardId:c.id,from:listId}));}; return el;}
-function makeDrop(cont,listId){cont.ondragover=e=>e.preventDefault(); cont.ondrop=e=>{e.preventDefault(); try{const d=JSON.parse(e.dataTransfer.getData('text/plain')); moveCard(d.cardId,d.from,listId);}catch(_){} };}
-function moveCard(cardId,from,to){ if(from===to)return; const lf=state.lists[from], lt=state.lists[to]; if(!lf||!lt)return; lf.cards=(lf.cards||[]).filter(id=>id!==cardId); lt.cards=lt.cards||[]; lt.cards.push(cardId); state.cards[cardId].updatedAt=new Date().toISOString(); save(); renderBoard();}
+function renderCard(c,listId){const el=document.createElement('div'); el.className='gt-card'+(c.done?' done':''); el.draggable=true; el.dataset.cardId=c.id; el.innerHTML=`${labelsHtml(c.labels)}<div class="gt-row"><span class="gt-check-dot ${c.done?'checked':''}" title="Concluir">${c.done?'✓':''}</span><div class="gt-card-title">${esc(c.title)}</div></div><div class="gt-card-meta">${c.due?'📅 '+fmtDateBR(c.due):''}${effectiveAlarm(c)?' ⏰ '+effectiveAlarm(c).time+(effectiveAlarm(c).scope==='shared'?' 🌐':' 📱'):''}${c.recurrence&&c.recurrence!=='none'?' 🔁 '+recName(c.recurrence):''}${(c.checklist||[]).length?' ☑ '+doneCount(c)+'/'+c.checklist.length:''}</div>`; el.onclick=(e)=>{ if(e.target.classList.contains('gt-check-dot')){toggleDone(c.id); e.stopPropagation();return;} openCardModal(c.id);}; el.ondragstart=e=>{el.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',JSON.stringify({cardId:c.id,from:listId}));}; el.ondragend=()=>{el.classList.remove('dragging'); $$('.gt-card.drag-over').forEach(x=>x.classList.remove('drag-over'));}; return el;}
+function getDropIndex(cont,y){const cards=[...cont.querySelectorAll('.gt-card:not(.dragging)')]; let closest={offset:Number.NEGATIVE_INFINITY,index:cards.length}; cards.forEach((card,i)=>{const box=card.getBoundingClientRect(); const offset=y-box.top-box.height/2; if(offset<0 && offset>closest.offset){closest={offset,index:i};}}); return closest.index;}
+function makeDrop(cont,listId){cont.ondragover=e=>{e.preventDefault(); e.dataTransfer.dropEffect='move'; const idx=getDropIndex(cont,e.clientY); const dragging=document.querySelector('.gt-card.dragging'); if(!dragging)return; const cards=[...cont.querySelectorAll('.gt-card:not(.dragging)')]; if(idx>=cards.length) cont.appendChild(dragging); else cont.insertBefore(dragging,cards[idx]);}; cont.ondrop=e=>{e.preventDefault(); try{const d=JSON.parse(e.dataTransfer.getData('text/plain')); const ordered=[...cont.querySelectorAll('.gt-card')].map(x=>x.dataset.cardId).filter(Boolean); let toIndex=ordered.indexOf(d.cardId); if(toIndex<0) toIndex=getDropIndex(cont,e.clientY); moveCard(d.cardId,d.from,listId,toIndex);}catch(_){} };}
+function moveCard(cardId,from,to,toIndex){ const lf=state.lists[from], lt=state.lists[to]; if(!lf||!lt||!state.cards[cardId])return; lf.cards=(lf.cards||[]).filter(id=>id!==cardId); lt.cards=(lt.cards||[]).filter(id=>id!==cardId); let idx=Number.isFinite(toIndex)?Number(toIndex):lt.cards.length; if(idx<0)idx=0; if(idx>lt.cards.length)idx=lt.cards.length; lt.cards.splice(idx,0,cardId); state.cards[cardId].updatedAt=new Date().toISOString(); save(); renderBoard();}
 function labelsHtml(labels){return labels?.length?`<div class="gt-labels">${labels.map(c=>`<span class="gt-label" style="background:${c}"></span>`).join('')}</div>`:''}
 function doneCount(c){return (c.checklist||[]).filter(x=>x.done).length}
 function toggleDone(cardId){const c=state.cards[cardId]; c.done=!c.done; c.completedAt=c.done?new Date().toISOString():''; save(); if(current.view==='planner')renderPlanner(); else renderBoard();}
@@ -367,8 +369,8 @@ async function showPwaNotification(c,a,test=false){
   renotify:true,
   requireInteraction:true,
   vibrate:a.vibrate!==false?[450,180,450,180,700]:undefined,
-  data:{url:'gerenciador-tarefas-v3.html',cardId:c.id||'',boardId:current.boardId||'',workspaceId:current.workspaceId||''},
-  actions:[{action:'open',title:'Abrir atividade'},{action:'done',title:'Marcar visto'}]
+  data:{url:'gerenciador-tarefas-v3.html',cardId:c.id||'',boardId:current.boardId||'',workspaceId:current.workspaceId||'',alarmScope:a.scope||'local'},
+  actions:[{action:'open',title:'Abrir atividade'},{action:'done',title:'Concluir'},{action:'snooze10',title:'Adiar 10 min'}]
  };
  try{
   if(reg&&reg.showNotification){await reg.showNotification('Gerenciador de Tarefas', opts); return true;}
@@ -386,14 +388,127 @@ async function keepAlarmAwake(){
 function alarmDateForCard(c,iso=todayISO()){ const a=effectiveAlarm(c); if(!a||!a.enabled||!a.time)return null; let day=c.due||iso; if(c.recurrence&&c.recurrence!=='none'&&shouldShowRecurring(c,iso)) day=iso; if(!day)return null; const d=new Date(`${day}T${a.time}:00`); if(Number.isNaN(d.getTime()))return null; d.setMinutes(d.getMinutes()-Number(a.advance||0)); return d; }
 function alarmKey(c,iso=todayISO()){const a=effectiveAlarm(c)||{}; return `${c.id}|${a.scope||'none'}|${iso}|${a.time||''}|${a.advance||0}`}
 function beep(){try{const C=window.AudioContext||window.webkitAudioContext; const ctx=new C(); const osc=ctx.createOscillator(); const gain=ctx.createGain(); osc.frequency.value=880; gain.gain.value=0.09; osc.connect(gain); gain.connect(ctx.destination); osc.start(); setTimeout(()=>{osc.stop(); ctx.close();},520);}catch(e){}}
-function playAlarmSound(soundId='default'){const item=getAlarmSound(soundId); if(!item||!item.file){beep(); return;} try{const audio=new Audio(item.file); audio.volume=0.95; const p=audio.play(); if(p&&p.catch)p.catch(()=>beep()); setTimeout(()=>{try{audio.pause(); audio.currentTime=0;}catch(e){}},15000);}catch(e){beep();}}
+
+async function unlockAlarmAudio(){
+ try{
+  if(!window.AudioContext&&!window.webkitAudioContext)return false;
+  if(!alarmAudioCtx) alarmAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(alarmAudioCtx.state==='suspended') await alarmAudioCtx.resume();
+  return alarmAudioCtx.state==='running';
+ }catch(e){return false;}
+}
+async function loadAlarmBuffer(item){
+ if(!item||!item.file)return null;
+ if(alarmAudioBuffers[item.id])return alarmAudioBuffers[item.id];
+ const res=await fetch(item.file,{cache:'force-cache'});
+ const arr=await res.arrayBuffer();
+ await unlockAlarmAudio();
+ const buf=await alarmAudioCtx.decodeAudioData(arr.slice(0));
+ alarmAudioBuffers[item.id]=buf;
+ return buf;
+}
+function stopAlarmSound(){
+ alarmPlayingSources.forEach(src=>{try{src.stop(0)}catch(e){}});
+ alarmPlayingSources=[];
+}
+async function playAlarmSound(soundId='default', repeat=1){
+ const item=getAlarmSound(soundId);
+ if(!item||!item.file){beep(); return;}
+ try{
+  const ok=await unlockAlarmAudio();
+  if(!ok) throw new Error('audio-context-blocked');
+  const buffer=await loadAlarmBuffer(item);
+  if(!buffer) throw new Error('audio-buffer-empty');
+  stopAlarmSound();
+  let when=alarmAudioCtx.currentTime+0.05;
+  const totalRepeats=Math.max(1, Number(repeat||1));
+  for(let i=0;i<totalRepeats;i++){
+   const src=alarmAudioCtx.createBufferSource();
+   const gain=alarmAudioCtx.createGain();
+   src.buffer=buffer;
+   gain.gain.value=0.95;
+   src.connect(gain).connect(alarmAudioCtx.destination);
+   src.start(when);
+   alarmPlayingSources.push(src);
+   when += buffer.duration + 0.4;
+   src.onended=()=>{ alarmPlayingSources=alarmPlayingSources.filter(x=>x!==src); };
+  }
+ }catch(e){
+  try{
+   const audio=new Audio(item.file);
+   audio.volume=0.95;
+   audio.loop=false;
+   audio.preload='auto';
+   audio.setAttribute('playsinline','');
+   const p=audio.play();
+   if(p&&p.catch)p.catch(()=>beep());
+  }catch(err){beep();}
+ }
+}
+
 function fireCardAlarm(c,test=false,overrideAlarm=null){
  const a=overrideAlarm||effectiveAlarm(c)||{sound:true,vibrate:true,scope:'local',time:'',soundId:'default'};
- if(a.sound!==false) playAlarmSound(a.soundId||'default');
+ if(a.sound!==false) playAlarmSound(a.soundId||'default', Number(a.repeat||1));
  if(a.vibrate!==false && navigator.vibrate) navigator.vibrate([450,180,450,180,700]);
  showPwaNotification(c,a,test).then(ok=>{ if(!ok) toast('⏰ '+c.title); });
 }
 function checkAlarms(){ const now=new Date(); const iso=todayISO(); Object.values(state.cards||{}).forEach(c=>{const a=effectiveAlarm(c); if(!a||!a.enabled||c.done)return; if(c.recurrence&&c.recurrence!=='none'&&!shouldShowRecurring(c,iso)&&c.due!==iso)return; const d=alarmDateForCard(c,iso); if(!d)return; const diff=now-d; const k=alarmKey(c,iso); if(diff>=0 && diff<120000 && !state.notificationLog[k]){state.notificationLog[k]=new Date().toISOString(); fireCardAlarm(c); save();}}); }
+
+function markAlarmCardDone(cardId){
+ const c=state.cards&&state.cards[cardId];
+ if(!c)return false;
+ c.done=true;
+ c.completedAt=new Date().toISOString();
+ c.updatedAt=new Date().toISOString();
+ stopAlarmSound();
+ save();
+ if(current.view==='planner')renderPlanner(); else renderBoard();
+ toast('Atividade concluída.');
+ return true;
+}
+function snoozeAlarmCard(cardId,minutes=10){
+ const c=state.cards&&state.cards[cardId];
+ if(!c)return false;
+ const base=effectiveAlarm(c)||{enabled:true,sound:true,vibrate:true,soundId:'default',scope:'local'};
+ const d=new Date(Date.now()+Number(minutes||10)*60000);
+ const hh=String(d.getHours()).padStart(2,'0'), mm=String(d.getMinutes()).padStart(2,'0');
+ c.due=todayISO();
+ setDeviceAlarmOnCard(c,{enabled:true,time:`${hh}:${mm}`,advance:0,vibrate:base.vibrate!==false,sound:base.sound!==false,soundId:base.soundId||'default',repeat:base.repeat||1});
+ c.updatedAt=new Date().toISOString();
+ stopAlarmSound();
+ save();
+ renderBoard();
+ toast(`Alarme adiado ${minutes} min.`);
+ return true;
+}
+function handleNotificationAction(data={}){
+ const action=data.action||'';
+ const cardId=data.cardId||'';
+ if(data.workspaceId&&state.workspaces[data.workspaceId]) current.workspaceId=data.workspaceId;
+ if(data.boardId&&state.boards[data.boardId]) current.boardId=data.boardId;
+ if(action==='done') return markAlarmCardDone(cardId);
+ if(action==='snooze10') return snoozeAlarmCard(cardId,10);
+ showView('board');
+ if(cardId&&state.cards[cardId]) setTimeout(()=>openCardModal(cardId),120);
+ return true;
+}
+function bindNotificationBridge(){
+ if('serviceWorker' in navigator){
+  navigator.serviceWorker.addEventListener('message',ev=>{
+   const msg=ev.data||{};
+   if(msg.type==='GT_NOTIFICATION_ACTION') handleNotificationAction(msg.data||{});
+   if(msg.type==='OPEN_TASK_FROM_NOTIFICATION') handleNotificationAction(Object.assign({action:'open'},msg.data||{}));
+  });
+ }
+ const params=new URLSearchParams(location.search);
+ if(params.get('gtAction')){
+  setTimeout(()=>{
+   handleNotificationAction({action:params.get('gtAction'),cardId:params.get('cardId'),boardId:params.get('boardId'),workspaceId:params.get('workspaceId')});
+   try{history.replaceState(null,'',location.pathname+location.hash)}catch(e){}
+  },500);
+ }
+}
+
 function openNotificationsPanel(){openOverlay(); const m=$('#gtFormModal'); const upcoming=Object.values(state.cards||{}).filter(c=>effectiveAlarm(c)).sort((a,b)=>(alarmDateForCard(a)?.getTime()||0)-(alarmDateForCard(b)?.getTime()||0)).slice(0,25); m.innerHTML=`<button class="gt-close" data-close>×</button><h2>Notificações e alarmes</h2><p class="gt-muted">Cards, listas e quadros sincronizam no Firebase. Alarmes locais ficam só neste dispositivo. Alarmes compartilhados sincronizam para todos.</p><button class="gt-primary" id="notifyPermissionBtn">Ativar notificações neste dispositivo</button><button class="gt-secondary" id="alarmPwaTestBtn">Testar PWA agora</button><p class="gt-muted">Para funcionar minimizado, instale o app na tela inicial e mantenha as notificações permitidas. O som personalizado toca quando o navegador permite áudio em segundo plano; a notificação e vibração usam o Service Worker.</p><h3>Próximos alarmes</h3><div class="gt-inbox-list">${upcoming.length?upcoming.map(c=>{const a=effectiveAlarm(c); return `<div class="gt-inbox-item"><strong>${esc(c.title)}</strong><br><small>⏰ ${a.time||'--:--'} ${a.advance?`• ${a.advance} min antes`:''} • ${a.scope==='shared'?'🌐 compartilhado':'📱 este dispositivo'} • ${esc(getAlarmSound(a.soundId||'default').name)} ${c.recurrence&&c.recurrence!=='none'?`• 🔁 ${recName(c.recurrence)}`:''}</small></div>`}).join(''):'<div class="gt-inbox-item">Nenhum alarme configurado.</div>'}</div>`; m.classList.remove('gt-hidden'); $('#notifyPermissionBtn').onclick=requestNotifyPermission; const testBtn=$('#alarmPwaTestBtn'); if(testBtn)testBtn.onclick=()=>{requestNotifyPermission().then(()=>fireCardAlarm({id:'teste_pwa',title:'Teste de alarme PWA'},true));}; $$('[data-close]').forEach(b=>b.onclick=closeModals); }
 function startAlarmLoop(){
  ensureServiceWorker();
@@ -414,5 +529,5 @@ function recName(r){return ({none:'Não repetir',daily:'Diária',weekdays:'Segun
 function esc(s){return String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
 function escAttr(s){return esc(s).replace(/'/g,'&#39;')}
 function bind(){ $('#gtHomeBtn').onclick=showHome; $('#gtMenuBtn').onclick=openDrawer; $('#gtCreateBtn').onclick=openCreate; $('#gtNewWorkspaceHome').onclick=openWorkspaceForm; $('#gtSwitchBoardsBtn').onclick=renderSwitch; $('#gtShareBtn').onclick=openShare; $('#gtBackgroundBtn').onclick=openBackground; $('#gtFavoriteBtn').onclick=()=>{board().favorite=!board().favorite; save(); renderBoard();}; $('#gtPlannerQuickBtn').onclick=()=>showView('planner'); $('#gtNewDailyTask').onclick=()=>{let firstList=board().lists[0]; openCardForm(firstList,{due:calDate.toISOString().slice(0,10)}); setTimeout(()=>{$('#fRec') && ($('#fRec').value='daily')},60)}; $('#gtPrevMonth').onclick=()=>{calDate.setMonth(calDate.getMonth()-1); renderPlanner();}; $('#gtNextMonth').onclick=()=>{calDate.setMonth(calDate.getMonth()+1); renderPlanner();}; $('#gtTodayBtn').onclick=()=>{calDate=new Date(); renderPlanner();}; $('#gtCreateWorkspaceOpt').onclick=openWorkspaceForm; $('#gtCreateBoardOpt').onclick=()=>openBoardForm(); $('#gtCreateListOpt').onclick=openListForm; $('#gtOverlay').onclick=()=>closeModals(); $$('.gt-bottom-nav button[data-view]').forEach(b=>b.onclick=()=>showView(b.dataset.view)); $('#gtSearch').oninput=()=>{const q=$('#gtSearch').value.toLowerCase(); $$('.gt-card').forEach(card=>card.style.display=card.textContent.toLowerCase().includes(q)?'':'none');}; $('#gtNotifyBtn') && ($('#gtNotifyBtn').onclick=openNotificationsPanel);}
-load(); bind(); showView('board'); startAlarmLoop(); initCloudSync();
+load(); bind(); bindNotificationBridge(); showView('board'); startAlarmLoop(); initCloudSync();
 })();

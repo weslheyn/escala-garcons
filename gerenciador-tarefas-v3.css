@@ -335,3 +335,7 @@
 .gt-muted{color:#5e6c84;font-size:13px;line-height:1.35;}
 .gt-card-meta{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
 @media(max-width:760px){.gt-reminder-row{grid-template-columns:1fr;}.gt-check-line{font-size:13px}.gt-muted{font-size:12px}}
+
+/* V5.4 - Reordenação de cards por arrastar */
+.gt-card.dragging{opacity:.72; transform:rotate(1deg); box-shadow:0 12px 28px rgba(0,0,0,.28);}
+.gt-cards{min-height:34px;}

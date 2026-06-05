@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'gestao-coco-bambu-pwa-alarmes-v5-1';
+const CACHE_VERSION = 'gestao-coco-bambu-pwa-alarmes-v5-3';
 const STATIC_ASSETS = [
   './manifest.json',
   './icon.png',
@@ -58,15 +58,23 @@ self.addEventListener('message', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const data = event.notification.data || {};
-  const url = new URL(data.url || './gerenciador-tarefas-v3.html', self.location.href).href;
+  const action = event.action || 'open';
+  const params = new URLSearchParams();
+  params.set('gtAction', action);
+  if (data.cardId) params.set('cardId', data.cardId);
+  if (data.boardId) params.set('boardId', data.boardId);
+  if (data.workspaceId) params.set('workspaceId', data.workspaceId);
+  const baseUrl = data.url || './gerenciador-tarefas-v3.html';
+  const url = new URL(baseUrl, self.location.href);
+  url.search = params.toString();
   event.waitUntil((async () => {
     const allClients = await clients.matchAll({ type: 'window', includeUncontrolled: true });
     for (const client of allClients) {
       if ('focus' in client && client.url.includes('gerenciador-tarefas-v3.html')) {
-        try { client.postMessage({ type: 'OPEN_TASK_FROM_NOTIFICATION', data }); } catch (e) {}
+        try { client.postMessage({ type: 'GT_NOTIFICATION_ACTION', data: Object.assign({}, data, { action }) }); } catch (e) {}
         return client.focus();
       }
     }
-    if (clients.openWindow) return clients.openWindow(url);
+    if (clients.openWindow) return clients.openWindow(url.href);
   })());
 });

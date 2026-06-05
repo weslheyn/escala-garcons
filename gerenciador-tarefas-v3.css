@@ -44,3 +44,286 @@
   }
   .gt-background-grid{grid-template-columns:repeat(2,1fr) !important;}
 }
+
+/* V4.3 - Mobile profissional: compacto, limpo e sem cards gigantes */
+@media (max-width: 760px){
+  html, body{
+    height:100%;
+    overflow:hidden !important;
+    background:#0b1020;
+    -webkit-text-size-adjust:100%;
+  }
+  .gt-app{height:100dvh; min-height:100dvh; overflow:hidden;}
+
+  /* Topo mobile */
+  .gt-topbar{
+    height:48px;
+    padding:0 8px;
+    gap:6px;
+    background:#17233b;
+  }
+  .gt-left{gap:6px; min-width:auto;}
+  .gt-icon-btn{height:34px; min-width:34px; border-radius:8px;}
+  .gt-logo-mark{width:25px;height:25px;border-radius:6px;font-size:13px;}
+  .gt-logo strong{display:block;font-size:13px;max-width:118px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .gt-search{
+    height:34px;
+    min-width:0;
+    flex:1;
+    margin:0;
+    padding:0 8px;
+    font-size:13px;
+    border-radius:8px;
+  }
+  .gt-search span{font-size:12px;}
+  .gt-create{height:34px;padding:0 10px;font-size:12px;border-radius:8px;}
+  .gt-avatar{width:30px;height:30px;font-size:11px;}
+  .gt-actions{gap:5px;}
+  .gt-actions .gt-icon-btn{display:none !important;}
+
+  /* Home/áreas */
+  .gt-home-screen{padding:14px 10px 80px;overflow:auto!important;}
+  .gt-home-header h1{font-size:22px;}
+  .gt-home-header p{font-size:13px;line-height:1.35;}
+  .gt-workspace-list{gap:14px;}
+  .gt-workspace-block{padding:12px;border-radius:12px;}
+  .gt-workspace-head{gap:10px;align-items:flex-start;margin-bottom:10px;}
+  .gt-workspace-name{font-size:15px;gap:8px;}
+  .gt-workspace-icon{width:30px;height:30px;border-radius:8px;font-size:13px;}
+  .gt-board-card-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+  .gt-board-tile{height:82px;border-radius:10px;padding:8px;}
+  .gt-board-tile strong{font-size:13px;line-height:1.2;}
+
+  /* Quadro mobile: uma coluna por tela, com scroll lateral suave */
+  .gt-board-screen{overflow:hidden;}
+  .gt-board-shell{height:100%;}
+  .gt-board-header{
+    height:auto;
+    min-height:50px;
+    padding:7px 8px;
+    flex-direction:column;
+    align-items:stretch;
+    gap:6px;
+    background:#00000042;
+  }
+  .gt-board-title-wrap,
+  .gt-board-tools{
+    width:100%;
+    display:flex;
+    align-items:center;
+    overflow-x:auto;
+    gap:6px;
+    scrollbar-width:none;
+  }
+  .gt-board-title-wrap::-webkit-scrollbar,
+  .gt-board-tools::-webkit-scrollbar{display:none;}
+  .gt-board-title{
+    padding:7px 9px;
+    font-size:14px;
+    border-radius:8px;
+    min-width:max-content;
+    max-width:62vw;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .gt-workspace-pill,.gt-top-tool,.gt-share{
+    padding:7px 9px;
+    font-size:12px;
+    border-radius:8px;
+    min-width:max-content;
+  }
+  .gt-top-tool#gtPlannerQuickBtn{display:inline-block;}
+  .gt-board-lists{
+    height:calc(100dvh - 124px);
+    padding:10px 10px 78px;
+    gap:10px;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+    align-items:flex-start;
+  }
+  .gt-list{
+    width:calc(100vw - 22px) !important;
+    min-width:calc(100vw - 22px) !important;
+    max-height:calc(100dvh - 210px);
+    border-radius:13px;
+    scroll-snap-align:center;
+    box-shadow:0 4px 18px #00000022;
+  }
+  .gt-list-head{
+    padding:10px 10px 6px;
+    min-height:40px;
+  }
+  .gt-list-title{
+    width:calc(100vw - 128px);
+    font-size:13px;
+    letter-spacing:.2px;
+  }
+  .gt-list-count{font-size:13px;}
+  .gt-list-menu{font-size:18px;line-height:1;}
+  .gt-cards{
+    padding:0 7px 4px;
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch;
+  }
+  .gt-card{
+    margin-bottom:7px;
+    padding:8px 9px;
+    border-radius:9px;
+    font-size:13px;
+    min-height:38px;
+  }
+  .gt-card-title{line-height:1.25;}
+  .gt-labels{margin-bottom:5px;gap:3px;}
+  .gt-label{height:6px;width:30px;}
+  .gt-card-meta{font-size:11px;margin-top:6px;gap:6px;}
+  .gt-check-dot{width:15px;height:15px;font-size:10px;border-width:1.5px;}
+  .gt-add-card{
+    margin:0 7px 7px;
+    padding:8px;
+    border-radius:9px;
+    font-size:13px;
+  }
+  .gt-add-list{
+    width:calc(100vw - 22px) !important;
+    min-width:calc(100vw - 22px) !important;
+    height:44px;
+    border-radius:13px;
+    font-size:13px;
+    scroll-snap-align:center;
+  }
+
+  /* Navegação inferior menor */
+  .gt-bottom-nav{
+    left:8px;
+    right:8px;
+    bottom:8px;
+    transform:none;
+    width:auto;
+    max-width:none;
+    padding:5px;
+    gap:3px;
+    border-radius:14px;
+    justify-content:space-around;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .gt-bottom-nav::-webkit-scrollbar{display:none;}
+  .gt-bottom-nav button{
+    flex:1 0 auto;
+    padding:8px 8px;
+    font-size:12px;
+    border-radius:10px;
+    white-space:nowrap;
+  }
+
+  /* Planejador mobile: calendário compacto + atividades em cards pequenos */
+  .gt-planner-screen{overflow:hidden!important;}
+  .gt-planner-layout{
+    height:calc(100dvh - 48px);
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding:8px 8px 74px;
+    overflow:auto!important;
+  }
+  .gt-calendar-panel{
+    flex:none;
+    border-radius:14px;
+    padding:10px;
+    max-height:none;
+    overflow:visible;
+  }
+  .gt-cal-head{margin-bottom:6px;}
+  .gt-cal-head strong{font-size:15px;}
+  .gt-cal-head button,.gt-today{padding:6px 9px;border-radius:8px;font-size:12px;}
+  .gt-weekdays{font-size:11px;margin:8px 0 5px;gap:2px;}
+  .gt-calendar-grid{gap:2px;}
+  .gt-day{
+    height:32px;
+    border-radius:8px;
+    font-size:12px;
+  }
+  .gt-day.has::after{bottom:3px;width:4px;height:4px;}
+  .gt-planner-day{
+    flex:1;
+    min-height:250px;
+    border-radius:14px;
+    padding:13px;
+    overflow:auto!important;
+  }
+  .gt-planner-head{
+    gap:10px;
+    align-items:flex-start;
+  }
+  .gt-planner-head h2{font-size:18px;line-height:1.2;}
+  .gt-planner-head p{font-size:12px;line-height:1.3;}
+  .gt-planner-head .gt-primary{padding:8px 9px;font-size:12px;border-radius:9px;white-space:nowrap;}
+  .gt-planner-cards{margin-top:12px;gap:8px;}
+  .gt-planner-card{
+    padding:9px;
+    border-radius:10px;
+    font-size:13px;
+    gap:8px;
+  }
+
+  /* Modais mobile em tela cheia profissional */
+  .gt-modal{
+    border-radius:16px 16px 0 0 !important;
+  }
+  .gt-create-modal,
+  .gt-form-modal,
+  .gt-background-modal,
+  .gt-share-modal,
+  .gt-switch-modal,
+  .gt-card-modal{
+    width:100vw !important;
+    left:0 !important;
+    right:0 !important;
+    top:auto !important;
+    bottom:0 !important;
+    transform:none !important;
+    max-height:88dvh !important;
+    padding:18px !important;
+    overflow-y:auto !important;
+    -webkit-overflow-scrolling:touch;
+  }
+  .gt-card-modal{height:88dvh;}
+  .gt-modal h2{font-size:20px;margin-top:2px;}
+  .gt-close{right:14px;top:10px;font-size:24px;}
+  .gt-field{margin:10px 0;gap:5px;}
+  .gt-field label{font-size:12px;}
+  .gt-field input,.gt-field textarea,.gt-field select{padding:10px;border-radius:9px;font-size:14px;}
+  .gt-background-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:8px;}
+  .gt-bg-option{height:68px;border-radius:10px;font-size:13px;padding:8px;}
+  .gt-form-actions{
+    position:sticky;
+    bottom:-18px;
+    background:#fff;
+    padding:10px 0 0;
+    margin-top:12px;
+  }
+  .gt-primary,.gt-secondary{padding:9px 12px;border-radius:9px;font-size:13px;}
+  .gt-card-grid{display:block;}
+  .gt-card-sidebar{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:7px;
+    margin-top:14px;
+  }
+  .gt-sidebar-btn{padding:9px;font-size:12px;border-radius:9px;}
+  .gt-switch-modal .gt-board-card-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .gt-modal-search{padding:8px;border-radius:10px;margin-right:30px;}
+  .gt-tabs{margin:8px 0 14px;overflow-x:auto;}
+  .gt-tabs button{font-size:12px;white-space:nowrap;}
+
+  /* Drawer */
+  .gt-menu-drawer{
+    top:48px;
+    width:min(84vw,320px);
+    padding:14px;
+  }
+  .gt-toast{left:12px;right:12px;bottom:78px;text-align:center;font-size:13px;}
+}

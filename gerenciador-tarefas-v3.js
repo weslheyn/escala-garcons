@@ -7,11 +7,11 @@ const uid=p=>(p||'id')+'_'+Date.now().toString(36)+'_'+Math.random().toString(36
 const fmtDateBR=(iso)=>{if(!iso)return''; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`};
 const monthNames=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const bgLib=[
- {id:'coco',name:'Coco Bambu',type:'image',value:'assets/gerenciador-tarefas/fundos/tema-coco-bambu.png',brand:true},
- {id:'coco-arara',name:'Coco Bambu Arara',type:'image',value:'assets/gerenciador-tarefas/fundos/coco-bambu-arara.png',brand:true},
- {id:'coco-logo',name:'Logo Coco Bambu',type:'image',value:'assets/gerenciador-tarefas/fundos/logo-coco-bambu.png',brand:true,contain:true},
- {id:'coco-app',name:'App Coco Bambu',type:'image',value:'assets/gerenciador-tarefas/fundos/app-entrega-gratis.png',brand:true},
- {id:'coco-cocada',name:'Cocada Coco Bambu',type:'image',value:'assets/gerenciador-tarefas/fundos/app-cocada.png',brand:true},
+ {id:'coco',name:'Coco Bambu',type:'gradient',brand:true,value:'linear-gradient(135deg,#4b130d 0%,#6b1f12 34%,#2b0905 68%,#120604 100%)'},
+ {id:'coco-gold',name:'Coco Bambu dourado',type:'gradient',brand:true,value:'radial-gradient(circle at 18% 20%,#f6b84a66 0 9%,transparent 10%),linear-gradient(135deg,#5c160f 0%,#8b3a17 45%,#f2a93b 100%)'},
+ {id:'coco-dark',name:'Coco Bambu premium',type:'gradient',brand:true,value:'linear-gradient(135deg,#1a0b05 0%,#5c160f 42%,#c87920 100%)'},
+ {id:'coco-wine',name:'Vinho Coco Bambu',type:'gradient',brand:true,value:'linear-gradient(135deg,#230704 0%,#5c160f 50%,#100604 100%)'},
+ {id:'coco-clean',name:'Coco Bambu claro',type:'gradient',brand:true,value:'linear-gradient(135deg,#fff3d6 0%,#f2a93b 48%,#5c160f 100%)'},
  {id:'darkmountain',name:'Montanha escura',type:'gradient',value:'linear-gradient(135deg,#101827,#2d3748 45%,#111827 46%,#0b101c)'},
  {id:'night',name:'Noite estrelada',type:'gradient',value:'radial-gradient(circle at 35% 20%,#66708555 0 8%,transparent 9%),linear-gradient(135deg,#111827,#1f2937,#020617)'},
  {id:'orange',name:'Montanha laranja',type:'gradient',value:'linear-gradient(135deg,#7c2d12,#ea580c,#fbbf24)'},
@@ -22,6 +22,16 @@ const bgLib=[
  {id:'forest',name:'Verde',type:'gradient',value:'linear-gradient(135deg,#064e3b,#0f766e,#111827)'},
  {id:'clean',name:'Claro',type:'gradient',value:'linear-gradient(135deg,#dbeafe,#f8fafc,#e2e8f0)'}
 ];
+
+function normalizeBg(bg){
+ const oldMap={
+  'coco-arara':'coco-gold','coco-logo':'coco','coco-app':'coco-dark','coco-cocada':'coco-wine',
+  'tema-coco-bambu':'coco','app-entrega-gratis':'coco-dark','app-cocada':'coco-wine'
+ };
+ if(!bg) return bgLib[0];
+ const id=typeof bg==='string'?bg:bg.id;
+ return bgLib.find(x=>x.id===id)||bgLib.find(x=>x.id===oldMap[id])||bgLib[0];
+}
 const colors=['#61bd4f','#f2d600','#ff9f1a','#eb5a46','#c377e0','#0079bf','#00c2e0','#51e898','#ff78cb','#344563'];
 let state, current={workspaceId:null, boardId:null, view:'board'}, calDate=new Date();
 function seed(){
@@ -40,7 +50,7 @@ function seed(){
  }, cards: tempCards, recurringLog:{}};
 }
 let tempCards={}; function stateAddCardTemp(c){tempCards[c.id]=c;}
-function load(){try{state=JSON.parse(localStorage.getItem(KEY))||seed();}catch(e){state=seed()} if(!state.version||state.version<3){state=seed()} state.workspaces=state.workspaces||{}; state.boards=state.boards||{}; state.lists=state.lists||{}; state.cards=state.cards||{}; state.recent=state.recent||[]; if(!Object.keys(state.workspaces).length){state=seed()} current.workspaceId=Object.keys(state.workspaces)[0]; current.boardId=state.recent?.find(id=>state.boards[id])||state.workspaces[current.workspaceId].boards?.find(id=>state.boards[id])||null; if(!current.boardId){const wid=current.workspaceId, bid=uid('b'), lid=uid('l'); state.boards[bid]={id:bid,workspaceId:wid,title:'NOVO QUADRO',background:bgLib[0],favorite:false,members:['Weslheyn Dias'],lists:[lid],createdAt:new Date().toISOString()}; state.lists[lid]={id:lid,boardId:bid,title:'A fazer',cards:[]}; state.workspaces[wid].boards=[bid]; current.boardId=bid; state.recent=[bid];} save();}
+function load(){try{state=JSON.parse(localStorage.getItem(KEY))||seed();}catch(e){state=seed()} if(!state.version||state.version<3){state=seed()} state.workspaces=state.workspaces||{}; state.boards=state.boards||{}; state.lists=state.lists||{}; state.cards=state.cards||{}; state.recent=state.recent||[]; Object.values(state.boards||{}).forEach(b=>{b.background=normalizeBg(b.background)}); if(!Object.keys(state.workspaces).length){state=seed()} current.workspaceId=Object.keys(state.workspaces)[0]; current.boardId=state.recent?.find(id=>state.boards[id])||state.workspaces[current.workspaceId].boards?.find(id=>state.boards[id])||null; if(!current.boardId){const wid=current.workspaceId, bid=uid('b'), lid=uid('l'); state.boards[bid]={id:bid,workspaceId:wid,title:'NOVO QUADRO',background:bgLib[0],favorite:false,members:['Weslheyn Dias'],lists:[lid],createdAt:new Date().toISOString()}; state.lists[lid]={id:lid,boardId:bid,title:'A fazer',cards:[]}; state.workspaces[wid].boards=[bid]; current.boardId=bid; state.recent=[bid];} save();}
 function save(){localStorage.setItem(KEY,JSON.stringify(state));}
 function board(){return state.boards[current.boardId]} function workspace(){return state.workspaces[current.workspaceId]} function setBg(el,bg){ if(!el)return; if(!bg) bg=bgLib[0]; el.style.backgroundSize=bg.contain?'contain':'cover'; el.style.backgroundRepeat=bg.contain?'no-repeat':'no-repeat'; el.style.backgroundPosition='center'; if(bg.type==='image') el.style.backgroundImage=`linear-gradient(#00000012,#00000012),url('${bg.value}')`; else el.style.backgroundImage=bg.value; }
 function showView(v){current.view=v; $$('.gt-bottom-nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v)); $('#gtHome').classList.add('gt-hidden'); $('#gtBoardScreen').classList.add('gt-hidden'); $('#gtPlannerScreen').classList.add('gt-hidden'); $('#gtInboxScreen').classList.add('gt-hidden'); if(v==='board'){$('#gtBoardScreen').classList.remove('gt-hidden'); renderBoard()} if(v==='planner'){$('#gtPlannerScreen').classList.remove('gt-hidden'); renderPlanner()} if(v==='inbox'){$('#gtInboxScreen').classList.remove('gt-hidden'); renderInbox()} }

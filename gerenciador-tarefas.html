@@ -6,45 +6,53 @@
 <meta name="theme-color" content="#17213c">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.png">
-<link rel="stylesheet" href="gerenciador-tarefas.css?v=2">
+<link rel="stylesheet" href="gerenciador-tarefas.css?v=3">
 <title>Gerenciador de Tarefas</title>
 </head>
 <body>
 <div id="gtToast" class="gt-toast"></div>
 <div id="gtApp" class="gt-app">
   <header class="gt-topbar">
-    <div class="gt-left">
+    <div class="gt-top-left">
       <button class="gt-icon" onclick="GT.toggleSidebar()">☷</button>
-      <div class="gt-trello-mark">▣</div>
-      <strong>Gerenciador de Tarefas</strong>
+      <div class="gt-logo">▣</div>
+      <strong id="gtAppName">Gerenciador de Tarefas</strong>
     </div>
-    <div class="gt-search"><span>🔎</span><input id="gtSearch" placeholder="Pesquisar" oninput="GT.render()"></div>
+    <label class="gt-search"><span>⌕</span><input id="gtSearch" placeholder="Pesquisar" oninput="GT.render()"></label>
     <div class="gt-top-actions">
-      <button onclick="GT.openCreateMenu()">Criar</button>
-      <button class="gt-icon" onclick="GT.openShareModal()">👥</button>
+      <button class="gt-btn" onclick="GT.openCreateMenu()">Criar</button>
+      <button class="gt-icon" onclick="GT.openWorkspaceModal()" title="Nova área">👥</button>
       <button class="gt-avatar">WD</button>
     </div>
   </header>
 
   <aside id="gtSidebar" class="gt-sidebar">
-    <div class="gt-sidebar-head"><div class="gt-cb">CB</div><div><b>Áreas de trabalho</b><small>Quadros e tarefas</small></div></div>
+    <div class="gt-sidebar-head"><div class="gt-cb">GT</div><div><b>Áreas de trabalho</b><small>Gerencie quadros e tarefas</small></div></div>
     <button class="gt-side-create" onclick="GT.openWorkspaceModal()">+ Nova área de trabalho</button>
     <div id="gtWorkspaces" class="gt-workspaces"></div>
     <button class="gt-side-back" onclick="location.href='index.html'">Sair para o início</button>
   </aside>
 
   <main class="gt-main">
-    <section class="gt-board-header">
-      <div class="gt-board-title-wrap">
+    <section class="gt-boardbar">
+      <div class="gt-boardbar-left">
         <button class="gt-board-title" onclick="GT.openBoardMenu()"><span id="gtCurrentBoard">Quadro</span></button>
-        <button class="gt-small-icon" onclick="GT.openSwitchBoards()">▥</button>
-        <button class="gt-small-icon" onclick="GT.openThemeModal()">🎨</button>
-        <button class="gt-small-icon" onclick="GT.openShareModal()">👥</button>
+        <button class="gt-board-icon" onclick="GT.openSwitchBoards()" title="Mudar de quadros">▥</button>
+        <button class="gt-board-icon" onclick="GT.openThemeModal()" title="Mudar fundo">🎨</button>
+        <button class="gt-board-icon" onclick="GT.openWorkspaceModal()" title="Nova área">👥</button>
       </div>
-      <div class="gt-board-actions">
+      <div class="gt-boardbar-right">
         <button onclick="GT.openThemeModal()">Mudar fundo</button>
         <button class="gt-share" onclick="GT.openShareModal()">+ Compartilhar</button>
-        <button class="gt-small-icon" onclick="GT.openBoardMenu()">⋯</button>
+        <button class="gt-board-icon" onclick="GT.openBoardMenu()">⋯</button>
+      </div>
+    </section>
+
+    <section id="gtInbox" class="gt-inbox" hidden>
+      <div class="gt-inbox-card">
+        <h2>Caixa de entrada</h2>
+        <p>Cartões sem data, cartões vencidos e tarefas rápidas do quadro atual.</p>
+        <div id="gtInboxList" class="gt-inbox-list"></div>
       </div>
     </section>
 
@@ -54,9 +62,11 @@
         <button class="gt-today" onclick="GT.today()">Hoje</button>
         <div id="gtCalendar" class="gt-calendar"></div>
       </div>
-      <div class="gt-planner-board">
-        <div class="gt-planner-title"><h2 id="gtPlannerTitle">Atividades do dia</h2><button onclick="GT.openCardModal(null,null,{daily:true})">+ Atividade diária</button></div>
+      <div class="gt-planner-area">
+        <div class="gt-planner-head"><h2 id="gtPlannerTitle">Atividades do dia</h2><button onclick="GT.openCardModal(null,null,{daily:true,prazo:GT.state.plannerDate})">+ Atividade diária</button></div>
         <div id="gtPlannerList" class="gt-planner-list"></div>
+        <div class="gt-planner-mini-title">Quadro atual</div>
+        <div id="gtPlannerMiniBoard" class="gt-mini-board"></div>
       </div>
     </section>
 
@@ -64,9 +74,9 @@
   </main>
 
   <nav class="gt-bottom-nav">
-    <button onclick="GT.setView('inbox')">▣ Caixa de entrada</button>
+    <button id="gtNavInbox" onclick="GT.setView('inbox')">▣ Caixa de entrada</button>
     <button id="gtNavPlanner" onclick="GT.setView('planner')">📅 Planejador</button>
-    <button id="gtNavBoard" class="active" onclick="GT.setView('board')">▥ Quadro</button>
+    <button id="gtNavBoard" onclick="GT.setView('board')">▥ Quadro</button>
     <button onclick="GT.openSwitchBoards()">▤ Mudar de quadros</button>
   </nav>
 </div>
@@ -76,7 +86,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-<script src="gerenciador-tarefas-firebase.js?v=2"></script>
-<script src="gerenciador-tarefas.js?v=2"></script>
+<script src="gerenciador-tarefas-firebase.js?v=3"></script>
+<script src="gerenciador-tarefas.js?v=3"></script>
 </body>
 </html>

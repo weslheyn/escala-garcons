@@ -327,3 +327,11 @@
   }
   .gt-toast{left:12px;right:12px;bottom:78px;text-align:center;font-size:13px;}
 }
+
+/* Alarmes e notificações */
+.gt-reminder-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.gt-check-line{display:flex;align-items:center;gap:8px;margin:9px 0;color:#172b4d;font-size:14px;}
+.gt-check-line input{width:auto!important;}
+.gt-muted{color:#5e6c84;font-size:13px;line-height:1.35;}
+.gt-card-meta{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
+@media(max-width:760px){.gt-reminder-row{grid-template-columns:1fr;}.gt-check-line{font-size:13px}.gt-muted{font-size:12px}}

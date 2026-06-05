@@ -22,3 +22,12 @@ Funções principais:
 - Editar card com descrição, responsável, prioridade, prazo, etiquetas e checklist.
 - Alterar fundo do quadro com cores/gradientes prontos ou imagem personalizada por URL.
 - Salvar no Firebase com fallback em localStorage.
+
+
+V4.4 - Alarmes e notificações:
+- Campo de despertador nos cards.
+- Permissão de notificações do navegador.
+- Vibração em celulares compatíveis.
+- Som simples no navegador.
+- Central de notificações.
+- Verificação automática a cada 30 segundos enquanto o app/PWA está aberto.

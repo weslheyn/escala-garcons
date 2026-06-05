@@ -63,9 +63,106 @@ function effectiveAlarm(c){const local=getLocalAlarm(c.id); if(local&&local.enab
 function migrateOldPersonalAlarms(){let changed=false; Object.values(state.cards||{}).forEach(c=>{ if(c.alarmEnabled&&c.alarmTime&&!c.sharedAlarmEnabled){setLocalAlarm(c.id,{enabled:true,time:c.alarmTime,advance:Number(c.alarmAdvance||0),vibrate:c.alarmVibrate!==false,sound:c.alarmSound!==false}); delete c.alarmEnabled; delete c.alarmTime; delete c.alarmAdvance; delete c.alarmVibrate; delete c.alarmSound; changed=true;} }); return changed;}
 function sanitizeStateForCloud(data){const clean=JSON.parse(JSON.stringify(data||{})); delete clean.notificationLog; if(clean.cards){Object.values(clean.cards).forEach(c=>{delete c.alarmEnabled; delete c.alarmTime; delete c.alarmAdvance; delete c.alarmVibrate; delete c.alarmSound;});} return clean;}
 function saveCloudDebounced(){ if(cloudApplying||!cloudReady||!window.GerenciadorTarefasFirebase?.enabled) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(()=>{window.GerenciadorTarefasFirebase.saveAll(sanitizeStateForCloud(state)).catch(e=>console.warn('GT Firebase save',e));},350);}
-async function initCloudSync(){ try{ if(!window.GerenciadorTarefasFirebase) return; const ok=await window.GerenciadorTarefasFirebase.init(); if(!ok) return; cloudReady=true; window.GerenciadorTarefasFirebase.listen(remote=>{ if(!remote||!remote.workspaces){ saveCloudDebounced(); return; } const keepCurrent=Object.assign({},current); cloudApplying=true; state=remote; state.workspaces=state.workspaces||{}; state.boards=state.boards||{}; state.lists=state.lists||{}; state.cards=state.cards||{}; state.recent=state.recent||[]; state.notificationLog=JSON.parse(localStorage.getItem(KEY)||'{}').notificationLog||{}; Object.values(state.boards||{}).forEach(b=>{b.background=normalizeBg(b.background)}); repairStateLinks(); current=keepCurrent; if(!current.workspaceId||!state.workspaces[current.workspaceId]) current.workspaceId=Object.keys(state.workspaces)[0]; if(!current.boardId||!state.boards[current.boardId]) current.boardId=state.workspaces[current.workspaceId]?.boards?.find(id=>state.boards[id])||Object.keys(state.boards)[0]||null; localStorage.setItem(KEY,JSON.stringify(state)); cloudApplying=false; if(current.view==='home')renderHome(); else if(current.view==='planner')renderPlanner(); else if(current.view==='inbox')renderInbox(); else renderBoard(); }); }catch(e){console.warn('GT Firebase sync indisponível',e);} }
 
-function load(){try{state=JSON.parse(localStorage.getItem(KEY))||seed();}catch(e){state=seed()} if(!state.version||state.version<3){state=seed()} state.workspaces=state.workspaces||{}; state.boards=state.boards||{}; state.lists=state.lists||{}; state.cards=state.cards||{}; state.recent=state.recent||[]; state.notificationLog=state.notificationLog||{}; migrateOldPersonalAlarms(); Object.values(state.cards||{}).forEach(c=>{c.sharedAlarmAdvance=Number(c.sharedAlarmAdvance||0); c.sharedAlarmVibrate=c.sharedAlarmVibrate!==false; c.sharedAlarmSound=c.sharedAlarmSound!==false;}); Object.values(state.boards||{}).forEach(b=>{b.background=normalizeBg(b.background)}); if(!Object.keys(state.workspaces).length){state=seed()} repairStateLinks(); current.workspaceId=Object.keys(state.workspaces)[0]; current.boardId=state.recent?.find(id=>state.boards[id])||state.workspaces[current.workspaceId].boards?.find(id=>state.boards[id])||null; if(!current.boardId){const wid=current.workspaceId, bid=uid('b'), lid=uid('l'); state.boards[bid]={id:bid,workspaceId:wid,title:'NOVO QUADRO',background:bgLib[0],favorite:false,members:['Weslheyn Dias'],lists:[lid],createdAt:new Date().toISOString()}; state.lists[lid]={id:lid,boardId:bid,title:'A fazer',cards:[]}; state.workspaces[wid].boards=[bid]; current.boardId=bid; state.recent=[bid];} save();}
+function normalizeLegacyFirebaseState(input){
+  if(!input || typeof input!=='object') return input;
+  // A base real exportada veio na estrutura antiga: workspaces/{area}/boards/{quadro}/columns/{lista}/cards/{card}
+  // O módulo V3 usa estrutura normalizada: workspaces + boards + lists + cards separados.
+  const looksLegacy = input.workspaces && (!input.boards || Object.values(input.workspaces||{}).some(ws => ws && ws.boards && !Array.isArray(ws.boards)));
+  if(!looksLegacy && input.version>=3) return input;
+  const out = {
+    version: 3,
+    recent: Array.isArray(input.recent) ? input.recent.slice(0,8) : [],
+    activeWorkspaceId: input.activeWorkspaceId || '',
+    activeBoardId: input.activeBoardId || '',
+    plannerDate: input.plannerDate || '',
+    plannerMonth: input.plannerMonth || '',
+    view: input.view || 'board',
+    workspaces: {}, boards: {}, lists: {}, cards: {}, notificationLog: input.notificationLog || {}
+  };
+  const themeToBg = (theme, customBg) => {
+    if(customBg) return {id:'custom',name:'Personalizado',type:'image',value:customBg};
+    const map = {'night':'night','dark-gold':'coco-dark','gold':'gold','coco':'coco','coco-bambu':'coco','darkmountain':'darkmountain'};
+    return bgLib.find(b=>b.id===(map[theme]||theme)) || bgLib[0];
+  };
+  const listSort = obj => Object.entries(obj||{}).sort((a,b)=>Number((a[1]&&a[1].order)||0)-Number((b[1]&&b[1].order)||0));
+  Object.entries(input.workspaces||{}).forEach(([wid,ws])=>{
+    if(!ws) return;
+    const newWs = {
+      id: ws.id || wid,
+      name: ws.name || ws.nome || 'Área de trabalho',
+      icon: ws.icon || 'WD',
+      color: ws.color || '#6554c0',
+      members: ws.members || ['Weslheyn Dias'],
+      createdAt: ws.createdAt || ws.criadoEm || new Date().toISOString(),
+      boards: []
+    };
+    out.workspaces[newWs.id]=newWs;
+    const boardsObj = ws.boards || {};
+    Object.entries(boardsObj).forEach(([bid,b])=>{
+      if(!b) return;
+      const boardId=b.id||bid;
+      const newB={
+        id: boardId,
+        workspaceId: newWs.id,
+        title: b.title || b.nome || 'Novo quadro',
+        background: normalizeBg(themeToBg(b.theme, b.customBg)),
+        favorite: !!b.favorite,
+        members: b.members || ['Weslheyn Dias'],
+        lists: [],
+        createdAt: b.createdAt || b.criadoEm || new Date().toISOString()
+      };
+      out.boards[boardId]=newB;
+      newWs.boards.push(boardId);
+      const columns=b.columns || b.lists || {};
+      listSort(columns).forEach(([lid,l])=>{
+        if(!l) return;
+        const listId=l.id||lid;
+        const newL={id:listId,boardId:boardId,title:l.title||l.nome||'Lista',cards:[]};
+        out.lists[listId]=newL;
+        newB.lists.push(listId);
+        const cards=l.cards||{};
+        const cardEntries=Array.isArray(cards) ? cards.map((x,i)=>[x&&x.id?x.id:String(i),x]) : listSort(cards);
+        cardEntries.forEach(([cid,c])=>{
+          if(!c) return;
+          const cardId=c.id||cid;
+          const newC={
+            id: cardId,
+            title: c.title || c.titulo || c.nome || 'Atividade',
+            description: c.description || c.descricao || '',
+            labels: Array.isArray(c.labels)?c.labels:[],
+            due: c.due || c.prazo || '',
+            done: !!(c.done || c.concluido),
+            recurrence: c.recurrence || (c.recorrenciaDiaria ? 'daily' : 'none'),
+            sharedAlarmEnabled: !!c.sharedAlarmEnabled,
+            sharedAlarmTime: c.sharedAlarmTime || '',
+            sharedAlarmAdvance: Number(c.sharedAlarmAdvance||0),
+            sharedAlarmVibrate: c.sharedAlarmVibrate!==false,
+            sharedAlarmSound: c.sharedAlarmSound!==false,
+            checklist: Array.isArray(c.checklist)?c.checklist:[],
+            comments: Array.isArray(c.comments)?c.comments:[],
+            createdAt: c.createdAt || c.criadoEm || new Date().toISOString(),
+            updatedAt: c.updatedAt || c.atualizadoEm || new Date().toISOString(),
+            responsavel: c.responsavel || '',
+            prioridade: c.prioridade || ''
+          };
+          out.cards[cardId]=normalizeCardForModal(newC,cardId);
+          newL.cards.push(cardId);
+        });
+      });
+      if(!newB.lists.length){ const lid=uid('l'); out.lists[lid]={id:lid,boardId:boardId,title:'A fazer',cards:[]}; newB.lists=[lid]; }
+    });
+  });
+  if(!Object.keys(out.workspaces).length) return input;
+  if(!out.activeWorkspaceId || !out.workspaces[out.activeWorkspaceId]) out.activeWorkspaceId=Object.keys(out.workspaces)[0];
+  if(!out.activeBoardId || !out.boards[out.activeBoardId]) out.activeBoardId=out.workspaces[out.activeWorkspaceId].boards[0] || Object.keys(out.boards)[0] || '';
+  if(!out.recent.length && out.activeBoardId) out.recent=[out.activeBoardId];
+  return out;
+}
+
+async function initCloudSync(){ try{ if(!window.GerenciadorTarefasFirebase) return; const ok=await window.GerenciadorTarefasFirebase.init(); if(!ok) return; cloudReady=true; window.GerenciadorTarefasFirebase.listen(remote=>{ if(!remote||!remote.workspaces){ saveCloudDebounced(); return; } const keepCurrent=Object.assign({},current); cloudApplying=true; state=normalizeLegacyFirebaseState(remote); state.workspaces=state.workspaces||{}; state.boards=state.boards||{}; state.lists=state.lists||{}; state.cards=state.cards||{}; state.recent=state.recent||[]; state.notificationLog=JSON.parse(localStorage.getItem(KEY)||'{}').notificationLog||{}; Object.values(state.boards||{}).forEach(b=>{b.background=normalizeBg(b.background)}); repairStateLinks(); current=keepCurrent; if(!current.workspaceId||!state.workspaces[current.workspaceId]) current.workspaceId=state.activeWorkspaceId&&state.workspaces[state.activeWorkspaceId]?state.activeWorkspaceId:Object.keys(state.workspaces)[0]; if(!current.boardId||!state.boards[current.boardId]) current.boardId=(state.activeBoardId&&state.boards[state.activeBoardId]?state.activeBoardId:null)||state.workspaces[current.workspaceId]?.boards?.find(id=>state.boards[id])||Object.keys(state.boards)[0]||null; localStorage.setItem(KEY,JSON.stringify(state)); cloudApplying=false; if(current.view==='home')renderHome(); else if(current.view==='planner')renderPlanner(); else if(current.view==='inbox')renderInbox(); else renderBoard(); }); }catch(e){console.warn('GT Firebase sync indisponível',e);} }
+
+function load(){try{state=JSON.parse(localStorage.getItem(KEY))||seed();}catch(e){state=seed()} state=normalizeLegacyFirebaseState(state)||state; if(!state.version||state.version<3){state=normalizeLegacyFirebaseState(state); if(!state.version||state.version<3) state=seed();} state.workspaces=state.workspaces||{}; state.boards=state.boards||{}; state.lists=state.lists||{}; state.cards=state.cards||{}; state.recent=state.recent||[]; state.notificationLog=state.notificationLog||{}; migrateOldPersonalAlarms(); Object.values(state.cards||{}).forEach(c=>{normalizeCardForModal(c,c&&c.id); c.sharedAlarmAdvance=Number(c.sharedAlarmAdvance||0); c.sharedAlarmVibrate=c.sharedAlarmVibrate!==false; c.sharedAlarmSound=c.sharedAlarmSound!==false;}); Object.values(state.boards||{}).forEach(b=>{b.background=normalizeBg(b.background)}); if(!Object.keys(state.workspaces).length){state=seed()} repairStateLinks(); current.workspaceId=(state.activeWorkspaceId&&state.workspaces[state.activeWorkspaceId]?state.activeWorkspaceId:Object.keys(state.workspaces)[0]); current.boardId=(state.activeBoardId&&state.boards[state.activeBoardId]?state.activeBoardId:null)||state.recent?.find(id=>state.boards[id])||state.workspaces[current.workspaceId].boards?.find(id=>state.boards[id])||null; if(!current.boardId){const wid=current.workspaceId, bid=uid('b'), lid=uid('l'); state.boards[bid]={id:bid,workspaceId:wid,title:'NOVO QUADRO',background:bgLib[0],favorite:false,members:['Weslheyn Dias'],lists:[lid],createdAt:new Date().toISOString()}; state.lists[lid]={id:lid,boardId:bid,title:'A fazer',cards:[]}; state.workspaces[wid].boards=[bid]; current.boardId=bid; state.recent=[bid];} save();}
 function save(){repairStateLinks(); localStorage.setItem(KEY,JSON.stringify(state)); saveCloudDebounced();}
 function board(){return state.boards[current.boardId]} function workspace(){return state.workspaces[current.workspaceId]} function setBg(el,bg){ if(!el)return; if(!bg) bg=bgLib[0]; el.style.backgroundSize=bg.contain?'contain':'cover'; el.style.backgroundRepeat=bg.contain?'no-repeat':'no-repeat'; el.style.backgroundPosition='center'; if(bg.type==='image') el.style.backgroundImage=`linear-gradient(#00000012,#00000012),url('${bg.value}')`; else el.style.backgroundImage=bg.value; }
 function showView(v){current.view=v; $$('.gt-bottom-nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v)); $('#gtHome').classList.add('gt-hidden'); $('#gtBoardScreen').classList.add('gt-hidden'); $('#gtPlannerScreen').classList.add('gt-hidden'); $('#gtInboxScreen').classList.add('gt-hidden'); if(v==='board'){$('#gtBoardScreen').classList.remove('gt-hidden'); renderBoard()} if(v==='planner'){$('#gtPlannerScreen').classList.remove('gt-hidden'); renderPlanner()} if(v==='inbox'){$('#gtInboxScreen').classList.remove('gt-hidden'); renderInbox()} }

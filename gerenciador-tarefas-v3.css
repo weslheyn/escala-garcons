@@ -423,3 +423,186 @@
 .gt-app.gt-theme-neon .gt-list{background:rgba(23,8,51,.62);border-color:rgba(168,85,247,.32);box-shadow:0 0 28px rgba(99,102,241,.18),0 18px 42px rgba(0,0,0,.32)}.gt-app.gt-theme-neon .gt-card{background:rgba(46,16,101,.36);border-color:rgba(217,70,239,.28)}.gt-app.gt-theme-neon .gt-add-card{color:#f0abfc}.gt-app.gt-theme-neon .gt-bottom-nav button.active{background:linear-gradient(135deg,#7c3aed,#0ea5e9);color:#fff}
 .gt-app.gt-density-compact .gt-list{width:248px;min-width:248px}.gt-app.gt-density-compact .gt-card{padding:9px 10px;margin:6px}.gt-app.gt-density-compact .gt-card-title{font-size:13px}.gt-app.gt-density-compact .gt-card-meta{font-size:10.5px;margin-top:5px}.gt-app.gt-density-compact .gt-list-head{padding:8px 10px}.gt-app.gt-density-compact .gt-cards{max-height:calc(100vh - 230px)}.gt-app.gt-density-comfortable .gt-list{width:300px;min-width:300px}.gt-app.gt-density-comfortable .gt-card{padding:15px 16px;margin:10px}.gt-app.gt-density-comfortable .gt-card-title{font-size:16px}.gt-app.gt-density-comfortable .gt-cards{max-height:calc(100vh - 185px)}
 @media(max-width:760px){.gt-theme-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.gt-density-grid{grid-template-columns:1fr}.gt-theme-option{min-height:64px;padding:10px}.gt-app.gt-density-compact .gt-list,.gt-app.gt-density-normal .gt-list,.gt-app.gt-density-comfortable .gt-list{width:84vw;min-width:84vw}.gt-app.gt-density-compact .gt-card{padding:9px 10px}.gt-app.gt-density-comfortable .gt-card{padding:13px 14px}}
+
+/* V5.10 - Refinamento premium: cabeçalhos por tema, menu inferior compacto, scroll limpo e títulos fixos */
+.gt-board-lists{
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+  align-items:flex-start !important;
+  padding-bottom:62px !important;
+  scrollbar-width:none !important;
+  -ms-overflow-style:none !important;
+}
+.gt-board-lists::-webkit-scrollbar,
+.gt-cards::-webkit-scrollbar,
+.gt-main::-webkit-scrollbar,
+.gt-screen::-webkit-scrollbar,
+.gt-list::-webkit-scrollbar,
+.gt-planner-day::-webkit-scrollbar,
+.gt-calendar-panel::-webkit-scrollbar,
+.gt-switch-modal-scroll::-webkit-scrollbar,
+.gt-card-modal::-webkit-scrollbar{
+  width:0 !important;
+  height:0 !important;
+  display:none !important;
+}
+.gt-cards,.gt-main,.gt-screen,.gt-list,.gt-planner-day,.gt-calendar-panel,.gt-switch-modal-scroll,.gt-card-modal{
+  scrollbar-width:none !important;
+  -ms-overflow-style:none !important;
+}
+.gt-list{
+  overflow:hidden !important;
+  max-height:calc(100vh - 190px) !important;
+  height:auto !important;
+}
+.gt-cards{
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  flex:1 1 auto !important;
+  min-height:80px !important;
+  padding-top:8px !important;
+}
+.gt-list-head{
+  position:sticky !important;
+  top:0 !important;
+  z-index:12 !important;
+  border-radius:14px 14px 0 0 !important;
+  padding:10px 12px 9px !important;
+  backdrop-filter:blur(16px) saturate(1.2) !important;
+  -webkit-backdrop-filter:blur(16px) saturate(1.2) !important;
+  border-bottom:1px solid var(--gt-list-head-border, rgba(255,255,255,.12)) !important;
+  background:var(--gt-list-head-bg, rgba(235,236,240,.96)) !important;
+  color:var(--gt-list-head-color, #172b4d) !important;
+}
+.gt-list-title,.gt-list-count,.gt-list-menu{
+  color:var(--gt-list-head-color, #172b4d) !important;
+}
+.gt-list-title::selection{background:rgba(56,139,255,.35)}
+.gt-card{
+  transition:transform .14s ease, background .14s ease, border-color .14s ease, box-shadow .14s ease !important;
+}
+.gt-card:hover{
+  transform:translateY(-1px) !important;
+}
+.gt-bottom-nav{
+  bottom:8px !important;
+  padding:5px 6px !important;
+  border-radius:12px !important;
+  gap:2px !important;
+  min-height:42px !important;
+  max-width:min(620px,88vw) !important;
+}
+.gt-bottom-nav button{
+  padding:6px 10px !important;
+  font-size:13px !important;
+  border-radius:9px !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+}
+.gt-bottom-nav button.active{
+  box-shadow:0 6px 16px rgba(0,0,0,.20) !important;
+}
+.gt-add-card{
+  margin-top:auto !important;
+  background:var(--gt-add-card-bg, transparent) !important;
+  color:var(--gt-add-card-color, #44546f) !important;
+  font-weight:700 !important;
+}
+
+/* Tema Padrão */
+.gt-app.gt-theme-default{
+  --gt-list-head-bg:linear-gradient(180deg,rgba(245,247,250,.98),rgba(235,236,240,.94));
+  --gt-list-head-color:#172b4d;
+  --gt-list-head-border:rgba(9,30,66,.12);
+  --gt-add-card-color:#44546f;
+}
+
+/* Tema Premium Glass V2 */
+.gt-app.gt-theme-premium{
+  --gt-list-head-bg:linear-gradient(135deg,rgba(34,50,115,.78),rgba(14,24,64,.62));
+  --gt-list-head-color:#f8fbff;
+  --gt-list-head-border:rgba(160,185,255,.22);
+  --gt-add-card-color:#b7c4ff;
+  --gt-add-card-bg:rgba(255,255,255,.04);
+}
+.gt-app.gt-theme-premium .gt-list{
+  background:linear-gradient(180deg,rgba(10,17,46,.54),rgba(8,13,34,.42)) !important;
+  border-color:rgba(172,190,255,.18) !important;
+}
+.gt-app.gt-theme-premium .gt-card{
+  background:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.07)) !important;
+}
+
+/* Tema Executivo Dark */
+.gt-app.gt-theme-executive{
+  --gt-list-head-bg:linear-gradient(135deg,rgba(20,18,14,.96),rgba(6,7,8,.88));
+  --gt-list-head-color:#ffe1a3;
+  --gt-list-head-border:rgba(212,165,78,.28);
+  --gt-add-card-color:#d4a54e;
+}
+.gt-app.gt-theme-executive .gt-list-title,.gt-app.gt-theme-executive .gt-list-count,.gt-app.gt-theme-executive .gt-list-menu{color:#ffe1a3 !important;}
+
+/* Tema Coco Bambu */
+.gt-app.gt-theme-coco{
+  --gt-list-head-bg:linear-gradient(135deg,rgba(98,25,12,.95),rgba(42,12,7,.88));
+  --gt-list-head-color:#ffd77a;
+  --gt-list-head-border:rgba(246,184,74,.34);
+  --gt-add-card-color:#ffc45a;
+}
+.gt-app.gt-theme-coco .gt-list-title,.gt-app.gt-theme-coco .gt-list-count,.gt-app.gt-theme-coco .gt-list-menu{color:#ffd77a !important;}
+
+/* Tema Corporativo */
+.gt-app.gt-theme-corporate{
+  --gt-list-head-bg:linear-gradient(135deg,rgba(228,243,255,.98),rgba(190,222,255,.92));
+  --gt-list-head-color:#073763;
+  --gt-list-head-border:rgba(59,130,246,.24);
+  --gt-add-card-color:#0c66e4;
+}
+.gt-app.gt-theme-corporate .gt-list-title,.gt-app.gt-theme-corporate .gt-list-count,.gt-app.gt-theme-corporate .gt-list-menu{color:#073763 !important;}
+
+/* Tema Neon */
+.gt-app.gt-theme-neon{
+  --gt-list-head-bg:linear-gradient(135deg,rgba(91,33,182,.80),rgba(31,13,76,.72));
+  --gt-list-head-color:#f7e9ff;
+  --gt-list-head-border:rgba(217,70,239,.35);
+  --gt-add-card-color:#f0abfc;
+  --gt-add-card-bg:rgba(217,70,239,.06);
+}
+.gt-app.gt-theme-neon .gt-list-title,.gt-app.gt-theme-neon .gt-list-count,.gt-app.gt-theme-neon .gt-list-menu{color:#f7e9ff !important;}
+
+/* Densidade ajustada para valorizar os fundos */
+.gt-app.gt-density-compact .gt-list{width:240px !important;min-width:240px !important;max-height:calc(100vh - 210px) !important;}
+.gt-app.gt-density-normal .gt-list{width:260px !important;min-width:260px !important;max-height:calc(100vh - 195px) !important;}
+.gt-app.gt-density-comfortable .gt-list{width:290px !important;min-width:290px !important;max-height:calc(100vh - 180px) !important;}
+.gt-app.gt-density-compact .gt-card{padding:8px 9px !important;margin:0 0 7px !important;}
+.gt-app.gt-density-normal .gt-card{padding:9px 10px !important;margin:0 0 8px !important;}
+.gt-app.gt-density-comfortable .gt-card{padding:12px 13px !important;margin:0 0 10px !important;}
+.gt-app.gt-density-compact .gt-card-title{font-size:13px !important;line-height:1.25 !important;}
+.gt-app.gt-density-normal .gt-card-title{font-size:14px !important;line-height:1.28 !important;}
+.gt-app.gt-density-comfortable .gt-card-title{font-size:15px !important;line-height:1.35 !important;}
+
+@media(max-width:760px){
+  .gt-list{
+    max-height:calc(100dvh - 190px) !important;
+  }
+  .gt-board-lists{
+    padding-bottom:64px !important;
+  }
+  .gt-bottom-nav{
+    width:min(92vw,520px) !important;
+    overflow-x:auto !important;
+  }
+  .gt-bottom-nav button{
+    font-size:12px !important;
+    padding:7px 9px !important;
+  }
+  .gt-list-head{
+    padding:9px 10px 8px !important;
+  }
+  .gt-app.gt-density-compact .gt-list,
+  .gt-app.gt-density-normal .gt-list,
+  .gt-app.gt-density-comfortable .gt-list{
+    width:82vw !important;
+    min-width:82vw !important;
+  }
+}

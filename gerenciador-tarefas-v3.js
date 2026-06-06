@@ -26,7 +26,11 @@ const bgLib=[
  {id:'gold',name:'Dourado',type:'gradient',value:'linear-gradient(135deg,#875000,#c87920,#f5a742)'},
  {id:'wine',name:'Vinho escuro',type:'gradient',value:'linear-gradient(135deg,#23020c,#5c0f22,#0f172a)'},
  {id:'forest',name:'Verde',type:'gradient',value:'linear-gradient(135deg,#064e3b,#0f766e,#111827)'},
- {id:'clean',name:'Claro',type:'gradient',value:'linear-gradient(135deg,#dbeafe,#f8fafc,#e2e8f0)'}
+ {id:'clean',name:'Claro',type:'gradient',value:'linear-gradient(135deg,#dbeafe,#f8fafc,#e2e8f0)'},
+ {id:'canal-noite',name:'Canal à noite',type:'image',value:'assets/backgrounds/cidade-canal-noite.jpg'},
+ {id:'rio-outono',name:'Rio de outono',type:'image',value:'assets/backgrounds/rio-outono.jpg'},
+ {id:'floresta-outono',name:'Floresta outono',type:'image',value:'assets/backgrounds/floresta-outono.jpg'},
+ {id:'cachoeira-ruinas',name:'Cachoeira e ruínas',type:'image',value:'assets/backgrounds/cachoeira-ruinas.jpg'}
 ];
 
 function normalizeBg(bg){
@@ -666,5 +670,5 @@ function recName(r){return ({none:'Não repetir',daily:'Diária',weekdays:'Segun
 function esc(s){return String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
 function escAttr(s){return esc(s).replace(/'/g,'&#39;')}
 function bind(){ $('#gtHomeBtn').onclick=showHome; $('#gtMenuBtn').onclick=openDrawer; $('#gtCreateBtn').onclick=openCreate; $('#gtNewWorkspaceHome').onclick=openWorkspaceForm; $('#gtSwitchBoardsBtn').onclick=renderSwitch; $('#gtShareBtn').onclick=openShare; $('#gtBackgroundBtn').onclick=openBackground; $('#gtFavoriteBtn').onclick=()=>{board().favorite=!board().favorite; save(); renderBoard();}; $('#gtPlannerQuickBtn').onclick=()=>showView('planner'); $('#gtNewDailyTask').onclick=()=>{let firstList=board().lists[0]; openCardForm(firstList,{due:calDate.toISOString().slice(0,10)}); setTimeout(()=>{$('#fRec') && ($('#fRec').value='daily')},60)}; $('#gtPrevMonth').onclick=()=>{calDate.setMonth(calDate.getMonth()-1); renderPlanner();}; $('#gtNextMonth').onclick=()=>{calDate.setMonth(calDate.getMonth()+1); renderPlanner();}; $('#gtTodayBtn').onclick=()=>{calDate=new Date(); renderPlanner();}; $('#gtCreateWorkspaceOpt').onclick=openWorkspaceForm; $('#gtCreateBoardOpt').onclick=()=>openBoardForm(); $('#gtCreateListOpt').onclick=openListForm; $('#gtOverlay').onclick=()=>closeModals(); $$('.gt-bottom-nav button[data-view]').forEach(b=>b.onclick=()=>showView(b.dataset.view)); $('#gtSearch').oninput=()=>{const q=$('#gtSearch').value.toLowerCase(); $$('.gt-card').forEach(card=>card.style.display=card.textContent.toLowerCase().includes(q)?'':'none');}; $('#gtNotifyBtn') && ($('#gtNotifyBtn').onclick=openNotificationsPanel);}
-load(); bind(); bindNotificationBridge(); showView('board'); startAlarmLoop(); initCloudSync();
+load(); bind(); bindNotificationBridge(); showView('board'); startAlarmLoop(); initCloudSync(); setTimeout(()=>{ try{ renderSwitch(); }catch(e){ console.warn('Não foi possível abrir seletor inicial',e); } },350);
 })();

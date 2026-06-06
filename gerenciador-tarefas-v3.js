@@ -201,7 +201,7 @@ function board(){return state.boards[current.boardId]} function workspace(){retu
 function showView(v){current.view=v; $$('.gt-bottom-nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v)); $('#gtHome').classList.add('gt-hidden'); $('#gtBoardScreen').classList.add('gt-hidden'); $('#gtPlannerScreen').classList.add('gt-hidden'); $('#gtInboxScreen').classList.add('gt-hidden'); if(v==='board'){$('#gtBoardScreen').classList.remove('gt-hidden'); renderBoard()} if(v==='planner'){$('#gtPlannerScreen').classList.remove('gt-hidden'); renderPlanner()} if(v==='inbox'){$('#gtInboxScreen').classList.remove('gt-hidden'); renderInbox()} }
 function showHome(){ current.view='home'; $('#gtHome').classList.remove('gt-hidden'); $('#gtBoardScreen').classList.add('gt-hidden'); $('#gtPlannerScreen').classList.add('gt-hidden'); $('#gtInboxScreen').classList.add('gt-hidden'); renderHome(); }
 function renderHome(){repairStateLinks(); const wrap=$('#gtWorkspaceList'); wrap.innerHTML=''; Object.values(state.workspaces).forEach(ws=>{let block=document.createElement('div'); block.className='gt-workspace-block'; block.innerHTML=`<div class="gt-workspace-head"><div class="gt-workspace-name"><span class="gt-workspace-icon" style="background:${ws.color}">${ws.icon||'▣'}</span>${esc(ws.name)}</div><button class="gt-secondary" data-new-board="${ws.id}">+ Criar quadro</button></div><div class="gt-board-card-grid"></div>`; const grid=block.querySelector('.gt-board-card-grid'); (ws.boards||[]).forEach(id=>{const b=state.boards[id]; if(!b)return; grid.appendChild(boardTile(b));}); wrap.appendChild(block);}); $$('[data-new-board]').forEach(btn=>btn.onclick=()=>openBoardForm(btn.dataset.newBoard)); }
-function boardTile(b){let el=document.createElement('button'); el.className='gt-board-tile'; setBg(el,b.background); el.innerHTML=`<span class="star">${b.favorite?'★':'☆'}</span><strong>${esc(b.title)}</strong>`; el.onclick=()=>openBoard(b.id); return el;}
+function boardTile(b){let el=document.createElement('button'); el.className='gt-board-tile'; setBg(el,b.background); el.innerHTML=`<span class="star">${b.favorite?'★':'☆'}</span><strong>${esc(b.title)}</strong>`; el.onclick=()=>{ closeModals(); openBoard(b.id); }; return el;}
 function openBoard(id){const b=state.boards[id]; if(!b)return; current.boardId=id; current.workspaceId=b.workspaceId; state.recent=[id,...(state.recent||[]).filter(x=>x!==id)].slice(0,8); save(); showView('board');}
 function renderBoard(){repairStateLinks(); const b=board(); if(!b){showHome();return;} setBg($('.gt-board-bg'),b.background); $('#gtBoardTitleBtn').textContent=b.title; $('#gtWorkspaceBtn').textContent=workspace()?.name||'Área'; $('#gtFavoriteBtn').textContent=b.favorite?'★':'☆'; $('#gtBoardTitleBtn').onclick=()=>openBoardEditForm(current.boardId); $('#gtWorkspaceBtn').onclick=()=>openWorkspaceEditForm(current.workspaceId); const wrap=$('#gtBoardLists'); wrap.innerHTML=''; (b.lists||[]).forEach(listId=>{const l=state.lists[listId]; if(l) wrap.appendChild(renderList(l));}); const add=document.createElement('button'); add.className='gt-add-list'; add.textContent='+ Adicionar outra lista'; add.onclick=()=>openListForm(); wrap.appendChild(add); }
 function renderList(l){const el=document.createElement('div'); el.className='gt-list'; el.dataset.listId=l.id; const cardIds=(l.cards||[]).filter(id=>state.cards[id]); const cards=cardIds.map(id=>normalizeCardForModal(state.cards[id],id)).filter(Boolean); el.innerHTML=`<div class="gt-list-head"><input class="gt-list-title" value="${escAttr(l.title)}"><span class="gt-list-count">${cards.length}</span><button class="gt-list-menu">•••</button></div><div class="gt-cards"></div><button class="gt-add-card">+ Adicionar um cartão</button>`; const title=el.querySelector('.gt-list-title'); title.onchange=()=>{l.title=title.value.trim()||'Lista'; save(); renderBoard()}; const cont=el.querySelector('.gt-cards'); cards.forEach(c=>cont.appendChild(renderCard(c,l.id))); el.querySelector('.gt-add-card').onclick=()=>openCardForm(l.id); el.querySelector('.gt-list-menu').onclick=()=>openListMenu(l.id); makeDrop(cont,l.id); return el;}
@@ -303,16 +303,17 @@ function openListMenu(listId){modalForm('Lista',`<button class="gt-secondary" id
 function openWorkspaceEditForm(wsId){
   const ws=state.workspaces&&state.workspaces[wsId];
   if(!ws)return toast('Área de trabalho não encontrada.');
-  modalForm('Editar área de trabalho',`<div class="gt-field"><label>Nome da área</label><input id="fWsEditName" value="${escAttr(ws.name||'')}"></div><div class="gt-field"><label>Cor</label><input id="fWsEditColor" type="color" value="${ws.color||'#6554c0'}"></div><div class="gt-field"><label>Ícone/Iniciais</label><input id="fWsEditIcon" value="${escAttr(ws.icon||'WD')}"></div>`,()=>{
+  modalForm('Editar área de trabalho',`<div class="gt-field"><label>Nome da área</label><input id="fWsEditName" value="${escAttr(ws.name||'')}"></div><div class="gt-field"><label>Cor</label><input id="fWsEditColor" type="color" value="${ws.color||'#6554c0'}"></div><div class="gt-field"><label>Ícone/Iniciais</label><input id="fWsEditIcon" value="${escAttr(ws.icon||'WD')}"></div><div class="gt-danger-zone"><strong>Zona de exclusão</strong><small>Excluir esta área também remove todos os quadros, listas e atividades dentro dela.</small><button type="button" class="gt-danger-btn" id="fWsDelete">Excluir área de trabalho</button></div>`,()=>{
     const name=$('#fWsEditName').value.trim(); if(!name)return toast('Informe o nome da área.');
     ws.name=name; ws.color=$('#fWsEditColor').value||ws.color||'#6554c0'; ws.icon=($('#fWsEditIcon').value||'WD').trim().slice(0,3)||'▣'; ws.updatedAt=new Date().toISOString();
     save(); closeModals(); renderSwitch(); toast('Área de trabalho atualizada.');
   });
+  const del=$('#fWsDelete'); if(del) del.onclick=(e)=>{ e.preventDefault(); deleteWorkspace(wsId); };
 }
 function openBoardEditForm(boardId){
   const b=state.boards&&state.boards[boardId];
   if(!b)return toast('Quadro não encontrado.');
-  modalForm('Editar quadro',`<div class="gt-field"><label>Nome do quadro</label><input id="fBoardEditTitle" value="${escAttr(b.title||'')}"></div><div class="gt-field"><label>Área de trabalho</label><select id="fBoardEditWs">${Object.values(state.workspaces||{}).map(w=>`<option value="${w.id}" ${w.id===b.workspaceId?'selected':''}>${esc(w.name)}</option>`).join('')}</select></div><label class="gt-check-line"><input id="fBoardEditFav" type="checkbox" ${b.favorite?'checked':''}> Marcar como favorito</label>`,()=>{
+  modalForm('Editar quadro',`<div class="gt-field"><label>Nome do quadro</label><input id="fBoardEditTitle" value="${escAttr(b.title||'')}"></div><div class="gt-field"><label>Área de trabalho</label><select id="fBoardEditWs">${Object.values(state.workspaces||{}).map(w=>`<option value="${w.id}" ${w.id===b.workspaceId?'selected':''}>${esc(w.name)}</option>`).join('')}</select></div><label class="gt-check-line"><input id="fBoardEditFav" type="checkbox" ${b.favorite?'checked':''}> Marcar como favorito</label><div class="gt-danger-zone"><strong>Zona de exclusão</strong><small>Excluir este quadro remove suas listas e atividades.</small><button type="button" class="gt-danger-btn" id="fBoardDelete">Excluir quadro</button></div>`,()=>{
     const title=$('#fBoardEditTitle').value.trim(); if(!title)return toast('Informe o nome do quadro.');
     const oldWs=b.workspaceId, newWs=$('#fBoardEditWs').value;
     b.title=title; b.favorite=$('#fBoardEditFav').checked; b.workspaceId=newWs; b.updatedAt=new Date().toISOString();
@@ -322,6 +323,56 @@ function openBoardEditForm(boardId){
     }
     save(); closeModals(); renderSwitch(); toast('Quadro atualizado.');
   });
+  const del=$('#fBoardDelete'); if(del) del.onclick=(e)=>{ e.preventDefault(); deleteBoard(boardId); };
+}
+function deleteBoard(boardId, opts={}){
+  const b=state.boards&&state.boards[boardId];
+  if(!b)return toast('Quadro não encontrado.');
+  const title=b.title||'este quadro';
+  if(!opts.skipConfirm){
+    const ok=confirm(`Excluir o quadro "${title}"?
+
+Todas as listas e atividades dentro dele serão removidas.`);
+    if(!ok)return;
+  }
+  (b.lists||[]).forEach(lid=>{ const l=state.lists&&state.lists[lid]; (l?.cards||[]).forEach(cid=>delete state.cards[cid]); delete state.lists[lid]; });
+  if(state.workspaces&&state.workspaces[b.workspaceId]) state.workspaces[b.workspaceId].boards=(state.workspaces[b.workspaceId].boards||[]).filter(id=>id!==boardId);
+  state.recent=(state.recent||[]).filter(id=>id!==boardId);
+  delete state.boards[boardId];
+  repairStateLinks();
+  const nextWs=Object.values(state.workspaces||{}).find(ws=>(ws.boards||[]).some(id=>state.boards[id]))||Object.values(state.workspaces||{})[0];
+  const nextBoard=nextWs?(nextWs.boards||[]).find(id=>state.boards[id]):null;
+  if(nextWs) current.workspaceId=nextWs.id;
+  current.boardId=nextBoard||null;
+  if(current.boardId) state.activeBoardId=current.boardId;
+  if(current.workspaceId) state.activeWorkspaceId=current.workspaceId;
+  save();
+  if(!opts.silent){ closeModals(); if(current.boardId) renderSwitch(); else showHome(); toast('Quadro excluído.'); }
+  return true;
+}
+function deleteWorkspace(wsId){
+  const ws=state.workspaces&&state.workspaces[wsId];
+  if(!ws)return toast('Área de trabalho não encontrada.');
+  const boards=(ws.boards||[]).filter(id=>state.boards&&state.boards[id]);
+  const ok=confirm(`Excluir a área de trabalho "${ws.name||'sem nome'}"?
+
+Isso removerá ${boards.length} quadro(s), listas e atividades dentro dela.`);
+  if(!ok)return;
+  boards.forEach(bid=>deleteBoard(bid,{skipConfirm:true,silent:true}));
+  delete state.workspaces[wsId];
+  repairStateLinks();
+  let nextWs=Object.values(state.workspaces||{})[0];
+  if(!nextWs){
+    const newWs=uid('ws'), newBoard=uid('b'), newList=uid('l');
+    state.workspaces[newWs]={id:newWs,name:'Área Principal',icon:'WD',color:'#6554c0',members:['Weslheyn Dias'],boards:[newBoard],createdAt:new Date().toISOString()};
+    state.boards[newBoard]={id:newBoard,workspaceId:newWs,title:'GERENCIAL',background:bgLib[0],favorite:false,members:['Weslheyn Dias'],lists:[newList],createdAt:new Date().toISOString()};
+    state.lists[newList]={id:newList,boardId:newBoard,title:'A fazer',cards:[]};
+    nextWs=state.workspaces[newWs];
+  }
+  current.workspaceId=nextWs.id;
+  current.boardId=(nextWs.boards||[]).find(id=>state.boards[id])||Object.keys(state.boards||{})[0]||null;
+  state.activeWorkspaceId=current.workspaceId; state.activeBoardId=current.boardId;
+  save(); closeModals(); renderSwitch(); toast('Área de trabalho excluída.');
 }
 function renderSwitch(){
   repairStateLinks();
@@ -351,9 +402,10 @@ function switchBoardTile(b){
   const tile=boardTile(b);
   const actions=document.createElement('div');
   actions.className='gt-switch-card-actions';
-  actions.innerHTML=`<button title="Editar quadro" data-edit-board="${b.id}">✎</button><button title="Favorito" data-fav-board="${b.id}">${b.favorite?'★':'☆'}</button>`;
+  actions.innerHTML=`<button title="Editar quadro" data-edit-board="${b.id}">✎</button><button title="Favorito" data-fav-board="${b.id}">${b.favorite?'★':'☆'}</button><button title="Excluir quadro" data-del-board="${b.id}">🗑</button>`;
   actions.querySelector('[data-edit-board]').onclick=(e)=>{e.stopPropagation(); openBoardEditForm(b.id);};
   actions.querySelector('[data-fav-board]').onclick=(e)=>{e.stopPropagation(); b.favorite=!b.favorite; save(); renderSwitch();};
+  actions.querySelector('[data-del-board]').onclick=(e)=>{e.stopPropagation(); deleteBoard(b.id);};
   wrap.appendChild(tile); wrap.appendChild(actions);
   return wrap;
 }
@@ -377,7 +429,7 @@ function fillSwitch(){
     const boards=(ws.boards||[]).map(id=>state.boards[id]).filter(Boolean).filter(matches);
     if(q && !boards.length && !String(ws.name||'').toLowerCase().includes(q)) return;
     const row=document.createElement('section'); row.className='gt-switch-workspace-row';
-    row.innerHTML=`<div class="gt-switch-workspace-title"><span><span class="gt-workspace-icon mini" style="background:${ws.color||'#6554c0'}">${esc(ws.icon||'▣')}</span>${esc(ws.name||'Área de trabalho')}</span><span class="gt-switch-workspace-actions"><button data-open-ws="${ws.id}">Abrir</button><button data-edit-ws="${ws.id}">Editar</button><button data-new-board-ws="${ws.id}">+ Quadro</button></span></div>`;
+    row.innerHTML=`<div class="gt-switch-workspace-title"><span><span class="gt-workspace-icon mini" style="background:${ws.color||'#6554c0'}">${esc(ws.icon||'▣')}</span>${esc(ws.name||'Área de trabalho')}</span><span class="gt-switch-workspace-actions"><button data-open-ws="${ws.id}">Abrir</button><button data-edit-ws="${ws.id}">Editar</button><button data-new-board-ws="${ws.id}">+ Quadro</button><button class="gt-danger-mini" data-del-ws="${ws.id}">Excluir</button></span></div>`;
     addGrid(row,boards);
     if(!boards.length) row.insertAdjacentHTML('beforeend','<p class="gt-muted">Nenhum quadro nesta área.</p>');
     root.appendChild(row);
@@ -385,6 +437,7 @@ function fillSwitch(){
   $$('#gtSwitchContent [data-open-ws]').forEach(btn=>btn.onclick=()=>{current.workspaceId=btn.dataset.openWs; closeModals(); showHome();});
   $$('#gtSwitchContent [data-edit-ws]').forEach(btn=>btn.onclick=()=>openWorkspaceEditForm(btn.dataset.editWs));
   $$('#gtSwitchContent [data-new-board-ws]').forEach(btn=>btn.onclick=()=>openBoardForm(btn.dataset.newBoardWs));
+  $$('#gtSwitchContent [data-del-ws]').forEach(btn=>btn.onclick=()=>deleteWorkspace(btn.dataset.delWs));
 }
 function renderPlanner(){const b=board(); if(b) setBg($('.gt-planner-day'),b.background); $('#gtCalMonth').textContent=`${monthNames[calDate.getMonth()]} de ${calDate.getFullYear()}`; renderCalendar(); renderPlannerCards();}
 function renderCalendar(){const grid=$('#gtCalendarGrid'); grid.innerHTML=''; const y=calDate.getFullYear(),m=calDate.getMonth(); const first=new Date(y,m,1); const start=new Date(y,m,1-first.getDay()); for(let i=0;i<42;i++){let d=new Date(start); d.setDate(start.getDate()+i); let iso=d.toISOString().slice(0,10); let btn=document.createElement('button'); btn.className='gt-day'+(d.getMonth()!==m?' other':'')+(iso===todayISO()?' active':'')+(cardsForDate(iso).length?' has':''); btn.textContent=d.getDate(); btn.onclick=()=>{calDate=d; renderPlanner();}; grid.appendChild(btn);} }

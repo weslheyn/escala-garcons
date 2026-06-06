@@ -398,3 +398,13 @@
   .gt-switch-card-actions{opacity:1;}
   .gt-switch-card-actions button{padding:4px 7px;font-size:11px;}
 }
+
+/* V5.7 - exclusão segura de áreas e quadros */
+.gt-danger-zone{margin-top:16px;border:1px solid #f0b8b8;background:#fff5f5;border-radius:8px;padding:12px;display:grid;gap:6px;color:#5f1f1f}
+.gt-danger-zone strong{color:#ae2e24;font-size:14px}
+.gt-danger-zone small{color:#6b2b2b;line-height:1.35}
+.gt-danger-btn{border:0;background:#ae2e24;color:#fff;border-radius:6px;padding:10px 12px;font-weight:800;cursor:pointer;width:100%;margin-top:4px}
+.gt-danger-btn:hover{background:#8f211a}
+.gt-danger-mini{border-color:#f0b8b8!important;color:#ae2e24!important;background:#fff5f5!important}
+.gt-switch-card-actions button[data-del-board]{color:#ae2e24;background:#fff5f5;border-color:#f0b8b8}
+@media(max-width:760px){.gt-switch-workspace-actions{display:flex;gap:6px;flex-wrap:wrap}.gt-switch-workspace-actions button{font-size:12px;padding:6px 8px}.gt-danger-zone{padding:10px}}

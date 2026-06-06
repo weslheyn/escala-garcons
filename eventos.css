@@ -1349,3 +1349,417 @@ textarea::-webkit-scrollbar,
     min-height:40px!important;
   }
 }
+
+/* =========================================================
+   V109 - EVENTOS MOBILE APP PRO
+   Ajustes isolados para o módulo Eventos em celulares/tablets.
+   Objetivo: aparência de app nativo, menu lateral funcional,
+   proporções compactas e navegação inferior profissional.
+   ========================================================= */
+@media (max-width: 900px){
+  html,body{
+    width:100%!important;
+    max-width:100%!important;
+    min-height:100dvh!important;
+    overflow-x:hidden!important;
+    background:#070912!important;
+  }
+  body{
+    padding:0!important;
+    color:#f8f2df!important;
+    -webkit-tap-highlight-color:transparent!important;
+  }
+  body:before{display:none!important;content:none!important;}
+  body.menu-open:after{
+    content:""!important;
+    position:fixed!important;
+    inset:0!important;
+    z-index:98!important;
+    background:rgba(0,0,0,.58)!important;
+    backdrop-filter:blur(8px)!important;
+    -webkit-backdrop-filter:blur(8px)!important;
+  }
+
+  .event-shell{
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    padding:0!important;
+    margin:0!important;
+  }
+  .app{
+    width:100%!important;
+    max-width:100%!important;
+    min-height:100dvh!important;
+    padding:0 0 calc(76px + env(safe-area-inset-bottom,0px))!important;
+    overflow-x:hidden!important;
+    background:
+      radial-gradient(circle at 10% 0%,rgba(124,34,21,.46),transparent 28%),
+      linear-gradient(180deg,#090d17 0%,#070912 52%,#040509 100%)!important;
+  }
+
+  /* Menu lateral corrigido */
+  .mobile-menu-fixed{
+    display:flex!important;
+    position:fixed!important;
+    left:12px!important;
+    top:calc(env(safe-area-inset-top,0px) + 10px)!important;
+    width:42px!important;
+    height:42px!important;
+    border-radius:15px!important;
+    z-index:160!important;
+    border:1px solid rgba(242,199,91,.36)!important;
+    background:linear-gradient(145deg,rgba(38,30,20,.96),rgba(8,10,16,.96))!important;
+    box-shadow:0 12px 30px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.08)!important;
+    align-items:center!important;
+    justify-content:center!important;
+    flex-direction:column!important;
+    gap:5px!important;
+    padding:0!important;
+  }
+  .mobile-menu-fixed span{
+    width:20px!important;
+    height:2px!important;
+    border-radius:99px!important;
+    background:#f4c756!important;
+    display:block!important;
+  }
+  .mobile-menu{display:none!important;}
+  .desktop-sidebar{
+    display:flex!important;
+    position:fixed!important;
+    left:0!important;
+    top:0!important;
+    bottom:0!important;
+    height:100dvh!important;
+    width:min(84vw,330px)!important;
+    min-width:0!important;
+    max-width:min(84vw,330px)!important;
+    z-index:170!important;
+    transform:translateX(-110%)!important;
+    transition:transform .23s ease!important;
+    border-radius:0 28px 28px 0!important;
+    padding:calc(env(safe-area-inset-top,0px) + 18px) 16px 18px!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    background:
+      radial-gradient(circle at 15% 0%,rgba(242,199,91,.15),transparent 28%),
+      linear-gradient(180deg,rgba(58,16,17,.98),rgba(8,10,16,.99))!important;
+    border:1px solid rgba(242,199,91,.28)!important;
+    border-left:0!important;
+    box-shadow:22px 0 70px rgba(0,0,0,.62)!important;
+  }
+  body.menu-open .desktop-sidebar{transform:translateX(0)!important;}
+  .side-logo{margin-bottom:14px!important;}
+  .side-logo strong{font-size:21px!important;}
+  .side-logo small{font-size:10px!important;letter-spacing:3px!important;}
+  .side-menu{gap:8px!important;margin-top:18px!important;}
+  .nav-link{
+    min-height:46px!important;
+    padding:11px 12px!important;
+    border-radius:15px!important;
+    font-size:13px!important;
+  }
+  .side-user{margin-top:16px!important;}
+
+  /* Topbar com proporção de app */
+  .topbar{
+    position:sticky!important;
+    top:0!important;
+    z-index:90!important;
+    min-height:62px!important;
+    margin:0!important;
+    padding:calc(env(safe-area-inset-top,0px) + 10px) 10px 10px 62px!important;
+    border-radius:0!important;
+    border:0!important;
+    border-bottom:1px solid rgba(242,199,91,.18)!important;
+    background:linear-gradient(180deg,rgba(8,11,20,.96),rgba(9,12,22,.88))!important;
+    backdrop-filter:blur(14px)!important;
+    -webkit-backdrop-filter:blur(14px)!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:8px!important;
+    overflow:visible!important;
+  }
+  .brand{min-width:0!important;gap:8px!important;flex:1 1 auto!important;}
+  .back{display:none!important;}
+  .logo{width:36px!important;height:36px!important;border-radius:13px!important;font-size:15px!important;flex:0 0 36px!important;}
+  .brand h1{font-size:16px!important;line-height:1.05!important;margin:0!important;max-width:145px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+  .brand p{font-size:10px!important;line-height:1.05!important;max-width:150px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+  .top-actions{width:auto!important;display:flex!important;align-items:center!important;gap:6px!important;flex:0 0 auto!important;}
+  .top-actions .icon-btn{
+    width:36px!important;
+    height:36px!important;
+    min-width:36px!important;
+    border-radius:13px!important;
+    padding:0!important;
+  }
+  .top-actions .icon-btn svg{width:17px!important;height:17px!important;}
+  .top-actions .icon-btn:nth-child(3){display:none!important;}
+  .top-actions .btn.primary{
+    min-width:0!important;
+    height:38px!important;
+    padding:0 12px!important;
+    border-radius:15px!important;
+    font-size:0!important;
+  }
+  .top-actions .btn.primary:after{content:"+";font-size:22px!important;line-height:1;font-weight:950;}
+
+  main{
+    width:100%!important;
+    max-width:100%!important;
+    overflow-x:hidden!important;
+    padding-bottom:0!important;
+  }
+
+  /* Hero e dashboard compactos */
+  .brand-hero.dashboard-only{
+    height:134px!important;
+    margin:10px 10px 8px!important;
+    border-radius:24px!important;
+  }
+  .hero-copy{left:18px!important;bottom:16px!important;}
+  .hero-copy span{font-size:13px!important;}
+  .hero-copy h2{font-size:34px!important;margin:4px 0!important;}
+  .hero-copy p{font-size:14px!important;}
+  .hero.hero-week{padding:0 10px 8px!important;}
+  .top-kpis{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+    overflow:visible!important;
+  }
+  .mini{
+    min-width:0!important;
+    min-height:78px!important;
+    padding:11px!important;
+    border-radius:18px!important;
+  }
+  .mini span{font-size:9px!important;letter-spacing:.35px!important;}
+  .mini b{font-size:18px!important;margin-top:5px!important;line-height:1.05!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+  .mini small{font-size:10px!important;margin-top:5px!important;}
+
+  .filters{
+    margin:8px 10px 12px!important;
+    padding:10px!important;
+    border-radius:18px!important;
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+  }
+  .field{
+    min-height:42px!important;
+    border-radius:14px!important;
+    font-size:13px!important;
+  }
+  .section{padding:0 10px 12px!important;}
+  .dash-layout,.dash-premium,.grid-2,.premium-grid{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+  }
+  .dash-main-card,.week-card,.panel,.premium-panel,.premium-block,.salao-card{
+    border-radius:20px!important;
+    padding:13px!important;
+  }
+  .dash-main-card{min-height:118px!important;}
+  .dash-main-card h2{font-size:28px!important;}
+  .dash-mini-grid,.kpi-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+  .kpi,.kpi.compact{
+    min-height:76px!important;
+    padding:11px!important;
+    border-radius:18px!important;
+  }
+  .kpi .label{font-size:9px!important;}
+  .kpi .value,.kpi.compact .value{font-size:18px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+  .kpi .hint{font-size:10px!important;}
+  .section-title-row h2,.section-title-row h3,.panel h3{font-size:15px!important;}
+  .week-scroll{gap:9px!important;padding:0 2px 8px!important;scrollbar-width:none!important;}
+  .week-scroll::-webkit-scrollbar{display:none!important;width:0!important;height:0!important;}
+  .week-event{
+    flex:0 0 74vw!important;
+    min-width:74vw!important;
+    max-width:74vw!important;
+    min-height:138px!important;
+    padding:12px!important;
+    border-radius:18px!important;
+  }
+  .week-event b{font-size:16px!important;}
+  .week-event p,.week-event .place{font-size:11px!important;}
+  .week-event .money{font-size:16px!important;}
+
+  /* Funil com cara de app */
+  .module-head{
+    margin:0 0 10px!important;
+    padding:13px!important;
+    border-radius:20px!important;
+  }
+  .module-head h2{font-size:20px!important;}
+  .module-actions{grid-template-columns:1fr 1fr!important;gap:8px!important;}
+  .module-actions .btn,.module-actions .field.compact{min-height:42px!important;border-radius:14px!important;font-size:12px!important;}
+  .kanban,.pipeline-kanban,.recuperacao-kanban{
+    display:grid!important;
+    grid-auto-flow:column!important;
+    grid-auto-columns:minmax(254px,82vw)!important;
+    grid-template-columns:none!important;
+    gap:10px!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    padding:0 2px 10px!important;
+    scroll-snap-type:x mandatory!important;
+    scrollbar-width:none!important;
+  }
+  .kanban::-webkit-scrollbar,.pipeline-kanban::-webkit-scrollbar,.recuperacao-kanban::-webkit-scrollbar{display:none!important;width:0!important;height:0!important;}
+  .col{
+    min-width:0!important;
+    width:auto!important;
+    min-height:calc(100dvh - 210px)!important;
+    max-height:calc(100dvh - 198px)!important;
+    border-radius:22px!important;
+    padding:10px!important;
+    scroll-snap-align:start!important;
+    overflow:hidden!important;
+    background:linear-gradient(180deg,rgba(18,23,37,.92),rgba(8,10,16,.92))!important;
+  }
+  .col h3{
+    position:sticky!important;
+    top:0!important;
+    z-index:2!important;
+    margin:-10px -10px 8px!important;
+    padding:12px 12px 10px!important;
+    background:linear-gradient(180deg,rgba(14,18,31,.98),rgba(14,18,31,.86))!important;
+    backdrop-filter:blur(10px)!important;
+    -webkit-backdrop-filter:blur(10px)!important;
+    border-bottom:1px solid rgba(242,199,91,.13)!important;
+    border-radius:22px 22px 0 0!important;
+    font-size:12px!important;
+  }
+  .event-card{
+    padding:10px!important;
+    border-radius:17px!important;
+    margin-bottom:8px!important;
+  }
+  .event-card b{font-size:14px!important;line-height:1.25!important;}
+  .event-card p{font-size:11px!important;line-height:1.3!important;}
+  .event-card .actions{gap:6px!important;}
+  .event-card .actions button{padding:7px 8px!important;border-radius:10px!important;font-size:11px!important;}
+
+  /* Calendário mobile em lista visual */
+  .calendar-toolbar,.calendar-head{
+    display:block!important;
+    padding:13px!important;
+    border-radius:20px!important;
+    margin-bottom:10px!important;
+  }
+  .calendar-controls{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;margin-top:10px!important;}
+  .calendar-weekdays{display:none!important;}
+  .calendar-grid.visual-calendar{
+    display:block!important;
+    border:0!important;
+    background:transparent!important;
+    overflow:visible!important;
+  }
+  .visual-calendar .day{
+    margin-bottom:8px!important;
+    min-height:auto!important;
+    border-radius:18px!important;
+    padding:10px!important;
+    border:1px solid rgba(242,199,91,.13)!important;
+  }
+  .visual-calendar .day.empty{display:none!important;}
+
+  /* Clientes, pacotes e tabelas */
+  .clientes-toolbar,.clientes-top,.sheets-actions{
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+  }
+  .clientes-tabs{width:100%!important;display:grid!important;grid-template-columns:1fr 1fr!important;}
+  .chip{min-height:38px!important;border-radius:14px!important;font-size:12px!important;padding:8px 10px!important;text-align:center!important;}
+  .package-grid{grid-template-columns:1fr!important;gap:10px!important;}
+  table{font-size:12px!important;}
+
+  /* Modais em tela cheia no celular */
+  .modal{
+    align-items:flex-end!important;
+    padding:0!important;
+  }
+  .modal-box{
+    width:100%!important;
+    max-width:100%!important;
+    max-height:92dvh!important;
+    border-radius:26px 26px 0 0!important;
+    padding:14px!important;
+    overflow:auto!important;
+  }
+  .modal-head h2{font-size:18px!important;}
+  .form-grid{grid-template-columns:1fr!important;gap:8px!important;}
+  .form-grid .span2,.form-grid .span3,.form-grid .span4{grid-column:auto!important;}
+  .modal-actions,.modal-actions-evento{display:grid!important;grid-template-columns:1fr!important;gap:8px!important;}
+  .modal-actions .btn,.modal-actions-evento .btn{width:100%!important;min-height:42px!important;border-radius:14px!important;}
+
+  /* Bottom nav estilo app nativo */
+  .bottom-nav{
+    display:flex!important;
+    visibility:visible!important;
+    pointer-events:auto!important;
+    position:fixed!important;
+    left:10px!important;
+    right:10px!important;
+    bottom:calc(env(safe-area-inset-bottom,0px) + 8px)!important;
+    z-index:95!important;
+    height:58px!important;
+    padding:6px!important;
+    border-radius:22px!important;
+    background:linear-gradient(180deg,rgba(11,14,24,.92),rgba(7,9,15,.96))!important;
+    border:1px solid rgba(242,199,91,.18)!important;
+    box-shadow:0 18px 55px rgba(0,0,0,.52),inset 0 1px 0 rgba(255,255,255,.05)!important;
+    backdrop-filter:blur(14px)!important;
+    -webkit-backdrop-filter:blur(14px)!important;
+    gap:4px!important;
+  }
+  .bottom-link{
+    flex:1 1 0!important;
+    min-width:0!important;
+    height:46px!important;
+    border:0!important;
+    border-radius:16px!important;
+    background:transparent!important;
+    color:#aeb8cd!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    flex-direction:column!important;
+    gap:2px!important;
+    font-size:15px!important;
+    font-weight:900!important;
+    padding:0!important;
+  }
+  .bottom-link span{font-size:9px!important;line-height:1!important;max-width:56px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+  .bottom-link.active{
+    background:linear-gradient(135deg,rgba(242,199,91,.26),rgba(242,199,91,.10))!important;
+    color:#ffd76a!important;
+    box-shadow:inset 0 0 0 1px rgba(242,199,91,.20)!important;
+  }
+
+  /* Scroll visual limpo */
+  main,.section,.panel,.modal-box,.desktop-sidebar,.sheet-card,.event-form-premium .event-notes-card textarea#f_obs{
+    scrollbar-width:none!important;
+    -ms-overflow-style:none!important;
+  }
+  main::-webkit-scrollbar,.section::-webkit-scrollbar,.panel::-webkit-scrollbar,.modal-box::-webkit-scrollbar,.desktop-sidebar::-webkit-scrollbar,.sheet-card::-webkit-scrollbar,.event-form-premium .event-notes-card textarea#f_obs::-webkit-scrollbar{
+    width:0!important;height:0!important;display:none!important;
+  }
+}
+
+@media (max-width: 430px){
+  .brand h1{max-width:120px!important;font-size:15px!important;}
+  .brand p{display:none!important;}
+  .top-actions .icon-btn{width:34px!important;height:34px!important;min-width:34px!important;}
+  .top-actions .btn.primary{height:34px!important;padding:0 10px!important;}
+  .dash-mini-grid,.kpi-grid,.top-kpis{grid-template-columns:1fr 1fr!important;}
+  .week-event{flex-basis:78vw!important;min-width:78vw!important;max-width:78vw!important;}
+  .kanban,.pipeline-kanban,.recuperacao-kanban{grid-auto-columns:minmax(242px,84vw)!important;}
+}

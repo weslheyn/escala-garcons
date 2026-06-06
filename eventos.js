@@ -1318,3 +1318,43 @@ document.addEventListener('DOMContentLoaded',boot);
   }, true);
 
 })();
+
+/* V109 - Eventos Mobile Pro: reforço do menu lateral sem alterar módulos externos */
+(function(){
+  function ready(fn){
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',fn,{once:true});
+    else fn();
+  }
+  ready(function(){
+    function openMenu(ev){
+      if(ev){ ev.preventDefault(); ev.stopPropagation(); }
+      document.body.classList.add('menu-open');
+    }
+    function closeMenu(ev){
+      if(ev){ ev.stopPropagation(); }
+      document.body.classList.remove('menu-open');
+    }
+    document.querySelectorAll('.mobile-menu-fixed,.mobile-menu').forEach(function(btn){
+      btn.addEventListener('click',function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        document.body.classList.toggle('menu-open');
+      });
+    });
+    document.querySelectorAll('.desktop-sidebar .nav-link').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        if(window.matchMedia('(max-width: 900px)').matches){
+          setTimeout(closeMenu,80);
+        }
+      });
+    });
+    document.addEventListener('click',function(ev){
+      if(!document.body.classList.contains('menu-open')) return;
+      if(ev.target.closest('.desktop-sidebar') || ev.target.closest('.mobile-menu-fixed') || ev.target.closest('.mobile-menu')) return;
+      closeMenu(ev);
+    },true);
+    document.addEventListener('keydown',function(ev){
+      if(ev.key==='Escape') closeMenu(ev);
+    });
+  });
+})();

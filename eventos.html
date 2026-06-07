@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.png">
 <title>Gestão Coco Bambu</title>
-<link rel="stylesheet" href="eventos.css?v=111">
+<link rel="stylesheet" href="eventos.css?v=101">
 <script>
 (function(){
   var APP_VERSION='v101-eventos-sem-calendario-planilha';
@@ -27,7 +27,7 @@
 
 </head>
 <body>
-<button class="mobile-menu-fixed" aria-label="Abrir menu" type="button"><span></span><span></span><span></span></button>
+<button class="mobile-menu-fixed" aria-label="Abrir menu" onclick="document.body.classList.toggle('menu-open')"><span></span><span></span><span></span></button>
 <div class="event-shell">
   <aside class="desktop-sidebar">
     <div class="side-logo"><strong>COCO BAMBU</strong><small>EVENTOS</small></div>
@@ -48,7 +48,7 @@
   <div class="app">
     <header class="topbar">
       <div class="brand">
-        <button class="mobile-menu" type="button">☰</button>
+        <button class="mobile-menu" onclick="document.body.classList.toggle('menu-open')">☰</button>
         <button class="back" onclick="location.href='index.html'">‹</button>
         <div class="logo logo-premium">CB</div>
         <div><h1>Eventos</h1><p>Gestão Coco Bambu</p></div>

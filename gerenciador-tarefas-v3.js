@@ -318,7 +318,7 @@ async function handleFilesSelected(listId,files){
    liveCard.file=liveCard.file||baseFile;
    // Fallback controlado: evita perder o arquivo quando o Storage estiver bloqueado.
    // Usa somente para arquivos pequenos, porque o banco não deve armazenar arquivos grandes.
-   if(file.size<=2500000){
+   if(file.size<=6500000){
     try{
      liveCard.file.url=await readFileData(file);
      liveCard.file.storagePath='';
@@ -326,7 +326,7 @@ async function handleFilesSelected(listId,files){
      liveCard.file.progress=100;
      liveCard.file.error='';
      liveCard.file.localFallback=true;
-     toast('Storage falhou; arquivo salvo localmente para download.');
+     toast('Storage falhou; arquivo salvo no banco para download.');
     }catch(_){
      liveCard.file.uploading=false;
      liveCard.file.progress=0;
@@ -370,11 +370,11 @@ async function uploadOptimizedFile(cardId,file,kind,thumbBlob=null,onProgress=nu
  if(!thumbBlob) thumbBlob=await makeFileThumbBlobSafe(file,kind);
 
  const uploadFn=storage.uploadBlobProgress?storage.uploadBlobProgress.bind(storage):storage.uploadBlob.bind(storage);
- const up=await withTimeout(uploadFn(`${base}/${Date.now()}-${safeFileName(file.name)}`,file,file.type||'application/octet-stream',onProgress),45000,'Tempo esgotado no upload do arquivo');
+ const up=await withTimeout(uploadFn(`${base}/${Date.now()}-${safeFileName(file.name)}`,file,file.type||'application/octet-stream',onProgress),18000,'Tempo esgotado no upload do arquivo');
  if(up){out.url=up.url; out.storagePath=up.path; out.localFallback=false;}
 
  if(thumbBlob){
-  const tup=await withTimeout(uploadFn(`${base}/thumb.webp`,thumbBlob,'image/webp',null),15000,'Tempo esgotado no upload da thumbnail').catch(e=>{console.warn('Falha ao enviar thumbnail',e); return null;});
+  const tup=await withTimeout(uploadFn(`${base}/thumb.webp`,thumbBlob,'image/webp',null),8000,'Tempo esgotado no upload da thumbnail').catch(e=>{console.warn('Falha ao enviar thumbnail',e); return null;});
   if(tup){out.thumb=tup.url; out.thumbPath=tup.path;}
  }
  return out;

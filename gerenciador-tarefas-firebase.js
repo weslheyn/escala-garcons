@@ -5,7 +5,7 @@ window.GT_FB_CONFIG = {
   authDomain: "coco-bambu-presenca.firebaseapp.com",
   databaseURL: "https://coco-bambu-presenca-default-rtdb.firebaseio.com",
   projectId: "coco-bambu-presenca",
-  storageBucket: "coco-bambu-presenca.firebasestorage.app",
+  storageBucket: "coco-bambu-presenca.appspot.com",
   messagingSenderId: "928977354796",
   appId: "1:928977354796:web:b62bfc7900fd67e3ec9189"
 };
@@ -14,6 +14,7 @@ window.GerenciadorTarefasFirebase = {
   enabled:false,
   db:null,
   storage:null,
+  altStorage:null,
   async init(){
     try{
       if(!window.firebase || !firebase.database) return false;
@@ -24,11 +25,14 @@ window.GerenciadorTarefasFirebase = {
       this.db = app.database();
       this.storage = null;
       if(firebase.storage){
-        try{ this.storage = app.storage(); }
+        try{ this.storage = app.storage('gs://' + (window.GT_FB_CONFIG.storageBucket||'')); }
         catch(e){
-          try{ this.storage = app.storage('gs://' + (window.GT_FB_CONFIG.storageBucket||'')); }
+          try{ this.storage = app.storage(); }
           catch(err){ console.warn('Firebase Storage indisponível:', err); }
         }
+        // Compatibilidade: alguns projetos Firebase antigos usam appspot.com; projetos novos podem usar firebasestorage.app.
+        // Mantemos os dois para evitar upload travado por bucket incorreto.
+        try{ this.altStorage = app.storage('gs://coco-bambu-presenca.firebasestorage.app'); }catch(_){ this.altStorage=null; }
       }
       this.enabled = true;
       return true;
@@ -67,9 +71,9 @@ window.GerenciadorTarefasFirebase = {
   },
   async uploadBlobProgress(path, blob, contentType, onProgress){
     if(!this.enabled || !this.storage || !path || !blob) return null;
-    const ref=this.storage.ref().child(path);
-    const task=ref.put(blob,{contentType:contentType||blob.type||'application/octet-stream'});
-    return await new Promise((resolve,reject)=>{
+    const doUpload=(storageSvc)=>new Promise((resolve,reject)=>{
+      const ref=storageSvc.ref().child(path);
+      const task=ref.put(blob,{contentType:contentType||blob.type||'application/octet-stream'});
       task.on('state_changed',
         snap=>{
           try{
@@ -87,6 +91,12 @@ window.GerenciadorTarefasFirebase = {
         }
       );
     });
+    try{ return await doUpload(this.storage); }
+    catch(e){
+      console.warn('Upload no bucket principal falhou, tentando bucket alternativo...', e);
+      if(this.altStorage){ return await doUpload(this.altStorage); }
+      throw e;
+    }
   },
   async deleteStorage(path){
     if(!this.enabled || !this.storage || !path) return false;

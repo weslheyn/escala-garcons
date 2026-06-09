@@ -62,13 +62,6 @@ window.GerenciadorTarefasFirebase = {
     const url=await snap.ref.getDownloadURL();
     return {url, storagePath:path};
   },
-  async uploadBlob(path, blob, contentType){
-    if(!this.enabled || !this.storage || !path || !blob) return null;
-    const ref=this.storage.ref().child(path);
-    const snap=await ref.put(blob, {contentType:contentType || blob.type || 'application/octet-stream'});
-    const url=await snap.ref.getDownloadURL();
-    return {url, storagePath:path};
-  },
   async deleteStoredFile(path){
     if(!this.enabled || !this.storage || !path) return false;
     try{ await this.storage.ref().child(path).delete(); return true; }catch(e){ console.warn('Falha ao excluir arquivo do Storage',e); return false; }

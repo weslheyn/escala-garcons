@@ -262,69 +262,12 @@ function getListDropIndex(wrap,x){const lists=[...wrap.querySelectorAll('.gt-lis
 function makeListDrop(wrap){wrap.ondragover=e=>{const dragging=document.querySelector('.gt-list.list-dragging'); if(!dragging)return; e.preventDefault(); const idx=getListDropIndex(wrap,e.clientX); const lists=[...wrap.querySelectorAll('.gt-list:not(.list-dragging)')]; if(idx>=lists.length) wrap.insertBefore(dragging,wrap.querySelector('.gt-add-list')); else wrap.insertBefore(dragging,lists[idx]);}; wrap.ondrop=e=>{const data=e.dataTransfer.getData('text/plain'); if(!data)return; let d={}; try{d=JSON.parse(data)}catch(_){return;} if(d.type!=='list'||!d.listId)return; e.preventDefault(); const ordered=[...wrap.querySelectorAll('.gt-list')].map(x=>x.dataset.listId).filter(Boolean); board().lists=ordered; save(); renderBoard();};}
 function fileKind(file){const n=(file.name||'').toLowerCase(), t=(file.type||'').toLowerCase(); if(t.startsWith('image/')||/\.(png|jpg|jpeg|webp|gif)$/i.test(n))return'image'; if(t.includes('pdf')||n.endsWith('.pdf'))return'pdf'; if(/\.(xls|xlsx|csv)$/i.test(n))return'excel'; if(/\.(doc|docx)$/i.test(n))return'word'; if(/\.(ppt|pptx)$/i.test(n))return'powerpoint'; return'file';}
 function fileIcon(kind){return {image:'🖼️',pdf:'📕',excel:'📗',word:'📘',powerpoint:'📙',file:'📎'}[kind]||'📎';}
-function fileExt(name){const m=(name||'').match(/\.([^.]+)$/); return m?m[1].toUpperCase():'ARQ';}
 function fmtBytes(bytes){bytes=Number(bytes||0); if(bytes<1024)return bytes+' B'; if(bytes<1048576)return (bytes/1024).toFixed(0)+' KB'; return (bytes/1048576).toFixed(1)+' MB';}
-function fileDownloadUrl(f){return f.url||f.downloadUrl||f.dataUrl||'';}
-function fileCardHtml(c){const f=c.file||{}, kind=f.kind||'file', thumb=f.thumb||''; const storageBadge=f.storagePath?' • Storage':(f.dataUrl?' • Local':''); const preview=thumb?`<div class="gt-file-thumb" style="background-image:url('${thumb}')"></div>`:`<div class="gt-file-thumb icon ${kind}"><span>${fileIcon(kind)}</span><b>${esc(fileExt(f.name))}</b></div>`; return `${preview}<div class="gt-file-info"><div class="gt-file-title">${esc(f.name||c.title||'Arquivo')}</div><div class="gt-file-meta">${esc((kind||'file').toUpperCase())} • ${fmtBytes(f.size)}${storageBadge} • ${f.date?fmtDateBR(f.date):fmtDateBR((c.createdAt||'').slice(0,10))}</div></div>`;}
+function fileCardHtml(c){const f=c.file||{}, kind=f.kind||'file', thumb=f.thumb||''; const preview=thumb?`<div class="gt-file-thumb" style="background-image:url('${thumb}')"></div>`:`<div class="gt-file-thumb icon ${kind}">${fileIcon(kind)}</div>`; return `${preview}<div class="gt-file-info"><div class="gt-file-title">${esc(f.name||c.title||'Arquivo')}</div><div class="gt-file-meta">${esc((kind||'file').toUpperCase())} • ${fmtBytes(f.size)} • ${f.date?fmtDateBR(f.date):fmtDateBR((c.createdAt||'').slice(0,10))}</div></div>`;}
 function openFilePicker(listId){const input=document.createElement('input'); input.type='file'; input.multiple=true; input.accept='.pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,image/*'; input.onchange=()=>handleFilesSelected(listId,[...input.files]); input.click();}
-async function handleFilesSelected(listId,files){
- if(!files.length)return;
- const storageOk=!!window.GerenciadorTarefasFirebase?.storage;
- for(const file of files){
-  try{
-   if(file.size>25000000){toast('Arquivo muito grande: '+file.name+' (limite 25 MB)'); continue;}
-   if(!storageOk && file.size>3500000){toast('Storage indisponível. Arquivo acima de 3,5 MB não foi salvo localmente: '+file.name); continue;}
-   toast('Processando arquivo: '+file.name);
-   const kind=fileKind(file);
-   const thumb=await createFileThumb(file, kind);
-   let stored=null, dataUrl='';
-   if(storageOk){
-    const safe=(file.name||'arquivo').replace(/[^a-zA-Z0-9._-]+/g,'_').slice(-90);
-    const path=`gerenciador_tarefas/arquivos/${current.boardId||'sem-quadro'}/${Date.now()}_${Math.random().toString(36).slice(2,8)}_${safe}`;
-    stored=await window.GerenciadorTarefasFirebase.uploadFile(path,file);
-   }else{
-    dataUrl=await readFileData(file);
-   }
-   const c={id:uid('c'),type:'file',title:file.name,description:'',labels:[],due:'',done:false,recurrence:'none',checklist:[],comments:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),file:{name:file.name,size:file.size,type:file.type||'',kind,date:new Date().toISOString().slice(0,10),url:stored?.url||'',storagePath:stored?.storagePath||'',dataUrl:dataUrl,thumb:thumb||''}};
-   state.cards[c.id]=c; state.lists[listId].cards=state.lists[listId].cards||[]; state.lists[listId].cards.push(c.id);
-  }catch(e){console.warn('Falha ao adicionar arquivo',e); toast('Falha ao adicionar: '+file.name);}
- }
- save(); renderBoard(); toast('Arquivo(s) adicionado(s) à lista');
-}
+async function handleFilesSelected(listId,files){if(!files.length)return; for(const file of files){if(file.size>3500000){toast('Arquivo muito grande: '+file.name+' (limite 3,5 MB)'); continue;} const data=await readFileData(file); const kind=fileKind(file); const c={id:uid('c'),type:'file',title:file.name,description:'',labels:[],due:'',done:false,recurrence:'none',checklist:[],comments:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),file:{name:file.name,size:file.size,type:file.type||'',kind,date:new Date().toISOString().slice(0,10),dataUrl:data,thumb:kind==='image'?data:''}}; state.cards[c.id]=c; state.lists[listId].cards=state.lists[listId].cards||[]; state.lists[listId].cards.push(c.id);} save(); renderBoard(); toast('Arquivo adicionado à lista');}
 function readFileData(file){return new Promise((res,rej)=>{const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file);});}
-function readFileArrayBuffer(file){return new Promise((res,rej)=>{const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsArrayBuffer(file);});}
-function canvasToJpeg(canvas,quality=.72){try{return canvas.toDataURL('image/jpeg',quality)}catch(e){return ''}}
-async function createImageThumb(file){return new Promise(resolve=>{const img=new Image(); const url=URL.createObjectURL(file); img.onload=()=>{try{const maxW=900,maxH=520; let w=img.naturalWidth||img.width,h=img.naturalHeight||img.height; const r=Math.min(maxW/w,maxH/h,1); w=Math.round(w*r); h=Math.round(h*r); const c=document.createElement('canvas'); c.width=w; c.height=h; const ctx=c.getContext('2d'); ctx.drawImage(img,0,0,w,h); URL.revokeObjectURL(url); resolve(canvasToJpeg(c,.72));}catch(e){URL.revokeObjectURL(url); resolve('');}}; img.onerror=()=>{URL.revokeObjectURL(url); resolve('')}; img.src=url;});}
-function genericOfficeThumb(file, kind){
- const ext=fileExt(file.name); const icon=fileIcon(kind); const title=(file.name||'Arquivo').replace(/[<>&]/g,'').slice(0,44);
- const theme={excel:['#0f7b45','#22c55e'],word:['#185abd','#60a5fa'],powerpoint:['#c2410c','#fb923c'],file:['#475569','#94a3b8']}[kind]||['#475569','#94a3b8'];
- const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop stop-color="${theme[0]}"/><stop offset="1" stop-color="${theme[1]}"/></linearGradient></defs><rect width="900" height="520" rx="36" fill="#111827"/><rect x="36" y="36" width="828" height="448" rx="30" fill="url(#g)" opacity=".92"/><circle cx="740" cy="95" r="82" fill="#fff" opacity=".12"/><text x="72" y="150" font-size="88" font-family="Arial, sans-serif">${icon}</text><text x="72" y="260" font-size="82" font-weight="900" fill="#fff" font-family="Arial, sans-serif">${ext}</text><text x="72" y="340" font-size="38" font-weight="700" fill="#f8fafc" font-family="Arial, sans-serif">${title}</text><text x="72" y="410" font-size="30" fill="#e2e8f0" font-family="Arial, sans-serif">Disponível para download</text></svg>`;
- return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
-}
-let pdfJsLoading=null;
-function loadPdfJs(){
- if(window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
- if(pdfJsLoading) return pdfJsLoading;
- pdfJsLoading=new Promise((resolve,reject)=>{const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'; s.onload=()=>{setTimeout(()=>{if(window.pdfjsLib){window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; resolve(window.pdfjsLib);}else reject(new Error('PDF.js não carregou'));},100)}; s.onerror=reject; document.head.appendChild(s);});
- return pdfJsLoading;
-}
-async function createPdfThumb(file){
- try{
-  const pdfjs=await loadPdfJs(); const buf=await readFileArrayBuffer(file); const pdf=await pdfjs.getDocument({data:buf}).promise; const page=await pdf.getPage(1); const vp=page.getViewport({scale:1}); const scale=Math.min(900/vp.width,520/vp.height,1.4); const viewport=page.getViewport({scale}); const c=document.createElement('canvas'); c.width=Math.round(viewport.width); c.height=Math.round(viewport.height); const ctx=c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); await page.render({canvasContext:ctx,viewport}).promise; return canvasToJpeg(c,.7);
- }catch(e){console.warn('PDF thumbnail indisponível',e); return genericOfficeThumb(file,'pdf');}
-}
-async function createFileThumb(file,kind){
- if(kind==='image') return await createImageThumb(file);
- if(kind==='pdf') return await createPdfThumb(file);
- if(kind==='excel'||kind==='word'||kind==='powerpoint'||kind==='file') return genericOfficeThumb(file,kind);
- return '';
-}
-function openFilePreview(cardId){
- const c=state.cards[cardId]; if(!c||!c.file)return; openOverlay(); const f=c.file, kind=f.kind||'file'; const m=$('#gtFormModal'); const url=fileDownloadUrl(f); const canView=kind==='pdf'||kind==='image';
- const viewer=kind==='image'?`<img class="gt-file-view-img" src="${url||f.thumb}" alt="${escAttr(f.name)}">`:kind==='pdf'?`<iframe class="gt-file-view-frame" src="${url}" title="${escAttr(f.name)}"></iframe>`:`<div class="gt-file-view-generic"><div>${fileIcon(kind)}</div><strong>${esc(f.name)}</strong><small>${esc(kind.toUpperCase())} • ${fmtBytes(f.size)}</small><p>Este tipo de arquivo fica salvo para download. A visualização interna completa está ativada apenas para PDF e imagem.</p></div>`;
- m.innerHTML=`<button class="gt-close" data-close>×</button><h2>${esc(f.name)}</h2>${viewer}<div class="gt-form-actions">${url?`<a class="gt-secondary" href="${url}" target="_blank" rel="noopener">${canView?'Abrir em nova aba':'Baixar / abrir no aparelho'}</a><a class="gt-secondary" href="${url}" download="${escAttr(f.name)}">Baixar</a>`:''}<button class="gt-secondary" id="renameFileBtn">Renomear</button><button class="gt-danger-btn" id="deleteFileBtn">Excluir</button><button class="gt-primary" data-close>Fechar</button></div>`;
- m.classList.remove('gt-hidden'); $('#renameFileBtn').onclick=()=>{const nn=prompt('Novo nome do arquivo',f.name); if(nn){f.name=nn.trim()||f.name; c.title=f.name; save(); closeModals(); renderBoard();}}; $('#deleteFileBtn').onclick=async()=>{if(confirm('Excluir este arquivo da lista?')){if(f.storagePath&&window.GerenciadorTarefasFirebase?.deleteStoredFile) await window.GerenciadorTarefasFirebase.deleteStoredFile(f.storagePath); deleteCard(cardId); closeModals();}}; $$('[data-close]').forEach(b=>b.onclick=closeModals);
-}
+function openFilePreview(cardId){const c=state.cards[cardId]; if(!c||!c.file)return; openOverlay(); const f=c.file, kind=f.kind||'file'; const m=$('#gtFormModal'); const canFrame=kind==='pdf'; const viewer=kind==='image'?`<img class="gt-file-view-img" src="${f.dataUrl||f.thumb}" alt="${escAttr(f.name)}">`:canFrame?`<iframe class="gt-file-view-frame" src="${f.dataUrl}" title="${escAttr(f.name)}"></iframe>`:`<div class="gt-file-view-generic"><div>${fileIcon(kind)}</div><strong>${esc(f.name)}</strong><small>${esc(kind.toUpperCase())} • ${fmtBytes(f.size)}</small></div>`; m.innerHTML=`<button class="gt-close" data-close>×</button><h2>${esc(f.name)}</h2>${viewer}<div class="gt-form-actions"><a class="gt-secondary" href="${f.dataUrl||'#'}" download="${escAttr(f.name)}">Baixar</a><button class="gt-secondary" id="renameFileBtn">Renomear</button><button class="gt-danger-btn" id="deleteFileBtn">Excluir</button><button class="gt-primary" data-close>Fechar</button></div>`; m.classList.remove('gt-hidden'); $('#renameFileBtn').onclick=()=>{const nn=prompt('Novo nome do arquivo',f.name); if(nn){f.name=nn.trim()||f.name; c.title=f.name; save(); closeModals(); renderBoard();}}; $('#deleteFileBtn').onclick=()=>{if(confirm('Excluir este arquivo da lista?')){deleteCard(cardId); closeModals();}}; $$('[data-close]').forEach(b=>b.onclick=closeModals);}
 
 function labelsHtml(labels){return labels?.length?`<div class="gt-labels">${labels.map(c=>`<span class="gt-label" style="background:${c}"></span>`).join('')}</div>`:''}
 function doneCount(c){return (c.checklist||[]).filter(x=>x.done).length}

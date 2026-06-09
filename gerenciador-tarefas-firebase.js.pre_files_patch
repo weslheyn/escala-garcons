@@ -13,7 +13,6 @@ window.GT_FB_CONFIG = {
 window.GerenciadorTarefasFirebase = {
   enabled:false,
   db:null,
-  storage:null,
   async init(){
     try{
       if(!window.firebase || !firebase.database) return false;
@@ -22,7 +21,6 @@ window.GerenciadorTarefasFirebase = {
       try{ app = firebase.app(name); }
       catch(e){ app = firebase.initializeApp(window.GT_FB_CONFIG, name); }
       this.db = app.database();
-      try{ this.storage = firebase.storage ? app.storage() : null; }catch(e){ this.storage = null; }
       this.enabled = true;
       return true;
     }catch(e){
@@ -54,16 +52,5 @@ window.GerenciadorTarefasFirebase = {
     if(!this.enabled || !this.db || !path) return false;
     await this.db.ref('gerenciador_tarefas/' + path).remove();
     return true;
-  },
-  async uploadFile(path, file){
-    if(!this.enabled || !this.storage || !path || !file) return null;
-    const ref=this.storage.ref().child(path);
-    const snap=await ref.put(file, {contentType:file.type || 'application/octet-stream'});
-    const url=await snap.ref.getDownloadURL();
-    return {url, storagePath:path};
-  },
-  async deleteStoredFile(path){
-    if(!this.enabled || !this.storage || !path) return false;
-    try{ await this.storage.ref().child(path).delete(); return true; }catch(e){ console.warn('Falha ao excluir arquivo do Storage',e); return false; }
   }
 };

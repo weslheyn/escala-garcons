@@ -22,7 +22,7 @@ window.GerenciadorTarefasFirebase = {
       try{ app = firebase.app(name); }
       catch(e){ app = firebase.initializeApp(window.GT_FB_CONFIG, name); }
       this.db = app.database();
-      try{ this.storage = firebase.storage ? app.storage() : null; }catch(e){ this.storage = null; }
+      this.storage = (firebase.storage ? app.storage() : null);
       this.enabled = true;
       return true;
     }catch(e){
@@ -55,21 +55,14 @@ window.GerenciadorTarefasFirebase = {
     await this.db.ref('gerenciador_tarefas/' + path).remove();
     return true;
   },
-  async uploadFile(path, file){
-    if(!this.enabled || !this.storage || !path || !file) return null;
-    const ref=this.storage.ref().child(path);
-    const snap=await ref.put(file, {contentType:file.type || 'application/octet-stream'});
-    const url=await snap.ref.getDownloadURL();
-    return {url, storagePath:path};
-  },
   async uploadBlob(path, blob, contentType){
     if(!this.enabled || !this.storage || !path || !blob) return null;
     const ref=this.storage.ref().child(path);
-    const snap=await ref.put(blob, {contentType:contentType || blob.type || 'application/octet-stream'});
+    const snap=await ref.put(blob,{contentType:contentType||blob.type||'application/octet-stream'});
     const url=await snap.ref.getDownloadURL();
-    return {url, storagePath:path};
+    return {url, path};
   },
-  async deleteStoredFile(path){
+  async deleteStorage(path){
     if(!this.enabled || !this.storage || !path) return false;
     try{ await this.storage.ref().child(path).delete(); return true; }catch(e){ console.warn('Falha ao excluir arquivo do Storage',e); return false; }
   }

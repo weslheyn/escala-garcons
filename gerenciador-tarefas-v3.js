@@ -1,5 +1,6 @@
 (function(){
 'use strict';
+if(window.pdfjsLib){ try{ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }catch(e){} }
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
 const KEY='gt_trello_like_v3';
 const LOCAL_ALARMS_KEY='gt_trello_local_alarms_v1';
@@ -252,9 +253,9 @@ function applyBoardTileCover(el,b){
 }
 function boardTile(b){let el=document.createElement('button'); el.className='gt-board-tile'; applyBoardTileCover(el,b); el.innerHTML=`<span class="star">${b.favorite?'★':'☆'}</span><strong>${esc(b.title)}</strong>`; el.onclick=()=>{ closeModals(); openBoard(b.id); }; return el;}
 function openBoard(id){const b=state.boards[id]; if(!b)return; current.boardId=id; current.workspaceId=b.workspaceId; state.recent=[id,...(state.recent||[]).filter(x=>x!==id)].slice(0,8); save(); showView('board');}
-function renderBoard(){repairStateLinks(); const b=board(); if(!b){showHome();return;} setBg($('.gt-board-bg'),b.background); applyBoardAppearance(b); const bgBtn=$('#gtBackgroundBtn'); if(bgBtn) bgBtn.textContent='Aparência'; $('#gtBoardTitleBtn').textContent=b.title; $('#gtWorkspaceBtn').textContent=workspace()?.name||'Área'; $('#gtFavoriteBtn').textContent=b.favorite?'★':'☆'; $('#gtBoardTitleBtn').onclick=()=>openBoardEditForm(current.boardId); $('#gtWorkspaceBtn').onclick=()=>openWorkspaceEditForm(current.workspaceId); const wrap=$('#gtBoardLists'); wrap.innerHTML=''; (b.lists||[]).forEach(listId=>{const l=state.lists[listId]; if(l) wrap.appendChild(renderList(l));}); makeListDrop(wrap); const add=document.createElement('button'); add.className='gt-add-list'; add.textContent='+ Adicionar outra lista'; add.onclick=()=>openListForm(); wrap.appendChild(add); }
+function renderBoard(){repairStateLinks(); const b=board(); if(!b){showHome();return;} setBg($('.gt-board-bg'),b.background); applyBoardAppearance(b); const bgBtn=$('#gtBackgroundBtn'); if(bgBtn) bgBtn.textContent='Aparência'; $('#gtBoardTitleBtn').textContent=b.title; $('#gtWorkspaceBtn').textContent=workspace()?.name||'Área'; $('#gtFavoriteBtn').textContent=b.favorite?'★':'☆'; $('#gtBoardTitleBtn').onclick=()=>openBoardEditForm(current.boardId); $('#gtWorkspaceBtn').onclick=()=>openWorkspaceEditForm(current.workspaceId); const wrap=$('#gtBoardLists'); wrap.innerHTML=''; (b.lists||[]).forEach(listId=>{const l=state.lists[listId]; if(l) wrap.appendChild(renderList(l));}); makeListDrop(wrap); const add=document.createElement('button'); add.className='gt-add-list'; add.textContent='+ Adicionar outra lista'; add.onclick=()=>openListForm(); wrap.appendChild(add); setTimeout(refreshMissingPdfThumbs,80); }
 function renderList(l){const el=document.createElement('div'); const isCollapsed=!!l.collapsed; el.className='gt-list'+(isCollapsed?' is-collapsed':''); el.dataset.listId=l.id; el.draggable=true; const cardIds=(l.cards||[]).filter(id=>state.cards[id]); const cards=cardIds.map(id=>normalizeCardForModal(state.cards[id],id)).filter(Boolean); el.innerHTML=`<div class="gt-list-head"><button class="gt-list-toggle" title="${isCollapsed?'Mostrar lista':'Ocultar lista'}" aria-label="${isCollapsed?'Mostrar lista':'Ocultar lista'}">${isCollapsed?'▸':'▾'}</button><input class="gt-list-title" value="${escAttr(l.title)}" title="${escAttr(l.title)}"><span class="gt-list-count">${cards.length}</span><button class="gt-list-menu">•••</button></div><div class="gt-cards"></div><div class="gt-list-actions"><button class="gt-add-card">+ Adicionar cartão</button><button class="gt-add-file">+ Adicionar arquivo</button></div>`; const toggle=el.querySelector('.gt-list-toggle'); toggle.onclick=(e)=>{e.stopPropagation(); l.collapsed=!l.collapsed; save(); renderBoard();}; const title=el.querySelector('.gt-list-title'); title.onchange=()=>{l.title=title.value.trim()||'Lista'; save(); renderBoard()}; el.ondragstart=e=>{ if(e.target.closest('.gt-card')) return; el.classList.add('list-dragging'); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',JSON.stringify({listId:l.id,type:'list'}));}; el.ondragend=()=>{el.classList.remove('list-dragging');}; const cont=el.querySelector('.gt-cards'); if(!isCollapsed){cards.forEach(c=>cont.appendChild(renderCard(c,l.id))); el.querySelector('.gt-add-card').onclick=()=>openCardForm(l.id); el.querySelector('.gt-add-file').onclick=()=>openFilePicker(l.id); makeDrop(cont,l.id);} else {cont.innerHTML='';} el.querySelector('.gt-list-menu').onclick=()=>openListMenu(l.id); return el;}
-function renderCard(c,listId){const el=document.createElement('div'); el.className='gt-card'+(c.done?' done':'')+(c.type==='file'?' gt-file-card':''); el.draggable=true; el.dataset.cardId=c.id; if(c.type==='file'&&c.file){el.innerHTML=fileCardHtml(c);}else{el.innerHTML=`${labelsHtml(c.labels)}<div class="gt-row"><span class="gt-check-dot ${c.done?'checked':''}" title="Concluir">${c.done?'✓':''}</span><div class="gt-card-title">${esc(c.title)}</div></div><div class="gt-card-meta">${c.due?'📅 '+fmtDateBR(c.due):''}${effectiveAlarm(c)?' ⏰ '+effectiveAlarm(c).time+(effectiveAlarm(c).scope==='shared'?' 🌐':' 📱'):''}${c.recurrence&&c.recurrence!=='none'?' 🔁 '+recName(c.recurrence):''}${(c.checklist||[]).length?' ☑ '+doneCount(c)+'/'+c.checklist.length:''}</div>`;} el.onclick=(e)=>{ if(e.target.classList.contains('gt-check-dot')){toggleDone(c.id); e.stopPropagation();return;} if(c.type==='file') openFileDownload(c.id); else openCardModal(c.id);}; el.ondragstart=e=>{el.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',JSON.stringify({cardId:c.id,from:listId,type:'card'}));}; el.ondragend=()=>{el.classList.remove('dragging'); $$('.gt-card.drag-over').forEach(x=>x.classList.remove('drag-over'));}; return el;}
+function renderCard(c,listId){const el=document.createElement('div'); el.className='gt-card'+(c.done?' done':'')+(c.type==='file'?' gt-file-card':''); el.draggable=true; el.dataset.cardId=c.id; if(c.type==='file'&&c.file){el.innerHTML=fileCardHtml(c);}else{el.innerHTML=`${labelsHtml(c.labels)}<div class="gt-row"><span class="gt-check-dot ${c.done?'checked':''}" title="Concluir">${c.done?'✓':''}</span><div class="gt-card-title">${esc(c.title)}</div></div><div class="gt-card-meta">${c.due?'📅 '+fmtDateBR(c.due):''}${effectiveAlarm(c)?' ⏰ '+effectiveAlarm(c).time+(effectiveAlarm(c).scope==='shared'?' 🌐':' 📱'):''}${c.recurrence&&c.recurrence!=='none'?' 🔁 '+recName(c.recurrence):''}${(c.checklist||[]).length?' ☑ '+doneCount(c)+'/'+c.checklist.length:''}</div>`;} el.onclick=(e)=>{ if(e.target.classList.contains('gt-check-dot')){toggleDone(c.id); e.stopPropagation();return;} if(c.type==='file') openFilePreview(c.id); else openCardModal(c.id);}; el.ondragstart=e=>{el.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',JSON.stringify({cardId:c.id,from:listId,type:'card'}));}; el.ondragend=()=>{el.classList.remove('dragging'); $$('.gt-card.drag-over').forEach(x=>x.classList.remove('drag-over'));}; return el;}
 function getDropIndex(cont,y){const cards=[...cont.querySelectorAll('.gt-card:not(.dragging)')]; let closest={offset:Number.NEGATIVE_INFINITY,index:cards.length}; cards.forEach((card,i)=>{const box=card.getBoundingClientRect(); const offset=y-box.top-box.height/2; if(offset<0 && offset>closest.offset){closest={offset,index:i};}}); return closest.index;}
 function makeDrop(cont,listId){cont.ondragover=e=>{e.preventDefault(); e.dataTransfer.dropEffect='move'; const idx=getDropIndex(cont,e.clientY); const dragging=document.querySelector('.gt-card.dragging'); if(!dragging)return; const cards=[...cont.querySelectorAll('.gt-card:not(.dragging)')]; if(idx>=cards.length) cont.appendChild(dragging); else cont.insertBefore(dragging,cards[idx]);}; cont.ondrop=e=>{e.preventDefault(); try{const d=JSON.parse(e.dataTransfer.getData('text/plain')); const ordered=[...cont.querySelectorAll('.gt-card')].map(x=>x.dataset.cardId).filter(Boolean); let toIndex=ordered.indexOf(d.cardId); if(toIndex<0) toIndex=getDropIndex(cont,e.clientY); moveCard(d.cardId,d.from,listId,toIndex);}catch(_){} };}
 function moveCard(cardId,from,to,toIndex){ const lf=state.lists[from], lt=state.lists[to]; if(!lf||!lt||!state.cards[cardId])return; lf.cards=(lf.cards||[]).filter(id=>id!==cardId); lt.cards=(lt.cards||[]).filter(id=>id!==cardId); let idx=Number.isFinite(toIndex)?Number(toIndex):lt.cards.length; if(idx<0)idx=0; if(idx>lt.cards.length)idx=lt.cards.length; lt.cards.splice(idx,0,cardId); state.cards[cardId].updatedAt=new Date().toISOString(); save(); renderBoard();}
@@ -262,115 +263,22 @@ function getListDropIndex(wrap,x){const lists=[...wrap.querySelectorAll('.gt-lis
 function makeListDrop(wrap){wrap.ondragover=e=>{const dragging=document.querySelector('.gt-list.list-dragging'); if(!dragging)return; e.preventDefault(); const idx=getListDropIndex(wrap,e.clientX); const lists=[...wrap.querySelectorAll('.gt-list:not(.list-dragging)')]; if(idx>=lists.length) wrap.insertBefore(dragging,wrap.querySelector('.gt-add-list')); else wrap.insertBefore(dragging,lists[idx]);}; wrap.ondrop=e=>{const data=e.dataTransfer.getData('text/plain'); if(!data)return; let d={}; try{d=JSON.parse(data)}catch(_){return;} if(d.type!=='list'||!d.listId)return; e.preventDefault(); const ordered=[...wrap.querySelectorAll('.gt-list')].map(x=>x.dataset.listId).filter(Boolean); board().lists=ordered; save(); renderBoard();};}
 function fileKind(file){const n=(file.name||'').toLowerCase(), t=(file.type||'').toLowerCase(); if(t.startsWith('image/')||/\.(png|jpg|jpeg|webp|gif)$/i.test(n))return'image'; if(t.includes('pdf')||n.endsWith('.pdf'))return'pdf'; if(/\.(xls|xlsx|csv)$/i.test(n))return'excel'; if(/\.(doc|docx)$/i.test(n))return'word'; if(/\.(ppt|pptx)$/i.test(n))return'powerpoint'; return'file';}
 function fileIcon(kind){return {image:'🖼️',pdf:'📕',excel:'📗',word:'📘',powerpoint:'📙',file:'📎'}[kind]||'📎';}
-function fileExt(name){const m=(name||'').match(/\.([^.]+)$/); return m?m[1].toUpperCase():'ARQ';}
 function fmtBytes(bytes){bytes=Number(bytes||0); if(bytes<1024)return bytes+' B'; if(bytes<1048576)return (bytes/1024).toFixed(0)+' KB'; return (bytes/1048576).toFixed(1)+' MB';}
-function fileDownloadUrl(f){return f.url||f.downloadUrl||f.dataUrl||'';}
-function fileCardHtml(c){const f=c.file||{}, kind=f.kind||'file', thumb=f.thumb||''; const storageBadge=f.storagePath?' • Storage':''; const preview=thumb?`<div class="gt-file-thumb" style="background-image:url('${thumb}')"></div>`:`<div class="gt-file-thumb icon ${kind}"><span>${fileIcon(kind)}</span><b>${esc(fileExt(f.name))}</b></div>`; return `${preview}<div class="gt-file-info"><div class="gt-file-title">${esc(f.name||c.title||'Arquivo')}</div><div class="gt-file-meta">${esc((kind||'file').toUpperCase())} • ${fmtBytes(f.size)}${storageBadge} • ${f.date?fmtDateBR(f.date):fmtDateBR((c.createdAt||'').slice(0,10))}</div><div class="gt-file-download-hint">⬇ Clique para baixar</div></div>`;}
+function fileCardHtml(c){const f=c.file||{}, kind=f.kind||'file', thumb=f.thumb||''; const preview=thumb?`<div class="gt-file-thumb" style="background-image:url('${thumb}')"></div>`:`<div class="gt-file-thumb icon ${kind}">${fileIcon(kind)}</div>`; return `${preview}<div class="gt-file-info"><div class="gt-file-title">${esc(f.name||c.title||'Arquivo')}</div><div class="gt-file-meta">${esc((kind||'file').toUpperCase())} • ${fmtBytes(f.size)} • ${f.date?fmtDateBR(f.date):fmtDateBR((c.createdAt||'').slice(0,10))}</div><div class="gt-file-download-hint">⬇ Clique para baixar</div></div>`;}
+function safeFileName(name){return String(name||'arquivo').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/-+/g,'-').slice(0,90);}
 function openFilePicker(listId){const input=document.createElement('input'); input.type='file'; input.multiple=true; input.accept='.pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,image/*'; input.onchange=()=>handleFilesSelected(listId,[...input.files]); input.click();}
-async function handleFilesSelected(listId,files){
- if(!files.length)return;
- const fb=window.GerenciadorTarefasFirebase;
- const storageOk=!!fb?.storage;
- if(!storageOk){toast('Storage indisponível. Não é seguro salvar arquivos no banco. Verifique o Firebase Storage.'); return;}
- for(const file of files){
-  try{
-   if(file.size>25000000){toast('Arquivo muito grande: '+file.name+' (limite 25 MB)'); continue;}
-   toast('Gerando miniatura e salvando: '+file.name);
-   const kind=fileKind(file);
-   const safe=(file.name||'arquivo').replace(/[^a-zA-Z0-9._-]+/g,'_').slice(-90);
-   const base=`gerenciador_tarefas/arquivos/${current.boardId||'sem-quadro'}/${Date.now()}_${Math.random().toString(36).slice(2,8)}_${safe}`;
-   const thumbData=await createFileThumb(file, kind);
-   let thumbStored=null;
-   if(thumbData){
-    const blob=dataUrlToBlob(thumbData);
-    const thumbExt=(blob.type||'image/jpeg').includes('svg')?'svg':((blob.type||'image/jpeg').includes('png')?'png':'jpg');
-    thumbStored=await fb.uploadBlob(`${base}_thumb.${thumbExt}`, blob, blob.type||'image/jpeg');
-   }
-   const stored=await fb.uploadFile(base,file);
-   const c={id:uid('c'),type:'file',title:file.name,description:'',labels:[],due:'',done:false,recurrence:'none',checklist:[],comments:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),file:{name:file.name,size:file.size,type:file.type||'',kind,date:new Date().toISOString().slice(0,10),url:stored?.url||'',storagePath:stored?.storagePath||'',thumb:thumbStored?.url||thumbData||'',thumbStoragePath:thumbStored?.storagePath||''}};
-   state.cards[c.id]=c; state.lists[listId].cards.push(c.id);
-  }catch(e){console.warn('Falha ao adicionar arquivo',e); toast('Falha ao adicionar: '+file.name);}
- }
- save(); renderBoard(); toast('Arquivo(s) salvo(s) com miniatura e download');
-}
-function dataUrlToBlob(dataUrl){
- const parts=String(dataUrl||'').split(',');
- const meta=parts[0]||''; const mime=(meta.match(/data:([^;]+)/)||[])[1]||'application/octet-stream';
- const bin=atob(parts[1]||''); const arr=new Uint8Array(bin.length);
- for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
- return new Blob([arr],{type:mime});
-}
+async function handleFilesSelected(listId,files){if(!files.length)return; for(const file of files){if(file.size>15000000){toast('Arquivo muito grande: '+file.name+' (limite 15 MB)'); continue;} const kind=fileKind(file); const cardId=uid('c'); const c={id:cardId,type:'file',title:file.name,description:'',labels:[],due:'',done:false,recurrence:'none',checklist:[],comments:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),file:{name:file.name,size:file.size,type:file.type||'',kind,date:new Date().toISOString().slice(0,10),url:'',storagePath:'',thumb:'',thumbPath:''}}; try{ const paths=await uploadOptimizedFile(cardId,file,kind); Object.assign(c.file,paths); }catch(e){ console.warn('Upload otimizado falhou, usando fallback local',e); const data=await readFileData(file); c.file.dataUrl=data; if(kind==='image') c.file.thumb=await makeImageThumbFromDataUrl(data).catch(()=>data); if(kind==='pdf') c.file.thumb=await makePdfThumbFromSource({dataUrl:data}).catch(()=>''); toast('Storage indisponível: arquivo salvo localmente no banco.'); } state.cards[c.id]=c; state.lists[listId].cards=state.lists[listId].cards||[]; state.lists[listId].cards.push(c.id);} save(); renderBoard(); toast('Arquivo adicionado à lista');}
+async function uploadOptimizedFile(cardId,file,kind){ const out={}; const storage=window.GerenciadorTarefasFirebase; const base=`gerenciador_tarefas/arquivos/${current.workspaceId||'workspace'}/${current.boardId||'board'}/${cardId}`; if(storage&&storage.enabled&&storage.uploadBlob){ const up=await storage.uploadBlob(`${base}/${Date.now()}-${safeFileName(file.name)}`,file,file.type||'application/octet-stream'); if(up){out.url=up.url; out.storagePath=up.path;} } else { throw new Error('Firebase Storage não está carregado'); } let thumbBlob=null; if(kind==='pdf') thumbBlob=await makePdfThumbBlob(file).catch(e=>{console.warn('Não foi possível gerar thumbnail PDF',e); return null;}); else if(kind==='image') thumbBlob=await makeImageThumbBlob(file).catch(()=>null); if(thumbBlob&&storage&&storage.uploadBlob){ const tup=await storage.uploadBlob(`${base}/thumb.webp`,thumbBlob,'image/webp'); if(tup){out.thumb=tup.url; out.thumbPath=tup.path;} } return out;}
 function readFileData(file){return new Promise((res,rej)=>{const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file);});}
-function readFileArrayBuffer(file){return new Promise((res,rej)=>{const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsArrayBuffer(file);});}
-function canvasToJpeg(canvas,quality=.72){try{return canvas.toDataURL('image/jpeg',quality)}catch(e){return ''}}
-async function createImageThumb(file){return new Promise(resolve=>{const img=new Image(); const url=URL.createObjectURL(file); img.onload=()=>{try{const maxW=900,maxH=520; let w=img.naturalWidth||img.width,h=img.naturalHeight||img.height; const r=Math.min(maxW/w,maxH/h,1); w=Math.round(w*r); h=Math.round(h*r); const c=document.createElement('canvas'); c.width=w; c.height=h; const ctx=c.getContext('2d'); ctx.drawImage(img,0,0,w,h); URL.revokeObjectURL(url); resolve(canvasToJpeg(c,.72));}catch(e){URL.revokeObjectURL(url); resolve('');}}; img.onerror=()=>{URL.revokeObjectURL(url); resolve('')}; img.src=url;});}
-function genericOfficeThumb(file, kind){
- const ext=fileExt(file.name); const icon=fileIcon(kind); const title=(file.name||'Arquivo').replace(/[<>&]/g,'').slice(0,44);
- const theme={excel:['#0f7b45','#22c55e'],word:['#185abd','#60a5fa'],powerpoint:['#c2410c','#fb923c'],file:['#475569','#94a3b8']}[kind]||['#475569','#94a3b8'];
- const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop stop-color="${theme[0]}"/><stop offset="1" stop-color="${theme[1]}"/></linearGradient></defs><rect width="900" height="520" rx="36" fill="#111827"/><rect x="36" y="36" width="828" height="448" rx="30" fill="url(#g)" opacity=".92"/><circle cx="740" cy="95" r="82" fill="#fff" opacity=".12"/><text x="72" y="150" font-size="88" font-family="Arial, sans-serif">${icon}</text><text x="72" y="260" font-size="82" font-weight="900" fill="#fff" font-family="Arial, sans-serif">${ext}</text><text x="72" y="340" font-size="38" font-weight="700" fill="#f8fafc" font-family="Arial, sans-serif">${title}</text><text x="72" y="410" font-size="30" fill="#e2e8f0" font-family="Arial, sans-serif">Disponível para download</text></svg>`;
- return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
-}
-let pdfJsLoading=null;
-function loadPdfJs(){
- if(window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
- if(pdfJsLoading) return pdfJsLoading;
- const urls=[
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
-  'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js'
- ];
- pdfJsLoading=new Promise((resolve,reject)=>{
-  let i=0;
-  const tryLoad=()=>{
-   if(i>=urls.length) return reject(new Error('PDF.js não carregou'));
-   const s=document.createElement('script');
-   s.src=urls[i++]; s.crossOrigin='anonymous';
-   s.onload=()=>setTimeout(()=>{
-    if(window.pdfjsLib){
-     try{ window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }catch(_){ }
-     resolve(window.pdfjsLib);
-    }else tryLoad();
-   },100);
-   s.onerror=tryLoad;
-   document.head.appendChild(s);
-  };
-  tryLoad();
- });
- return pdfJsLoading;
-}
-async function createPdfThumb(file){
- try{
-  const pdfjs=await loadPdfJs();
-  const buf=await readFileArrayBuffer(file);
-  const task=pdfjs.getDocument({data:new Uint8Array(buf),disableWorker:true,useWorkerFetch:false,isEvalSupported:false});
-  const pdf=await task.promise;
-  const page=await pdf.getPage(1);
-  const vp=page.getViewport({scale:1});
-  const scale=Math.min(900/vp.width,520/vp.height,1.8);
-  const viewport=page.getViewport({scale});
-  const c=document.createElement('canvas');
-  c.width=Math.max(1,Math.round(viewport.width)); c.height=Math.max(1,Math.round(viewport.height));
-  const ctx=c.getContext('2d',{alpha:false});
-  ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height);
-  await page.render({canvasContext:ctx,viewport}).promise;
-  try{ await pdf.destroy(); }catch(_){ }
-  return canvasToJpeg(c,.68);
- }catch(e){console.warn('PDF thumbnail indisponível',e); return genericOfficeThumb(file,'pdf');}
-}
-async function createFileThumb(file,kind){
- if(kind==='image') return await createImageThumb(file);
- if(kind==='pdf') return await createPdfThumb(file);
- if(kind==='excel'||kind==='word'||kind==='powerpoint'||kind==='file') return genericOfficeThumb(file,kind);
- return '';
-}
-function openFileDownload(cardId){
- const c=state.cards[cardId]; if(!c||!c.file)return;
- const f=c.file, url=fileDownloadUrl(f);
- if(!url){toast('Arquivo sem link de download.'); return;}
- const a=document.createElement('a');
- a.href=url; a.download=f.name||'arquivo'; a.target='_blank'; a.rel='noopener';
- document.body.appendChild(a); a.click(); a.remove();
-}
-function openFilePreview(cardId){openFileDownload(cardId);}
+function blobToDataUrl(blob){return new Promise((res,rej)=>{const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(blob);});}
+function canvasToBlob(canvas,type='image/webp',quality=.72){return new Promise(res=>canvas.toBlob(b=>res(b),type,quality));}
+async function makePdfThumbBlob(file){ if(!window.pdfjsLib) throw new Error('PDF.js não carregado'); const buf=await file.arrayBuffer(); const pdf=await pdfjsLib.getDocument({data:buf}).promise; const page=await pdf.getPage(1); const vp0=page.getViewport({scale:1}); const targetW=520; const scale=Math.min(1.8,targetW/vp0.width); const viewport=page.getViewport({scale}); const canvas=document.createElement('canvas'); canvas.width=Math.floor(viewport.width); canvas.height=Math.floor(viewport.height); const ctx=canvas.getContext('2d',{alpha:false}); ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height); await page.render({canvasContext:ctx,viewport}).promise; const blob=await canvasToBlob(canvas,'image/webp',.74); if(!blob) throw new Error('Falha ao converter thumbnail'); return blob;}
+async function makePdfThumbFromSource(src){ if(src.dataUrl){ const bin=atob(src.dataUrl.split(',')[1]||''); const arr=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i); const blob=await makePdfThumbBlob(new File([arr], 'arquivo.pdf', {type:'application/pdf'})); return blobToDataUrl(blob);} return ''; }
+function makeImageThumbBlob(file){return new Promise((res,rej)=>{const img=new Image(); const url=URL.createObjectURL(file); img.onload=async()=>{try{const maxW=520,maxH=300; const r=Math.min(maxW/img.width,maxH/img.height,1); const canvas=document.createElement('canvas'); canvas.width=Math.max(1,Math.round(img.width*r)); canvas.height=Math.max(1,Math.round(img.height*r)); canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height); URL.revokeObjectURL(url); res(await canvasToBlob(canvas,'image/webp',.75));}catch(e){rej(e)}}; img.onerror=rej; img.src=url;});}
+async function makeImageThumbFromDataUrl(dataUrl){return new Promise((res,rej)=>{const img=new Image(); img.onload=async()=>{try{const maxW=520,maxH=300; const r=Math.min(maxW/img.width,maxH/img.height,1); const canvas=document.createElement('canvas'); canvas.width=Math.round(img.width*r); canvas.height=Math.round(img.height*r); canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height); const blob=await canvasToBlob(canvas,'image/webp',.75); res(await blobToDataUrl(blob));}catch(e){rej(e)}}; img.onerror=rej; img.src=dataUrl;});}
+function downloadFile(cardId){const c=state.cards[cardId]; if(!c||!c.file)return; const f=c.file; const href=f.url||f.dataUrl||''; if(!href){toast('Arquivo indisponível para download'); return;} const a=document.createElement('a'); a.href=href; a.download=f.name||c.title||'arquivo'; a.target='_blank'; document.body.appendChild(a); a.click(); a.remove();}
+function openFilePreview(cardId){downloadFile(cardId);}
+async function refreshMissingPdfThumbs(){ if(!window.pdfjsLib) return; let changed=false; for(const c of Object.values(state.cards||{})){ if(!c||c.type!=='file'||!c.file||c.file.kind!=='pdf'||c.file.thumb) continue; if(c.file.dataUrl){ try{ c.file.thumb=await makePdfThumbFromSource({dataUrl:c.file.dataUrl}); changed=true; }catch(e){console.warn('Falha ao criar thumb legado',e);} } } if(changed){save(); renderBoard();} }
 
 function labelsHtml(labels){return labels?.length?`<div class="gt-labels">${labels.map(c=>`<span class="gt-label" style="background:${c}"></span>`).join('')}</div>`:''}
 function doneCount(c){return (c.checklist||[]).filter(x=>x.done).length}

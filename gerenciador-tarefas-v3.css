@@ -724,8 +724,3 @@
 @media(max-width:760px){.gt-file-thumb{height:84px}.gt-list-actions{grid-template-columns:1fr 1fr}.gt-list-actions .gt-add-card,.gt-list-actions .gt-add-file{font-size:13px}.gt-file-view-frame{height:52vh}.gt-file-view-img{max-height:52vh}}
 .gt-list.is-collapsed .gt-list-actions{display:none!important;}
 .gt-list-head{cursor:grab;}.gt-list-head:active{cursor:grabbing;}
-
-/* V5.14 - arquivos com thumbnail + download direto */
-.gt-file-download-hint{margin-top:6px;font-size:11px;font-weight:800;color:#f4c24f;opacity:.95;}
-.gt-file-card{cursor:pointer;}
-.gt-file-card:hover .gt-file-download-hint{text-decoration:underline;}

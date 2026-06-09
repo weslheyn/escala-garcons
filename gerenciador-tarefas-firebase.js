@@ -63,11 +63,30 @@ window.GerenciadorTarefasFirebase = {
     return true;
   },
   async uploadBlob(path, blob, contentType){
+    return this.uploadBlobProgress(path, blob, contentType, null);
+  },
+  async uploadBlobProgress(path, blob, contentType, onProgress){
     if(!this.enabled || !this.storage || !path || !blob) return null;
     const ref=this.storage.ref().child(path);
-    const snap=await ref.put(blob,{contentType:contentType||blob.type||'application/octet-stream'});
-    const url=await snap.ref.getDownloadURL();
-    return {url, path};
+    const task=ref.put(blob,{contentType:contentType||blob.type||'application/octet-stream'});
+    return await new Promise((resolve,reject)=>{
+      task.on('state_changed',
+        snap=>{
+          try{
+            const pct=snap.totalBytes?Math.round((snap.bytesTransferred/snap.totalBytes)*100):0;
+            if(typeof onProgress==='function') onProgress(Math.max(1,Math.min(100,pct)), snap);
+          }catch(_){}
+        },
+        err=>reject(err),
+        async()=>{
+          try{
+            const url=await task.snapshot.ref.getDownloadURL();
+            if(typeof onProgress==='function') onProgress(100, task.snapshot);
+            resolve({url, path});
+          }catch(e){reject(e);}
+        }
+      );
+    });
   },
   async deleteStorage(path){
     if(!this.enabled || !this.storage || !path) return false;

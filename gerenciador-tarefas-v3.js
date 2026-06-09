@@ -267,8 +267,10 @@ function fmtBytes(bytes){bytes=Number(bytes||0); if(bytes<1024)return bytes+' B'
 function fileCardHtml(c){
  const f=c.file||{}, kind=f.kind||'file', thumb=f.thumb||'';
  const preview=thumb?`<div class="gt-file-thumb" style="background-image:url('${escAttr(thumb)}')"></div>`:`<div class="gt-file-thumb icon ${kind}">${fileIcon(kind)}</div>`;
- const status=f.uploading?'Enviando...':(f.error?'Falha no upload':'⬇ Clique para baixar');
- return `<button type="button" class="gt-file-delete" title="Excluir arquivo" aria-label="Excluir arquivo" data-file-delete="${escAttr(c.id)}">×</button>${preview}<div class="gt-file-info"><div class="gt-file-title" title="${escAttr(f.name||c.title||'Arquivo')}">${esc(f.name||c.title||'Arquivo')}</div><div class="gt-file-meta">${esc((kind||'file').toUpperCase())} • ${fmtBytes(f.size)} • ${f.date?fmtDateBR(f.date):fmtDateBR((c.createdAt||'').slice(0,10))}</div><div class="gt-file-download-hint ${f.error?'is-error':''}">${esc(status)}</div></div>`;
+ const pct=Math.max(0,Math.min(100,Number(f.progress||0)));
+ const status=f.uploading?('Enviando... '+(pct?pct+'%':'')):(f.error?'Falha no upload':'⬇ Clique para baixar');
+ const progress=f.uploading?`<div class="gt-file-progress"><span style="width:${pct||6}%"></span></div>`:'';
+ return `<button type="button" class="gt-file-delete" title="Excluir arquivo" aria-label="Excluir arquivo" data-file-delete="${escAttr(c.id)}">×</button>${preview}<div class="gt-file-info"><div class="gt-file-title" title="${escAttr(f.name||c.title||'Arquivo')}">${esc(f.name||c.title||'Arquivo')}</div><div class="gt-file-meta">${esc((kind||'file').toUpperCase())} • ${fmtBytes(f.size)} • ${f.date?fmtDateBR(f.date):fmtDateBR((c.createdAt||'').slice(0,10))}</div>${progress}<div class="gt-file-download-hint ${f.error?'is-error':''}">${esc(status)}</div></div>`;
 }
 function safeFileName(name){return String(name||'arquivo').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/-+/g,'-').slice(0,90);}
 function openFilePicker(listId){
@@ -288,7 +290,7 @@ async function handleFilesSelected(listId,files){
  for(const file of files){
   if(file.size>25000000){toast('Arquivo muito grande: '+file.name+' (limite 25 MB)'); continue;}
   const kind=fileKind(file); const cardId=uid('c');
-  const baseFile={name:file.name,size:file.size,type:file.type||'',kind,date:new Date().toISOString().slice(0,10),url:'',storagePath:'',thumb:'',thumbPath:'',uploading:true,error:''};
+  const baseFile={name:file.name,size:file.size,type:file.type||'',kind,date:new Date().toISOString().slice(0,10),url:'',storagePath:'',thumb:'',thumbPath:'',uploading:true,progress:0,error:''};
   const c={id:cardId,type:'file',title:file.name,description:'',labels:[],due:'',done:false,recurrence:'none',checklist:[],comments:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),file:baseFile};
   state.cards[c.id]=c; state.lists[listId].cards=state.lists[listId].cards||[]; state.lists[listId].cards.push(c.id); save(); renderBoard();
   try{
@@ -303,10 +305,10 @@ async function handleFilesSelected(listId,files){
     state.cards[cardId]=live;
     save(); renderBoard();
    }
-   const paths=await uploadOptimizedFile(cardId,file,kind,thumbBlob);
+   const paths=await uploadOptimizedFile(cardId,file,kind,thumbBlob,(pct)=>updateFileUploadProgress(cardId,pct));
    const liveCard=state.cards[cardId]||c;
    liveCard.file=liveCard.file||baseFile;
-   Object.assign(liveCard.file,paths,{uploading:false,error:''});
+   Object.assign(liveCard.file,paths,{uploading:false,progress:100,error:''});
    liveCard.updatedAt=new Date().toISOString();
    state.cards[cardId]=liveCard;
    save(); renderBoard();
@@ -321,15 +323,18 @@ async function handleFilesSelected(listId,files){
      liveCard.file.url=await readFileData(file);
      liveCard.file.storagePath='';
      liveCard.file.uploading=false;
+     liveCard.file.progress=100;
      liveCard.file.error='';
      liveCard.file.localFallback=true;
      toast('Storage falhou; arquivo salvo localmente para download.');
     }catch(_){
      liveCard.file.uploading=false;
+     liveCard.file.progress=0;
      liveCard.file.error='Falha no upload';
     }
    }else{
     liveCard.file.uploading=false;
+    liveCard.file.progress=0;
     liveCard.file.error='Falha no upload';
    }
    liveCard.updatedAt=new Date().toISOString();
@@ -340,6 +345,15 @@ async function handleFilesSelected(listId,files){
  }
  toast('Upload finalizado');
 }
+function updateFileUploadProgress(cardId,pct){
+ const c=state.cards[cardId]; if(!c||!c.file)return;
+ pct=Math.max(0,Math.min(100,Math.round(Number(pct)||0)));
+ if(Math.abs(Number(c.file.progress||0)-pct)<5 && pct<100) return;
+ c.file.progress=pct; c.updatedAt=new Date().toISOString();
+ localStorage.setItem(KEY,JSON.stringify(state));
+ const node=document.querySelector(`[data-card-id="${cardId}"]`);
+ if(node){ node.innerHTML=fileCardHtml(c); }
+}
 function withTimeout(promise,ms,label){return Promise.race([promise,new Promise((_,rej)=>setTimeout(()=>rej(new Error(label||'Tempo esgotado')),ms))]);}
 async function ensureStorageReady(){
  const storage=window.GerenciadorTarefasFirebase;
@@ -348,18 +362,19 @@ async function ensureStorageReady(){
  if(!storage.enabled||!storage.storage||!storage.uploadBlob) throw new Error('Firebase Storage não está carregado');
  return storage;
 }
-async function uploadOptimizedFile(cardId,file,kind,thumbBlob=null){
+async function uploadOptimizedFile(cardId,file,kind,thumbBlob=null,onProgress=null){
  const out={}; const storage=await ensureStorageReady();
  const base=`gerenciador_tarefas/arquivos/${current.workspaceId||'workspace'}/${current.boardId||'board'}/${cardId}`;
 
  // A miniatura já foi gerada antes de enviar. Se ainda não existir, tenta gerar sem travar o upload.
  if(!thumbBlob) thumbBlob=await makeFileThumbBlobSafe(file,kind);
 
- const up=await withTimeout(storage.uploadBlob(`${base}/${Date.now()}-${safeFileName(file.name)}`,file,file.type||'application/octet-stream'),90000,'Tempo esgotado no upload do arquivo');
+ const uploadFn=storage.uploadBlobProgress?storage.uploadBlobProgress.bind(storage):storage.uploadBlob.bind(storage);
+ const up=await withTimeout(uploadFn(`${base}/${Date.now()}-${safeFileName(file.name)}`,file,file.type||'application/octet-stream',onProgress),45000,'Tempo esgotado no upload do arquivo');
  if(up){out.url=up.url; out.storagePath=up.path; out.localFallback=false;}
 
  if(thumbBlob){
-  const tup=await withTimeout(storage.uploadBlob(`${base}/thumb.webp`,thumbBlob,'image/webp'),30000,'Tempo esgotado no upload da thumbnail').catch(e=>{console.warn('Falha ao enviar thumbnail',e); return null;});
+  const tup=await withTimeout(uploadFn(`${base}/thumb.webp`,thumbBlob,'image/webp',null),15000,'Tempo esgotado no upload da thumbnail').catch(e=>{console.warn('Falha ao enviar thumbnail',e); return null;});
   if(tup){out.thumb=tup.url; out.thumbPath=tup.path;}
  }
  return out;

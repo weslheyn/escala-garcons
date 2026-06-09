@@ -283,13 +283,24 @@ async function handleFilesSelected(listId,files){
  for(const file of files){
   if(file.size>25000000){toast('Arquivo muito grande: '+file.name+' (limite 25 MB)'); continue;}
   const kind=fileKind(file); const cardId=uid('c');
-  const c={id:cardId,type:'file',title:file.name,description:'',labels:[],due:'',done:false,recurrence:'none',checklist:[],comments:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),file:{name:file.name,size:file.size,type:file.type||'',kind,date:new Date().toISOString().slice(0,10),url:'',storagePath:'',thumb:'',thumbPath:'',uploading:true}};
+  const baseFile={name:file.name,size:file.size,type:file.type||'',kind,date:new Date().toISOString().slice(0,10),url:'',storagePath:'',thumb:'',thumbPath:'',uploading:true,error:''};
+  const c={id:cardId,type:'file',title:file.name,description:'',labels:[],due:'',done:false,recurrence:'none',checklist:[],comments:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),file:baseFile};
   state.cards[c.id]=c; state.lists[listId].cards=state.lists[listId].cards||[]; state.lists[listId].cards.push(c.id); save(); renderBoard();
   try{
    toast('Enviando arquivo: '+file.name);
-   const paths=await uploadOptimizedFile(cardId,file,kind);
+   // Miniatura local primeiro: assim o card já mostra a capa real mesmo se o Storage demorar ou falhar.
+   const thumbBlob=await makeFileThumbBlobSafe(file,kind);
+   if(thumbBlob){
+    const live=state.cards[cardId]||c;
+    live.file=live.file||baseFile;
+    live.file.thumb=await blobToDataUrl(thumbBlob);
+    live.updatedAt=new Date().toISOString();
+    state.cards[cardId]=live;
+    save(); renderBoard();
+   }
+   const paths=await uploadOptimizedFile(cardId,file,kind,thumbBlob);
    const liveCard=state.cards[cardId]||c;
-   liveCard.file=liveCard.file||c.file||{};
+   liveCard.file=liveCard.file||baseFile;
    Object.assign(liveCard.file,paths,{uploading:false,error:''});
    liveCard.updatedAt=new Date().toISOString();
    state.cards[cardId]=liveCard;
@@ -297,13 +308,29 @@ async function handleFilesSelected(listId,files){
   }catch(e){
    console.warn('Upload para Storage falhou',e);
    const liveCard=state.cards[cardId]||c;
-   liveCard.file=liveCard.file||c.file||{};
-   liveCard.file.uploading=false;
-   liveCard.file.error='Falha no envio para Storage';
+   liveCard.file=liveCard.file||baseFile;
+   // Fallback controlado: evita perder o arquivo quando o Storage estiver bloqueado.
+   // Usa somente para arquivos pequenos, porque o banco não deve armazenar arquivos grandes.
+   if(file.size<=2500000){
+    try{
+     liveCard.file.url=await readFileData(file);
+     liveCard.file.storagePath='';
+     liveCard.file.uploading=false;
+     liveCard.file.error='';
+     liveCard.file.localFallback=true;
+     toast('Storage falhou, mas o arquivo pequeno foi salvo para download.');
+    }catch(_){
+     liveCard.file.uploading=false;
+     liveCard.file.error='Falha no upload';
+    }
+   }else{
+    liveCard.file.uploading=false;
+    liveCard.file.error='Falha no upload';
+   }
    liveCard.updatedAt=new Date().toISOString();
    state.cards[cardId]=liveCard;
    save(); renderBoard();
-   toast('Falha ao enviar para o Storage. Verifique regras/permissão do Firebase.');
+   if(liveCard.file.error) toast('Falha ao enviar para o Storage. Verifique regras/permissão do Firebase Storage.');
   }
  }
  toast('Upload finalizado');
@@ -316,23 +343,28 @@ async function ensureStorageReady(){
  if(!storage.enabled||!storage.storage||!storage.uploadBlob) throw new Error('Firebase Storage não está carregado');
  return storage;
 }
-async function uploadOptimizedFile(cardId,file,kind){
+async function uploadOptimizedFile(cardId,file,kind,thumbBlob=null){
  const out={}; const storage=await ensureStorageReady();
  const base=`gerenciador_tarefas/arquivos/${current.workspaceId||'workspace'}/${current.boardId||'board'}/${cardId}`;
 
- // Primeiro gera a miniatura leve. Se falhar, o upload do arquivo continua normalmente.
- let thumbBlob=null;
- if(kind==='pdf') thumbBlob=await withTimeout(makePdfThumbBlob(file),18000,'Tempo esgotado na miniatura PDF').catch(e=>{console.warn('Não foi possível gerar thumbnail PDF',e); return null;});
- else if(kind==='image') thumbBlob=await withTimeout(makeImageThumbBlob(file),12000,'Tempo esgotado na miniatura da imagem').catch(e=>{console.warn('Não foi possível gerar thumbnail imagem',e); return null;});
+ // A miniatura já foi gerada antes de enviar. Se ainda não existir, tenta gerar sem travar o upload.
+ if(!thumbBlob) thumbBlob=await makeFileThumbBlobSafe(file,kind);
 
- const up=await withTimeout(storage.uploadBlob(`${base}/${Date.now()}-${safeFileName(file.name)}`,file,file.type||'application/octet-stream'),60000,'Tempo esgotado no upload do arquivo');
- if(up){out.url=up.url; out.storagePath=up.path;}
+ const up=await withTimeout(storage.uploadBlob(`${base}/${Date.now()}-${safeFileName(file.name)}`,file,file.type||'application/octet-stream'),90000,'Tempo esgotado no upload do arquivo');
+ if(up){out.url=up.url; out.storagePath=up.path; out.localFallback=false;}
 
  if(thumbBlob){
   const tup=await withTimeout(storage.uploadBlob(`${base}/thumb.webp`,thumbBlob,'image/webp'),30000,'Tempo esgotado no upload da thumbnail').catch(e=>{console.warn('Falha ao enviar thumbnail',e); return null;});
   if(tup){out.thumb=tup.url; out.thumbPath=tup.path;}
  }
  return out;
+}
+async function makeFileThumbBlobSafe(file,kind){
+ try{
+  if(kind==='pdf') return await withTimeout(makePdfThumbBlob(file),22000,'Tempo esgotado na miniatura PDF');
+  if(kind==='image') return await withTimeout(makeImageThumbBlob(file),12000,'Tempo esgotado na miniatura da imagem');
+ }catch(e){console.warn('Não foi possível gerar thumbnail',e);}
+ return null;
 }
 function readFileData(file){return new Promise((res,rej)=>{const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file);});}
 function blobToDataUrl(blob){return new Promise((res,rej)=>{const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(blob);});}

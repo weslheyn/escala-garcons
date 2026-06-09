@@ -288,14 +288,20 @@ async function handleFilesSelected(listId,files){
   try{
    toast('Enviando arquivo: '+file.name);
    const paths=await uploadOptimizedFile(cardId,file,kind);
-   Object.assign(c.file,paths,{uploading:false});
-   c.updatedAt=new Date().toISOString();
+   const liveCard=state.cards[cardId]||c;
+   liveCard.file=liveCard.file||c.file||{};
+   Object.assign(liveCard.file,paths,{uploading:false,error:''});
+   liveCard.updatedAt=new Date().toISOString();
+   state.cards[cardId]=liveCard;
    save(); renderBoard();
   }catch(e){
    console.warn('Upload para Storage falhou',e);
-   c.file.uploading=false;
-   c.file.error='Falha no envio para Storage';
-   c.updatedAt=new Date().toISOString();
+   const liveCard=state.cards[cardId]||c;
+   liveCard.file=liveCard.file||c.file||{};
+   liveCard.file.uploading=false;
+   liveCard.file.error='Falha no envio para Storage';
+   liveCard.updatedAt=new Date().toISOString();
+   state.cards[cardId]=liveCard;
    save(); renderBoard();
    toast('Falha ao enviar para o Storage. Verifique regras/permissão do Firebase.');
   }
@@ -313,12 +319,15 @@ async function ensureStorageReady(){
 async function uploadOptimizedFile(cardId,file,kind){
  const out={}; const storage=await ensureStorageReady();
  const base=`gerenciador_tarefas/arquivos/${current.workspaceId||'workspace'}/${current.boardId||'board'}/${cardId}`;
- const up=await withTimeout(storage.uploadBlob(`${base}/${Date.now()}-${safeFileName(file.name)}`,file,file.type||'application/octet-stream'),45000,'Tempo esgotado no upload do arquivo');
- if(up){out.url=up.url; out.storagePath=up.path;}
- // Thumbnail é importante, mas não pode travar nem impedir o upload do arquivo original.
+
+ // Primeiro gera a miniatura leve. Se falhar, o upload do arquivo continua normalmente.
  let thumbBlob=null;
  if(kind==='pdf') thumbBlob=await withTimeout(makePdfThumbBlob(file),18000,'Tempo esgotado na miniatura PDF').catch(e=>{console.warn('Não foi possível gerar thumbnail PDF',e); return null;});
  else if(kind==='image') thumbBlob=await withTimeout(makeImageThumbBlob(file),12000,'Tempo esgotado na miniatura da imagem').catch(e=>{console.warn('Não foi possível gerar thumbnail imagem',e); return null;});
+
+ const up=await withTimeout(storage.uploadBlob(`${base}/${Date.now()}-${safeFileName(file.name)}`,file,file.type||'application/octet-stream'),60000,'Tempo esgotado no upload do arquivo');
+ if(up){out.url=up.url; out.storagePath=up.path;}
+
  if(thumbBlob){
   const tup=await withTimeout(storage.uploadBlob(`${base}/thumb.webp`,thumbBlob,'image/webp'),30000,'Tempo esgotado no upload da thumbnail').catch(e=>{console.warn('Falha ao enviar thumbnail',e); return null;});
   if(tup){out.thumb=tup.url; out.thumbPath=tup.path;}

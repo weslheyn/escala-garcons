@@ -264,11 +264,67 @@ function makeListDrop(wrap){wrap.ondragover=e=>{const dragging=document.querySel
 function fileKind(file){const n=(file.name||'').toLowerCase(), t=(file.type||'').toLowerCase(); if(t.startsWith('image/')||/\.(png|jpg|jpeg|webp|gif)$/i.test(n))return'image'; if(t.includes('pdf')||n.endsWith('.pdf'))return'pdf'; if(/\.(xls|xlsx|csv)$/i.test(n))return'excel'; if(/\.(doc|docx)$/i.test(n))return'word'; if(/\.(ppt|pptx)$/i.test(n))return'powerpoint'; return'file';}
 function fileIcon(kind){return {image:'🖼️',pdf:'📕',excel:'📗',word:'📘',powerpoint:'📙',file:'📎'}[kind]||'📎';}
 function fmtBytes(bytes){bytes=Number(bytes||0); if(bytes<1024)return bytes+' B'; if(bytes<1048576)return (bytes/1024).toFixed(0)+' KB'; return (bytes/1048576).toFixed(1)+' MB';}
-function fileCardHtml(c){const f=c.file||{}, kind=f.kind||'file', thumb=f.thumb||''; const preview=thumb?`<div class="gt-file-thumb" style="background-image:url('${thumb}')"></div>`:`<div class="gt-file-thumb icon ${kind}">${fileIcon(kind)}</div>`; return `${preview}<div class="gt-file-info"><div class="gt-file-title">${esc(f.name||c.title||'Arquivo')}</div><div class="gt-file-meta">${esc((kind||'file').toUpperCase())} • ${fmtBytes(f.size)} • ${f.date?fmtDateBR(f.date):fmtDateBR((c.createdAt||'').slice(0,10))}</div><div class="gt-file-download-hint">⬇ Clique para baixar</div></div>`;}
+function fileCardHtml(c){const f=c.file||{}, kind=f.kind||'file', thumb=f.thumb||''; const preview=thumb?`<div class="gt-file-thumb" style="background-image:url('${thumb}')"></div>`:`<div class="gt-file-thumb icon ${kind}">${fileIcon(kind)}</div>`; const status=f.uploading?'Enviando...':(f.error?'Falha no upload':'⬇ Clique para baixar'); return `${preview}<div class="gt-file-info"><div class="gt-file-title">${esc(f.name||c.title||'Arquivo')}</div><div class="gt-file-meta">${esc((kind||'file').toUpperCase())} • ${fmtBytes(f.size)} • ${f.date?fmtDateBR(f.date):fmtDateBR((c.createdAt||'').slice(0,10))}</div><div class="gt-file-download-hint ${f.error?'is-error':''}">${esc(status)}</div></div>`;}
 function safeFileName(name){return String(name||'arquivo').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/-+/g,'-').slice(0,90);}
-function openFilePicker(listId){const input=document.createElement('input'); input.type='file'; input.multiple=true; input.accept='.pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,image/*'; input.onchange=()=>handleFilesSelected(listId,[...input.files]); input.click();}
-async function handleFilesSelected(listId,files){if(!files.length)return; for(const file of files){if(file.size>15000000){toast('Arquivo muito grande: '+file.name+' (limite 15 MB)'); continue;} const kind=fileKind(file); const cardId=uid('c'); const c={id:cardId,type:'file',title:file.name,description:'',labels:[],due:'',done:false,recurrence:'none',checklist:[],comments:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),file:{name:file.name,size:file.size,type:file.type||'',kind,date:new Date().toISOString().slice(0,10),url:'',storagePath:'',thumb:'',thumbPath:''}}; try{ const paths=await uploadOptimizedFile(cardId,file,kind); Object.assign(c.file,paths); }catch(e){ console.warn('Upload otimizado falhou, usando fallback local',e); const data=await readFileData(file); c.file.dataUrl=data; if(kind==='image') c.file.thumb=await makeImageThumbFromDataUrl(data).catch(()=>data); if(kind==='pdf') c.file.thumb=await makePdfThumbFromSource({dataUrl:data}).catch(()=>''); toast('Storage indisponível: arquivo salvo localmente no banco.'); } state.cards[c.id]=c; state.lists[listId].cards=state.lists[listId].cards||[]; state.lists[listId].cards.push(c.id);} save(); renderBoard(); toast('Arquivo adicionado à lista');}
-async function uploadOptimizedFile(cardId,file,kind){ const out={}; const storage=window.GerenciadorTarefasFirebase; const base=`gerenciador_tarefas/arquivos/${current.workspaceId||'workspace'}/${current.boardId||'board'}/${cardId}`; if(storage&&storage.enabled&&storage.uploadBlob){ const up=await storage.uploadBlob(`${base}/${Date.now()}-${safeFileName(file.name)}`,file,file.type||'application/octet-stream'); if(up){out.url=up.url; out.storagePath=up.path;} } else { throw new Error('Firebase Storage não está carregado'); } let thumbBlob=null; if(kind==='pdf') thumbBlob=await makePdfThumbBlob(file).catch(e=>{console.warn('Não foi possível gerar thumbnail PDF',e); return null;}); else if(kind==='image') thumbBlob=await makeImageThumbBlob(file).catch(()=>null); if(thumbBlob&&storage&&storage.uploadBlob){ const tup=await storage.uploadBlob(`${base}/thumb.webp`,thumbBlob,'image/webp'); if(tup){out.thumb=tup.url; out.thumbPath=tup.path;} } return out;}
+function openFilePicker(listId){
+ const input=document.createElement('input');
+ input.type='file';
+ input.multiple=true;
+ input.accept='.pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,image/*';
+ input.style.position='fixed'; input.style.left='-9999px'; input.style.top='-9999px';
+ document.body.appendChild(input);
+ input.onchange=async()=>{ const files=[...input.files]; input.remove(); await handleFilesSelected(listId,files); };
+ input.oncancel=()=>input.remove();
+ input.click();
+}
+async function handleFilesSelected(listId,files){
+ if(!files.length)return;
+ if(!state.lists[listId]){toast('Lista não encontrada para upload');return;}
+ for(const file of files){
+  if(file.size>25000000){toast('Arquivo muito grande: '+file.name+' (limite 25 MB)'); continue;}
+  const kind=fileKind(file); const cardId=uid('c');
+  const c={id:cardId,type:'file',title:file.name,description:'',labels:[],due:'',done:false,recurrence:'none',checklist:[],comments:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),file:{name:file.name,size:file.size,type:file.type||'',kind,date:new Date().toISOString().slice(0,10),url:'',storagePath:'',thumb:'',thumbPath:'',uploading:true}};
+  state.cards[c.id]=c; state.lists[listId].cards=state.lists[listId].cards||[]; state.lists[listId].cards.push(c.id); save(); renderBoard();
+  try{
+   toast('Enviando arquivo: '+file.name);
+   const paths=await uploadOptimizedFile(cardId,file,kind);
+   Object.assign(c.file,paths,{uploading:false});
+   c.updatedAt=new Date().toISOString();
+   save(); renderBoard();
+  }catch(e){
+   console.warn('Upload para Storage falhou',e);
+   c.file.uploading=false;
+   c.file.error='Falha no envio para Storage';
+   c.updatedAt=new Date().toISOString();
+   save(); renderBoard();
+   toast('Falha ao enviar para o Storage. Verifique regras/permissão do Firebase.');
+  }
+ }
+ toast('Upload finalizado');
+}
+function withTimeout(promise,ms,label){return Promise.race([promise,new Promise((_,rej)=>setTimeout(()=>rej(new Error(label||'Tempo esgotado')),ms))]);}
+async function ensureStorageReady(){
+ const storage=window.GerenciadorTarefasFirebase;
+ if(!storage) throw new Error('Módulo Firebase não carregado');
+ if((!storage.enabled||!storage.storage) && storage.init){ await storage.init(); }
+ if(!storage.enabled||!storage.storage||!storage.uploadBlob) throw new Error('Firebase Storage não está carregado');
+ return storage;
+}
+async function uploadOptimizedFile(cardId,file,kind){
+ const out={}; const storage=await ensureStorageReady();
+ const base=`gerenciador_tarefas/arquivos/${current.workspaceId||'workspace'}/${current.boardId||'board'}/${cardId}`;
+ const up=await withTimeout(storage.uploadBlob(`${base}/${Date.now()}-${safeFileName(file.name)}`,file,file.type||'application/octet-stream'),45000,'Tempo esgotado no upload do arquivo');
+ if(up){out.url=up.url; out.storagePath=up.path;}
+ // Thumbnail é importante, mas não pode travar nem impedir o upload do arquivo original.
+ let thumbBlob=null;
+ if(kind==='pdf') thumbBlob=await withTimeout(makePdfThumbBlob(file),18000,'Tempo esgotado na miniatura PDF').catch(e=>{console.warn('Não foi possível gerar thumbnail PDF',e); return null;});
+ else if(kind==='image') thumbBlob=await withTimeout(makeImageThumbBlob(file),12000,'Tempo esgotado na miniatura da imagem').catch(e=>{console.warn('Não foi possível gerar thumbnail imagem',e); return null;});
+ if(thumbBlob){
+  const tup=await withTimeout(storage.uploadBlob(`${base}/thumb.webp`,thumbBlob,'image/webp'),30000,'Tempo esgotado no upload da thumbnail').catch(e=>{console.warn('Falha ao enviar thumbnail',e); return null;});
+  if(tup){out.thumb=tup.url; out.thumbPath=tup.path;}
+ }
+ return out;
+}
 function readFileData(file){return new Promise((res,rej)=>{const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file);});}
 function blobToDataUrl(blob){return new Promise((res,rej)=>{const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(blob);});}
 function canvasToBlob(canvas,type='image/webp',quality=.72){return new Promise(res=>canvas.toBlob(b=>res(b),type,quality));}
@@ -276,7 +332,7 @@ async function makePdfThumbBlob(file){ if(!window.pdfjsLib) throw new Error('PDF
 async function makePdfThumbFromSource(src){ if(src.dataUrl){ const bin=atob(src.dataUrl.split(',')[1]||''); const arr=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i); const blob=await makePdfThumbBlob(new File([arr], 'arquivo.pdf', {type:'application/pdf'})); return blobToDataUrl(blob);} return ''; }
 function makeImageThumbBlob(file){return new Promise((res,rej)=>{const img=new Image(); const url=URL.createObjectURL(file); img.onload=async()=>{try{const maxW=520,maxH=300; const r=Math.min(maxW/img.width,maxH/img.height,1); const canvas=document.createElement('canvas'); canvas.width=Math.max(1,Math.round(img.width*r)); canvas.height=Math.max(1,Math.round(img.height*r)); canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height); URL.revokeObjectURL(url); res(await canvasToBlob(canvas,'image/webp',.75));}catch(e){rej(e)}}; img.onerror=rej; img.src=url;});}
 async function makeImageThumbFromDataUrl(dataUrl){return new Promise((res,rej)=>{const img=new Image(); img.onload=async()=>{try{const maxW=520,maxH=300; const r=Math.min(maxW/img.width,maxH/img.height,1); const canvas=document.createElement('canvas'); canvas.width=Math.round(img.width*r); canvas.height=Math.round(img.height*r); canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height); const blob=await canvasToBlob(canvas,'image/webp',.75); res(await blobToDataUrl(blob));}catch(e){rej(e)}}; img.onerror=rej; img.src=dataUrl;});}
-function downloadFile(cardId){const c=state.cards[cardId]; if(!c||!c.file)return; const f=c.file; const href=f.url||f.dataUrl||''; if(!href){toast('Arquivo indisponível para download'); return;} const a=document.createElement('a'); a.href=href; a.download=f.name||c.title||'arquivo'; a.target='_blank'; document.body.appendChild(a); a.click(); a.remove();}
+function downloadFile(cardId){const c=state.cards[cardId]; if(!c||!c.file)return; const f=c.file; if(f.uploading){toast('Arquivo ainda está sendo enviado'); return;} const href=f.url||f.dataUrl||''; if(!href){toast('Arquivo indisponível para download'); return;} const a=document.createElement('a'); a.href=href; a.download=f.name||c.title||'arquivo'; a.target='_blank'; document.body.appendChild(a); a.click(); a.remove();}
 function openFilePreview(cardId){downloadFile(cardId);}
 async function refreshMissingPdfThumbs(){ if(!window.pdfjsLib) return; let changed=false; for(const c of Object.values(state.cards||{})){ if(!c||c.type!=='file'||!c.file||c.file.kind!=='pdf'||c.file.thumb) continue; if(c.file.dataUrl){ try{ c.file.thumb=await makePdfThumbFromSource({dataUrl:c.file.dataUrl}); changed=true; }catch(e){console.warn('Falha ao criar thumb legado',e);} } } if(changed){save(); renderBoard();} }
 

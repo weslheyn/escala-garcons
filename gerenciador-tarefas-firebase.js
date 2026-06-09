@@ -22,7 +22,14 @@ window.GerenciadorTarefasFirebase = {
       try{ app = firebase.app(name); }
       catch(e){ app = firebase.initializeApp(window.GT_FB_CONFIG, name); }
       this.db = app.database();
-      this.storage = (firebase.storage ? app.storage() : null);
+      this.storage = null;
+      if(firebase.storage){
+        try{ this.storage = app.storage(); }
+        catch(e){
+          try{ this.storage = app.storage('gs://' + (window.GT_FB_CONFIG.storageBucket||'')); }
+          catch(err){ console.warn('Firebase Storage indisponível:', err); }
+        }
+      }
       this.enabled = true;
       return true;
     }catch(e){

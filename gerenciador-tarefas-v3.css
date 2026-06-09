@@ -725,3 +725,10 @@
 @media(max-width:760px){.gt-file-thumb{height:66px}.gt-list-actions{grid-template-columns:1fr 1fr}.gt-list-actions .gt-add-card,.gt-list-actions .gt-add-file{font-size:13px}.gt-file-view-frame{height:52vh}.gt-file-view-img{max-height:52vh}}
 .gt-list.is-collapsed .gt-list-actions{display:none!important;}
 .gt-list-head{cursor:grab;}.gt-list-head:active{cursor:grabbing;}
+/* V5.19 - arquivos compactos com excluir */
+.gt-file-card{position:relative!important;}
+.gt-file-delete{position:absolute;top:6px;right:6px;z-index:3;width:24px;height:24px;border:1px solid rgba(255,255,255,.22);border-radius:8px;background:rgba(2,6,23,.72);color:#fff;font-weight:900;line-height:1;cursor:pointer;opacity:.86;}
+.gt-file-delete:hover{background:#ef4444;border-color:#ef4444;opacity:1;}
+.gt-file-card .gt-file-title{max-height:18px;}
+.gt-file-card .gt-file-download-hint.is-error{color:#fca5a5;}
+.gt-file-card .gt-file-thumb{background-repeat:no-repeat;background-size:cover;background-position:center;}

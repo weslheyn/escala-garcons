@@ -1,12 +1,10 @@
 (function(){
 'use strict';
-if(window.pdfjsLib){ try{ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }catch(e){} }
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
 const KEY='gt_trello_like_v3';
 const LOCAL_ALARMS_KEY='gt_trello_local_alarms_v1';
 const DEVICE_ID_KEY='gt_trello_device_id_v1';
 let cloudReady=false, cloudApplying=false, cloudTimer=null;
-let uploadInProgress=false;
 let pwaReg=null, alarmWakeLock=null;
 let alarmAudioCtx=null, alarmAudioBuffers={}, alarmPlayingSources=[];
 const deviceId=(()=>{let id=localStorage.getItem(DEVICE_ID_KEY); if(!id){id='dev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8); localStorage.setItem(DEVICE_ID_KEY,id);} return id;})();
@@ -122,7 +120,7 @@ function effectiveAlarm(c){
  return null;
 }
 function migrateOldPersonalAlarms(){let changed=false; Object.values(state.cards||{}).forEach(c=>{ if(c.alarmEnabled&&c.alarmTime&&!c.sharedAlarmEnabled){setLocalAlarm(c.id,{enabled:true,time:c.alarmTime,advance:Number(c.alarmAdvance||0),vibrate:c.alarmVibrate!==false,sound:c.alarmSound!==false,soundId:c.alarmSoundId||'default'}); delete c.alarmEnabled; delete c.alarmTime; delete c.alarmAdvance; delete c.alarmVibrate; delete c.alarmSound; changed=true;} }); return changed;}
-function sanitizeStateForCloud(data){const clean=JSON.parse(JSON.stringify(data||{})); delete clean.notificationLog; if(clean.cards){Object.values(clean.cards).forEach(c=>{delete c.alarmEnabled; delete c.alarmTime; delete c.alarmAdvance; delete c.alarmVibrate; delete c.alarmSound; if(c.file){ if(c.file.uploading){ c.file.uploading=false; c.file.progress=0; c.file.error=c.file.error||'Upload interrompido'; } }});} return clean;}
+function sanitizeStateForCloud(data){const clean=JSON.parse(JSON.stringify(data||{})); delete clean.notificationLog; if(clean.cards){Object.values(clean.cards).forEach(c=>{delete c.alarmEnabled; delete c.alarmTime; delete c.alarmAdvance; delete c.alarmVibrate; delete c.alarmSound;});} return clean;}
 function saveCloudDebounced(){ if(cloudApplying||!cloudReady||!window.GerenciadorTarefasFirebase?.enabled) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(()=>{window.GerenciadorTarefasFirebase.saveAll(sanitizeStateForCloud(state)).catch(e=>console.warn('GT Firebase save',e));},350);}
 
 function normalizeLegacyFirebaseState(input){
@@ -223,217 +221,22 @@ function normalizeLegacyFirebaseState(input){
   return out;
 }
 
-async function initCloudSync(){ try{ if(!window.GerenciadorTarefasFirebase) return; const ok=await window.GerenciadorTarefasFirebase.init(); if(!ok) return; cloudReady=true; window.GerenciadorTarefasFirebase.listen(remote=>{ if(uploadInProgress){ console.log('GT: atualização remota ignorada durante upload'); return; } if(!remote||!remote.workspaces){ saveCloudDebounced(); return; } const keepCurrent=Object.assign({},current); cloudApplying=true; state=normalizeLegacyFirebaseState(remote); state.workspaces=state.workspaces||{}; state.boards=state.boards||{}; state.lists=state.lists||{}; state.cards=state.cards||{}; state.recent=state.recent||[]; state.notificationLog=JSON.parse(localStorage.getItem(KEY)||'{}').notificationLog||{}; Object.values(state.boards||{}).forEach(b=>{b.background=normalizeBg(b.background); b.visualTheme=normalizeVisualTheme(b.visualTheme); b.density=normalizeDensity(b.density);}); repairStateLinks(); current=keepCurrent; if(!current.workspaceId||!state.workspaces[current.workspaceId]) current.workspaceId=state.activeWorkspaceId&&state.workspaces[state.activeWorkspaceId]?state.activeWorkspaceId:Object.keys(state.workspaces)[0]; if(!current.boardId||!state.boards[current.boardId]) current.boardId=(state.activeBoardId&&state.boards[state.activeBoardId]?state.activeBoardId:null)||state.workspaces[current.workspaceId]?.boards?.find(id=>state.boards[id])||Object.keys(state.boards)[0]||null; localStorage.setItem(KEY,JSON.stringify(state)); cloudApplying=false; if(current.view==='home')renderHome(); else if(current.view==='planner')renderPlanner(); else if(current.view==='inbox')renderInbox(); else renderBoard(); }); }catch(e){console.warn('GT Firebase sync indisponível',e);} }
+async function initCloudSync(){ try{ if(!window.GerenciadorTarefasFirebase) return; const ok=await window.GerenciadorTarefasFirebase.init(); if(!ok) return; cloudReady=true; window.GerenciadorTarefasFirebase.listen(remote=>{ if(!remote||!remote.workspaces){ saveCloudDebounced(); return; } const keepCurrent=Object.assign({},current); cloudApplying=true; state=normalizeLegacyFirebaseState(remote); state.workspaces=state.workspaces||{}; state.boards=state.boards||{}; state.lists=state.lists||{}; state.cards=state.cards||{}; state.recent=state.recent||[]; state.notificationLog=JSON.parse(localStorage.getItem(KEY)||'{}').notificationLog||{}; Object.values(state.boards||{}).forEach(b=>{b.background=normalizeBg(b.background); b.visualTheme=normalizeVisualTheme(b.visualTheme); b.density=normalizeDensity(b.density);}); repairStateLinks(); current=keepCurrent; if(!current.workspaceId||!state.workspaces[current.workspaceId]) current.workspaceId=state.activeWorkspaceId&&state.workspaces[state.activeWorkspaceId]?state.activeWorkspaceId:Object.keys(state.workspaces)[0]; if(!current.boardId||!state.boards[current.boardId]) current.boardId=(state.activeBoardId&&state.boards[state.activeBoardId]?state.activeBoardId:null)||state.workspaces[current.workspaceId]?.boards?.find(id=>state.boards[id])||Object.keys(state.boards)[0]||null; localStorage.setItem(KEY,JSON.stringify(state)); cloudApplying=false; if(current.view==='home')renderHome(); else if(current.view==='planner')renderPlanner(); else if(current.view==='inbox')renderInbox(); else renderBoard(); }); }catch(e){console.warn('GT Firebase sync indisponível',e);} }
 
 function load(){try{state=JSON.parse(localStorage.getItem(KEY))||seed();}catch(e){state=seed()} state=normalizeLegacyFirebaseState(state)||state; if(!state.version||state.version<3){state=normalizeLegacyFirebaseState(state); if(!state.version||state.version<3) state=seed();} state.workspaces=state.workspaces||{}; state.boards=state.boards||{}; state.lists=state.lists||{}; state.cards=state.cards||{}; state.recent=state.recent||[]; state.notificationLog=state.notificationLog||{}; migrateOldPersonalAlarms(); Object.values(state.cards||{}).forEach(c=>{normalizeCardForModal(c,c&&c.id); c.sharedAlarmAdvance=Number(c.sharedAlarmAdvance||0); c.sharedAlarmVibrate=c.sharedAlarmVibrate!==false; c.sharedAlarmSound=c.sharedAlarmSound!==false;}); Object.values(state.boards||{}).forEach(b=>{b.background=normalizeBg(b.background); b.visualTheme=normalizeVisualTheme(b.visualTheme); b.density=normalizeDensity(b.density);}); if(!Object.keys(state.workspaces).length){state=seed()} repairStateLinks(); current.workspaceId=(state.activeWorkspaceId&&state.workspaces[state.activeWorkspaceId]?state.activeWorkspaceId:Object.keys(state.workspaces)[0]); current.boardId=(state.activeBoardId&&state.boards[state.activeBoardId]?state.activeBoardId:null)||state.recent?.find(id=>state.boards[id])||state.workspaces[current.workspaceId].boards?.find(id=>state.boards[id])||null; if(!current.boardId){const wid=current.workspaceId, bid=uid('b'), lid=uid('l'); state.boards[bid]={id:bid,workspaceId:wid,title:'NOVO QUADRO',background:bgLib[0],favorite:false,members:['Weslheyn Dias'],lists:[lid],createdAt:new Date().toISOString()}; state.lists[lid]={id:lid,boardId:bid,title:'A fazer',cards:[]}; state.workspaces[wid].boards=[bid]; current.boardId=bid; state.recent=[bid];} save();}
-function save(opts={}){repairStateLinks(); localStorage.setItem(KEY,JSON.stringify(state)); if(!opts.localOnly && !uploadInProgress) saveCloudDebounced();}
-function saveLocalOnly(){ save({localOnly:true}); }
-async function saveCloudNow(){ if(!cloudReady||!window.GerenciadorTarefasFirebase?.enabled) return false; try{ await window.GerenciadorTarefasFirebase.saveAll(sanitizeStateForCloud(state)); return true; }catch(e){ console.warn('GT Firebase save imediato',e); return false;} }
+function save(){repairStateLinks(); localStorage.setItem(KEY,JSON.stringify(state)); saveCloudDebounced();}
 function board(){return state.boards[current.boardId]} function workspace(){return state.workspaces[current.workspaceId]} function setBg(el,bg){ if(!el)return; if(!bg) bg=bgLib[0]; el.style.backgroundSize=bg.contain?'contain':'cover'; el.style.backgroundRepeat=bg.contain?'no-repeat':'no-repeat'; el.style.backgroundPosition='center'; if(bg.type==='image') el.style.backgroundImage=`linear-gradient(#00000012,#00000012),url('${bg.value}')`; else el.style.backgroundImage=bg.value; }
 function showView(v){current.view=v; $$('.gt-bottom-nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v)); $('#gtHome').classList.add('gt-hidden'); $('#gtBoardScreen').classList.add('gt-hidden'); $('#gtPlannerScreen').classList.add('gt-hidden'); $('#gtInboxScreen').classList.add('gt-hidden'); if(v==='board'){$('#gtBoardScreen').classList.remove('gt-hidden'); renderBoard()} if(v==='planner'){$('#gtPlannerScreen').classList.remove('gt-hidden'); renderPlanner()} if(v==='inbox'){$('#gtInboxScreen').classList.remove('gt-hidden'); renderInbox()} }
 function showHome(){ current.view='home'; $('#gtHome').classList.remove('gt-hidden'); $('#gtBoardScreen').classList.add('gt-hidden'); $('#gtPlannerScreen').classList.add('gt-hidden'); $('#gtInboxScreen').classList.add('gt-hidden'); renderHome(); }
 function renderHome(){repairStateLinks(); const wrap=$('#gtWorkspaceList'); wrap.innerHTML=''; Object.values(state.workspaces).forEach(ws=>{let block=document.createElement('div'); block.className='gt-workspace-block'; block.innerHTML=`<div class="gt-workspace-head"><div class="gt-workspace-name"><span class="gt-workspace-icon" style="background:${ws.color}">${ws.icon||'▣'}</span>${esc(ws.name)}</div><button class="gt-secondary" data-new-board="${ws.id}">+ Criar quadro</button></div><div class="gt-board-card-grid"></div>`; const grid=block.querySelector('.gt-board-card-grid'); (ws.boards||[]).forEach(id=>{const b=state.boards[id]; if(!b)return; grid.appendChild(boardTile(b));}); wrap.appendChild(block);}); $$('[data-new-board]').forEach(btn=>btn.onclick=()=>openBoardForm(btn.dataset.newBoard)); }
-function firstFileCardForBoard(b){
-  if(!b) return null;
-  for(const lid of (b.lists||[])){
-    const l=state.lists[lid];
-    for(const cid of (l?.cards||[])){
-      const c=state.cards[cid];
-      if(c && c.type==='file' && c.file) return c;
-    }
-  }
-  return null;
-}
-function applyBoardTileCover(el,b){
-  const file=firstFileCardForBoard(b);
-  if(file && file.file && file.file.thumb){
-    el.style.backgroundImage=`linear-gradient(180deg,rgba(0,0,0,.10),rgba(0,0,0,.68)),url("${file.file.thumb}")`;
-    el.style.backgroundSize='cover'; el.style.backgroundPosition='center';
-    el.classList.add('has-file-cover');
-  }else{
-    setBg(el,b.background);
-  }
-}
-function boardTile(b){let el=document.createElement('button'); el.className='gt-board-tile'; applyBoardTileCover(el,b); el.innerHTML=`<span class="star">${b.favorite?'★':'☆'}</span><strong>${esc(b.title)}</strong>`; el.onclick=()=>{ closeModals(); openBoard(b.id); }; return el;}
+function boardTile(b){let el=document.createElement('button'); el.className='gt-board-tile'; setBg(el,b.background); el.innerHTML=`<span class="star">${b.favorite?'★':'☆'}</span><strong>${esc(b.title)}</strong>`; el.onclick=()=>{ closeModals(); openBoard(b.id); }; return el;}
 function openBoard(id){const b=state.boards[id]; if(!b)return; current.boardId=id; current.workspaceId=b.workspaceId; state.recent=[id,...(state.recent||[]).filter(x=>x!==id)].slice(0,8); save(); showView('board');}
-function renderBoard(){repairStateLinks(); const b=board(); if(!b){showHome();return;} setBg($('.gt-board-bg'),b.background); applyBoardAppearance(b); const bgBtn=$('#gtBackgroundBtn'); if(bgBtn) bgBtn.textContent='Aparência'; $('#gtBoardTitleBtn').textContent=b.title; $('#gtWorkspaceBtn').textContent=workspace()?.name||'Área'; $('#gtFavoriteBtn').textContent=b.favorite?'★':'☆'; $('#gtBoardTitleBtn').onclick=()=>openBoardEditForm(current.boardId); $('#gtWorkspaceBtn').onclick=()=>openWorkspaceEditForm(current.workspaceId); const wrap=$('#gtBoardLists'); wrap.innerHTML=''; (b.lists||[]).forEach(listId=>{const l=state.lists[listId]; if(l) wrap.appendChild(renderList(l));}); makeListDrop(wrap); const add=document.createElement('button'); add.className='gt-add-list'; add.textContent='+ Adicionar outra lista'; add.onclick=()=>openListForm(); wrap.appendChild(add); setTimeout(refreshMissingPdfThumbs,80); }
-function renderList(l){const el=document.createElement('div'); const isCollapsed=!!l.collapsed; el.className='gt-list'+(isCollapsed?' is-collapsed':''); el.dataset.listId=l.id; el.draggable=true; const cardIds=(l.cards||[]).filter(id=>state.cards[id]); const cards=cardIds.map(id=>normalizeCardForModal(state.cards[id],id)).filter(Boolean); el.innerHTML=`<div class="gt-list-head"><button class="gt-list-toggle" title="${isCollapsed?'Mostrar lista':'Ocultar lista'}" aria-label="${isCollapsed?'Mostrar lista':'Ocultar lista'}">${isCollapsed?'▸':'▾'}</button><input class="gt-list-title" value="${escAttr(l.title)}" title="${escAttr(l.title)}"><span class="gt-list-count">${cards.length}</span><button class="gt-list-menu">•••</button></div><div class="gt-cards"></div><div class="gt-list-actions"><button class="gt-add-card">+ Adicionar cartão</button><button class="gt-add-file">+ Adicionar arquivo</button></div>`; const toggle=el.querySelector('.gt-list-toggle'); toggle.onclick=(e)=>{e.stopPropagation(); l.collapsed=!l.collapsed; save(); renderBoard();}; const title=el.querySelector('.gt-list-title'); title.onchange=()=>{l.title=title.value.trim()||'Lista'; save(); renderBoard()}; el.ondragstart=e=>{ if(e.target.closest('.gt-card')) return; el.classList.add('list-dragging'); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',JSON.stringify({listId:l.id,type:'list'}));}; el.ondragend=()=>{el.classList.remove('list-dragging');}; const cont=el.querySelector('.gt-cards'); if(!isCollapsed){cards.forEach(c=>cont.appendChild(renderCard(c,l.id))); el.querySelector('.gt-add-card').onclick=()=>openCardForm(l.id); el.querySelector('.gt-add-file').onclick=()=>openFilePicker(l.id); makeDrop(cont,l.id);} else {cont.innerHTML='';} el.querySelector('.gt-list-menu').onclick=()=>openListMenu(l.id); return el;}
-function renderCard(c,listId){const el=document.createElement('div'); el.className='gt-card'+(c.done?' done':'')+(c.type==='file'?' gt-file-card':''); el.draggable=true; el.dataset.cardId=c.id; if(c.type==='file'&&c.file){el.innerHTML=fileCardHtml(c);}else{el.innerHTML=`${labelsHtml(c.labels)}<div class="gt-row"><span class="gt-check-dot ${c.done?'checked':''}" title="Concluir">${c.done?'✓':''}</span><div class="gt-card-title">${esc(c.title)}</div></div><div class="gt-card-meta">${c.due?'📅 '+fmtDateBR(c.due):''}${effectiveAlarm(c)?' ⏰ '+effectiveAlarm(c).time+(effectiveAlarm(c).scope==='shared'?' 🌐':' 📱'):''}${c.recurrence&&c.recurrence!=='none'?' 🔁 '+recName(c.recurrence):''}${(c.checklist||[]).length?' ☑ '+doneCount(c)+'/'+c.checklist.length:''}</div>`;} el.onclick=(e)=>{ if(e.target.closest('[data-file-delete]')){ e.stopPropagation(); deleteFileCard(c.id); return;} if(e.target.classList.contains('gt-check-dot')){toggleDone(c.id); e.stopPropagation();return;} if(c.type==='file') openFilePreview(c.id); else openCardModal(c.id);}; el.ondragstart=e=>{el.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',JSON.stringify({cardId:c.id,from:listId,type:'card'}));}; el.ondragend=()=>{el.classList.remove('dragging'); $$('.gt-card.drag-over').forEach(x=>x.classList.remove('drag-over'));}; return el;}
+function renderBoard(){repairStateLinks(); const b=board(); if(!b){showHome();return;} setBg($('.gt-board-bg'),b.background); applyBoardAppearance(b); const bgBtn=$('#gtBackgroundBtn'); if(bgBtn) bgBtn.textContent='Aparência'; $('#gtBoardTitleBtn').textContent=b.title; $('#gtWorkspaceBtn').textContent=workspace()?.name||'Área'; $('#gtFavoriteBtn').textContent=b.favorite?'★':'☆'; $('#gtBoardTitleBtn').onclick=()=>openBoardEditForm(current.boardId); $('#gtWorkspaceBtn').onclick=()=>openWorkspaceEditForm(current.workspaceId); const wrap=$('#gtBoardLists'); wrap.innerHTML=''; (b.lists||[]).forEach(listId=>{const l=state.lists[listId]; if(l) wrap.appendChild(renderList(l));}); const add=document.createElement('button'); add.className='gt-add-list'; add.textContent='+ Adicionar outra lista'; add.onclick=()=>openListForm(); wrap.appendChild(add); }
+function renderList(l){const el=document.createElement('div'); const isCollapsed=!!l.collapsed; el.className='gt-list'+(isCollapsed?' is-collapsed':''); el.dataset.listId=l.id; const cardIds=(l.cards||[]).filter(id=>state.cards[id]); const cards=cardIds.map(id=>normalizeCardForModal(state.cards[id],id)).filter(Boolean); el.innerHTML=`<div class="gt-list-head"><button class="gt-list-toggle" title="${isCollapsed?'Mostrar lista':'Ocultar lista'}" aria-label="${isCollapsed?'Mostrar lista':'Ocultar lista'}">${isCollapsed?'▸':'▾'}</button><input class="gt-list-title" value="${escAttr(l.title)}" title="${escAttr(l.title)}"><span class="gt-list-count">${cards.length}</span><button class="gt-list-menu">•••</button></div><div class="gt-cards"></div><button class="gt-add-card">+ Adicionar um cartão</button>`; const toggle=el.querySelector('.gt-list-toggle'); toggle.onclick=(e)=>{e.stopPropagation(); l.collapsed=!l.collapsed; save(); renderBoard();}; const title=el.querySelector('.gt-list-title'); title.onchange=()=>{l.title=title.value.trim()||'Lista'; save(); renderBoard()}; const cont=el.querySelector('.gt-cards'); if(!isCollapsed){cards.forEach(c=>cont.appendChild(renderCard(c,l.id))); el.querySelector('.gt-add-card').onclick=()=>openCardForm(l.id); makeDrop(cont,l.id);} else {cont.innerHTML='';} el.querySelector('.gt-list-menu').onclick=()=>openListMenu(l.id); return el;}
+function renderCard(c,listId){const el=document.createElement('div'); el.className='gt-card'+(c.done?' done':''); el.draggable=true; el.dataset.cardId=c.id; el.innerHTML=`${labelsHtml(c.labels)}<div class="gt-row"><span class="gt-check-dot ${c.done?'checked':''}" title="Concluir">${c.done?'✓':''}</span><div class="gt-card-title">${esc(c.title)}</div></div><div class="gt-card-meta">${c.due?'📅 '+fmtDateBR(c.due):''}${effectiveAlarm(c)?' ⏰ '+effectiveAlarm(c).time+(effectiveAlarm(c).scope==='shared'?' 🌐':' 📱'):''}${c.recurrence&&c.recurrence!=='none'?' 🔁 '+recName(c.recurrence):''}${(c.checklist||[]).length?' ☑ '+doneCount(c)+'/'+c.checklist.length:''}</div>`; el.onclick=(e)=>{ if(e.target.classList.contains('gt-check-dot')){toggleDone(c.id); e.stopPropagation();return;} openCardModal(c.id);}; el.ondragstart=e=>{el.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',JSON.stringify({cardId:c.id,from:listId}));}; el.ondragend=()=>{el.classList.remove('dragging'); $$('.gt-card.drag-over').forEach(x=>x.classList.remove('drag-over'));}; return el;}
 function getDropIndex(cont,y){const cards=[...cont.querySelectorAll('.gt-card:not(.dragging)')]; let closest={offset:Number.NEGATIVE_INFINITY,index:cards.length}; cards.forEach((card,i)=>{const box=card.getBoundingClientRect(); const offset=y-box.top-box.height/2; if(offset<0 && offset>closest.offset){closest={offset,index:i};}}); return closest.index;}
 function makeDrop(cont,listId){cont.ondragover=e=>{e.preventDefault(); e.dataTransfer.dropEffect='move'; const idx=getDropIndex(cont,e.clientY); const dragging=document.querySelector('.gt-card.dragging'); if(!dragging)return; const cards=[...cont.querySelectorAll('.gt-card:not(.dragging)')]; if(idx>=cards.length) cont.appendChild(dragging); else cont.insertBefore(dragging,cards[idx]);}; cont.ondrop=e=>{e.preventDefault(); try{const d=JSON.parse(e.dataTransfer.getData('text/plain')); const ordered=[...cont.querySelectorAll('.gt-card')].map(x=>x.dataset.cardId).filter(Boolean); let toIndex=ordered.indexOf(d.cardId); if(toIndex<0) toIndex=getDropIndex(cont,e.clientY); moveCard(d.cardId,d.from,listId,toIndex);}catch(_){} };}
 function moveCard(cardId,from,to,toIndex){ const lf=state.lists[from], lt=state.lists[to]; if(!lf||!lt||!state.cards[cardId])return; lf.cards=(lf.cards||[]).filter(id=>id!==cardId); lt.cards=(lt.cards||[]).filter(id=>id!==cardId); let idx=Number.isFinite(toIndex)?Number(toIndex):lt.cards.length; if(idx<0)idx=0; if(idx>lt.cards.length)idx=lt.cards.length; lt.cards.splice(idx,0,cardId); state.cards[cardId].updatedAt=new Date().toISOString(); save(); renderBoard();}
-function getListDropIndex(wrap,x){const lists=[...wrap.querySelectorAll('.gt-list:not(.list-dragging)')]; let closest={offset:Number.NEGATIVE_INFINITY,index:lists.length}; lists.forEach((list,i)=>{const box=list.getBoundingClientRect(); const offset=x-box.left-box.width/2; if(offset<0 && offset>closest.offset){closest={offset,index:i};}}); return closest.index;}
-function makeListDrop(wrap){wrap.ondragover=e=>{const dragging=document.querySelector('.gt-list.list-dragging'); if(!dragging)return; e.preventDefault(); const idx=getListDropIndex(wrap,e.clientX); const lists=[...wrap.querySelectorAll('.gt-list:not(.list-dragging)')]; if(idx>=lists.length) wrap.insertBefore(dragging,wrap.querySelector('.gt-add-list')); else wrap.insertBefore(dragging,lists[idx]);}; wrap.ondrop=e=>{const data=e.dataTransfer.getData('text/plain'); if(!data)return; let d={}; try{d=JSON.parse(data)}catch(_){return;} if(d.type!=='list'||!d.listId)return; e.preventDefault(); const ordered=[...wrap.querySelectorAll('.gt-list')].map(x=>x.dataset.listId).filter(Boolean); board().lists=ordered; save(); renderBoard();};}
-function fileKind(file){const n=(file.name||'').toLowerCase(), t=(file.type||'').toLowerCase(); if(t.startsWith('image/')||/\.(png|jpg|jpeg|webp|gif)$/i.test(n))return'image'; if(t.includes('pdf')||n.endsWith('.pdf'))return'pdf'; if(/\.(xls|xlsx|csv)$/i.test(n))return'excel'; if(/\.(doc|docx)$/i.test(n))return'word'; if(/\.(ppt|pptx)$/i.test(n))return'powerpoint'; return'file';}
-function fileIcon(kind){return {image:'🖼️',pdf:'📕',excel:'📗',word:'📘',powerpoint:'📙',file:'📎'}[kind]||'📎';}
-function fmtBytes(bytes){bytes=Number(bytes||0); if(bytes<1024)return bytes+' B'; if(bytes<1048576)return (bytes/1024).toFixed(0)+' KB'; return (bytes/1048576).toFixed(1)+' MB';}
-function fileCardHtml(c){
- const f=c.file||{}, kind=f.kind||'file', thumb=f.thumb||'';
- const preview=thumb?`<div class="gt-file-thumb" style="background-image:url('${escAttr(thumb)}')"></div>`:`<div class="gt-file-thumb icon ${kind}">${fileIcon(kind)}</div>`;
- const pct=Math.max(0,Math.min(100,Number(f.progress||0)));
- const status=f.uploading?('Carregando... '+(pct?pct+'%':'')):(f.error?'Falha no upload':'⬇ Clique para baixar');
- const progress=f.uploading?`<div class="gt-file-progress"><span style="width:${pct||6}%"></span></div>`:'';
- return `<button type="button" class="gt-file-delete" title="Excluir arquivo" aria-label="Excluir arquivo" data-file-delete="${escAttr(c.id)}">×</button>${preview}<div class="gt-file-info"><div class="gt-file-title" title="${escAttr(f.name||c.title||'Arquivo')}">${esc(f.name||c.title||'Arquivo')}</div><div class="gt-file-meta">${esc((kind||'file').toUpperCase())} • ${fmtBytes(f.size)} • ${f.date?fmtDateBR(f.date):fmtDateBR((c.createdAt||'').slice(0,10))}</div>${progress}<div class="gt-file-download-hint ${f.error?'is-error':''}">${esc(status)}</div></div>`;
-}
-function safeFileName(name){return String(name||'arquivo').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/-+/g,'-').slice(0,90);}
-function openFilePicker(listId){
- const input=document.createElement('input');
- input.type='file';
- input.multiple=true;
- input.accept='.pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,image/*';
- input.style.position='fixed'; input.style.left='-9999px'; input.style.top='-9999px';
- document.body.appendChild(input);
- input.onchange=async()=>{ const files=[...input.files]; input.remove(); await handleFilesSelected(listId,files); };
- input.oncancel=()=>input.remove();
- input.click();
-}
-async function handleFilesSelected(listId,files){
- if(!files.length)return;
- if(!state.lists[listId]){toast('Lista não encontrada para upload');return;}
- uploadInProgress=true;
- try{
-  for(const file of files){
-   // MODO SEGURO: Firebase Storage está recusando escrita neste projeto.
-   // Para não travar em "Enviando...", o arquivo é finalizado no banco/localStorage como dataUrl.
-   // Assim o usuário consegue anexar, ver miniatura, excluir e baixar imediatamente.
-   if(file.size>8500000){toast('Arquivo acima do limite seguro de 8,5 MB: '+file.name); continue;}
-   const kind=fileKind(file); const cardId=uid('c');
-   const baseFile={name:file.name,size:file.size,type:file.type||'',kind,date:new Date().toISOString().slice(0,10),url:'',dataUrl:'',storagePath:'',thumb:'',thumbPath:'',uploading:true,progress:1,error:'',localFallback:true};
-   const c={id:cardId,type:'file',title:file.name,description:'',labels:[],due:'',done:false,recurrence:'none',checklist:[],comments:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),file:baseFile};
-   state.cards[c.id]=c;
-   state.lists[listId].cards=state.lists[listId].cards||[];
-   state.lists[listId].cards.push(c.id);
-   saveLocalOnly(); renderBoard();
-   try{
-    toast('Carregando arquivo: '+file.name);
-    updateFileUploadProgress(cardId,10);
-
-    const thumbBlob=await makeFileThumbBlobSafe(file,kind);
-    const live=state.cards[cardId];
-    if(!live) continue;
-    live.file=live.file||baseFile;
-    if(thumbBlob){
-      live.file.thumb=await blobToDataUrl(thumbBlob);
-      updateFileUploadProgress(cardId,35);
-    }
-
-    live.file.url=await readFileData(file);
-    live.file.dataUrl=live.file.url;
-    live.file.storagePath='';
-    live.file.thumbPath='';
-    live.file.uploading=false;
-    live.file.progress=100;
-    live.file.error='';
-    live.file.localFallback=true;
-    live.file.storageWarning='Salvo em modo leve/compatível para download.';
-    live.updatedAt=new Date().toISOString();
-
-    saveLocalOnly();
-    renderBoard();
-    await saveCloudNow();
-    toast('Arquivo carregado: '+file.name);
-   }catch(e){
-    console.error('Falha ao processar arquivo',e);
-    const liveCard=state.cards[cardId];
-    if(liveCard){
-      liveCard.file=liveCard.file||baseFile;
-      liveCard.file.uploading=false;
-      liveCard.file.progress=0;
-      liveCard.file.error='Falha no upload';
-      liveCard.updatedAt=new Date().toISOString();
-      saveLocalOnly(); renderBoard(); await saveCloudNow();
-    }
-    toast('Falha ao carregar arquivo: '+file.name);
-   }
-  }
- }finally{
-  uploadInProgress=false;
-  await saveCloudNow();
- }
-}
-
-function updateFileUploadProgress(cardId,pct){
- const c=state.cards[cardId]; if(!c||!c.file)return;
- pct=Math.max(0,Math.min(100,Math.round(Number(pct)||0)));
- if(Math.abs(Number(c.file.progress||0)-pct)<5 && pct<100) return;
- c.file.progress=pct; c.updatedAt=new Date().toISOString();
- localStorage.setItem(KEY,JSON.stringify(state));
- const node=document.querySelector(`[data-card-id="${cardId}"]`);
- if(node){ node.innerHTML=fileCardHtml(c); }
-}
-function withTimeout(promise,ms,label){return Promise.race([promise,new Promise((_,rej)=>setTimeout(()=>rej(new Error(label||'Tempo esgotado')),ms))]);}
-async function ensureStorageReady(){
- const storage=window.GerenciadorTarefasFirebase;
- if(!storage) throw new Error('Módulo Firebase não carregado');
- if((!storage.enabled||!storage.storage) && storage.init){ await storage.init(); }
- if(!storage.enabled||!storage.storage||!storage.uploadBlob) throw new Error('Firebase Storage não está carregado');
- return storage;
-}
-async function uploadOptimizedFile(cardId,file,kind,thumbBlob=null,onProgress=null){
- const out={}; const storage=await ensureStorageReady();
- const base=`gerenciador_tarefas/arquivos/${current.workspaceId||'workspace'}/${current.boardId||'board'}/${cardId}`;
-
- // A miniatura já foi gerada antes de enviar. Se ainda não existir, tenta gerar sem travar o upload.
- if(!thumbBlob) thumbBlob=await makeFileThumbBlobSafe(file,kind);
-
- const uploadFn=storage.uploadBlobProgress?storage.uploadBlobProgress.bind(storage):storage.uploadBlob.bind(storage);
- const up=await withTimeout(uploadFn(`${base}/${Date.now()}-${safeFileName(file.name)}`,file,file.type||'application/octet-stream',onProgress),9000,'Tempo esgotado no upload do arquivo');
- if(up){out.url=up.url; out.storagePath=up.path; out.localFallback=false;}
-
- if(thumbBlob){
-  const tup=await withTimeout(uploadFn(`${base}/thumb.webp`,thumbBlob,'image/webp',null),8000,'Tempo esgotado no upload da thumbnail').catch(e=>{console.warn('Falha ao enviar thumbnail',e); return null;});
-  if(tup){out.thumb=tup.url; out.thumbPath=tup.path;}
- }
- return out;
-}
-async function makeFileThumbBlobSafe(file,kind){
- try{
-  if(kind==='pdf') return await withTimeout(makePdfThumbBlob(file),22000,'Tempo esgotado na miniatura PDF');
-  if(kind==='image') return await withTimeout(makeImageThumbBlob(file),12000,'Tempo esgotado na miniatura da imagem');
-  if(kind==='excel'||kind==='word'||kind==='powerpoint'||kind==='file') return await makeOfficeThumbBlob(file,kind);
- }catch(e){console.warn('Não foi possível gerar thumbnail',e);}
- try{return await makeOfficeThumbBlob(file,kind||'file');}catch(e){return null;}
-}
-function readFileData(file){return new Promise((res,rej)=>{const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file);});}
-function blobToDataUrl(blob){return new Promise((res,rej)=>{const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(blob);});}
-function canvasToBlob(canvas,type='image/webp',quality=.72){return new Promise(res=>canvas.toBlob(b=>res(b),type,quality));}
-function makeOfficeThumbBlob(file,kind='file'){
- const canvas=document.createElement('canvas'); canvas.width=520; canvas.height=300;
- const ctx=canvas.getContext('2d',{alpha:false});
- const palette={excel:['#052e16','#16a34a','#86efac','EXCEL'],word:['#0f172a','#2563eb','#93c5fd','WORD'],powerpoint:['#431407','#ea580c','#fdba74','POWER'],pdf:['#450a0a','#ef4444','#fecaca','PDF'],file:['#111827','#64748b','#cbd5e1','ARQUIVO']};
- const p=palette[kind]||palette.file;
- const grd=ctx.createLinearGradient(0,0,520,300); grd.addColorStop(0,p[0]); grd.addColorStop(1,'#020617');
- ctx.fillStyle=grd; ctx.fillRect(0,0,520,300);
- ctx.fillStyle='rgba(255,255,255,.06)'; for(let x=0;x<520;x+=46){ctx.fillRect(x,0,1,300)} for(let y=0;y<300;y+=42){ctx.fillRect(0,y,520,1)}
- ctx.fillStyle=p[1]; ctx.beginPath(); ctx.roundRect(36,36,112,112,20); ctx.fill();
- ctx.fillStyle='rgba(255,255,255,.18)'; ctx.fillRect(64,58,56,7); ctx.fillRect(64,78,56,7); ctx.fillRect(64,98,42,7);
- ctx.fillStyle='#ffffff'; ctx.font='900 42px Arial, sans-serif'; ctx.fillText(p[3],170,92);
- ctx.fillStyle=p[2]; ctx.font='700 20px Arial, sans-serif'; ctx.fillText((file.name||'arquivo').slice(0,34),170,132);
- ctx.fillStyle='rgba(255,255,255,.72)'; ctx.font='600 16px Arial, sans-serif'; ctx.fillText(fmtBytes(file.size||0),170,164);
- return canvasToBlob(canvas,'image/webp',.72);
-}
-async function makePdfThumbBlob(file){ if(!window.pdfjsLib) throw new Error('PDF.js não carregado'); const buf=await file.arrayBuffer(); const pdf=await pdfjsLib.getDocument({data:buf}).promise; const page=await pdf.getPage(1); const vp0=page.getViewport({scale:1}); const targetW=520; const scale=Math.min(1.8,targetW/vp0.width); const viewport=page.getViewport({scale}); const canvas=document.createElement('canvas'); canvas.width=Math.floor(viewport.width); canvas.height=Math.floor(viewport.height); const ctx=canvas.getContext('2d',{alpha:false}); ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height); await page.render({canvasContext:ctx,viewport}).promise; const blob=await canvasToBlob(canvas,'image/webp',.74); if(!blob) throw new Error('Falha ao converter thumbnail'); return blob;}
-async function makePdfThumbFromSource(src){ if(src.dataUrl){ const bin=atob(src.dataUrl.split(',')[1]||''); const arr=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i); const blob=await makePdfThumbBlob(new File([arr], 'arquivo.pdf', {type:'application/pdf'})); return blobToDataUrl(blob);} return ''; }
-function makeImageThumbBlob(file){return new Promise((res,rej)=>{const img=new Image(); const url=URL.createObjectURL(file); img.onload=async()=>{try{const maxW=520,maxH=300; const r=Math.min(maxW/img.width,maxH/img.height,1); const canvas=document.createElement('canvas'); canvas.width=Math.max(1,Math.round(img.width*r)); canvas.height=Math.max(1,Math.round(img.height*r)); canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height); URL.revokeObjectURL(url); res(await canvasToBlob(canvas,'image/webp',.75));}catch(e){rej(e)}}; img.onerror=rej; img.src=url;});}
-async function makeImageThumbFromDataUrl(dataUrl){return new Promise((res,rej)=>{const img=new Image(); img.onload=async()=>{try{const maxW=520,maxH=300; const r=Math.min(maxW/img.width,maxH/img.height,1); const canvas=document.createElement('canvas'); canvas.width=Math.round(img.width*r); canvas.height=Math.round(img.height*r); canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height); const blob=await canvasToBlob(canvas,'image/webp',.75); res(await blobToDataUrl(blob));}catch(e){rej(e)}}; img.onerror=rej; img.src=dataUrl;});}
-function downloadFile(cardId){const c=state.cards[cardId]; if(!c||!c.file)return; const f=c.file; if(f.uploading){toast('Arquivo ainda está sendo enviado'); return;} const href=f.url||f.dataUrl||''; if(!href){toast('Arquivo indisponível para download'); return;} const a=document.createElement('a'); a.href=href; a.download=f.name||c.title||'arquivo'; a.target='_blank'; document.body.appendChild(a); a.click(); a.remove();}
-function openFilePreview(cardId){downloadFile(cardId);}
-async function deleteFileCard(cardId){
- const c=state.cards[cardId]; if(!c||!c.file)return;
- if(!confirm('Excluir este arquivo?')) return;
- const f=c.file||{};
- try{
-  const storage=window.GerenciadorTarefasFirebase;
-  if(storage&&storage.deleteStorage){
-   if(f.storagePath) await storage.deleteStorage(f.storagePath);
-   if(f.thumbPath) await storage.deleteStorage(f.thumbPath);
-  }
- }catch(e){console.warn('Falha ao excluir do Storage',e);}
- deleteCard(cardId);
- toast('Arquivo excluído');
-}
-async function refreshMissingPdfThumbs(){ if(!window.pdfjsLib) return; let changed=false; for(const c of Object.values(state.cards||{})){ if(!c||c.type!=='file'||!c.file||c.file.kind!=='pdf'||c.file.thumb) continue; if(c.file.dataUrl){ try{ c.file.thumb=await makePdfThumbFromSource({dataUrl:c.file.dataUrl}); changed=true; }catch(e){console.warn('Falha ao criar thumb legado',e);} } } if(changed){save(); renderBoard();} }
-
 function labelsHtml(labels){return labels?.length?`<div class="gt-labels">${labels.map(c=>`<span class="gt-label" style="background:${c}"></span>`).join('')}</div>`:''}
 function doneCount(c){return (c.checklist||[]).filter(x=>x.done).length}
 function toggleDone(cardId){const c=state.cards[cardId]; c.done=!c.done; c.completedAt=c.done?new Date().toISOString():''; save(); if(current.view==='planner')renderPlanner(); else renderBoard();}

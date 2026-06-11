@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'gestao-coco-bambu-pwa-alarmes-v5-3';
+const CACHE_VERSION = 'gestao-coco-bambu-pwa-alarmes-v5-8';
 const STATIC_ASSETS = [
   './manifest.json',
   './icon.png',
@@ -11,7 +11,11 @@ const STATIC_ASSETS = [
   './assets/sounds/sinos-cancao-passaros.mp3',
   './assets/sounds/dance-monkey-iphone-remix.mp3',
   './assets/sounds/jk-sax-dance-monkey.mp3',
-  './assets/sounds/dance-monkey-piano-violino.mp3'
+  './assets/sounds/dance-monkey-piano-violino.mp3',
+  './assets/backgrounds/cidade-canal-noite.jpg',
+  './assets/backgrounds/rio-outono.jpg',
+  './assets/backgrounds/floresta-outono.jpg',
+  './assets/backgrounds/cachoeira-ruinas.jpg'
 ];
 
 self.addEventListener('install', event => {

@@ -442,6 +442,67 @@ body.gs-open #premiumDashboard{
   display:block!important;
 }
 
+
+
+/* =========================================================
+   AJUSTE V2 - FREQUÊNCIA FUNCIONÁRIOS
+   Layout compacto igual ao modelo aprovado (imagem 3).
+   Mantém a mesma estrutura/funções: altera apenas a apresentação.
+========================================================= */
+@media (min-width: 761px){
+  .section{margin-bottom:10px}
+  .emp-list{gap:0;padding:0 16px}
+  .emp-card{
+    display:grid;
+    grid-template-columns:minmax(300px,1fr) minmax(520px,auto);
+    align-items:center;
+    column-gap:14px;
+    padding:8px 12px;
+    min-height:58px;
+    border-radius:0;
+    border-left:0!important;
+    box-shadow:none;
+    background:linear-gradient(90deg,#111722,#141925);
+  }
+  .emp-list .emp-card:first-child{border-radius:12px 12px 0 0}
+  .emp-list .emp-card:last-child{border-radius:0 0 12px 12px}
+  .emp-list .emp-card:only-child{border-radius:12px}
+  .emp-card + .emp-card{border-top:0;border-bottom:1px solid var(--border)}
+  .emp-top{margin:0;min-width:0;align-items:center;gap:10px}
+  .emp-name{font-size:17px;line-height:1}
+  .emp-meta{font-size:10px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .emp-badges{justify-content:flex-start;margin-left:10px;flex-wrap:nowrap;gap:5px}
+  .badge{font-size:9px;padding:3px 8px}
+  .status-btns{display:grid;grid-template-columns:repeat(5,minmax(86px,1fr));gap:8px;align-items:center}
+  .sbtn{
+    min-width:0;
+    height:34px;
+    padding:4px 6px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    font-size:14px;
+    line-height:1;
+    white-space:nowrap;
+  }
+  .sbtn br{display:none}
+  .sbtn span{font-size:11px!important}
+  .extra-fields,.saved-info{grid-column:1 / -1;margin-top:8px}
+  .desligado-card .desligado-info,.desligado-card .reativar-btn{grid-column:1 / -1}
+}
+@media (min-width: 761px) and (max-width: 1180px){
+  .emp-card{grid-template-columns:minmax(260px,1fr) minmax(430px,auto);column-gap:10px}
+  .status-btns{grid-template-columns:repeat(5,minmax(72px,1fr));gap:6px}
+  .sbtn span{font-size:10px!important}
+}
+@media (max-width: 760px){
+  .emp-card{border-radius:14px;padding:12px}
+  .status-btns{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .sbtn{min-width:0}
+}
+
 </style>
 <!-- Firebase SDK (Realtime Database — sync em tempo real) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>

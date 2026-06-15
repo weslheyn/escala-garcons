@@ -9331,5 +9331,131 @@ function openGsPanel(){ abrirGsTelaExclusiva(); }
 })();
 </script>
 
+
+
+<style id="freq-funcionarios-premium-v3-css">
+/* ===== Frequência Funcionários — layout premium compacto com controle de celular ===== */
+.freq-v3-wrap{padding:0 14px 90px;max-width:1500px;margin:0 auto;}
+.freq-v3-toolbar{display:grid;grid-template-columns:minmax(260px,1.15fr) minmax(220px,.8fr) minmax(220px,.8fr) minmax(220px,.8fr) auto;gap:10px;align-items:center;margin:12px 0 12px}
+.freq-v3-toolbar .emp-search-wrap{display:contents}.freq-v3-toolbar .emp-search-box,.freq-v3-toolbar .emp-area-box,.freq-v3-toolbar .emp-horario-box,.freq-v3-toolbar .emp-setor-box{height:44px;border-radius:12px;background:linear-gradient(180deg,#111827,#0c111c);border:1px solid rgba(148,163,184,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
+.freq-v3-total{height:44px;border-radius:12px;background:#0c111c;border:1px solid rgba(148,163,184,.18);display:flex;align-items:center;justify-content:center;padding:0 18px;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:#fff;white-space:nowrap}.freq-v3-total span{font-size:11px;color:#8d96b8;margin-left:6px}
+.freq-v3-table-card{background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(7,12,21,.98));border:1px solid rgba(148,163,184,.16);border-radius:16px;box-shadow:0 18px 45px rgba(0,0,0,.25);overflow:hidden}
+.freq-v3-grid{display:grid;grid-template-columns:minmax(220px,1.5fr) minmax(105px,.65fr) minmax(112px,.7fr) minmax(80px,.55fr) minmax(100px,.62fr) minmax(116px,.72fr) repeat(5,minmax(104px,.62fr)) 48px;align-items:center;column-gap:8px}
+.freq-v3-head{height:44px;padding:0 12px;background:linear-gradient(180deg,rgba(22,31,48,.98),rgba(12,18,30,.98));border-bottom:1px solid rgba(148,163,184,.15);color:#b8c2d8;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;position:sticky;top:0;z-index:3}
+.freq-v3-row{min-height:56px;padding:6px 12px;border-bottom:1px solid rgba(148,163,184,.095);transition:.15s;background:rgba(2,6,15,.06)}.freq-v3-row:hover{background:rgba(59,130,246,.045)}.freq-v3-row:last-child{border-bottom:0}.freq-v3-row.is-folga{opacity:.58;background:rgba(245,200,66,.055)}
+.freq-v3-person{display:flex;align-items:center;gap:10px;min-width:0}.freq-v3-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;color:#fff;background:linear-gradient(145deg,#374151,#111827);border:1px solid rgba(255,255,255,.14);box-shadow:0 3px 10px rgba(0,0,0,.22);flex:0 0 auto}.freq-v3-name{font-family:'Barlow Condensed',sans-serif;font-size:16px;line-height:1;font-weight:800;color:#fff;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.freq-v3-sub{font-size:11px;color:#8996b8;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.freq-v3-cell{font-size:12px;color:#d6def3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.freq-v3-role{text-transform:uppercase;color:#b9c1d6;font-size:11px;font-weight:700}.freq-v3-time{font-size:12px;color:#d7def1}.freq-v3-badge{display:inline-flex;align-items:center;justify-content:center;border-radius:7px;padding:5px 9px;font-size:10px;line-height:1;font-weight:900;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.16);white-space:nowrap}.freq-v3-badge.salao{color:#f5c842;border-color:#f5c84266;background:#f5c84213}.freq-v3-badge.cozinha{color:#c084fc;border-color:#a855f766;background:#a855f713}.freq-v3-status{display:inline-flex;align-items:center;gap:7px;height:28px;min-width:94px;padding:0 10px;border-radius:8px;background:rgba(15,23,42,.92);border:1px solid rgba(148,163,184,.11);font-size:12px;font-weight:900;text-transform:uppercase;color:#dbe4ff}.freq-v3-status .dot{width:8px;height:8px;border-radius:50%;background:#8d96b8;box-shadow:0 0 12px currentColor}.freq-v3-status.presente{color:#2ecc71}.freq-v3-status.falta{color:#ff4d4d}.freq-v3-status.atestado{color:#a78bfa}.freq-v3-status.troca-folga{color:#38bdf8}.freq-v3-status.saida-antecipada{color:#fb923c}.freq-v3-status.banco-horas{color:#c084fc}.freq-v3-status.ferias{color:#34d399}.freq-v3-status.desligado{color:#94a3b8}.freq-v3-locker{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;min-width:74px;min-height:42px;padding:4px 7px;border-radius:9px;border:1px solid rgba(148,163,184,.15);background:rgba(15,23,42,.72);cursor:pointer;transition:.15s}.freq-v3-locker:hover{border-color:#f5c84288;box-shadow:0 0 0 2px #f5c84216}.freq-v3-locker-main{font-size:15px;font-weight:900;line-height:1}.freq-v3-locker-sub{font-size:10px;color:#9ba6c4;margin-top:3px}.freq-v3-locker.guardado .freq-v3-locker-main{color:#ff5555}.freq-v3-locker.com_colaborador .freq-v3-locker-main{color:#f59e0b}.freq-v3-locker.finalizado .freq-v3-locker-main{color:#94a3b8}.freq-v3-locker.livre .freq-v3-locker-main{color:#22c55e}
+.freq-v3-action{height:32px;border-radius:8px;border:1px solid rgba(148,163,184,.16);background:#0f172a;color:#cdd7f2;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.35px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.15s;white-space:nowrap}.freq-v3-action:hover{transform:translateY(-1px);filter:brightness(1.12)}.freq-v3-action.presente{color:#20d072;border-color:#16a34a88;background:#052e1a}.freq-v3-action.falta{color:#ff4d4d;border-color:#ef444488;background:#2a0a0a}.freq-v3-action.atestado{color:#c084fc;border-color:#8b5cf688;background:#1e1437}.freq-v3-action.troca-folga{color:#38bdf8;border-color:#0284c788;background:#071e31}.freq-v3-action.saida-antecipada{color:#fb923c;border-color:#f9731688;background:#2c1605}.freq-v3-action.active.presente{background:linear-gradient(180deg,#16a34a,#087332);color:#fff}.freq-v3-action.active.falta{background:linear-gradient(180deg,#ef4444,#991b1b);color:#fff}.freq-v3-action.active.atestado{background:linear-gradient(180deg,#8b5cf6,#5b21b6);color:#fff}.freq-v3-action.active.troca-folga{background:linear-gradient(180deg,#0284c7,#075985);color:#fff}.freq-v3-action.active.saida-antecipada{background:linear-gradient(180deg,#f97316,#b45309);color:#fff}.freq-v3-more{width:32px;height:32px;border-radius:8px;background:rgba(15,23,42,.75);border:1px solid rgba(148,163,184,.12);color:#9aa6c5;font-size:20px;cursor:pointer}.freq-v3-more:hover{color:#fff;border-color:#f5c84266}.freq-v3-foot{padding:12px 16px;border-top:1px solid rgba(148,163,184,.1);font-size:12px;color:#8d96b8}.freq-v3-empty{padding:30px;text-align:center;color:#8d96b8;font-weight:700}
+@media(max-width:980px){.freq-v3-toolbar{grid-template-columns:1fr}.freq-v3-table-card{overflow-x:auto}.freq-v3-grid{grid-template-columns:230px 110px 110px 85px 110px 115px repeat(5,115px) 44px;min-width:1320px}.freq-v3-wrap{padding-left:8px;padding-right:8px}.freq-v3-action{font-size:12px}}
+</style>
+
+<script id="freq-funcionarios-premium-v3-js">
+(function(){
+  if(window.__freqPremiumV3Applied) return; window.__freqPremiumV3Applied=true;
+  const oldBuildMain=window.buildMain;
+  const oldSelectStatus=window.selectStatus;
+  const oldBuildSummary=window.buildSummary;
+  function esc(v){return String(v??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+  function initials(name){return String(name||'?').trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase()||'?';}
+  function isoHoje(){const d=WEEK_DATES&&WEEK_DATES[curDay]?WEEK_DATES[curDay]:new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+  function nowHM(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+  function phoneKey(nome){return 'freq_celular_'+isoHoje()+'_'+String(nome||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]/g,'_');}
+  function getPhone(nome){try{return JSON.parse(localStorage.getItem(phoneKey(nome))||'null')||{status:'livre'};}catch(e){return{status:'livre'};}}
+  function setPhone(nome,obj){localStorage.setItem(phoneKey(nome),JSON.stringify({...obj,updatedAt:new Date().toISOString()}));}
+  function statusClass(st){return String(st||'sem').replace(/_/g,'-');}
+  function statusLabel(f){
+    const r=getRec(curDay,f.nome)||{}; const st=r.status||''; const ex=(r.extra&&typeof r.extra==='object')?r.extra:{};
+    if(st==='presente' && (ex.registradoAs||ex.horaRegistro)) return {cls:'presente',txt:ex.registradoAs||ex.horaRegistro,dot:true,sub:'Hoje'};
+    if(st==='presente') return {cls:'presente',txt:'Presente',dot:true};
+    const s=(STATUS||[]).find(x=>x.id===st);
+    if(s) return {cls:statusClass(st),txt:s.label,dot:true};
+    if(isFolgaSemanal&&isFolgaSemanal(f,DAYS[curDay])) return {cls:'ferias',txt:'Folga',dot:false};
+    return {cls:'',txt:'Pendente',dot:false};
+  }
+  function areaBadge(f){const area=(typeof _areaFuncionario==='function'?_areaFuncionario(f):'SALAO');return `<span class="freq-v3-badge ${area==='COZINHA'?'cozinha':'salao'}">${area==='COZINHA'?'COZINHA':'SALÃO'}</span>`;}
+  function cellPhoneHtml(f){const c=getPhone(f.nome);let cls=c.status||'livre',main='Livre',sub='';
+    if(cls==='guardado'){main='📱 '+esc(c.armario||'—');sub='Guardado'}
+    else if(cls==='com_colaborador'){main='☕ Com';sub='colaborador'}
+    else if(cls==='finalizado'){main='⚑ Finalizado';sub='Retirado'}
+    else {main='🔓 Livre';sub=''}
+    return `<button class="freq-v3-locker ${cls}" onclick="openCelularModal('${String(f.nome).replace(/'/g,"\\'")}')"><span class="freq-v3-locker-main">${main}</span>${sub?`<span class="freq-v3-locker-sub">${sub}</span>`:''}</button>`;
+  }
+  function actionBtn(f,id,label){const r=getRec(curDay,f.nome)||{};const active=r.status===id?' active':'';const name=String(f.nome).replace(/'/g,"\\'");return `<button class="freq-v3-action ${id}${active}" onclick="selectStatus('${name}','${id}')">${label}</button>`;}
+  function rowHtml(f){const name=esc(f.nome), cat=esc(f.categoria||''), hi=esc(f.horIni||''), hf=esc(f.horFim||''), st=statusLabel(f);const folga=isFolgaSemanal&&isFolgaSemanal(f,DAYS[curDay]);const nameSafe=String(f.nome).replace(/'/g,"\\'");
+    return `<div class="freq-v3-row freq-v3-grid ${folga?'is-folga':''}" id="card_${String(f.nome).replace(/ /g,'_')}">
+      <div class="freq-v3-person"><div class="freq-v3-avatar">${initials(f.nome)}</div><div style="min-width:0"><button class="emp-name-btn" onclick="openFicha('${nameSafe}')"><div class="freq-v3-name">${name}</div></button><div class="freq-v3-sub">${cat}</div></div></div>
+      <div class="freq-v3-cell freq-v3-role">${cat}</div>
+      <div class="freq-v3-cell freq-v3-time">${hi}${hf?' às '+hf:''}</div>
+      <div>${areaBadge(f)}</div>
+      <div>${cellPhoneHtml(f)}</div>
+      <div><span class="freq-v3-status ${st.cls}">${st.dot?'<span class="dot"></span>':''}<span>${esc(st.txt)}</span></span>${st.sub?`<div style="font-size:10px;color:#7b86a6;margin-top:3px">▱ ${esc(st.sub)}</div>`:''}</div>
+      <div>${actionBtn(f,'presente','✓ Presente')}</div>
+      <div>${actionBtn(f,'falta','✕ Falta')}</div>
+      <div>${actionBtn(f,'atestado','▣ Atestado')}</div>
+      <div>${actionBtn(f,'troca-folga','↔ Troca Folga')}</div>
+      <div>${actionBtn(f,'saida-antecipada','⇥ Saída Ant.')}</div>
+      <div><button class="freq-v3-more" onclick="openRegistrarAcao('${nameSafe}')">⋮</button></div>
+    </div>`;
+  }
+  function filteredEquipe(){
+    const termo=(EMP_SEARCH||'').trim().toLowerCase();
+    return (EQUIPE||[]).filter(f=>{
+      const area=typeof _areaFuncionario==='function'?_areaFuncionario(f):'SALAO';
+      if(EMP_AREA!=='TODOS' && area!==EMP_AREA) return false;
+      if(EMP_SETOR!=='TODOS' && f.categoria!==EMP_SETOR) return false;
+      const h=(f.horIni||'')+' '+(f.horFim||'');
+      if(EMP_HORARIO!=='TODOS'){
+        const ini=String(f.horIni||''); const n=parseInt(ini.replace(':',''),10)||0;
+        if(EMP_HORARIO==='ABERTURA' && !(n<1100)) return false;
+        if(EMP_HORARIO==='INTERCALADO' && !(n>=1100 && n<1500)) return false;
+        if(EMP_HORARIO==='FECHAMENTO' && !(n>=1500)) return false;
+      }
+      if(!termo) return true;
+      const hay=[f.nome,f.categoria,f.turno,area,h].filter(Boolean).join(' ').toLowerCase();
+      return hay.includes(termo);
+    }).sort((a,b)=>{
+      const ha=String(a.horIni||'99:99'), hb=String(b.horIni||'99:99');
+      if(ha!==hb) return ha.localeCompare(hb);
+      return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR');
+    });
+  }
+  window.renderEmployeeSections=function(){
+    const box=document.getElementById('empSections'); if(!box) return;
+    const rows=filteredEquipe().map(rowHtml).join('');
+    box.innerHTML=`<div class="freq-v3-table-card"><div class="freq-v3-head freq-v3-grid"><div>Colaborador</div><div>Função</div><div>Horário</div><div>Setor</div><div>Celular</div><div>Status do dia</div><div>Presente</div><div>Falta</div><div>Atestado</div><div>Troca de Folga</div><div>Saída Antecipada</div><div>Mais ações</div></div>${rows||'<div class="freq-v3-empty">Nenhum colaborador encontrado.</div>'}<div class="freq-v3-foot">ⓘ O armário é liberado automaticamente ao finalizar o expediente.</div></div>`;
+  };
+  window.buildMain=function(){
+    if(typeof curView!=='undefined' && curView==='pendencias' && oldBuildMain){return oldBuildMain();}
+    if(typeof buildSummary==='function') buildSummary();
+    const main=document.getElementById('mainContent'); if(!main) return;
+    main.innerHTML=`<div class="freq-v3-wrap"><div class="freq-v3-toolbar">${getSearchBoxHtml()}<div class="freq-v3-total">${(EQUIPE||[]).length}<span>TOTAL</span></div></div><div id="empSections"></div></div>`;
+    activateEmployeeSearch(); renderEmployeeSections();
+  };
+  window.selectStatus=function(name,newSt){
+    if(newSt==='presente'){
+      const r=getRec(curDay,name)||{}; const status=r.status===newSt?'':newSt;
+      if(status===''){
+        const d=WEEK_DATES[curDay]; const iso=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; const dkDate=`drec_${name}_${iso}`; const wk=getWeekKey(weekOffset);
+        delete _fbCache[dkDate]; delete _fbCache[curDay+'_'+name];
+        if(fbDb&&fbConnected){fbDb.ref('presenca/'+wk+'/'+fbEncode(dkDate)).remove();fbDb.ref('presenca/'+wk+'/'+fbEncode(curDay+'_'+name)).remove();}
+        buildMain(); refreshPendBadge(); buildSummary(); if(gToken&&SHEET_ID) enqueueSyncCell(name,d.getDate()); return;
+      }
+      const ex={...(r.extra&&typeof r.extra==='object'?r.extra:{}),registradoAs:nowHM(),registradoEm:new Date().toISOString()};
+      setRec(curDay,name,'presente',ex); bridgeSaveByDate(name,curDay,'presente',ex); showToast('✅ Presente registrado às '+ex.registradoAs); buildMain(); refreshPendBadge(); buildSummary(); return;
+    }
+    if(oldSelectStatus) return oldSelectStatus(name,newSt);
+  };
+  window.openCelularModal=function(nome){
+    const c=getPhone(nome); let modal=document.getElementById('celularModal');
+    if(!modal){modal=document.createElement('div');modal.className='modal-overlay';modal.id='celularModal';modal.onclick=function(ev){if(ev.target===modal) closeModal('celularModal')};document.body.appendChild(modal);}
+    const safe=String(nome).replace(/'/g,"\\'");
+    modal.innerHTML=`<div class="modal-box" style="max-width:430px"><div class="modal-title">📱 CONTROLE DE CELULAR</div><div style="font-size:13px;color:var(--sub);margin-bottom:12px">${esc(nome)}</div><div class="field-wrap"><span class="field-label">Número do armário</span><input class="field-input" id="celArmarioInput" inputmode="numeric" placeholder="Ex: 10" value="${esc(c.armario||'')}"></div><button class="export-btn" style="text-align:left;margin-bottom:8px" onclick="salvarCelularArmario('${safe}')">📱 Guardar / alterar armário</button><button class="export-btn" style="text-align:left;margin-bottom:8px" onclick="marcarCelularStatus('${safe}','com_colaborador')">☕ Retirou para intervalo</button><button class="export-btn" style="text-align:left;margin-bottom:8px" onclick="marcarCelularStatus('${safe}','guardado')">↩️ Guardou novamente</button><button class="export-btn" style="text-align:left;margin-bottom:8px" onclick="marcarCelularStatus('${safe}','finalizado')">🏁 Retirou ao finalizar expediente</button><button class="export-btn" style="text-align:left;margin-bottom:8px;color:var(--green)" onclick="marcarCelularStatus('${safe}','livre')">🔓 Liberar armário</button><div class="modal-btns"><button class="btn-cancel" onclick="closeModal('celularModal')">FECHAR</button></div></div>`;
+    openModal('celularModal');
+  };
+  window.salvarCelularArmario=function(nome){const el=document.getElementById('celArmarioInput');const arm=(el&&el.value||'').trim();if(!arm){showToast('⚠️ Informe o número do armário');return;}setPhone(nome,{status:'guardado',armario:arm});closeModal('celularModal');renderEmployeeSections();showToast('📱 Celular guardado no armário '+arm);};
+  window.marcarCelularStatus=function(nome,status){const c=getPhone(nome); if(status==='guardado'&&!c.armario){return window.salvarCelularArmario(nome);} setPhone(nome,{...c,status});closeModal('celularModal');renderEmployeeSections();showToast('📱 Status do celular atualizado');};
+  setTimeout(()=>{try{buildMain();}catch(e){console.warn('freq v3 build',e)}},80);
+})();
+</script>
+
 </body>
 </html>

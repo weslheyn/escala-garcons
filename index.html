@@ -9643,3 +9643,79 @@ function openGsPanel(){ abrirGsTelaExclusiva(); }
 
 </body>
 </html>
+
+<!-- ===== FIX v4.3: home não deve abrir Frequência automaticamente ===== -->
+<style id="freq-home-first-fix-v43">
+  body.home-active.freq-v4-active #mainContent,
+  body.home-active #mainContent{
+    display:none!important;
+    position:static!important;
+    inset:auto!important;
+    width:auto!important;
+    height:auto!important;
+    overflow:visible!important;
+  }
+  body.home-active #premiumDashboard{display:block!important;}
+  body.home-active .header,
+  body.home-active #syncBar,
+  body.home-active #sheetsBar,
+  body.home-active .date-bar,
+  body.home-active #summary{display:none!important;}
+</style>
+<script id="freq-home-first-fix-v43-js">
+(function(){
+  var _buildMainV43 = window.buildMain;
+  var _showHomeDashboardV43 = window.showHomeDashboard;
+  var _openDashboardModuleV43 = window.openDashboardModule;
+
+  function keepHomeClean(){
+    document.body.classList.add('home-active');
+    document.body.classList.remove('freq-v4-active');
+    var main=document.getElementById('mainContent');
+    if(main) main.style.display='none';
+    var dash=document.getElementById('premiumDashboard');
+    if(dash) dash.style.display='block';
+  }
+
+  window.showHomeDashboard=function(){
+    if(typeof _showHomeDashboardV43==='function'){
+      try{ _showHomeDashboardV43.apply(this,arguments); }catch(e){}
+    }
+    keepHomeClean();
+  };
+
+  window.buildMain=function(){
+    // Firebase/sync chama buildMain ao carregar. Se o usuário ainda está na home,
+    // não pode trocar a tela para Frequência sozinho.
+    if(document.body.classList.contains('home-active') && !window.__abrindoModuloFrequencia){
+      try{ if(typeof updateDashboardPremium==='function') updateDashboardPremium(); }catch(e){}
+      return;
+    }
+    return _buildMainV43 && _buildMainV43.apply(this,arguments);
+  };
+
+  window.openDashboardModule=function(mod){
+    if(mod==='frequencia'){
+      window.__abrindoModuloFrequencia=true;
+      document.body.classList.remove('home-active');
+      document.body.classList.add('freq-v4-active');
+      try{
+        if(typeof _premiumNavActive==='function') _premiumNavActive('navInicio');
+        if(typeof showView==='function') showView('escala');
+        else if(typeof _buildMainV43==='function') _buildMainV43();
+      }finally{
+        setTimeout(function(){ window.__abrindoModuloFrequencia=false; },250);
+      }
+      return;
+    }
+    return _openDashboardModuleV43 && _openDashboardModuleV43.apply(this,arguments);
+  };
+
+  document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){
+      // Garante que a primeira tela continue sendo o menu, mesmo depois do Firebase sincronizar.
+      if(!sessionStorage.getItem('freq_foi_aberta_pelo_usuario')) keepHomeClean();
+    },700);
+  });
+})();
+</script>

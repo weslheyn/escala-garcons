@@ -9553,7 +9553,16 @@ function openGsPanel(){ abrirGsTelaExclusiva(); }
   window.openCelularModal=function(nome){const c=getPhone(nome);let modal=document.getElementById('celularModal');if(!modal){modal=document.createElement('div');modal.className='modal-overlay';modal.id='celularModal';modal.onclick=function(ev){if(ev.target===modal)closeModal('celularModal')};document.body.appendChild(modal);}const safe=String(nome).replace(/'/g,"\\'");modal.innerHTML=`<div class="modal-box" style="max-width:430px"><div class="modal-title">📱 CONTROLE DE CELULAR</div><div style="font-size:13px;color:var(--sub);margin-bottom:12px">${esc(nome)}</div><div class="field-wrap"><span class="field-label">Número do armário</span><input class="field-input" id="celArmarioInput" inputmode="numeric" placeholder="Ex: 10" value="${esc(c.armario||'')}"></div><button class="export-btn" style="text-align:left;margin-bottom:8px" onclick="salvarCelularArmario('${safe}')">📱 Guardar / alterar armário</button><button class="export-btn" style="text-align:left;margin-bottom:8px" onclick="marcarCelularStatus('${safe}','com_colaborador')">☕ Retirou para intervalo</button><button class="export-btn" style="text-align:left;margin-bottom:8px" onclick="marcarCelularStatus('${safe}','guardado')">↩️ Guardou novamente</button><button class="export-btn" style="text-align:left;margin-bottom:8px" onclick="marcarCelularStatus('${safe}','finalizado')">🏁 Retirou ao finalizar expediente</button><button class="export-btn" style="text-align:left;margin-bottom:8px;color:#22c55e" onclick="marcarCelularStatus('${safe}','livre')">🔓 Liberar armário</button><div class="modal-btns"><button class="btn-cancel" onclick="closeModal('celularModal')">FECHAR</button></div></div>`;openModal('celularModal');};
   window.salvarCelularArmario=function(nome){const el=document.getElementById('celArmarioInput');const arm=(el&&el.value||'').trim();if(!arm){showToast('⚠️ Informe o número do armário');return;}setPhone(nome,{status:'guardado',armario:arm});closeModal('celularModal');renderEmployeeSections();showToast('📱 Celular guardado no armário '+arm);};
   window.marcarCelularStatus=function(nome,status){const c=getPhone(nome);if(status==='guardado'&&!c.armario){return window.salvarCelularArmario(nome);}setPhone(nome,{...c,status});closeModal('celularModal');renderEmployeeSections();showToast('📱 Status do celular atualizado');};
-  setTimeout(()=>{try{buildMain();}catch(e){console.warn('freq v4 build',e)}},120);
+  // Não abrir o módulo de Frequência automaticamente ao carregar o site.
+  // A tela inicial premium deve continuar sendo a primeira tela;
+  // buildMain() só deve rodar quando o usuário clicar em Frequência Funcionários.
+  setTimeout(()=>{
+    try{
+      if(!document.body.classList.contains('home-active') && typeof curView!=='undefined' && curView==='escala'){
+        buildMain();
+      }
+    }catch(e){console.warn('freq v4 build',e)}
+  },120);
 })();
 </script>
 

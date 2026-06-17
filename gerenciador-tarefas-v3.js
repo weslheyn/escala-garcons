@@ -6,6 +6,7 @@ const KEY='gt_trello_like_v3';
 const LOCAL_ALARMS_KEY='gt_trello_local_alarms_v1';
 const DEVICE_ID_KEY='gt_trello_device_id_v1';
 let cloudReady=false, cloudApplying=false, cloudTimer=null;
+let uploadInProgress=false;
 let pwaReg=null, alarmWakeLock=null;
 let alarmAudioCtx=null, alarmAudioBuffers={}, alarmPlayingSources=[];
 const deviceId=(()=>{let id=localStorage.getItem(DEVICE_ID_KEY); if(!id){id='dev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8); localStorage.setItem(DEVICE_ID_KEY,id);} return id;})();
@@ -121,7 +122,7 @@ function effectiveAlarm(c){
  return null;
 }
 function migrateOldPersonalAlarms(){let changed=false; Object.values(state.cards||{}).forEach(c=>{ if(c.alarmEnabled&&c.alarmTime&&!c.sharedAlarmEnabled){setLocalAlarm(c.id,{enabled:true,time:c.alarmTime,advance:Number(c.alarmAdvance||0),vibrate:c.alarmVibrate!==false,sound:c.alarmSound!==false,soundId:c.alarmSoundId||'default'}); delete c.alarmEnabled; delete c.alarmTime; delete c.alarmAdvance; delete c.alarmVibrate; delete c.alarmSound; changed=true;} }); return changed;}
-function sanitizeStateForCloud(data){const clean=JSON.parse(JSON.stringify(data||{})); delete clean.notificationLog; if(clean.cards){Object.values(clean.cards).forEach(c=>{delete c.alarmEnabled; delete c.alarmTime; delete c.alarmAdvance; delete c.alarmVibrate; delete c.alarmSound;});} return clean;}
+function sanitizeStateForCloud(data){const clean=JSON.parse(JSON.stringify(data||{})); delete clean.notificationLog; if(clean.cards){Object.values(clean.cards).forEach(c=>{delete c.alarmEnabled; delete c.alarmTime; delete c.alarmAdvance; delete c.alarmVibrate; delete c.alarmSound; if(c.file){ if(c.file.uploading){ c.file.uploading=false; c.file.progress=0; c.file.error=c.file.error||'Upload interrompido'; } }});} return clean;}
 function saveCloudDebounced(){ if(cloudApplying||!cloudReady||!window.GerenciadorTarefasFirebase?.enabled) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(()=>{window.GerenciadorTarefasFirebase.saveAll(sanitizeStateForCloud(state)).catch(e=>console.warn('GT Firebase save',e));},350);}
 
 function normalizeLegacyFirebaseState(input){
@@ -222,10 +223,12 @@ function normalizeLegacyFirebaseState(input){
   return out;
 }
 
-async function initCloudSync(){ try{ if(!window.GerenciadorTarefasFirebase) return; const ok=await window.GerenciadorTarefasFirebase.init(); if(!ok) return; cloudReady=true; window.GerenciadorTarefasFirebase.listen(remote=>{ if(!remote||!remote.workspaces){ saveCloudDebounced(); return; } const keepCurrent=Object.assign({},current); cloudApplying=true; state=normalizeLegacyFirebaseState(remote); state.workspaces=state.workspaces||{}; state.boards=state.boards||{}; state.lists=state.lists||{}; state.cards=state.cards||{}; state.recent=state.recent||[]; state.notificationLog=JSON.parse(localStorage.getItem(KEY)||'{}').notificationLog||{}; Object.values(state.boards||{}).forEach(b=>{b.background=normalizeBg(b.background); b.visualTheme=normalizeVisualTheme(b.visualTheme); b.density=normalizeDensity(b.density);}); repairStateLinks(); current=keepCurrent; if(!current.workspaceId||!state.workspaces[current.workspaceId]) current.workspaceId=state.activeWorkspaceId&&state.workspaces[state.activeWorkspaceId]?state.activeWorkspaceId:Object.keys(state.workspaces)[0]; if(!current.boardId||!state.boards[current.boardId]) current.boardId=(state.activeBoardId&&state.boards[state.activeBoardId]?state.activeBoardId:null)||state.workspaces[current.workspaceId]?.boards?.find(id=>state.boards[id])||Object.keys(state.boards)[0]||null; localStorage.setItem(KEY,JSON.stringify(state)); cloudApplying=false; if(current.view==='home')renderHome(); else if(current.view==='planner')renderPlanner(); else if(current.view==='inbox')renderInbox(); else renderBoard(); }); }catch(e){console.warn('GT Firebase sync indisponível',e);} }
+async function initCloudSync(){ try{ if(!window.GerenciadorTarefasFirebase) return; const ok=await window.GerenciadorTarefasFirebase.init(); if(!ok) return; cloudReady=true; window.GerenciadorTarefasFirebase.listen(remote=>{ if(uploadInProgress){ console.log('GT: atualização remota ignorada durante upload'); return; } if(!remote||!remote.workspaces){ saveCloudDebounced(); return; } const keepCurrent=Object.assign({},current); cloudApplying=true; state=normalizeLegacyFirebaseState(remote); state.workspaces=state.workspaces||{}; state.boards=state.boards||{}; state.lists=state.lists||{}; state.cards=state.cards||{}; state.recent=state.recent||[]; state.notificationLog=JSON.parse(localStorage.getItem(KEY)||'{}').notificationLog||{}; Object.values(state.boards||{}).forEach(b=>{b.background=normalizeBg(b.background); b.visualTheme=normalizeVisualTheme(b.visualTheme); b.density=normalizeDensity(b.density);}); repairStateLinks(); current=keepCurrent; if(!current.workspaceId||!state.workspaces[current.workspaceId]) current.workspaceId=state.activeWorkspaceId&&state.workspaces[state.activeWorkspaceId]?state.activeWorkspaceId:Object.keys(state.workspaces)[0]; if(!current.boardId||!state.boards[current.boardId]) current.boardId=(state.activeBoardId&&state.boards[state.activeBoardId]?state.activeBoardId:null)||state.workspaces[current.workspaceId]?.boards?.find(id=>state.boards[id])||Object.keys(state.boards)[0]||null; localStorage.setItem(KEY,JSON.stringify(state)); cloudApplying=false; if(current.view==='home')renderHome(); else if(current.view==='planner')renderPlanner(); else if(current.view==='inbox')renderInbox(); else renderBoard(); }); }catch(e){console.warn('GT Firebase sync indisponível',e);} }
 
 function load(){try{state=JSON.parse(localStorage.getItem(KEY))||seed();}catch(e){state=seed()} state=normalizeLegacyFirebaseState(state)||state; if(!state.version||state.version<3){state=normalizeLegacyFirebaseState(state); if(!state.version||state.version<3) state=seed();} state.workspaces=state.workspaces||{}; state.boards=state.boards||{}; state.lists=state.lists||{}; state.cards=state.cards||{}; state.recent=state.recent||[]; state.notificationLog=state.notificationLog||{}; migrateOldPersonalAlarms(); Object.values(state.cards||{}).forEach(c=>{normalizeCardForModal(c,c&&c.id); c.sharedAlarmAdvance=Number(c.sharedAlarmAdvance||0); c.sharedAlarmVibrate=c.sharedAlarmVibrate!==false; c.sharedAlarmSound=c.sharedAlarmSound!==false;}); Object.values(state.boards||{}).forEach(b=>{b.background=normalizeBg(b.background); b.visualTheme=normalizeVisualTheme(b.visualTheme); b.density=normalizeDensity(b.density);}); if(!Object.keys(state.workspaces).length){state=seed()} repairStateLinks(); current.workspaceId=(state.activeWorkspaceId&&state.workspaces[state.activeWorkspaceId]?state.activeWorkspaceId:Object.keys(state.workspaces)[0]); current.boardId=(state.activeBoardId&&state.boards[state.activeBoardId]?state.activeBoardId:null)||state.recent?.find(id=>state.boards[id])||state.workspaces[current.workspaceId].boards?.find(id=>state.boards[id])||null; if(!current.boardId){const wid=current.workspaceId, bid=uid('b'), lid=uid('l'); state.boards[bid]={id:bid,workspaceId:wid,title:'NOVO QUADRO',background:bgLib[0],favorite:false,members:['Weslheyn Dias'],lists:[lid],createdAt:new Date().toISOString()}; state.lists[lid]={id:lid,boardId:bid,title:'A fazer',cards:[]}; state.workspaces[wid].boards=[bid]; current.boardId=bid; state.recent=[bid];} save();}
-function save(){repairStateLinks(); localStorage.setItem(KEY,JSON.stringify(state)); saveCloudDebounced();}
+function save(opts={}){repairStateLinks(); localStorage.setItem(KEY,JSON.stringify(state)); if(!opts.localOnly && !uploadInProgress) saveCloudDebounced();}
+function saveLocalOnly(){ save({localOnly:true}); }
+async function saveCloudNow(){ if(!cloudReady||!window.GerenciadorTarefasFirebase?.enabled) return false; try{ await window.GerenciadorTarefasFirebase.saveAll(sanitizeStateForCloud(state)); return true; }catch(e){ console.warn('GT Firebase save imediato',e); return false;} }
 function board(){return state.boards[current.boardId]} function workspace(){return state.workspaces[current.workspaceId]} function setBg(el,bg){ if(!el)return; if(!bg) bg=bgLib[0]; el.style.backgroundSize=bg.contain?'contain':'cover'; el.style.backgroundRepeat=bg.contain?'no-repeat':'no-repeat'; el.style.backgroundPosition='center'; if(bg.type==='image') el.style.backgroundImage=`linear-gradient(#00000012,#00000012),url('${bg.value}')`; else el.style.backgroundImage=bg.value; }
 function showView(v){current.view=v; $$('.gt-bottom-nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v)); $('#gtHome').classList.add('gt-hidden'); $('#gtBoardScreen').classList.add('gt-hidden'); $('#gtPlannerScreen').classList.add('gt-hidden'); $('#gtInboxScreen').classList.add('gt-hidden'); if(v==='board'){$('#gtBoardScreen').classList.remove('gt-hidden'); renderBoard()} if(v==='planner'){$('#gtPlannerScreen').classList.remove('gt-hidden'); renderPlanner()} if(v==='inbox'){$('#gtInboxScreen').classList.remove('gt-hidden'); renderInbox()} }
 function showHome(){ current.view='home'; $('#gtHome').classList.remove('gt-hidden'); $('#gtBoardScreen').classList.add('gt-hidden'); $('#gtPlannerScreen').classList.add('gt-hidden'); $('#gtInboxScreen').classList.add('gt-hidden'); renderHome(); }
@@ -268,7 +271,7 @@ function fileCardHtml(c){
  const f=c.file||{}, kind=f.kind||'file', thumb=f.thumb||'';
  const preview=thumb?`<div class="gt-file-thumb" style="background-image:url('${escAttr(thumb)}')"></div>`:`<div class="gt-file-thumb icon ${kind}">${fileIcon(kind)}</div>`;
  const pct=Math.max(0,Math.min(100,Number(f.progress||0)));
- const status=f.uploading?('Enviando... '+(pct?pct+'%':'')):(f.error?'Falha no upload':'⬇ Clique para baixar');
+ const status=f.uploading?('Carregando... '+(pct?pct+'%':'')):(f.error?'Falha no upload':'⬇ Clique para baixar');
  const progress=f.uploading?`<div class="gt-file-progress"><span style="width:${pct||6}%"></span></div>`:'';
  return `<button type="button" class="gt-file-delete" title="Excluir arquivo" aria-label="Excluir arquivo" data-file-delete="${escAttr(c.id)}">×</button>${preview}<div class="gt-file-info"><div class="gt-file-title" title="${escAttr(f.name||c.title||'Arquivo')}">${esc(f.name||c.title||'Arquivo')}</div><div class="gt-file-meta">${esc((kind||'file').toUpperCase())} • ${fmtBytes(f.size)} • ${f.date?fmtDateBR(f.date):fmtDateBR((c.createdAt||'').slice(0,10))}</div>${progress}<div class="gt-file-download-hint ${f.error?'is-error':''}">${esc(status)}</div></div>`;
 }
@@ -287,64 +290,68 @@ function openFilePicker(listId){
 async function handleFilesSelected(listId,files){
  if(!files.length)return;
  if(!state.lists[listId]){toast('Lista não encontrada para upload');return;}
- for(const file of files){
-  if(file.size>25000000){toast('Arquivo muito grande: '+file.name+' (limite 25 MB)'); continue;}
-  const kind=fileKind(file); const cardId=uid('c');
-  const baseFile={name:file.name,size:file.size,type:file.type||'',kind,date:new Date().toISOString().slice(0,10),url:'',storagePath:'',thumb:'',thumbPath:'',uploading:true,progress:0,error:''};
-  const c={id:cardId,type:'file',title:file.name,description:'',labels:[],due:'',done:false,recurrence:'none',checklist:[],comments:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),file:baseFile};
-  state.cards[c.id]=c; state.lists[listId].cards=state.lists[listId].cards||[]; state.lists[listId].cards.push(c.id); save(); renderBoard();
-  try{
-   toast('Enviando arquivo: '+file.name);
-   // Miniatura local primeiro: assim o card já mostra a capa real mesmo se o Storage demorar ou falhar.
-   const thumbBlob=await makeFileThumbBlobSafe(file,kind);
-   if(thumbBlob){
-    const live=state.cards[cardId]||c;
+ uploadInProgress=true;
+ try{
+  for(const file of files){
+   // MODO SEGURO: Firebase Storage está recusando escrita neste projeto.
+   // Para não travar em "Enviando...", o arquivo é finalizado no banco/localStorage como dataUrl.
+   // Assim o usuário consegue anexar, ver miniatura, excluir e baixar imediatamente.
+   if(file.size>8500000){toast('Arquivo acima do limite seguro de 8,5 MB: '+file.name); continue;}
+   const kind=fileKind(file); const cardId=uid('c');
+   const baseFile={name:file.name,size:file.size,type:file.type||'',kind,date:new Date().toISOString().slice(0,10),url:'',dataUrl:'',storagePath:'',thumb:'',thumbPath:'',uploading:true,progress:1,error:'',localFallback:true};
+   const c={id:cardId,type:'file',title:file.name,description:'',labels:[],due:'',done:false,recurrence:'none',checklist:[],comments:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),file:baseFile};
+   state.cards[c.id]=c;
+   state.lists[listId].cards=state.lists[listId].cards||[];
+   state.lists[listId].cards.push(c.id);
+   saveLocalOnly(); renderBoard();
+   try{
+    toast('Carregando arquivo: '+file.name);
+    updateFileUploadProgress(cardId,10);
+
+    const thumbBlob=await makeFileThumbBlobSafe(file,kind);
+    const live=state.cards[cardId];
+    if(!live) continue;
     live.file=live.file||baseFile;
-    live.file.thumb=await blobToDataUrl(thumbBlob);
-    live.updatedAt=new Date().toISOString();
-    state.cards[cardId]=live;
-    save(); renderBoard();
-   }
-   const paths=await uploadOptimizedFile(cardId,file,kind,thumbBlob,(pct)=>updateFileUploadProgress(cardId,pct));
-   const liveCard=state.cards[cardId]||c;
-   liveCard.file=liveCard.file||baseFile;
-   Object.assign(liveCard.file,paths,{uploading:false,progress:100,error:''});
-   liveCard.updatedAt=new Date().toISOString();
-   state.cards[cardId]=liveCard;
-   save(); renderBoard();
-  }catch(e){
-   console.warn('Upload para Storage falhou',e);
-   const liveCard=state.cards[cardId]||c;
-   liveCard.file=liveCard.file||baseFile;
-   // Fallback controlado: evita perder o arquivo quando o Storage estiver bloqueado.
-   // Usa somente para arquivos pequenos, porque o banco não deve armazenar arquivos grandes.
-   if(file.size<=6500000){
-    try{
-     liveCard.file.url=await readFileData(file);
-     liveCard.file.storagePath='';
-     liveCard.file.uploading=false;
-     liveCard.file.progress=100;
-     liveCard.file.error='';
-     liveCard.file.localFallback=true;
-     toast('Storage falhou; arquivo salvo no banco para download.');
-    }catch(_){
-     liveCard.file.uploading=false;
-     liveCard.file.progress=0;
-     liveCard.file.error='Falha no upload';
+    if(thumbBlob){
+      live.file.thumb=await blobToDataUrl(thumbBlob);
+      updateFileUploadProgress(cardId,35);
     }
-   }else{
-    liveCard.file.uploading=false;
-    liveCard.file.progress=0;
-    liveCard.file.error='Falha no upload';
+
+    live.file.url=await readFileData(file);
+    live.file.dataUrl=live.file.url;
+    live.file.storagePath='';
+    live.file.thumbPath='';
+    live.file.uploading=false;
+    live.file.progress=100;
+    live.file.error='';
+    live.file.localFallback=true;
+    live.file.storageWarning='Salvo em modo leve/compatível para download.';
+    live.updatedAt=new Date().toISOString();
+
+    saveLocalOnly();
+    renderBoard();
+    await saveCloudNow();
+    toast('Arquivo carregado: '+file.name);
+   }catch(e){
+    console.error('Falha ao processar arquivo',e);
+    const liveCard=state.cards[cardId];
+    if(liveCard){
+      liveCard.file=liveCard.file||baseFile;
+      liveCard.file.uploading=false;
+      liveCard.file.progress=0;
+      liveCard.file.error='Falha no upload';
+      liveCard.updatedAt=new Date().toISOString();
+      saveLocalOnly(); renderBoard(); await saveCloudNow();
+    }
+    toast('Falha ao carregar arquivo: '+file.name);
    }
-   liveCard.updatedAt=new Date().toISOString();
-   state.cards[cardId]=liveCard;
-   save(); renderBoard();
-   if(liveCard.file.error) toast('Falha ao enviar para o Storage. Verifique regras/permissão do Firebase Storage.');
   }
+ }finally{
+  uploadInProgress=false;
+  await saveCloudNow();
  }
- toast('Upload finalizado');
 }
+
 function updateFileUploadProgress(cardId,pct){
  const c=state.cards[cardId]; if(!c||!c.file)return;
  pct=Math.max(0,Math.min(100,Math.round(Number(pct)||0)));
@@ -370,7 +377,7 @@ async function uploadOptimizedFile(cardId,file,kind,thumbBlob=null,onProgress=nu
  if(!thumbBlob) thumbBlob=await makeFileThumbBlobSafe(file,kind);
 
  const uploadFn=storage.uploadBlobProgress?storage.uploadBlobProgress.bind(storage):storage.uploadBlob.bind(storage);
- const up=await withTimeout(uploadFn(`${base}/${Date.now()}-${safeFileName(file.name)}`,file,file.type||'application/octet-stream',onProgress),18000,'Tempo esgotado no upload do arquivo');
+ const up=await withTimeout(uploadFn(`${base}/${Date.now()}-${safeFileName(file.name)}`,file,file.type||'application/octet-stream',onProgress),9000,'Tempo esgotado no upload do arquivo');
  if(up){out.url=up.url; out.storagePath=up.path; out.localFallback=false;}
 
  if(thumbBlob){

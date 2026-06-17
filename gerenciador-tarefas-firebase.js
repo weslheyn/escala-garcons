@@ -5,7 +5,7 @@ window.GT_FB_CONFIG = {
   authDomain: "coco-bambu-presenca.firebaseapp.com",
   databaseURL: "https://coco-bambu-presenca-default-rtdb.firebaseio.com",
   projectId: "coco-bambu-presenca",
-  storageBucket: "coco-bambu-presenca.appspot.com",
+  storageBucket: "coco-bambu-presenca.firebasestorage.app",
   messagingSenderId: "928977354796",
   appId: "1:928977354796:web:b62bfc7900fd67e3ec9189"
 };
@@ -32,7 +32,7 @@ window.GerenciadorTarefasFirebase = {
         }
         // Compatibilidade: alguns projetos Firebase antigos usam appspot.com; projetos novos podem usar firebasestorage.app.
         // Mantemos os dois para evitar upload travado por bucket incorreto.
-        try{ this.altStorage = app.storage('gs://coco-bambu-presenca.firebasestorage.app'); }catch(_){ this.altStorage=null; }
+        try{ this.altStorage = app.storage('gs://coco-bambu-presenca.appspot.com'); }catch(_){ this.altStorage=null; }
       }
       this.enabled = true;
       return true;

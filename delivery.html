@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Delivery • Coco Bambu Recreio</title>
+  <link rel="icon" href="icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="delivery.css?v=1.1.0">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="icon.png" alt="Coco Bambu">
+      <div><strong>COCO BAMBU</strong><span>RECREIO</span><small>DASHBOARD DELIVERY</small></div>
+    </div>
+    <nav id="deliveryNav">
+      <button class="active" data-view="visao"><span>⌂</span> VISÃO GERAL</button>
+      <button data-view="pedidos"><span>▤</span> PEDIDOS</button>
+      <button data-view="motoboys"><span>🛵</span> MOTOBOYS</button>
+      <button data-view="turnos"><span>◷</span> TURNOS</button>
+      <button data-view="regioes"><span>⌖</span> REGIÕES</button>
+      <button data-view="plataformas"><span>▣</span> PLATAFORMAS</button>
+      <button data-view="tempos"><span>◴</span> TEMPOS</button>
+      <button data-view="cancelamentos"><span>⊗</span> CANCELAMENTOS</button>
+      <button data-view="relatorios"><span>▥</span> RELATÓRIOS</button>
+    </nav>
+    <div class="import-box">
+      <h4>IMPORTAR RELATÓRIOS</h4>
+      <label class="file-card"><span><b>Relatório 1</b><small id="file1Label">CSV da plataforma</small></span><input id="file1" type="file" accept=".csv,.xlsx,.xls"><i>⇧</i></label>
+      <label class="file-card"><span><b>Relatório 2</b><small id="file2Label">Excel operacional</small></span><input id="file2" type="file" accept=".xlsx,.xls,.csv"><i>⇧</i></label>
+      <button id="processBtn" class="process-btn">ATUALIZAR DASHBOARD</button>
+      <small class="import-help">Importe sempre os relatórios acumulados do dia 1º até o dia atual. O sistema cruza pelo número do pedido e mantém filtros diário, semanal e mensal.</small>
+    </div>
+    <button class="back-app" onclick="location.href='index.html'">← Voltar ao sistema</button>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <div class="date-controls">
+        <label>PERÍODO<select id="periodFilter"><option value="day">Diário</option><option value="week">Semanal</option><option value="month">Mensal</option></select></label>
+        <label>REFERÊNCIA<input id="dateFilter" type="date"></label>
+        <label>COMPARAR COM<select id="compareSelect"><option value="prev">Período anterior</option><option value="none">Sem comparação</option></select></label>
+      </div>
+      <div class="updated"><span>Última atualização:</span><b id="updatedAt">—</b></div>
+      <button id="refreshBtn" class="refresh">↻ ATUALIZAR DADOS</button>
+    </header>
+
+    <section id="view-visao" class="view active">
+      <div class="kpi-grid" id="kpiGrid"></div>
+      <div class="grid-main">
+        <article class="panel span-4"><h3>PEDIDOS POR HORA</h3><div class="chart-wrap"><canvas id="hourChart"></canvas></div></article>
+        <article class="panel span-3"><h3>PEDIDOS POR PLATAFORMA</h3><div class="chart-wrap donut"><canvas id="platformChart"></canvas></div></article>
+        <article class="panel span-3"><h3>PEDIDOS POR REGIÃO</h3><div id="regionBars" class="bars"></div></article>
+        <article class="panel span-2 turn-summary-panel"><h3>MOTOBOYS POR TURNO — RESUMO</h3><div id="shiftSummary"></div></article>
+
+        <article class="panel span-4"><h3>STATUS DOS PEDIDOS</h3><div id="statusCards" class="status-grid"></div></article>
+        <article class="panel span-4"><h3>TEMPOS MÉDIOS</h3><div id="timeCards" class="time-grid"></div></article>
+        <article class="panel span-2"><h3>RAIO DE ENTREGA</h3><div class="radius-wrap"><div class="radius-rings"><i></i><i></i><i></i><i></i></div><div id="radiusStats"></div></div></article>
+        <article class="panel span-2"><h3>RESUMO DOS TURNOS</h3><div id="shiftMini"></div></article>
+
+        <article class="panel span-3"><h3>RANKING MOTOBOYS <small>(POR ENTREGAS)</small></h3><div id="motoRanking"></div></article>
+        <article class="panel span-4"><h3>CONCENTRAÇÃO DE ENTREGAS</h3><div id="heatRegions" class="heat-regions"></div></article>
+        <article class="panel span-5"><h3>ÚLTIMOS PEDIDOS</h3><div id="latestOrders"></div></article>
+      </div>
+      <div class="day-summary" id="daySummary"></div>
+    </section>
+
+    <section id="view-pedidos" class="view"><div class="page-head"><h2>PEDIDOS</h2><input id="orderSearch" placeholder="Buscar pedido, cliente, motoboy, endereço..."></div><div class="panel table-panel"><div id="ordersTable"></div></div></section>
+    <section id="view-motoboys" class="view"><div class="page-head"><h2>MOTOBOYS</h2><select id="motoShiftFilter"><option value="TODOS">Todos os turnos</option><option>MANHÃ</option><option>NOITE</option></select></div><div id="motoCards" class="detail-cards"></div></section>
+    <section id="view-turnos" class="view"><div class="page-head"><h2>TURNOS</h2><p>Manhã até 16:59 • Noite a partir de 17:00</p></div><div id="shiftDetail" class="detail-cards"></div></section>
+    <section id="view-regioes" class="view"><div class="page-head"><h2>REGIÕES</h2></div><div class="panel table-panel"><div id="regionsTable"></div></div></section>
+    <section id="view-plataformas" class="view"><div class="page-head"><h2>PLATAFORMAS</h2></div><div class="panel table-panel"><div id="platformsTable"></div></div></section>
+    <section id="view-tempos" class="view"><div class="page-head"><h2>TEMPOS</h2></div><div class="panel table-panel"><div id="timesTable"></div></div></section>
+    <section id="view-cancelamentos" class="view"><div class="page-head"><h2>CANCELAMENTOS</h2></div><div class="panel table-panel"><div id="cancelTable"></div></div></section>
+    <section id="view-relatorios" class="view"><div class="page-head"><h2>RELATÓRIOS / HISTÓRICO</h2><p>Os relatórios acumulados do mês substituem/atualizam o mês corrente sem duplicar pedidos.</p></div><div class="detail-cards"><div class="panel"><h3>HISTÓRICO SALVO</h3><div id="historyList"></div></div><div class="panel"><h3>EXPORTAÇÃO</h3><button id="exportCsv" class="action-btn">Exportar base consolidada CSV</button><button id="saveDay" class="action-btn secondary">Salvar dia no Firebase</button></div></div></section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="delivery-firebase.js?v=1.1.0"></script>
+  <script src="delivery-import.js?v=1.1.0"></script>
+  <script src="delivery-dashboard.js?v=1.1.0"></script>
+  <script src="delivery.js?v=1.1.0"></script>
+</body>
+</html>

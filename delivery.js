@@ -87,11 +87,13 @@
     const range=periodRange(ref,period);
     await ensureMonths(range.start,range.end);
     currentRows=allRows.filter(r=>between(r,range.start,range.end));
+    if(window.DeliveryMap)await DeliveryMap.prepareRows(currentRows);
     prevRows=[];
     if($('compareSelect').value==='prev'){
       const pr=previousRange(range,period);
       await ensureMonths(pr.start,pr.end);
       prevRows=allRows.filter(r=>between(r,pr.start,pr.end));
+      if(window.DeliveryMap)await DeliveryMap.prepareRows(prevRows);
     }
     DeliveryDashboard.renderAll(currentRows,prevRows);
     updatePeriodUI(range,period);
@@ -120,7 +122,7 @@
     const data=currentRows.map(r=>({Pedido:r.pedido,Data:r.data,Hora:r.hora,Status:r.status,Turno:r.turno,Plataforma:r.platform,Cliente:r.cliente,Motoboy:r.motoboy,Regiao:r.regiao,Endereco:r.endereco,KM:r.km,Valor:r.valor,TempoPreparo:r.tempoPreparo,TempoEntrega:r.tempoEntrega,TempoTotal:r.tempoTotal}));
     const ws=XLSX.utils.json_to_sheet(data),csv=XLSX.utils.sheet_to_csv(ws,{FS:';'});const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`delivery_${$('periodFilter').value}_${$('dateFilter').value||'relatorio'}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)
   }
-  function setupNav(){document.querySelectorAll('#deliveryNav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#deliveryNav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));$('view-'+b.dataset.view).classList.add('active')})}
+  function setupNav(){document.querySelectorAll('#deliveryNav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#deliveryNav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));$('view-'+b.dataset.view).classList.add('active');if(b.dataset.view==='regioes')setTimeout(()=>DeliveryMap?.showRegionView?.(currentRows),40)})}
   function bind(){
     $('file1').addEventListener('change',e=>fileChanged(1,e.target.files[0]));
     $('file2').addEventListener('change',e=>fileChanged(2,e.target.files[0]));
@@ -132,7 +134,7 @@
     $('saveDay').onclick=saveDay;$('exportCsv').onclick=exportCsv;
     $('orderSearch').oninput=e=>{const q=DeliveryImport.norm(e.target.value);DeliveryDashboard.renderOrders(currentRows.filter(r=>DeliveryImport.norm([r.pedido,r.cliente,r.motoboy,r.endereco,r.regiao,r.platform].join(' ')).includes(q)))};
     $('motoShiftFilter').onchange=()=>DeliveryDashboard.renderMotoCards(currentRows);
-    setupNav();loadHistory();
+    setupNav();loadHistory();DeliveryMap?.init?.();DeliveryMap?.onChange?.(()=>applyPeriod($('dateFilter').value));
     const today=dateKeyLocal(new Date());$('dateFilter').value=today;
   }
   document.addEventListener('DOMContentLoaded',bind);

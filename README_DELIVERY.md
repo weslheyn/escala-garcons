@@ -28,3 +28,13 @@ Cada nova importação acumulada (dia 1º → hoje) regrava os dias e o snapshot
 ## Regras dos turnos
 - MANHÃ: antes das 17:00.
 - NOITE: a partir das 17:00.
+
+
+## v3 — Mapa e regiões personalizadas
+- Mapa de calor real sobre OpenStreetMap.
+- Novos arquivos isolados: `delivery-map.js` e `delivery-map.css`.
+- Editor de regiões por polígonos no próprio mapa.
+- Quatro áreas iniciais editáveis: Recreio, Barra da Tijuca, Barra Olímpica e Vargem Grande e Pequena.
+- Classificação por ponto dentro do polígono, não apenas pelo texto do endereço.
+- Geocodificação manual via botão LOCALIZAR ENDEREÇOS, com cache local e Firebase.
+- Pedidos sem localização ficam fora do ranking de regiões até serem localizados.

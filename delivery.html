@@ -8,7 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="delivery.css?v=1.1.0">
+  <link rel="stylesheet" href="delivery.css?v=1.2.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
+  <link rel="stylesheet" href="delivery-map.css?v=1.2.0">
 </head>
 <body>
   <aside class="sidebar">
@@ -62,7 +65,7 @@
         <article class="panel span-2"><h3>RESUMO DOS TURNOS</h3><div id="shiftMini"></div></article>
 
         <article class="panel span-3"><h3>RANKING MOTOBOYS <small>(POR ENTREGAS)</small></h3><div id="motoRanking"></div></article>
-        <article class="panel span-4"><h3>CONCENTRAÇÃO DE ENTREGAS</h3><div id="heatRegions" class="heat-regions"></div></article>
+        <article class="panel span-4 map-panel"><div class="panel-title-row"><h3>MAPA DE CALOR — CONCENTRAÇÃO DE ENTREGAS</h3><span id="mapAccuracyBadge" class="map-badge">Mapa</span></div><div id="deliveryHeatMap" class="delivery-map dashboard-map"></div></article>
         <article class="panel span-5"><h3>ÚLTIMOS PEDIDOS</h3><div id="latestOrders"></div></article>
       </div>
       <div class="day-summary" id="daySummary"></div>
@@ -71,7 +74,24 @@
     <section id="view-pedidos" class="view"><div class="page-head"><h2>PEDIDOS</h2><input id="orderSearch" placeholder="Buscar pedido, cliente, motoboy, endereço..."></div><div class="panel table-panel"><div id="ordersTable"></div></div></section>
     <section id="view-motoboys" class="view"><div class="page-head"><h2>MOTOBOYS</h2><select id="motoShiftFilter"><option value="TODOS">Todos os turnos</option><option>MANHÃ</option><option>NOITE</option></select></div><div id="motoCards" class="detail-cards"></div></section>
     <section id="view-turnos" class="view"><div class="page-head"><h2>TURNOS</h2><p>Manhã até 16:59 • Noite a partir de 17:00</p></div><div id="shiftDetail" class="detail-cards"></div></section>
-    <section id="view-regioes" class="view"><div class="page-head"><h2>REGIÕES</h2></div><div class="panel table-panel"><div id="regionsTable"></div></div></section>
+    <section id="view-regioes" class="view">
+      <div class="page-head"><div><h2>REGIÕES</h2><p>Defina no mapa exatamente as áreas que serão contabilizadas em cada região.</p></div><div class="region-actions"><button id="geoPendingBtn" class="action-btn compact">LOCALIZAR ENDEREÇOS</button><button id="fitRegionsBtn" class="action-btn secondary compact">ENQUADRAR ÁREAS</button></div></div>
+      <div class="regions-layout">
+        <div class="panel region-map-panel">
+          <div class="region-map-toolbar">
+            <div><b>MAPA DE ÁREAS</b><small id="geoProgress">Use o desenho de polígono para criar ou ajustar regiões.</small></div>
+            <div class="region-name-box"><input id="newRegionName" placeholder="Nome da nova região"><button id="startDrawRegion" class="action-btn compact">+ DESENHAR ÁREA</button></div>
+          </div>
+          <div id="deliveryRegionMap" class="delivery-map region-map"></div>
+        </div>
+        <div class="panel regions-side">
+          <div class="panel-title-row"><h3>ÁREAS CONFIGURADAS</h3><span id="unassignedCount" class="map-badge warn">0 sem área</span></div>
+          <div id="regionZoneList" class="region-zone-list"></div>
+          <div class="region-help">Os pedidos passam a ser contabilizados pela posição do endereço dentro das áreas desenhadas. Endereços ainda não localizados não entram no ranking das regiões até serem geocodificados.</div>
+        </div>
+      </div>
+      <div class="panel table-panel regions-table-panel"><div id="regionsTable"></div></div>
+    </section>
     <section id="view-plataformas" class="view"><div class="page-head"><h2>PLATAFORMAS</h2></div><div class="panel table-panel"><div id="platformsTable"></div></div></section>
     <section id="view-tempos" class="view"><div class="page-head"><h2>TEMPOS</h2></div><div class="panel table-panel"><div id="timesTable"></div></div></section>
     <section id="view-cancelamentos" class="view"><div class="page-head"><h2>CANCELAMENTOS</h2></div><div class="panel table-panel"><div id="cancelTable"></div></div></section>
@@ -82,11 +102,16 @@
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="delivery-firebase.js?v=1.1.0"></script>
-  <script src="delivery-import.js?v=1.1.0"></script>
-  <script src="delivery-dashboard.js?v=1.1.0"></script>
-  <script src="delivery.js?v=1.1.0"></script>
+  <script src="delivery-firebase.js?v=1.2.0"></script>
+  <script src="delivery-import.js?v=1.2.0"></script>
+  <script src="delivery-map.js?v=1.2.0"></script>
+  <script src="delivery-dashboard.js?v=1.2.0"></script>
+  <script src="delivery.js?v=1.2.0"></script>
 </body>
 </html>

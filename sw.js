@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'gestao-coco-bambu-pwa-alarmes-v5-9-delivery-v2';
+const CACHE_VERSION = 'gestao-coco-bambu-pwa-alarmes-v5-9-delivery-v3-map';
 const STATIC_ASSETS = [
   './manifest.json',
   './icon.png',
@@ -8,6 +8,8 @@ const STATIC_ASSETS = [
   './delivery-import.js',
   './delivery-dashboard.js',
   './delivery-firebase.js',
+  './delivery-map.js',
+  './delivery-map.css',
   './gerenciador-tarefas-v3.html',
   './gerenciador-tarefas-v3.css',
   './gerenciador-tarefas-v3.js',

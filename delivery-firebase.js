@@ -23,6 +23,10 @@
     async saveMonth(month,payload){if(!db)return false;await db.ref('delivery/meses/'+safeKey(month)).set(payload);return true},
     async loadMonth(month){if(!db)return null;const s=await db.ref('delivery/meses/'+safeKey(month)).once('value');return s.val()},
     async listMonths(){if(!db)return {};const s=await db.ref('delivery/meses').once('value');return s.val()||{}},
-    async saveImportMeta(key,meta){if(!db)return false;await db.ref('delivery/importacoes/'+safeKey(key)).set(meta);return true}
+    async saveImportMeta(key,meta){if(!db)return false;await db.ref('delivery/importacoes/'+safeKey(key)).set(meta);return true},
+    async saveRegions(regions){if(!db)return false;await db.ref('delivery/config/regioes').set(regions||[]);return true},
+    async loadRegions(){if(!db)return null;const s=await db.ref('delivery/config/regioes').once('value');return s.val()},
+    async saveGeoCache(cache){if(!db)return false;await db.ref('delivery/config/geocache').set(cache||{});return true},
+    async loadGeoCache(){if(!db)return {};const s=await db.ref('delivery/config/geocache').once('value');return s.val()||{}}
   };
 })();

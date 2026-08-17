@@ -38,3 +38,10 @@ Cada nova importação acumulada (dia 1º → hoje) regrava os dias e o snapshot
 - Classificação por ponto dentro do polígono, não apenas pelo texto do endereço.
 - Geocodificação manual via botão LOCALIZAR ENDEREÇOS, com cache local e Firebase.
 - Pedidos sem localização ficam fora do ranking de regiões até serem localizados.
+
+## v4 — Visual Premium
+- Novo arquivo isolado `delivery-premium.css` com refinamento completo da interface.
+- Sidebar, KPIs, painéis, tabelas, filtros e cards com acabamento premium.
+- Mapa usa base escura CARTO + OpenStreetMap, deixando ruas e bairros visíveis sob o heatmap.
+- Heatmap com transparência e gradiente ajustados para preservar a leitura do mapa.
+- Melhor responsividade e menos rolagem horizontal em desktop.

@@ -57,7 +57,10 @@
   function drawOrderMarkers(){if(!regionMap)return;if(regionMap._deliveryMarkers){regionMap._deliveryMarkers.forEach(x=>regionMap.removeLayer(x))}regionMap._deliveryMarkers=[];for(const r of currentRows){const p=getCachedPoint(r);if(!p)continue;const c=L.circleMarker([p.lat,p.lng],{radius:p.approx?3:4,color:p.approx?'#8b8b8b':'#f0b83f',weight:1,fillColor:p.approx?'#666':'#f0b83f',fillOpacity:.75}).addTo(regionMap);c.bindPopup(`<b>Pedido ${esc(r.pedido)}</b><br>${esc(r.cliente||'')}<br>${esc(r.endereco||'')}<br><small>${p.approx?'Posição aproximada':'Endereço localizado'}</small>`);regionMap._deliveryMarkers.push(c)}}
   function selectZone(id){const z=zones.find(x=>x.id===id);if(!z||!regionMap)return;regionMap.fitBounds(z.coords,{padding:[30,30]})}
   function renderZoneList(){const el=document.getElementById('regionZoneList');if(!el)return;const counts={};currentRows.forEach(r=>counts[r.regiao]=(counts[r.regiao]||0)+1);el.innerHTML=zones.map(z=>`<div class="zone-row"><i class="zone-color" style="background:${z.color}"></i><div><b>${esc(z.name)}</b><small>${counts[z.name]||0} pedidos no período</small></div><div class="zone-actions"><button data-fit="${z.id}">ver</button><button data-rename="${z.id}">renomear</button><button class="danger" data-del="${z.id}">excluir</button></div></div>`).join('');el.querySelectorAll('[data-fit]').forEach(b=>b.onclick=()=>selectZone(b.dataset.fit));el.querySelectorAll('[data-rename]').forEach(b=>b.onclick=()=>{const z=zones.find(x=>x.id===b.dataset.rename);if(!z)return;const n=prompt('Novo nome da região:',z.name);if(n&&n.trim()){z.name=n.trim();saveZones()}});el.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(!confirm('Excluir esta área?'))return;zones=zones.filter(x=>x.id!==b.dataset.del);saveZones()})}
-  function bindEditor(){const start=document.getElementById('startDrawRegion');if(start&&!start.dataset.bound){start.dataset.bound='1';start.onclick=()=>{ensureRegionMap();drawName=safe(document.getElementById('newRegionName')?.value);if(!drawName){alert('Digite o nome da região antes de desenhar.');return}new L.Draw.Polygon(regionMap,drawControl.options.draw.polygon).enable()}}const fit=document.getElementById('fitRegionsBtn');if(fit&&!fit.dataset.bound){fit.dataset.bound='1';fit.onclick=()=>{ensureRegionMap();const pts=zones.flatMap(z=>z.coords);if(pts.length)regionMap.fitBounds(pts,{padding:[25,25]})}}const geo=document.getElementById('geoPendingBtn');if(geo&&!geo.dataset.bound){geo.dataset.bound='1';geo.onclick=()=>geocodePending()}}
+  function bindEditor(){const start=document.getElementById('startDrawRegion');if(start&&!start.dataset.bound){start.dataset.bound='1';start.onclick=()=>{ensureRegionMap();drawName=safe(document.getElementById('newRegionName')?.value);if(!drawName){alert('Digite o nome da região antes de desenhar.');return}new L.Draw.Polygon(regionMap,drawControl.options.draw.polygon).enable()}}const fit=document.getElementById('fitRegionsBtn');if(fit&&!fit.dataset.bound){fit.dataset.bound='1';fit.onclick=()=>{ensureRegionMap();const pts=zones.flatMap(z=>z.coords);if(pts.length)regionMap.fitBounds(pts,{padding:[25,25]})}}const geo=document.getElementById('geoPendingBtn');if(geo&&!geo.dataset.bound){geo.dataset.bound='1';geo.onclick=()=>geocodePending()}
+    const retry=document.getElementById('retryUnclassifiedBtn');
+    if(retry&&!retry.dataset.bound){retry.dataset.bound='1';retry.onclick=()=>retryUnclassified()}
+  }
   function cleanAddress(address){
     return safe(address)
       .replace(/\.\s*Complemento:.*$/i,'')
@@ -89,6 +92,35 @@
     return null
   }
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  async function retryUnclassified(){
+    const allowed=configuredRegions();
+    let reset=0;
+    for(const r of currentRows||[]){
+      if(allowed.includes(r.regiao))continue;
+      const k=keyAddr(r.endereco);
+      if(!k)continue;
+      const cached=geoCache[k];
+      // Remove somente resultados negativos/aproximados para permitir nova tentativa.
+      // Pontos reais já encontrados continuam preservados.
+      if(!cached || cached.notFound || r.locationApprox){
+        delete geoCache[k];
+        delete r.lat; delete r.lng; r.locationApprox=false;
+        reset++;
+      }
+    }
+    saveLocal();
+    const prog=document.getElementById('geoProgress');
+    if(prog)prog.textContent=reset?`Reprocessando ${reset} endereço(s) não classificado(s)...`:'Os endereços não classificados já possuem coordenadas; revise os polígonos das áreas.';
+    if(reset) await geocodePending();
+    else {
+      reclassify(currentRows);
+      drawOrderMarkers();
+      renderZoneList();
+      renderDashboard(currentRows);
+      if(changeHandler)changeHandler();
+    }
+  }
+
   async function geocodePending(){const btn=document.getElementById('geoPendingBtn'),prog=document.getElementById('geoProgress');const uniq=[];const seen=new Set();for(const r of currentRows){const k=keyAddr(r.endereco);if(!k||seen.has(k))continue;const cached=geoCache[k];if(cached&&Number.isFinite(+cached.lat)&&Number.isFinite(+cached.lng))continue;seen.add(k);uniq.push({k,address:r.endereco})}if(!uniq.length){if(prog)prog.textContent='Todos os endereços deste período já foram processados.';return}if(btn){btn.disabled=true;btn.textContent='LOCALIZANDO...'}let ok=0,fail=0;for(let i=0;i<uniq.length;i++){const item=uniq[i];if(prog)prog.textContent=`Localizando ${i+1} de ${uniq.length} • ${item.address}`;try{const g=await geocodeAddress(item.address);if(g){geoCache[item.k]=g;ok++}else{geoCache[item.k]={notFound:true,updatedAt:new Date().toISOString()};fail++}}catch(e){console.warn(e);fail++}saveLocal();if((i+1)%10===0){try{await DeliveryFirebase.saveGeoCache?.(geoCache)}catch(e){}}await sleep(1100)}try{await DeliveryFirebase.saveGeoCache?.(geoCache)}catch(e){}reclassify(currentRows);drawOrderMarkers();renderZoneList();renderDashboard(currentRows);if(changeHandler)changeHandler();if(prog)prog.textContent=`Concluído: ${ok} novos endereços localizados • ${fail} ainda pendentes.`;if(btn){btn.disabled=false;btn.textContent='LOCALIZAR ENDEREÇOS'}}
   async function init(){loadLocal();await loadRemote();bindEditor()}
   function showRegionView(rows){currentRows=rows||currentRows;reclassify(currentRows);ensureRegionMap();drawOrderMarkers();renderZoneList()}
@@ -96,5 +128,5 @@
   function validRegionName(name){return zones.some(z=>z.name===name)}
   function configuredRegions(){return zones.map(z=>z.name)}
   loadLocal();
-  window.DeliveryMap={init,prepareRows,renderDashboard,showRegionView,onChange,configuredRegions,validRegionName,reclassify,getCachedPoint};
+  window.DeliveryMap={init,prepareRows,renderDashboard,showRegionView,onChange,configuredRegions,validRegionName,reclassify,getCachedPoint,retryUnclassified};
 })();

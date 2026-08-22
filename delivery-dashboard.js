@@ -25,7 +25,35 @@
   function renderOrders(rows){document.getElementById('ordersTable').innerHTML=table(['Pedido','Data','Hora','Status','Turno','Motoboy','Cliente','Região','Plataforma','KM','Valor','Tempo'],rows.map(r=>`<tr><td>${r.pedido}</td><td>${r.data}</td><td>${r.hora}</td><td>${r.status}</td><td>${r.turno}</td><td>${r.motoboy||'—'}</td><td>${r.cliente||'—'}</td><td>${r.regiao}</td><td>${r.platform}</td><td>${n1(r.km)}</td><td>${money(r.valor)}</td><td>${fmtMin(r.tempoEntrega)}</td></tr>`))}
   function renderMotoCards(rows){const filter=document.getElementById('motoShiftFilter')?.value||'TODOS';const data=motoStats(filter==='TODOS'?rows:rows.filter(r=>r.turno===filter));document.getElementById('motoCards').innerHTML=data.map(x=>`<div class="detail-card"><h3>🛵 ${x.m}</h3><div class="mini-kpis"><div class="mini-kpi"><small>Pedidos</small><b>${x.p}</b></div><div class="mini-kpi"><small>KM</small><b>${n1(x.km)}</b></div><div class="mini-kpi"><small>KM médio</small><b>${n1(x.kmMed)}</b></div><div class="mini-kpi"><small>Tempo médio</small><b>${fmtMin(x.tMed)}</b></div></div><div style="margin-top:10px;color:#aaa;font-size:11px">Turnos: ${[...x.turnos].join(', ')}</div></div>`).join('')||'<div class="panel">Nenhum motoboy encontrado.</div>'}
   function renderShiftDetail(rows){document.getElementById('shiftDetail').innerHTML=['MANHÃ','NOITE'].map(s=>{const rr=rows.filter(r=>r.turno===s);return`<div class="detail-card"><h3>${s==='MANHÃ'?'☀':'☾'} TURNO ${s}</h3>${table(['Motoboy','Pedidos','KM','KM médio/pedido','Tempo médio'],motoStats(rr).map(x=>`<tr><td>${x.m}</td><td>${x.p}</td><td>${n1(x.km)}</td><td>${n1(x.kmMed)}</td><td>${fmtMin(x.tMed)}</td></tr>`))}</div>`}).join('')}
+  function renderUnclassified(rows){
+    const allowed=window.DeliveryMap?.configuredRegions?.()||[];
+    const list=(rows||[]).filter(r=>!allowed.includes(r.regiao));
+    const count=document.getElementById('unclassifiedDetailCount');
+    if(count) count.textContent=`${list.length} ${list.length===1?'pedido':'pedidos'}`;
+    const target=document.getElementById('unclassifiedOrders');
+    if(!target)return;
+    const reason=r=>{
+      if(r.regiao==='FORA DAS ÁREAS')return 'Ponto localizado fora das áreas';
+      if(r.locationApprox)return 'Posição aproximada — revisar';
+      if(!Number.isFinite(+r.lat)||!Number.isFinite(+r.lng))return 'Endereço ainda não localizado';
+      return 'Ponto não pertence a uma área configurada';
+    };
+    target.innerHTML=list.length
+      ? table(
+          ['Pedido','Cliente','Endereço','KM','Região atual','Motivo'],
+          list.map(r=>`<tr>
+            <td>${r.pedido}</td>
+            <td>${r.cliente||'—'}</td>
+            <td class="unresolved-address">${r.endereco||'—'}</td>
+            <td>${n1(r.km)}</td>
+            <td>${r.regiao||'—'}</td>
+            <td class="unresolved-reason">${reason(r)}</td>
+          </tr>`)
+        )
+      : '<div style="padding:12px;color:#77c66e;font-size:11px;font-weight:700">✓ Todos os pedidos do período estão classificados em uma área.</div>';
+  }
+
   function renderAnalyticTables(rows){const allowedRegions=window.DeliveryMap?.configuredRegions?.()||[];const regs={};rows.forEach(r=>{const reg=allowedRegions.includes(r.regiao)?r.regiao:'NÃO CLASSIFICADO';const x=regs[reg]||(regs[reg]={p:0,e:0,c:0,km:0,v:0,t:[]});x.p++;if(delivered(r)){x.e++;x.km+=r.km||0;if(typeof r.tempoEntrega==='number')x.t.push(r.tempoEntrega)}if(r.status==='CANCELADO')x.c++;x.v+=r.valor||0});document.getElementById('regionsTable').innerHTML=table(['Região','Pedidos','Entregas','Cancelados','KM','Tempo médio','Faturamento'],Object.entries(regs).sort((a,b)=>b[1].p-a[1].p).map(([k,x])=>`<tr><td>${k}</td><td>${x.p}</td><td>${x.e}</td><td>${x.c}</td><td>${n1(x.km)}</td><td>${fmtMin(avg(x.t))}</td><td>${money(x.v)}</td></tr>`));const plats={};rows.forEach(r=>{const x=plats[r.platform]||(plats[r.platform]={p:0,e:0,c:0,v:0});x.p++;if(delivered(r))x.e++;if(r.status==='CANCELADO')x.c++;x.v+=r.valor||0});document.getElementById('platformsTable').innerHTML=table(['Plataforma','Pedidos','Entregas','Cancelados','Faturamento'],Object.entries(plats).sort((a,b)=>b[1].p-a[1].p).map(([k,x])=>`<tr><td>${k}</td><td>${x.p}</td><td>${x.e}</td><td>${x.c}</td><td>${money(x.v)}</td></tr>`));document.getElementById('timesTable').innerHTML=table(['Pedido','Motoboy','Preparo','Coleta','Entrega','Total','Status'],rows.map(r=>`<tr><td>${r.pedido}</td><td>${r.motoboy||'—'}</td><td>${fmtMin(r.tempoPreparo)}</td><td>${fmtMin(r.tempoColeta)}</td><td>${fmtMin(r.tempoEntrega)}</td><td>${fmtMin(r.tempoTotal)}</td><td>${r.status}</td></tr>`));const cc=rows.filter(r=>r.status==='CANCELADO');document.getElementById('cancelTable').innerHTML=table(['Pedido','Hora','Cliente','Região','Motoboy','Plataforma','Valor','Endereço'],cc.map(r=>`<tr><td>${r.pedido}</td><td>${r.hora}</td><td>${r.cliente||'—'}</td><td>${r.regiao}</td><td>${r.motoboy||'—'}</td><td>${r.platform}</td><td>${money(r.valor)}</td><td>${r.endereco||'—'}</td></tr>`))}
-  function renderAll(rows,prevRows){renderKpis(rows,prevRows);renderCharts(rows);renderRegions(rows);renderShifts(rows);renderStatusTimes(rows);renderRadius(rows);renderMoto(rows);renderLatest(rows);renderSummary(rows);renderOrders(rows);renderAnalyticTables(rows)}
+  function renderAll(rows,prevRows){renderKpis(rows,prevRows);renderCharts(rows);renderRegions(rows);renderShifts(rows);renderStatusTimes(rows);renderRadius(rows);renderMoto(rows);renderLatest(rows);renderSummary(rows);renderOrders(rows);renderAnalyticTables(rows);renderUnclassified(rows)}
   window.DeliveryDashboard={renderAll,renderOrders,renderMotoCards,metrics,money,n1,fmtMin};
 })();

@@ -11,8 +11,8 @@
   <link rel="stylesheet" href="delivery.css?v=1.3.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
-  <link rel="stylesheet" href="delivery-map.css?v=1.3.0">
-  <link rel="stylesheet" href="delivery-premium.css?v=1.3.0">
+  <link rel="stylesheet" href="delivery-map.css?v=1.4.0">
+  <link rel="stylesheet" href="delivery-premium.css?v=1.4.0">
 </head>
 <body>
   <aside class="sidebar">
@@ -33,8 +33,8 @@
     </nav>
     <div class="import-box">
       <h4>IMPORTAR RELATÓRIOS</h4>
-      <label class="file-card"><span><b>Relatório 1</b><small id="file1Label">CSV da plataforma</small></span><input id="file1" type="file" accept=".csv,.xlsx,.xls"><i>⇧</i></label>
-      <label class="file-card"><span><b>Relatório 2</b><small id="file2Label">Excel operacional</small></span><input id="file2" type="file" accept=".xlsx,.xls,.csv"><i>⇧</i></label>
+      <label class="file-card"><span><b>Relatório Maestro</b><small id="file1Label">CSV Maestro</small></span><input id="file1" type="file" accept=".csv,.xlsx,.xls"><i>⇧</i></label>
+      <label class="file-card"><span><b>Relatório Agilizone</b><small id="file2Label">Excel Agilizone</small></span><input id="file2" type="file" accept=".xlsx,.xls,.csv"><i>⇧</i></label>
       <button id="processBtn" class="process-btn">ATUALIZAR DASHBOARD</button>
       <small class="import-help">Importe sempre os relatórios acumulados do dia 1º até o dia atual. O sistema cruza pelo número do pedido e mantém filtros diário, semanal e mensal.</small>
     </div>
@@ -66,7 +66,7 @@
         <article class="panel span-2"><h3>RESUMO DOS TURNOS</h3><div id="shiftMini"></div></article>
 
         <article class="panel span-3"><h3>RANKING MOTOBOYS <small>(POR ENTREGAS)</small></h3><div id="motoRanking"></div></article>
-        <article class="panel span-4 map-panel"><div class="panel-title-row"><h3>MAPA DE CALOR — CONCENTRAÇÃO DE ENTREGAS</h3><span id="mapAccuracyBadge" class="map-badge">Mapa</span></div><div id="deliveryHeatMap" class="delivery-map dashboard-map"></div></article>
+        <article class="panel span-4 map-panel"><div class="panel-title-row"><h3>MAPA DE PEDIDOS — CONCENTRAÇÃO E PONTOS</h3><span id="mapAccuracyBadge" class="map-badge">Mapa</span></div><div id="deliveryHeatMap" class="delivery-map dashboard-map"></div></article>
         <article class="panel span-5"><h3>ÚLTIMOS PEDIDOS</h3><div id="latestOrders"></div></article>
       </div>
       <div class="day-summary" id="daySummary"></div>
@@ -111,7 +111,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="delivery-firebase.js?v=1.3.0"></script>
   <script src="delivery-import.js?v=1.3.0"></script>
-  <script src="delivery-map.js?v=1.3.0"></script>
+  <script src="delivery-map.js?v=1.4.0"></script>
   <script src="delivery-dashboard.js?v=1.3.0"></script>
   <script src="delivery.js?v=1.3.0"></script>
 </body>

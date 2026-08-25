@@ -11,50 +11,79 @@
   function delta(cur,prev,reverse=false){if(!prev)return{txt:'—',cls:''};const d=((cur-prev)/Math.abs(prev))*100;const good=reverse?d<=0:d>=0;return{txt:`${d>=0?'↑':'↓'} ${Math.abs(d).toFixed(1).replace('.',',')}%`,cls:good?'up':'down'}}
   function renderKpis(rows,prevRows){const m=metrics(rows),p=metrics(prevRows||[]);const items=[['🛵','ENTREGAS REALIZADAS',m.entregas,p.entregas,false],['📦','PEDIDOS TOTAIS',m.pedidos,p.pedidos,false],['👤','MOTOBOYS ATIVOS',m.motoboys,p.motoboys,false],['⌖','KM TOTAL PERCORRIDOS',`${n1(m.km)} km`,p.km,false,m.km],['◴','TEMPO MÉDIO DE ENTREGA',fmtMin(m.tempoEntrega),p.tempoEntrega,true,m.tempoEntrega],['💰','FATURAMENTO TOTAL',money(m.faturamento),p.faturamento,false,m.faturamento],['🎟️','TICKET MÉDIO',money(m.ticket),p.ticket,false,m.ticket],['⊗','CANCELADOS',m.cancelados,p.cancelados,true]];document.getElementById('kpiGrid').innerHTML=items.map(x=>{const curRaw=x.length>6?x[6]:x[2];const d=delta(+curRaw||0,+x[3]||0,x[4]);return`<div class="kpi"><div class="kpi-icon">${x[0]}</div><div><div class="lbl">${x[1]}</div><div class="val">${x[2]}</div><div class="delta ${d.cls}">${d.txt} <span>vs dia anterior</span></div></div></div>`}).join('')}
   function renderCharts(rows){
-    const hours=Array.from({length:18},(_,i)=>i+6);
+    const hours=Array.from({length:24},(_,i)=>i);
     const byH=hours.map(h=>rows.filter(r=>r.dt&&r.dt.getHours()===h).length);
     const entH=hours.map(h=>rows.filter(r=>r.dt&&r.dt.getHours()===h&&delivered(r)).length);
     if(hourChart)hourChart.destroy();
+    const hourCtx=document.getElementById('hourChart').getContext('2d');
+    const hourGrad=hourCtx.createLinearGradient(0,0,0,210);
+    hourGrad.addColorStop(0,'#e8b94f');hourGrad.addColorStop(1,'#b9781d');
     hourChart=new Chart(document.getElementById('hourChart'),{
       type:'bar',
       data:{labels:hours.map(h=>String(h).padStart(2,'0')+'h'),datasets:[
-        {label:'Pedidos',data:byH,backgroundColor:'#d4a03b',borderRadius:3,maxBarThickness:18},
-        {label:'Entregas',data:entH,type:'line',borderColor:'#9a2438',backgroundColor:'#9a2438',tension:.28,pointRadius:1.8,borderWidth:2}
+        {label:'Pedidos',data:byH,backgroundColor:hourGrad,borderColor:'#f0c867',borderWidth:1,borderRadius:5,maxBarThickness:14,barPercentage:.78,categoryPercentage:.84},
+        {label:'Entregas',data:entH,type:'line',borderColor:'#b52646',backgroundColor:'#b52646',tension:.34,pointRadius:1.6,pointHoverRadius:4,borderWidth:2.2,fill:false}
       ]},
-      options:chartOpts()
+      options:chartOpts({hourly:true})
     });
 
     const weekLabels=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
     const byWeek=[1,2,3,4,5,6,0].map(day=>rows.filter(r=>r.dt&&r.dt.getDay()===day).length);
     if(weekdayChart)weekdayChart.destroy();
+    const weekCtx=document.getElementById('weekdayChart').getContext('2d');
+    const weekGrad=weekCtx.createLinearGradient(0,0,0,210);
+    weekGrad.addColorStop(0,'#efbf54');weekGrad.addColorStop(1,'#bb7b22');
     weekdayChart=new Chart(document.getElementById('weekdayChart'),{
       type:'bar',
-      data:{labels:weekLabels,datasets:[{label:'Pedidos',data:byWeek,backgroundColor:'#d4a03b',borderRadius:5,maxBarThickness:34}]},
-      options:chartOpts({hideLegend:true})
+      data:{labels:weekLabels,datasets:[{label:'Pedidos',data:byWeek,backgroundColor:weekGrad,borderColor:'#f0c867',borderWidth:1,borderRadius:7,maxBarThickness:38}]},
+      options:chartOpts({hideLegend:true,weekday:true}),
+      plugins:[valueLabelPlugin]
     });
 
     const c=count(rows,'platform');
     const entries=Object.entries(c).sort((a,b)=>b[1]-a[1]);
     const labels=entries.map(x=>x[0]),vals=entries.map(x=>x[1]);
     const total=vals.reduce((a,b)=>a+b,0);
+    const palette=['#a8233f','#e0a936','#6f988e','#c5c7cb','#8a73b4','#4e90c6','#d26d35','#73808c'];
     if(platformChart)platformChart.destroy();
     platformChart=new Chart(document.getElementById('platformChart'),{
       type:'doughnut',
-      data:{labels,datasets:[{data:vals,backgroundColor:['#9f1f39','#d6a23b','#6f948a','#b7b7b7','#7d6aa7','#4b88b8'],borderWidth:0,hoverOffset:4}]},
+      data:{labels,datasets:[{data:vals,backgroundColor:labels.map((_,i)=>palette[i%palette.length]),borderColor:'#17191c',borderWidth:2,hoverBorderColor:'#f2c35b',hoverBorderWidth:2,hoverOffset:5}]},
       options:{
-        responsive:true,maintainAspectRatio:false,cutout:'62%',
-        plugins:{legend:{position:'right',labels:{color:'#ddd',boxWidth:9,boxHeight:9,padding:10,font:{size:10},generateLabels(chart){
-          const ds=chart.data.datasets[0];
-          return chart.data.labels.map((label,i)=>({
-            text:`${label} — ${ds.data[i]} pedidos (${total?((ds.data[i]/total)*100).toFixed(1):'0.0'}%)`,
-            fillStyle:ds.backgroundColor[i],strokeStyle:ds.backgroundColor[i],lineWidth:0,hidden:false,index:i
-          }));
-        }}}},
-        layout:{padding:{left:2,right:4,top:0,bottom:0}}
-      }
+        responsive:true,maintainAspectRatio:false,cutout:'68%',
+        plugins:{legend:{display:false},tooltip:{backgroundColor:'#111317',titleColor:'#f5c451',bodyColor:'#fff',borderColor:'#34373d',borderWidth:1,padding:10,callbacks:{label(ctx){const v=ctx.raw||0;return ` ${ctx.label}: ${v} pedidos (${total?((v/total)*100).toFixed(1):'0.0'}%)`;}}}},
+        layout:{padding:{left:2,right:2,top:2,bottom:2}}
+      },
+      plugins:[doughnutCenterPlugin]
     });
+    renderPlatformLegend(labels,vals,total,palette);
   }
-  function chartOpts(extra={}){return{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{color:'#bbb',font:{size:9}},grid:{display:false}},y:{beginAtZero:true,ticks:{color:'#bbb',font:{size:9},precision:0},grid:{color:'#2d2d2d'}}},plugins:{legend:{display:!extra.hideLegend,labels:{color:'#ddd',boxWidth:12,font:{size:10}}}}}}
+
+  const valueLabelPlugin={id:'deliveryValueLabels',afterDatasetsDraw(chart){
+    const {ctx}=chart;ctx.save();ctx.fillStyle='#f2d58a';ctx.font='700 10px Arial';ctx.textAlign='center';ctx.textBaseline='bottom';
+    chart.getDatasetMeta(0).data.forEach((el,i)=>{const v=chart.data.datasets[0].data[i];if(v>0)ctx.fillText(String(v),el.x,el.y-5)});ctx.restore();
+  }};
+  const doughnutCenterPlugin={id:'deliveryDonutCenter',afterDraw(chart){
+    const ds=chart.data.datasets?.[0];if(!ds)return;const total=(ds.data||[]).reduce((a,b)=>a+(+b||0),0);const {ctx,chartArea}=chart;
+    const x=(chartArea.left+chartArea.right)/2,y=(chartArea.top+chartArea.bottom)/2;ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#f4f4f4';ctx.font='800 24px Arial';ctx.fillText(String(total),x,y-5);ctx.fillStyle='#b7b9be';ctx.font='700 9px Arial';ctx.fillText('PEDIDOS',x,y+16);ctx.restore();
+  }};
+  function renderPlatformLegend(labels,vals,total,palette){
+    const el=document.getElementById('platformLegend');if(!el)return;
+    el.innerHTML=labels.map((label,i)=>`<div class="platform-legend-row"><span class="platform-dot" style="background:${palette[i%palette.length]}"></span><span class="platform-name">${label}</span><span class="platform-count"><b>${vals[i]}</b> pedidos</span><span class="platform-pct">${total?((vals[i]/total)*100).toFixed(1):'0.0'}%</span></div>`).join('')||'<div class="platform-empty">Sem pedidos no período.</div>';
+  }
+  function chartOpts(extra={}){return{
+    responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    scales:{
+      x:{ticks:{color:'#cfd1d5',font:{size:extra.hourly?8:10,weight:'600'},autoSkip:extra.hourly?false:true,maxRotation:extra.hourly?48:0,minRotation:extra.hourly?48:0,padding:5},grid:{display:false},border:{color:'#3a3d43'}},
+      y:{beginAtZero:true,suggestedMax:extra.weekday?undefined:undefined,ticks:{color:'#9fa3aa',font:{size:9},precision:0,padding:5},grid:{color:'rgba(255,255,255,.08)'},border:{display:false}}
+    },
+    plugins:{
+      legend:{display:!extra.hideLegend,labels:{color:'#e8e9eb',boxWidth:11,boxHeight:8,padding:12,font:{size:10,weight:'600'}}},
+      tooltip:{backgroundColor:'#111317',titleColor:'#f5c451',bodyColor:'#fff',borderColor:'#34373d',borderWidth:1,padding:9,displayColors:true}
+    },
+    layout:{padding:{left:2,right:5,top:6,bottom:0}}
+  }}
   function renderRegions(rows){const allowed=window.DeliveryMap?.configuredRegions?.()||[];const c={};rows.forEach(r=>{const region=allowed.includes(r.regiao)?r.regiao:'NÃO CLASSIFICADO';c[region]=(c[region]||0)+1});const arr=Object.entries(c).sort((a,b)=>b[1]-a[1]),max=arr[0]?.[1]||1,total=rows.length||1;document.getElementById('regionBars').innerHTML=arr.length?arr.map(([k,v])=>`<div class="bar-row ${k==='NÃO CLASSIFICADO'?'bar-unclassified':''}"><span>${k}</span><div class="bar-bg"><div class="bar-fill" style="width:${v/max*100}%"></div></div><span class="bar-val"><b>${v}</b> (${(v/total*100).toFixed(1)}%)</span></div>`).join('')+`<div class="distribution-total">TOTAL <b>${rows.length} PEDIDOS</b></div>`:'<div style="color:#888;font-size:11px;padding:10px">Sem pedidos no período.</div>';window.DeliveryMap?.renderDashboard?.(rows)}
   function shiftMetrics(rows,shift){const rr=rows.filter(r=>r.turno===shift),assigned=rr.filter(r=>r.motoboy);return{rows:rr,ped:rr.length,moto:new Set(assigned.map(r=>r.motoboy).filter(Boolean)).size,km:sum(rr.map(r=>r.km)),tempo:avg(rr.map(r=>r.tempoEntrega))}}
   function renderShifts(rows){const a=shiftMetrics(rows,'MANHÃ'),b=shiftMetrics(rows,'NOITE');const box=(n,x,range,night=false)=>`<div class="shift-box"><div class="shift-title ${night?'night':''}">${night?'☾':'☀'} TURNO ${n}<span class="shift-range">${range}</span></div><div class="shift-metrics"><div><small>Pedidos</small><b>${x.ped}</b></div><div><small>Motoboys</small><b>${x.moto}</b></div><div><small>KM</small><b>${n1(x.km)}</b></div><div><small>Média entrega</small><b>${fmtMin(x.tempo)}</b></div></div></div>`;document.getElementById('shiftSummary').innerHTML=box('MANHÃ',a,'até 16:59')+box('NOITE',b,'17:00 em diante',true);document.getElementById('shiftMini').innerHTML=`${box('MANHÃ',a,'até 16:59')}${box('NOITE',b,'17:00+',true)}`;renderShiftDetail(rows)}

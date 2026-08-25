@@ -205,3 +205,33 @@ main {
 @media (max-width:720px){
   .overview-chart-panel.span-4{grid-column:1 !important;}
 }
+
+
+/* =========================================================
+   DELIVERY v9 — GRÁFICOS MAIS LEGÍVEIS E PREMIUM
+   ========================================================= */
+.overview-chart-panel{
+  min-height:268px;
+  background:linear-gradient(180deg,#1a1c1f 0%,#15171a 100%);
+  border:1px solid #30333a;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 10px 28px rgba(0,0,0,.18);
+}
+.overview-chart-panel h3{letter-spacing:.25px;color:#f1f1f2}
+.overview-chart-panel h3 small{color:#787d86;font-weight:600}
+.overview-chart-panel .compact-chart{height:198px !important;min-height:198px}
+.platform-chart-panel{overflow:hidden}
+.platform-chart-layout{display:grid;grid-template-columns:minmax(145px,46%) 1fr;align-items:center;gap:8px;height:202px;min-height:202px}
+.platform-chart-layout .compact-chart{height:190px !important;min-height:190px;width:100%}
+.platform-legend{min-width:0;display:flex;flex-direction:column;gap:7px;padding:6px 4px 6px 0;overflow:hidden}
+.platform-legend-row{display:grid;grid-template-columns:9px minmax(78px,1fr) auto 42px;align-items:center;gap:7px;color:#e5e6e8;font-size:10px;line-height:1.15;min-width:0}
+.platform-dot{width:8px;height:8px;border-radius:2px;box-shadow:0 0 8px rgba(255,255,255,.06)}
+.platform-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#f0f0f1}
+.platform-count{white-space:nowrap;color:#d6d7da}.platform-count b{color:#f5c451;font-size:11px}
+.platform-pct{text-align:right;color:#90949b;font-variant-numeric:tabular-nums}
+.platform-empty{color:#888;font-size:10px}
+@media (max-width:1180px){
+  .platform-chart-layout{grid-template-columns:42% 1fr}.platform-legend-row{grid-template-columns:8px minmax(60px,1fr) auto 38px;font-size:9px}
+}
+@media (max-width:720px){
+  .overview-chart-panel .compact-chart{height:210px !important;min-height:210px}.platform-chart-layout{grid-template-columns:1fr;height:auto}.platform-chart-layout .compact-chart{height:185px !important}.platform-legend{padding:0 8px 8px}.platform-legend-row{grid-template-columns:9px minmax(90px,1fr) auto 44px}
+}

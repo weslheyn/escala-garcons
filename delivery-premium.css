@@ -170,3 +170,38 @@ main {
   white-space: normal;
   line-height: 1.25;
 }
+
+
+/* =========================================================
+   DELIVERY v8 — TRÊS GRÁFICOS COMPACTOS NA MESMA LINHA
+   ========================================================= */
+.overview-chart-panel{
+  min-height:250px;
+  padding:11px 12px 9px;
+}
+.overview-chart-panel h3{
+  margin-bottom:6px;
+}
+.overview-chart-panel .compact-chart{
+  height:185px !important;
+  min-height:185px;
+}
+.platform-chart-panel .compact-chart{
+  height:185px !important;
+}
+.platform-chart-panel canvas{
+  max-height:185px !important;
+}
+@media (min-width:1351px){
+  .overview-chart-panel.span-4{grid-column:span 4 !important;}
+}
+@media (max-width:1350px) and (min-width:1051px){
+  .overview-chart-panel.span-4{grid-column:span 4 !important;}
+  .overview-chart-panel .compact-chart{height:175px !important;min-height:175px;}
+}
+@media (max-width:1050px){
+  .overview-chart-panel.span-4{grid-column:span 6 !important;}
+}
+@media (max-width:720px){
+  .overview-chart-panel.span-4{grid-column:1 !important;}
+}

@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'gestao-coco-bambu-pwa-alarmes-v5-9-delivery-v6-map-pedidos';
+const CACHE_VERSION = 'gestao-coco-bambu-pwa-alarmes-v5-9-delivery-v8-graficos';
 const STATIC_ASSETS = [
   './manifest.json',
   './icon.png',

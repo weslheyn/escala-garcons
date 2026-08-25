@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
   <link rel="stylesheet" href="delivery-map.css?v=1.7.0">
-  <link rel="stylesheet" href="delivery-premium.css?v=1.7.0">
+  <link rel="stylesheet" href="delivery-premium.css?v=1.8.0">
 </head>
 <body>
   <aside class="sidebar">
@@ -55,9 +55,10 @@
     <section id="view-visao" class="view active">
       <div class="kpi-grid" id="kpiGrid"></div>
       <div class="grid-main">
-        <article class="panel span-4"><h3>PEDIDOS POR HORA</h3><div class="chart-wrap"><canvas id="hourChart"></canvas></div></article>
-        <article class="panel span-3"><h3>PEDIDOS POR PLATAFORMA</h3><div class="chart-wrap donut"><canvas id="platformChart"></canvas></div></article>
-        <article class="panel span-3"><h3>PEDIDOS POR REGIÃO <small>— TODOS OS PEDIDOS</small></h3><div id="regionBars" class="bars"></div></article>
+        <article class="panel span-4 overview-chart-panel"><h3>PEDIDOS POR HORA <small>— QUANTIDADE</small></h3><div class="chart-wrap compact-chart"><canvas id="hourChart"></canvas></div></article>
+        <article class="panel span-4 overview-chart-panel"><h3>PEDIDOS POR DIA DA SEMANA <small>— QUANTIDADE</small></h3><div class="chart-wrap compact-chart"><canvas id="weekdayChart"></canvas></div></article>
+        <article class="panel span-4 overview-chart-panel platform-chart-panel"><h3>PEDIDOS POR PLATAFORMA <small>— QUANTIDADE</small></h3><div class="chart-wrap compact-chart donut"><canvas id="platformChart"></canvas></div></article>
+        <article class="panel span-4"><h3>PEDIDOS POR REGIÃO <small>— TODOS OS PEDIDOS</small></h3><div id="regionBars" class="bars"></div></article>
         <article class="panel span-2 turn-summary-panel"><h3>MOTOBOYS POR TURNO — RESUMO</h3><div id="shiftSummary"></div></article>
 
         <article class="panel span-4"><h3>STATUS DOS PEDIDOS</h3><div id="statusCards" class="status-grid"></div></article>
@@ -125,7 +126,7 @@
   <script src="delivery-firebase.js?v=1.7.0"></script>
   <script src="delivery-import.js?v=1.7.0"></script>
   <script src="delivery-map.js?v=1.7.0"></script>
-  <script src="delivery-dashboard.js?v=1.7.0"></script>
+  <script src="delivery-dashboard.js?v=1.8.0"></script>
   <script src="delivery.js?v=1.7.0"></script>
 </body>
 </html>

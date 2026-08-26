@@ -13,8 +13,9 @@
     'Jacarepaguá':[-22.948,-43.340],'Itanhangá':[-22.987,-43.303],'Camorim':[-22.972,-43.438],
     'Pechincha':[-22.930,-43.357],'Freguesia':[-22.940,-43.344],'Curicica':[-22.951,-43.390],'Joá':[-23.011,-43.289]
   };
-  let dashboardMap=null,regionMap=null,heatLayer=null,dashboardZoneLayer=null,dashboardMarkerLayer=null,drawLayer=null,drawControl=null;
+  let dashboardMap=null,regionMap=null,dashboardZoneLayer=null,dashboardMarkerLayer=null,drawLayer=null,drawControl=null;
   let zones=[],geoCache={},currentRows=[],changeHandler=null,drawName='';
+  let mapFilters={platform:'TODOS',turno:'TODOS',status:'TODOS',raio:'TODOS',regiao:'TODOS',cluster:false,areas:false};
   const storageZones='cbDeliveryCustomRegionsV1',storageGeo='cbDeliveryGeoCacheV1';
   const safe=s=>String(s||'').trim();
   const norm=s=>window.DeliveryImport?.norm?DeliveryImport.norm(s):String(s||'').toLowerCase();
@@ -31,26 +32,179 @@
   function reclassify(rows){let exact=0,approx=0,unassigned=0;for(const r of rows||[]){if(!r._regionHint)r._regionHint=r.regiao;const p=getCachedPoint(r);if(p){r.lat=p.lat;r.lng=p.lng;r.locationApprox=!!p.approx;if(!p.approx){exact++;r.regiao=classifyPoint(p.lat,p.lng)||'FORA DAS ÁREAS'}else{approx++;r.regiao=classifyPoint(p.lat,p.lng)||r._regionHint||'A GEOCODIFICAR'}}else{unassigned++;r.regiao='A GEOCODIFICAR'}}updateBadge(exact,approx,unassigned,rows?.length||0);return rows}
   function updateBadge(exact,approx,unassigned,total){const b=document.getElementById('mapAccuracyBadge');if(b){b.textContent=`${exact}/${total} localizados`;b.classList.toggle('warn',exact<total)}const u=document.getElementById('unassignedCount');if(u){u.textContent=`${unassigned+approx} a revisar`;u.classList.toggle('warn',unassigned+approx>0)}}
   async function prepareRows(rows){currentRows=rows||[];reclassify(currentRows);return currentRows}
-  function ensureDashboardMap(){const el=document.getElementById('deliveryHeatMap');if(!el||!window.L)return null;if(!dashboardMap){dashboardMap=L.map(el,{zoomControl:true,attributionControl:true,preferCanvas:true}).setView(DEFAULT_CENTER,DEFAULT_ZOOM);L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:20,subdomains:'abcd',attribution:'© OpenStreetMap © CARTO'}).addTo(dashboardMap);dashboardZoneLayer=L.featureGroup().addTo(dashboardMap);dashboardMarkerLayer=L.featureGroup().addTo(dashboardMap);const legend=L.control({position:'bottomright'});legend.onAdd=()=>{const d=L.DomUtil.create('div','map-legend');d.innerHTML='<b>CONCENTRAÇÃO</b>verde → amarelo → vermelho';return d};legend.addTo(dashboardMap)}setTimeout(()=>dashboardMap.invalidateSize(),20);return dashboardMap}
+
+  const PLATFORM_COLORS={
+    'IFOOD':'#d92d50',
+    'APP COCO BAMBU':'#f0a91d',
+    '99FOOD':'#58b987',
+    'RAPPI':'#4d97d2',
+    'PEDIDO MANUAL':'#8d67cf',
+    'OUTROS':'#9ba2ab'
+  };
+  function platformColor(name){
+    const k=safe(name).toUpperCase();
+    return PLATFORM_COLORS[k]||'#e68a36';
+  }
+  function mapFilteredRows(rows){
+    return (rows||[]).filter(r=>{
+      if(mapFilters.platform!=='TODOS' && safe(r.platform)!==mapFilters.platform)return false;
+      if(mapFilters.turno!=='TODOS' && safe(r.turno)!==mapFilters.turno)return false;
+      if(mapFilters.status!=='TODOS' && safe(r.status)!==mapFilters.status)return false;
+      if(mapFilters.regiao!=='TODOS' && safe(r.regiao)!==mapFilters.regiao)return false;
+      const km=Number(r.km);
+      if(mapFilters.raio==='0-3' && !(Number.isFinite(km)&&km<=3))return false;
+      if(mapFilters.raio==='3-5' && !(Number.isFinite(km)&&km>3&&km<=5))return false;
+      if(mapFilters.raio==='5-10' && !(Number.isFinite(km)&&km>5&&km<=10))return false;
+      if(mapFilters.raio==='10+' && !(Number.isFinite(km)&&km>10))return false;
+      return true;
+    });
+  }
+  function mapFilterOptions(rows,key){
+    return [...new Set((rows||[]).map(r=>safe(r[key])).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  }
+  function filterSelect(id,label,values,current){
+    return `<label><span>${label}</span><select id="${id}"><option value="TODOS">Todos</option>${values.map(v=>`<option value="${esc(v)}"${v===current?' selected':''}>${esc(v)}</option>`).join('')}</select></label>`;
+  }
+  function ensureMapUi(map){
+    const panel=map.getContainer();
+    let ui=panel.querySelector('.orders-map-ui');
+    if(!ui){
+      ui=document.createElement('div');ui.className='orders-map-ui';
+      ui.innerHTML=`<button class="orders-map-filter-btn" type="button">☷ FILTROS</button><div class="orders-map-filter-panel"></div>`;
+      panel.appendChild(ui);
+      ui.querySelector('.orders-map-filter-btn').onclick=e=>{e.stopPropagation();ui.classList.toggle('open')};
+      L.DomEvent.disableClickPropagation(ui);L.DomEvent.disableScrollPropagation(ui);
+    }
+    return ui;
+  }
+  function renderMapFilterPanel(rows,map){
+    const ui=ensureMapUi(map),box=ui.querySelector('.orders-map-filter-panel');
+    const platforms=mapFilterOptions(rows,'platform');
+    const turnos=mapFilterOptions(rows,'turno');
+    const statuses=mapFilterOptions(rows,'status');
+    const regioes=mapFilterOptions(rows,'regiao').filter(x=>x!=='A GEOCODIFICAR');
+    box.innerHTML=`<div class="map-filter-head"><b>FILTROS DO MAPA</b><button type="button" data-close>×</button></div>
+      ${filterSelect('mapFilterPlatform','Plataforma',platforms,mapFilters.platform)}
+      ${filterSelect('mapFilterTurno','Turno',turnos,mapFilters.turno)}
+      ${filterSelect('mapFilterStatus','Status',statuses,mapFilters.status)}
+      ${filterSelect('mapFilterRegion','Região',regioes,mapFilters.regiao)}
+      <label><span>Raio</span><select id="mapFilterRadius"><option value="TODOS">Todos</option><option value="0-3"${mapFilters.raio==='0-3'?' selected':''}>Até 3 km</option><option value="3-5"${mapFilters.raio==='3-5'?' selected':''}>3–5 km</option><option value="5-10"${mapFilters.raio==='5-10'?' selected':''}>5–10 km</option><option value="10+"${mapFilters.raio==='10+'?' selected':''}>Acima de 10 km</option></select></label>
+      <div class="map-switch-row"><span>Agrupar pontos próximos</span><input id="mapFilterCluster" type="checkbox"${mapFilters.cluster?' checked':''}></div>
+      <div class="map-switch-row"><span>Exibir áreas das regiões</span><input id="mapFilterAreas" type="checkbox"${mapFilters.areas?' checked':''}></div>
+      <button type="button" class="map-filter-clear">LIMPAR FILTROS</button>`;
+    const rerender=()=>{
+      mapFilters.platform=box.querySelector('#mapFilterPlatform').value;
+      mapFilters.turno=box.querySelector('#mapFilterTurno').value;
+      mapFilters.status=box.querySelector('#mapFilterStatus').value;
+      mapFilters.regiao=box.querySelector('#mapFilterRegion').value;
+      mapFilters.raio=box.querySelector('#mapFilterRadius').value;
+      mapFilters.cluster=box.querySelector('#mapFilterCluster').checked;
+      mapFilters.areas=box.querySelector('#mapFilterAreas').checked;
+      renderDashboard(currentRows);
+    };
+    box.querySelectorAll('select,input').forEach(x=>x.onchange=rerender);
+    box.querySelector('[data-close]').onclick=()=>ui.classList.remove('open');
+    box.querySelector('.map-filter-clear').onclick=()=>{mapFilters={platform:'TODOS',turno:'TODOS',status:'TODOS',raio:'TODOS',regiao:'TODOS',cluster:false,areas:false};renderDashboard(currentRows)};
+  }
+  function markerPopup(r){
+    const km=Number.isFinite(+r.km)?`${(+r.km).toLocaleString('pt-BR',{maximumFractionDigits:1})} km`:'—';
+    const val=Number.isFinite(+r.valor)?(+r.valor).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):'—';
+    return `<div class="order-map-popup"><b>Pedido ${esc(r.pedido)}</b><span>${esc(r.cliente||'Cliente não informado')}</span><hr>
+      <small>Horário</small><strong>${esc(r.hora||'—')}</strong>
+      <small>Plataforma</small><strong>${esc(r.platform||'—')}</strong>
+      <small>Região</small><strong>${esc(r.regiao||'—')}</strong>
+      <small>Motoboy</small><strong>${esc(r.motoboy||'—')}</strong>
+      <small>KM</small><strong>${esc(km)}</strong>
+      <small>Status</small><strong>${esc(r.status||'—')}</strong>
+      <small>Valor</small><strong>${esc(val)}</strong>
+      <small>Endereço</small><strong>${esc(r.endereco||'—')}</strong></div>`;
+  }
+  function groupNearby(rows){
+    const groups=new Map();
+    for(const r of rows){
+      const key=`${(+r.lat).toFixed(3)}|${(+r.lng).toFixed(3)}`;
+      if(!groups.has(key))groups.set(key,[]);
+      groups.get(key).push(r);
+    }
+    return [...groups.values()];
+  }
+  function renderMapLegend(map,rows){
+    const panel=map.getContainer();
+    let legend=panel.querySelector('.orders-map-legend');
+    if(!legend){legend=document.createElement('div');legend.className='orders-map-legend';panel.appendChild(legend)}
+    const counts={};rows.forEach(r=>{const p=safe(r.platform)||'Outros';counts[p]=(counts[p]||0)+1});
+    legend.innerHTML=Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([p,n])=>`<span><i style="background:${platformColor(p)}"></i>${esc(p)} <b>${n}</b></span>`).join('');
+  }
+  function ensureDashboardMap(){
+    const el=document.getElementById('deliveryHeatMap');if(!el||!window.L)return null;
+    if(!dashboardMap){
+      dashboardMap=L.map(el,{zoomControl:true,attributionControl:true,preferCanvas:true}).setView(DEFAULT_CENTER,DEFAULT_ZOOM);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:20,subdomains:'abcd',attribution:'© OpenStreetMap © CARTO'}).addTo(dashboardMap);
+      dashboardZoneLayer=L.featureGroup().addTo(dashboardMap);
+      dashboardMarkerLayer=L.featureGroup().addTo(dashboardMap);
+      ensureMapUi(dashboardMap);
+    }
+    setTimeout(()=>dashboardMap.invalidateSize(),20);
+    return dashboardMap;
+  }
   function renderDashboard(rows){
     const map=ensureDashboardMap();if(!map)return;
     currentRows=rows||currentRows;reclassify(currentRows);
-    if(heatLayer){map.removeLayer(heatLayer);heatLayer=null}
-    dashboardZoneLayer.clearLayers();dashboardMarkerLayer?.clearLayers();
-    zones.forEach(z=>{const poly=L.polygon(z.coords,{color:z.color,weight:1.6,fillColor:z.color,fillOpacity:.07,dashArray:'5 7'}).addTo(dashboardZoneLayer);poly.bindTooltip(z.name,{permanent:false,direction:'center',className:'region-label'})});
-    const exactRows=currentRows.filter(r=>!r.locationApprox&&Number.isFinite(r.lat)&&Number.isFinite(r.lng));
-    const pts=exactRows.map(r=>[r.lat,r.lng,1]);
-    if(pts.length&&L.heatLayer){heatLayer=L.heatLayer(pts,{radius:25,blur:20,maxZoom:16,minOpacity:.18,gradient:{0.20:'#2c9b4b',0.45:'#d1bb30',0.68:'#ff8f1f',1:'#ef2f1f'}}).addTo(map)}
-    exactRows.forEach(r=>{
-      const marker=L.circleMarker([r.lat,r.lng],{radius:4,color:'#ffd166',weight:1.4,fillColor:'#ffb000',fillOpacity:.95});
-      marker.bindPopup(`<b>Pedido ${esc(r.pedido)}</b><br>${esc(r.cliente||'')}<br>${esc(r.endereco||'')}<br><b>${esc(r.regiao||'')}</b>`);
-      marker.addTo(dashboardMarkerLayer);
-    });
+    dashboardZoneLayer.clearLayers();dashboardMarkerLayer.clearLayers();
+
+    renderMapFilterPanel(currentRows,map);
+
+    if(mapFilters.areas){
+      zones.forEach(z=>{
+        const poly=L.polygon(z.coords,{color:z.color,weight:1.2,fillColor:z.color,fillOpacity:.025,dashArray:'5 7'}).addTo(dashboardZoneLayer);
+        poly.bindTooltip(z.name,{permanent:false,direction:'center',className:'region-label'});
+      });
+    }
+
+    const filtered=mapFilteredRows(currentRows);
+    const exactRows=filtered.filter(r=>!r.locationApprox&&Number.isFinite(r.lat)&&Number.isFinite(r.lng));
+
+    if(mapFilters.cluster){
+      groupNearby(exactRows).forEach(group=>{
+        if(group.length===1){
+          const r=group[0],c=platformColor(r.platform);
+          L.circleMarker([r.lat,r.lng],{radius:5.5,color:'#15171a',weight:1.6,fillColor:c,fillOpacity:.96})
+            .bindPopup(markerPopup(r),{maxWidth:300}).addTo(dashboardMarkerLayer);
+        }else{
+          const lat=group.reduce((s,r)=>s+r.lat,0)/group.length,lng=group.reduce((s,r)=>s+r.lng,0)/group.length;
+          const c=platformColor(group[0].platform);
+          const mk=L.circleMarker([lat,lng],{radius:Math.min(18,7+Math.log2(group.length)*3),color:'#fff',weight:1.2,fillColor:c,fillOpacity:.92});
+          mk.bindTooltip(String(group.length),{permanent:true,direction:'center',className:'cluster-count'});
+          mk.bindPopup(`<div class="order-map-popup"><b>${group.length} pedidos próximos</b><span>Clique em “Agrupar pontos” para desativar e visualizar individualmente.</span></div>`);
+          mk.addTo(dashboardMarkerLayer);
+        }
+      });
+    }else{
+      exactRows.forEach(r=>{
+        const c=platformColor(r.platform);
+        const marker=L.circleMarker([r.lat,r.lng],{radius:5.5,color:'#15171a',weight:1.5,fillColor:c,fillOpacity:.96});
+        marker.bindPopup(markerPopup(r),{maxWidth:310});
+        marker.bindTooltip(`Pedido ${esc(r.pedido)} • ${esc(r.platform||'')}`,{direction:'top',offset:[0,-5]});
+        marker.addTo(dashboardMarkerLayer);
+      });
+    }
+
+    renderMapLegend(map,exactRows);
+
     const bounds=exactRows.map(r=>[r.lat,r.lng]);
-    if(bounds.length>=2)map.fitBounds(bounds,{padding:[18,18],maxZoom:13});
-    else {const zoneBounds=[];zones.forEach(z=>z.coords.forEach(x=>zoneBounds.push(x)));if(zoneBounds.length)map.fitBounds(zoneBounds,{padding:[12,12],maxZoom:12.5})}
-    const panel=map.getContainer();let fl=panel.querySelector('.region-summary-floater');if(!fl){fl=document.createElement('div');fl.className='region-summary-floater';panel.appendChild(fl)}
-    fl.innerHTML=`<b>${exactRows.length} pedidos localizados</b><small>pontos reais por endereço • ${Math.max(0,currentRows.length-exactRows.length)} pendentes</small>`
+    if(bounds.length>=2)map.fitBounds(bounds,{padding:[28,28],maxZoom:13});
+    else if(bounds.length===1)map.setView(bounds[0],14);
+    else{
+      const zoneBounds=[];zones.forEach(z=>z.coords.forEach(x=>zoneBounds.push(x)));
+      if(zoneBounds.length)map.fitBounds(zoneBounds,{padding:[18,18],maxZoom:12});
+    }
+
+    const panel=map.getContainer();
+    let fl=panel.querySelector('.region-summary-floater');
+    if(!fl){fl=document.createElement('div');fl.className='region-summary-floater';panel.appendChild(fl)}
+    fl.innerHTML=`<b>${exactRows.length} pedidos no mapa</b><small>${filtered.length} no filtro • ${Math.max(0,filtered.length-exactRows.length)} pendentes de localização</small>`;
+    const badge=document.getElementById('mapAccuracyBadge');
+    if(badge)badge.textContent=`${exactRows.length}/${filtered.length} localizados`;
   }
   function ensureRegionMap(){const el=document.getElementById('deliveryRegionMap');if(!el||!window.L)return null;if(!regionMap){regionMap=L.map(el,{zoomControl:true,preferCanvas:true}).setView(DEFAULT_CENTER,DEFAULT_ZOOM);L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:20,subdomains:'abcd',attribution:'© OpenStreetMap © CARTO'}).addTo(regionMap);drawLayer=L.featureGroup().addTo(regionMap);drawControl=new L.Control.Draw({position:'topleft',draw:{polyline:false,rectangle:false,circle:false,circlemarker:false,marker:false,polygon:{allowIntersection:false,showArea:true,shapeOptions:{color:'#f0b83f',weight:2,fillOpacity:.15}}},edit:{featureGroup:drawLayer,remove:false}});regionMap.addControl(drawControl);regionMap.on(L.Draw.Event.CREATED,e=>{const name=safe(drawName||document.getElementById('newRegionName')?.value)||`Região ${zones.length+1}`;const coords=e.layer.getLatLngs()[0].map(p=>[+p.lat.toFixed(6),+p.lng.toFixed(6)]);zones.push({id:'z_'+Date.now(),name,color:colorFor(zones.length),coords});drawName='';const inp=document.getElementById('newRegionName');if(inp)inp.value='';saveZones()});regionMap.on(L.Draw.Event.EDITED,e=>{e.layers.eachLayer(layer=>{const id=layer.options.zoneId,z=zones.find(x=>x.id===id);if(z)z.coords=layer.getLatLngs()[0].map(p=>[+p.lat.toFixed(6),+p.lng.toFixed(6)])});saveZones()})}setTimeout(()=>regionMap.invalidateSize(),20);drawZonesOnEditor();drawOrderMarkers();return regionMap}
   function drawZonesOnEditor(){if(!regionMap||!drawLayer)return;drawLayer.clearLayers();zones.forEach(z=>{const l=L.polygon(z.coords,{color:z.color,weight:2,fillColor:z.color,fillOpacity:.14,zoneId:z.id}).addTo(drawLayer);l.options.zoneId=z.id;l.bindTooltip(z.name,{permanent:true,direction:'center',className:'region-label'});l.on('click',()=>selectZone(z.id))})}

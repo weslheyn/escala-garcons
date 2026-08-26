@@ -1084,3 +1084,64 @@ main {
   .orders-map-filter-panel{width:min(220px,75vw)}
   .orders-map-legend{max-width:82%}
 }
+
+
+/* =========================================================
+   DELIVERY v18 — MAPA: TODOS OS PONTOS + FILTRO COMPACTO
+   ========================================================= */
+#view-visao .overview-map-panel{
+  overflow:visible!important;
+}
+#view-visao .dashboard-map{
+  overflow:hidden!important;
+}
+.orders-map-filter-panel{
+  width:205px!important;
+  max-height:245px!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding:10px!important;
+  scrollbar-width:none!important;
+  -ms-overflow-style:none!important;
+}
+.orders-map-filter-panel::-webkit-scrollbar{width:0!important;height:0!important}
+.orders-map-filter-panel label{margin-bottom:6px!important}
+.orders-map-filter-panel label>span{font-size:8.5px!important;margin-bottom:3px!important}
+.orders-map-filter-panel select{
+  height:28px!important;
+  font-size:9px!important;
+  padding:0 7px!important;
+}
+.map-filter-head{margin-bottom:7px!important}
+.map-filter-head b{font-size:10px!important}
+.map-switch-row{
+  padding:5px 0!important;
+  font-size:8.5px!important;
+}
+.map-filter-clear{
+  height:29px!important;
+  margin-top:5px!important;
+  font-size:8.5px!important;
+}
+.orders-map-filter-btn{
+  height:30px!important;
+  padding:0 10px!important;
+  font-size:9px!important;
+}
+.orders-map-legend{
+  max-width:82%!important;
+  gap:5px 9px!important;
+  padding:6px 8px!important;
+  font-size:8.5px!important;
+}
+.dashboard-map .leaflet-interactive{
+  cursor:pointer;
+}
+.dashboard-map .leaflet-interactive:hover{
+  stroke:#fff!important;
+  stroke-width:2.4!important;
+  fill-opacity:1!important;
+}
+.region-summary-floater{
+  max-width:190px!important;
+}

@@ -119,14 +119,31 @@
       <small>Valor</small><strong>${esc(val)}</strong>
       <small>Endereço</small><strong>${esc(r.endereco||'—')}</strong></div>`;
   }
-  function groupNearby(rows){
+  function exactCoordinateGroups(rows){
     const groups=new Map();
     for(const r of rows){
-      const key=`${(+r.lat).toFixed(3)}|${(+r.lng).toFixed(3)}`;
+      // Agrupa apenas coordenadas praticamente idênticas.
+      // Muitos pedidos podem ter o mesmo destino/endereço ou o geocoder pode
+      // devolver o mesmo ponto. No mapa, cada pedido continua sendo exibido.
+      const key=`${(+r.lat).toFixed(6)}|${(+r.lng).toFixed(6)}`;
       if(!groups.has(key))groups.set(key,[]);
       groups.get(key).push(r);
     }
     return [...groups.values()];
+  }
+  function displayLatLng(r,index,total){
+    const lat=+r.lat,lng=+r.lng;
+    if(total<=1)return [lat,lng];
+    // Separação SOMENTE visual para pontos sobrepostos.
+    // Não altera a coordenada salva nem a classificação da região.
+    const ring=Math.floor(index/10);
+    const pos=index%10;
+    const count=Math.min(10,total-ring*10);
+    const angle=(Math.PI*2*pos/Math.max(1,count))+(ring*.31);
+    const meters=10+(ring*8);
+    const dLat=(meters/111320)*Math.sin(angle);
+    const dLng=(meters/(111320*Math.cos(lat*Math.PI/180)))*Math.cos(angle);
+    return [lat+dLat,lng+dLng];
   }
   function renderMapLegend(map,rows){
     const panel=map.getContainer();
@@ -163,36 +180,57 @@
 
     const filtered=mapFilteredRows(currentRows);
     const exactRows=filtered.filter(r=>!r.locationApprox&&Number.isFinite(r.lat)&&Number.isFinite(r.lng));
+    const renderedBounds=[];
 
     if(mapFilters.cluster){
-      groupNearby(exactRows).forEach(group=>{
+      exactCoordinateGroups(exactRows).forEach(group=>{
         if(group.length===1){
-          const r=group[0],c=platformColor(r.platform);
-          L.circleMarker([r.lat,r.lng],{radius:5.5,color:'#15171a',weight:1.6,fillColor:c,fillOpacity:.96})
-            .bindPopup(markerPopup(r),{maxWidth:300}).addTo(dashboardMarkerLayer);
+          const r=group[0],c=platformColor(r.platform),ll=[r.lat,r.lng];
+          renderedBounds.push(ll);
+          L.circleMarker(ll,{radius:6,color:'#111318',weight:1.7,fillColor:c,fillOpacity:.98})
+            .bindPopup(markerPopup(r),{maxWidth:300})
+            .bindTooltip(`Pedido ${esc(r.pedido)} • ${esc(r.platform||'')}`,{direction:'top',offset:[0,-5]})
+            .addTo(dashboardMarkerLayer);
         }else{
-          const lat=group.reduce((s,r)=>s+r.lat,0)/group.length,lng=group.reduce((s,r)=>s+r.lng,0)/group.length;
+          const lat=group.reduce((sum,r)=>sum+(+r.lat),0)/group.length;
+          const lng=group.reduce((sum,r)=>sum+(+r.lng),0)/group.length;
           const c=platformColor(group[0].platform);
-          const mk=L.circleMarker([lat,lng],{radius:Math.min(18,7+Math.log2(group.length)*3),color:'#fff',weight:1.2,fillColor:c,fillOpacity:.92});
+          renderedBounds.push([lat,lng]);
+          const mk=L.circleMarker([lat,lng],{
+            radius:Math.min(18,8+Math.log2(group.length)*3),
+            color:'#fff',weight:1.3,fillColor:c,fillOpacity:.94
+          });
           mk.bindTooltip(String(group.length),{permanent:true,direction:'center',className:'cluster-count'});
-          mk.bindPopup(`<div class="order-map-popup"><b>${group.length} pedidos próximos</b><span>Clique em “Agrupar pontos” para desativar e visualizar individualmente.</span></div>`);
+          mk.bindPopup(`<div class="order-map-popup"><b>${group.length} pedidos neste ponto</b><span>Desative “Agrupar pontos próximos” para ver cada pedido separadamente.</span></div>`);
           mk.addTo(dashboardMarkerLayer);
         }
       });
     }else{
-      exactRows.forEach(r=>{
-        const c=platformColor(r.platform);
-        const marker=L.circleMarker([r.lat,r.lng],{radius:5.5,color:'#15171a',weight:1.5,fillColor:c,fillOpacity:.96});
-        marker.bindPopup(markerPopup(r),{maxWidth:310});
-        marker.bindTooltip(`Pedido ${esc(r.pedido)} • ${esc(r.platform||'')}`,{direction:'top',offset:[0,-5]});
-        marker.addTo(dashboardMarkerLayer);
+      // Exibe TODOS os pedidos. Se vários tiverem a mesma coordenada,
+      // abre levemente os pontos em volta dela para não ficarem escondidos.
+      exactCoordinateGroups(exactRows).forEach(group=>{
+        group.forEach((r,i)=>{
+          const c=platformColor(r.platform);
+          const ll=displayLatLng(r,i,group.length);
+          renderedBounds.push(ll);
+          const marker=L.circleMarker(ll,{
+            radius:6,
+            color:'#111318',
+            weight:1.7,
+            fillColor:c,
+            fillOpacity:.98
+          });
+          marker.bindPopup(markerPopup(r),{maxWidth:310});
+          marker.bindTooltip(`Pedido ${esc(r.pedido)} • ${esc(r.platform||'')}`,{direction:'top',offset:[0,-6]});
+          marker.addTo(dashboardMarkerLayer);
+        });
       });
     }
 
     renderMapLegend(map,exactRows);
 
-    const bounds=exactRows.map(r=>[r.lat,r.lng]);
-    if(bounds.length>=2)map.fitBounds(bounds,{padding:[28,28],maxZoom:13});
+    const bounds=renderedBounds;
+    if(bounds.length>=2)map.fitBounds(bounds,{padding:[34,34],maxZoom:14});
     else if(bounds.length===1)map.setView(bounds[0],14);
     else{
       const zoneBounds=[];zones.forEach(z=>z.coords.forEach(x=>zoneBounds.push(x)));
@@ -202,7 +240,7 @@
     const panel=map.getContainer();
     let fl=panel.querySelector('.region-summary-floater');
     if(!fl){fl=document.createElement('div');fl.className='region-summary-floater';panel.appendChild(fl)}
-    fl.innerHTML=`<b>${exactRows.length} pedidos no mapa</b><small>${filtered.length} no filtro • ${Math.max(0,filtered.length-exactRows.length)} pendentes de localização</small>`;
+    fl.innerHTML=`<b>${exactRows.length} pontos de pedidos</b><small>${filtered.length} pedidos no filtro • ${Math.max(0,filtered.length-exactRows.length)} pendentes de localização</small>`;
     const badge=document.getElementById('mapAccuracyBadge');
     if(badge)badge.textContent=`${exactRows.length}/${filtered.length} localizados`;
   }

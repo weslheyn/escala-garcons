@@ -255,3 +255,207 @@ main {
 .chart-mode-select option{background:#15171a;color:#fff}
 .trend-chart-panel .compact-chart{height:210px!important;min-height:210px!important}
 @media(max-width:720px){.chart-panel-head{align-items:flex-start}.chart-mode-select{min-width:86px}.trend-chart-panel .compact-chart{height:220px!important;min-height:220px!important}}
+
+
+/* =========================================================
+   DELIVERY v12 — LAYOUT DE REFERÊNCIA APROVADO
+   Ajuste exclusivamente visual do módulo Delivery.
+   ========================================================= */
+
+/* Mais respiro no dashboard sem alterar a estrutura do app. */
+#view-visao{
+  max-width: 1540px;
+  margin: 0 auto;
+}
+#view-visao .grid-main{
+  display:grid;
+  grid-template-columns:repeat(12,minmax(0,1fr));
+  gap:12px;
+  align-items:start;
+}
+
+/* Linha 1 — exatamente três gráficos lado a lado. */
+#view-visao .overview-chart-panel{
+  grid-column:span 4 !important;
+  min-height:270px;
+  border-radius:13px;
+  padding:13px 14px 12px;
+}
+#view-visao .overview-chart-panel .compact-chart{
+  height:205px !important;
+  min-height:205px !important;
+}
+#view-visao .overview-chart-panel:has(#hourChart) .compact-chart{
+  height:215px !important;
+  min-height:215px !important;
+}
+#view-visao .platform-chart-layout{
+  height:205px;
+  min-height:205px;
+  grid-template-columns:minmax(150px,45%) 1fr;
+}
+
+/* Linha 2 — Região grande + resumo de turno compacto, preservando o espaço visual aprovado. */
+#view-visao .region-overview-panel{
+  grid-column:span 6 !important;
+  min-height:285px;
+}
+#view-visao .turn-summary-panel{
+  grid-column:span 3 !important;
+  min-height:285px;
+}
+
+/* Linha 3 — Status e Tempos, meio a meio. */
+#view-visao .status-overview-panel,
+#view-visao .times-overview-panel{
+  grid-column:span 6 !important;
+  min-height:170px;
+}
+
+/* Linha 4 — Raio, resumo dos turnos e ranking. */
+#view-visao .radius-overview-panel{
+  grid-column:span 3 !important;
+  min-height:275px;
+}
+#view-visao .shift-mini-overview-panel{
+  grid-column:span 3 !important;
+  min-height:275px;
+}
+#view-visao .ranking-overview-panel{
+  grid-column:span 4 !important;
+  min-height:275px;
+}
+
+/* Linha 5 — mapa e últimos pedidos exatamente lado a lado. */
+#view-visao .overview-map-panel{
+  grid-column:span 6 !important;
+  min-height:360px;
+}
+#view-visao .latest-overview-panel{
+  grid-column:span 6 !important;
+  min-height:360px;
+}
+#view-visao .dashboard-map{
+  height:300px !important;
+  border-radius:9px;
+}
+
+/* Resumo final em largura total. */
+#view-visao .day-summary{
+  width:100%;
+  margin-top:12px;
+  border-radius:12px;
+}
+
+/* Acabamento dos painéis da referência. */
+#view-visao .panel{
+  background:
+    radial-gradient(circle at 100% 0%,rgba(255,255,255,.018),transparent 34%),
+    linear-gradient(155deg,#191b1e 0%,#151719 60%,#121416 100%);
+  border-color:#30333a;
+  box-shadow:0 12px 28px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.025);
+}
+#view-visao .panel h3{
+  font-size:14px;
+  letter-spacing:.15px;
+}
+#view-visao .panel h3 small{
+  font-size:9px;
+  color:#777c84;
+}
+
+/* Barras do eixo horário na vertical, como a referência escolhida. */
+#view-visao .overview-chart-panel:has(#hourChart){
+  padding-bottom:8px;
+}
+#view-visao .overview-chart-panel:has(#hourChart) canvas{
+  overflow:visible;
+}
+
+/* KPIs compactos e alinhados em uma única faixa no desktop. */
+#view-visao .kpi-grid{
+  border-radius:13px;
+  overflow:hidden;
+}
+#view-visao .kpi{
+  min-height:118px;
+}
+#view-visao .kpi .lbl{
+  min-height:28px;
+}
+#view-visao .kpi .val{
+  white-space:nowrap;
+}
+
+/* Região — barras mais longas e leitura mais próxima da referência. */
+#view-visao .region-overview-panel .bar-row{
+  grid-template-columns:130px 1fr 72px;
+  min-height:26px;
+}
+#view-visao .region-overview-panel .bar-bg{
+  height:11px;
+}
+
+/* Status e tempos mais compactos, sem espaços vazios excessivos. */
+#view-visao .status-grid,
+#view-visao .time-grid{
+  min-height:112px;
+  align-items:center;
+}
+#view-visao .status-card,
+#view-visao .time-card{
+  padding:8px 6px;
+}
+
+/* Tabelas do overview com boa densidade. */
+#view-visao .rank-table th{
+  font-size:9px;
+  padding:8px 6px;
+}
+#view-visao .rank-table td{
+  font-size:10px;
+  padding:8px 6px;
+}
+
+/* Horários ficam claros e legíveis mesmo com 24 marcas. */
+#view-visao .overview-chart-panel:first-of-type{
+  overflow:visible;
+}
+
+/* Breakpoints preservam os outros módulos e só afetam Delivery. */
+@media(max-width:1350px){
+  #view-visao .region-overview-panel{grid-column:span 7 !important}
+  #view-visao .turn-summary-panel{grid-column:span 5 !important}
+  #view-visao .radius-overview-panel,
+  #view-visao .shift-mini-overview-panel,
+  #view-visao .ranking-overview-panel{grid-column:span 4 !important}
+  #view-visao .overview-map-panel,
+  #view-visao .latest-overview-panel{grid-column:span 6 !important}
+}
+@media(max-width:1050px){
+  #view-visao .overview-chart-panel{grid-column:span 6 !important}
+  #view-visao .platform-chart-panel{grid-column:span 12 !important}
+  #view-visao .region-overview-panel,
+  #view-visao .turn-summary-panel,
+  #view-visao .status-overview-panel,
+  #view-visao .times-overview-panel,
+  #view-visao .overview-map-panel,
+  #view-visao .latest-overview-panel{grid-column:span 6 !important}
+  #view-visao .radius-overview-panel,
+  #view-visao .shift-mini-overview-panel,
+  #view-visao .ranking-overview-panel{grid-column:span 6 !important}
+}
+@media(max-width:720px){
+  #view-visao .grid-main{grid-template-columns:1fr}
+  #view-visao .overview-chart-panel,
+  #view-visao .platform-chart-panel,
+  #view-visao .region-overview-panel,
+  #view-visao .turn-summary-panel,
+  #view-visao .status-overview-panel,
+  #view-visao .times-overview-panel,
+  #view-visao .radius-overview-panel,
+  #view-visao .shift-mini-overview-panel,
+  #view-visao .ranking-overview-panel,
+  #view-visao .overview-map-panel,
+  #view-visao .latest-overview-panel{grid-column:1 !important}
+}

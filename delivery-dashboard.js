@@ -20,7 +20,7 @@
     hourGrad.addColorStop(0,'#e8b94f');hourGrad.addColorStop(1,'#b9781d');
     hourChart=new Chart(document.getElementById('hourChart'),{
       type:'bar',
-      data:{labels:hours.map(h=>String(h).padStart(2,'0')),datasets:[
+      data:{labels:hours.map(h=>String(h).padStart(2,'0')+'h'),datasets:[
         {label:'Pedidos',data:byH,backgroundColor:hourGrad,borderColor:'#f0c867',borderWidth:1,borderRadius:5,maxBarThickness:14,barPercentage:.78,categoryPercentage:.84},
         {label:'Entregas',data:entH,type:'line',borderColor:'#b52646',backgroundColor:'#b52646',tension:.34,pointRadius:1.6,pointHoverRadius:4,borderWidth:2.2,fill:false}
       ]},
@@ -102,14 +102,14 @@
     responsive:true,maintainAspectRatio:false,
     interaction:{mode:'index',intersect:false},
     scales:{
-      x:{ticks:{color:extra.hourly?'#f2f3f5':'#cfd1d5',font:{size:extra.hourly?10:10,weight:extra.hourly?'700':'600'},autoSkip:extra.hourly?false:true,maxRotation:0,minRotation:0,padding:extra.hourly?8:5},grid:{display:false},border:{color:'#3a3d43'},title:extra.hourly?{display:true,text:'HORA DO PEDIDO',color:'#777d85',font:{size:9,weight:'700'},padding:{top:5}}:undefined},
+      x:{ticks:{color:extra.hourly?'#f4f4f5':'#cfd1d5',font:{size:extra.hourly?9:10,weight:extra.hourly?'700':'600'},autoSkip:extra.hourly?false:true,maxRotation:extra.hourly?90:0,minRotation:extra.hourly?90:0,padding:extra.hourly?4:5,align:extra.hourly?'center':'center'},grid:{display:false},border:{color:'#3a3d43'},title:extra.hourly?{display:true,text:'HORA DO PEDIDO',color:'#858a92',font:{size:9,weight:'700'},padding:{top:8}}:undefined},
       y:{beginAtZero:true,suggestedMax:extra.weekday?undefined:undefined,ticks:{color:'#9fa3aa',font:{size:9},precision:0,padding:5},grid:{color:'rgba(255,255,255,.08)'},border:{display:false}}
     },
     plugins:{
       legend:{display:!extra.hideLegend,labels:{color:'#e8e9eb',boxWidth:11,boxHeight:8,padding:12,font:{size:10,weight:'600'}}},
       tooltip:{backgroundColor:'#111317',titleColor:'#f5c451',bodyColor:'#fff',borderColor:'#34373d',borderWidth:1,padding:9,displayColors:true}
     },
-    layout:{padding:{left:2,right:5,top:6,bottom:0}}
+    layout:{padding:{left:2,right:5,top:6,bottom:extra.hourly?10:0}}
   }}
   function renderRegions(rows){const allowed=window.DeliveryMap?.configuredRegions?.()||[];const c={};rows.forEach(r=>{const region=allowed.includes(r.regiao)?r.regiao:'NÃO CLASSIFICADO';c[region]=(c[region]||0)+1});const arr=Object.entries(c).sort((a,b)=>b[1]-a[1]),max=arr[0]?.[1]||1,total=rows.length||1;document.getElementById('regionBars').innerHTML=arr.length?arr.map(([k,v])=>`<div class="bar-row ${k==='NÃO CLASSIFICADO'?'bar-unclassified':''}"><span>${k}</span><div class="bar-bg"><div class="bar-fill" style="width:${v/max*100}%"></div></div><span class="bar-val"><b>${v}</b> (${(v/total*100).toFixed(1)}%)</span></div>`).join('')+`<div class="distribution-total">TOTAL <b>${rows.length} PEDIDOS</b></div>`:'<div style="color:#888;font-size:11px;padding:10px">Sem pedidos no período.</div>';window.DeliveryMap?.renderDashboard?.(rows)}
   function shiftMetrics(rows,shift){const rr=rows.filter(r=>r.turno===shift),assigned=rr.filter(r=>r.motoboy);return{rows:rr,ped:rr.length,moto:new Set(assigned.map(r=>r.motoboy).filter(Boolean)).size,km:sum(rr.map(r=>r.km)),tempo:avg(rr.map(r=>r.tempoEntrega))}}

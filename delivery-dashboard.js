@@ -57,7 +57,7 @@
     grad.addColorStop(0,'#f0c35a');grad.addColorStop(.55,'#d79a32');grad.addColorStop(1,'#a96619');
     let labels=[],data=[],title='PEDIDOS DA SEMANA';
     if(mode==='day'){
-      labels=Array.from({length:24},(_,i)=>String(i).padStart(2,'0'));
+      labels=Array.from({length:24},(_,i)=>String(i).padStart(2,'0')+'h');
       data=labels.map((_,h)=>rows.filter(r=>r.dt&&r.dt.getHours()===h).length);
       title='PEDIDOS DO DIA';
     }else if(mode==='month'){
@@ -76,8 +76,8 @@
       data:{labels,datasets:[{label:'Pedidos',data,backgroundColor:grad,borderColor:'#f4cd72',borderWidth:1,borderRadius:8,maxBarThickness:mode==='day'?15:mode==='month'?30:38,barPercentage:.78,categoryPercentage:.82}]},
       options:{...chartOpts({hideLegend:true,weekday:true}),
         scales:{
-          x:{ticks:{color:'#e2e3e6',font:{size:10,weight:'700'},autoSkip:false,maxRotation:0,minRotation:0,padding:7},grid:{display:false},border:{color:'#3a3d43'}},
-          y:{beginAtZero:true,ticks:{color:'#9fa3aa',font:{size:9},precision:0,padding:5},grid:{color:'rgba(255,255,255,.075)'},border:{display:false}}
+          x:{ticks:{color:'#d9dce1',font:{family:'Barlow',size:mode==='day'?8:10,weight:mode==='day'?'500':'600'},autoSkip:false,maxRotation:mode==='day'?90:0,minRotation:mode==='day'?90:0,padding:mode==='day'?3:7},grid:{display:false},border:{color:'#3a3d43'},title:mode==='day'?{display:true,text:'HORA DO PEDIDO',color:'#747b84',font:{family:'Barlow',size:9,weight:'500'},padding:{top:8}}:undefined},
+          y:{beginAtZero:true,ticks:{color:'#9298a1',font:{family:'Barlow',size:9,weight:'400'},precision:0,padding:5},grid:{color:'rgba(255,255,255,.06)'},border:{display:false}}
         },
         plugins:{legend:{display:false},tooltip:{backgroundColor:'#111317',titleColor:'#f5c451',bodyColor:'#fff',borderColor:'#34373d',borderWidth:1,padding:10,callbacks:{label(c){return ` ${c.raw||0} pedidos`;}}}},
         animation:{duration:380}
@@ -87,12 +87,12 @@
   }
 
   const valueLabelPlugin={id:'deliveryValueLabels',afterDatasetsDraw(chart){
-    const {ctx}=chart;ctx.save();ctx.fillStyle='#f2d58a';ctx.font='700 10px Arial';ctx.textAlign='center';ctx.textBaseline='bottom';
+    const {ctx}=chart;ctx.save();ctx.fillStyle='#f2d58a';ctx.font='600 9px Barlow, Arial';ctx.textAlign='center';ctx.textBaseline='bottom';
     chart.getDatasetMeta(0).data.forEach((el,i)=>{const v=chart.data.datasets[0].data[i];if(v>0)ctx.fillText(String(v),el.x,el.y-5)});ctx.restore();
   }};
   const doughnutCenterPlugin={id:'deliveryDonutCenter',afterDraw(chart){
     const ds=chart.data.datasets?.[0];if(!ds)return;const total=(ds.data||[]).reduce((a,b)=>a+(+b||0),0);const {ctx,chartArea}=chart;
-    const x=(chartArea.left+chartArea.right)/2,y=(chartArea.top+chartArea.bottom)/2;ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#f4f4f4';ctx.font='800 24px Arial';ctx.fillText(String(total),x,y-5);ctx.fillStyle='#b7b9be';ctx.font='700 9px Arial';ctx.fillText('PEDIDOS',x,y+16);ctx.restore();
+    const x=(chartArea.left+chartArea.right)/2,y=(chartArea.top+chartArea.bottom)/2;ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#f4f4f4';ctx.font='600 24px Barlow, Arial';ctx.fillText(String(total),x,y-5);ctx.fillStyle='#b7b9be';ctx.font='600 9px Barlow, Arial';ctx.fillText('PEDIDOS',x,y+16);ctx.restore();
   }};
   function renderPlatformLegend(labels,vals,total,palette){
     const el=document.getElementById('platformLegend');if(!el)return;
@@ -102,11 +102,11 @@
     responsive:true,maintainAspectRatio:false,
     interaction:{mode:'index',intersect:false},
     scales:{
-      x:{ticks:{color:extra.hourly?'#f4f4f5':'#cfd1d5',font:{size:extra.hourly?9:10,weight:extra.hourly?'700':'600'},autoSkip:extra.hourly?false:true,maxRotation:extra.hourly?90:0,minRotation:extra.hourly?90:0,padding:extra.hourly?4:5,align:extra.hourly?'center':'center'},grid:{display:false},border:{color:'#3a3d43'},title:extra.hourly?{display:true,text:'HORA DO PEDIDO',color:'#858a92',font:{size:9,weight:'700'},padding:{top:8}}:undefined},
-      y:{beginAtZero:true,suggestedMax:extra.weekday?undefined:undefined,ticks:{color:'#9fa3aa',font:{size:9},precision:0,padding:5},grid:{color:'rgba(255,255,255,.08)'},border:{display:false}}
+      x:{ticks:{color:extra.hourly?'#dfe2e7':'#cfd1d5',font:{family:'Barlow',size:extra.hourly?8:10,weight:extra.hourly?'500':'500'},autoSkip:extra.hourly?false:true,maxRotation:extra.hourly?90:0,minRotation:extra.hourly?90:0,padding:extra.hourly?3:5,align:'center'},grid:{display:false},border:{color:'#343840'},title:extra.hourly?{display:true,text:'HORA DO PEDIDO',color:'#747b84',font:{family:'Barlow',size:9,weight:'500'},padding:{top:8}}:undefined},
+      y:{beginAtZero:true,suggestedMax:extra.weekday?undefined:undefined,ticks:{color:'#9298a1',font:{family:'Barlow',size:9,weight:'400'},precision:0,padding:5},grid:{color:'rgba(255,255,255,.06)'},border:{display:false}}
     },
     plugins:{
-      legend:{display:!extra.hideLegend,labels:{color:'#e8e9eb',boxWidth:11,boxHeight:8,padding:12,font:{size:10,weight:'600'}}},
+      legend:{display:!extra.hideLegend,labels:{color:'#e8e9eb',boxWidth:11,boxHeight:8,padding:12,font:{family:'Barlow',size:10,weight:'500'}}},
       tooltip:{backgroundColor:'#111317',titleColor:'#f5c451',bodyColor:'#fff',borderColor:'#34373d',borderWidth:1,padding:9,displayColors:true}
     },
     layout:{padding:{left:2,right:5,top:6,bottom:extra.hourly?10:0}}

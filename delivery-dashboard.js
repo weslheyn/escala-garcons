@@ -20,11 +20,12 @@
     hourGrad.addColorStop(0,'#e8b94f');hourGrad.addColorStop(1,'#b9781d');
     hourChart=new Chart(document.getElementById('hourChart'),{
       type:'bar',
-      data:{labels:hours.map(h=>String(h).padStart(2,'0')+'h'),datasets:[
+      data:{labels:hours.map(h=>String(h).padStart(2,'0')),datasets:[
         {label:'Pedidos',data:byH,backgroundColor:hourGrad,borderColor:'#f0c867',borderWidth:1,borderRadius:5,maxBarThickness:14,barPercentage:.78,categoryPercentage:.84},
         {label:'Entregas',data:entH,type:'line',borderColor:'#b52646',backgroundColor:'#b52646',tension:.34,pointRadius:1.6,pointHoverRadius:4,borderWidth:2.2,fill:false}
       ]},
-      options:chartOpts({hourly:true})
+      options:chartOpts({hourly:true}),
+      plugins:[valueLabelPlugin]
     });
 
     const weekLabels=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
@@ -75,7 +76,7 @@
     responsive:true,maintainAspectRatio:false,
     interaction:{mode:'index',intersect:false},
     scales:{
-      x:{ticks:{color:'#cfd1d5',font:{size:extra.hourly?8:10,weight:'600'},autoSkip:extra.hourly?false:true,maxRotation:extra.hourly?48:0,minRotation:extra.hourly?48:0,padding:5},grid:{display:false},border:{color:'#3a3d43'}},
+      x:{ticks:{color:extra.hourly?'#f2f3f5':'#cfd1d5',font:{size:extra.hourly?10:10,weight:extra.hourly?'700':'600'},autoSkip:extra.hourly?false:true,maxRotation:0,minRotation:0,padding:extra.hourly?8:5},grid:{display:false},border:{color:'#3a3d43'},title:extra.hourly?{display:true,text:'HORA DO PEDIDO',color:'#777d85',font:{size:9,weight:'700'},padding:{top:5}}:undefined},
       y:{beginAtZero:true,suggestedMax:extra.weekday?undefined:undefined,ticks:{color:'#9fa3aa',font:{size:9},precision:0,padding:5},grid:{color:'rgba(255,255,255,.08)'},border:{display:false}}
     },
     plugins:{

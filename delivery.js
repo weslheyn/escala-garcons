@@ -81,6 +81,18 @@
     toast(`${importRows.length} pedidos do mês consolidados • ${keys[0]?.split('-').reverse().join('/')} a ${latest.split('-').reverse().join('/')}`);
     loadHistory();
   }
+  async function updateTrendChart(){
+    const mode=$('trendChartMode')?.value||'week';
+    const ref=$('dateFilter').value||dateKeyLocal(new Date());
+    const d=parseKey(ref);
+    let range;
+    if(mode==='month') range={start:new Date(d.getFullYear(),0,1,12),end:new Date(d.getFullYear(),11,31,12)};
+    else if(mode==='day') range=periodRange(ref,'day');
+    else range=periodRange(ref,'week');
+    await ensureMonths(range.start,range.end);
+    const trendRows=allRows.filter(r=>between(r,range.start,range.end));
+    DeliveryDashboard.renderTrendChart(trendRows,mode,ref);
+  }
   async function applyPeriod(ref){
     if(!ref)return;
     const period=$('periodFilter').value;
@@ -96,6 +108,7 @@
       if(window.DeliveryMap)await DeliveryMap.prepareRows(prevRows);
     }
     DeliveryDashboard.renderAll(currentRows,prevRows);
+    await updateTrendChart();
     updatePeriodUI(range,period);
   }
   function updatePeriodUI(range,period){
@@ -131,6 +144,7 @@
     $('dateFilter').onchange=e=>applyPeriod(e.target.value);
     $('periodFilter').onchange=()=>applyPeriod($('dateFilter').value);
     $('compareSelect').onchange=()=>applyPeriod($('dateFilter').value);
+    $('trendChartMode').onchange=()=>updateTrendChart();
     $('saveDay').onclick=saveDay;$('exportCsv').onclick=exportCsv;
     $('orderSearch').oninput=e=>{const q=DeliveryImport.norm(e.target.value);DeliveryDashboard.renderOrders(currentRows.filter(r=>DeliveryImport.norm([r.pedido,r.cliente,r.motoboy,r.endereco,r.regiao,r.platform].join(' ')).includes(q)))};
     $('motoShiftFilter').onchange=()=>DeliveryDashboard.renderMotoCards(currentRows);

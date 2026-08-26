@@ -28,18 +28,7 @@
       plugins:[valueLabelPlugin]
     });
 
-    const weekLabels=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
-    const byWeek=[1,2,3,4,5,6,0].map(day=>rows.filter(r=>r.dt&&r.dt.getDay()===day).length);
-    if(weekdayChart)weekdayChart.destroy();
-    const weekCtx=document.getElementById('weekdayChart').getContext('2d');
-    const weekGrad=weekCtx.createLinearGradient(0,0,0,210);
-    weekGrad.addColorStop(0,'#efbf54');weekGrad.addColorStop(1,'#bb7b22');
-    weekdayChart=new Chart(document.getElementById('weekdayChart'),{
-      type:'bar',
-      data:{labels:weekLabels,datasets:[{label:'Pedidos',data:byWeek,backgroundColor:weekGrad,borderColor:'#f0c867',borderWidth:1,borderRadius:7,maxBarThickness:38}]},
-      options:chartOpts({hideLegend:true,weekday:true}),
-      plugins:[valueLabelPlugin]
-    });
+    // O gráfico central é controlado de forma independente pelo seletor DIA / SEMANA / MÊS.
 
     const c=count(rows,'platform');
     const entries=Object.entries(c).sort((a,b)=>b[1]-a[1]);
@@ -58,6 +47,43 @@
       plugins:[doughnutCenterPlugin]
     });
     renderPlatformLegend(labels,vals,total,palette);
+  }
+
+  function renderTrendChart(rows,mode='week',ref=''){
+    const canvas=document.getElementById('weekdayChart');if(!canvas)return;
+    if(weekdayChart)weekdayChart.destroy();
+    const ctx=canvas.getContext('2d');
+    const grad=ctx.createLinearGradient(0,0,0,220);
+    grad.addColorStop(0,'#f0c35a');grad.addColorStop(.55,'#d79a32');grad.addColorStop(1,'#a96619');
+    let labels=[],data=[],title='PEDIDOS DA SEMANA';
+    if(mode==='day'){
+      labels=Array.from({length:24},(_,i)=>String(i).padStart(2,'0'));
+      data=labels.map((_,h)=>rows.filter(r=>r.dt&&r.dt.getHours()===h).length);
+      title='PEDIDOS DO DIA';
+    }else if(mode==='month'){
+      labels=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+      data=labels.map((_,m)=>rows.filter(r=>r.dt&&r.dt.getMonth()===m).length);
+      title='PEDIDOS POR MÊS';
+    }else{
+      labels=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
+      data=[1,2,3,4,5,6,0].map(day=>rows.filter(r=>r.dt&&r.dt.getDay()===day).length);
+      title='PEDIDOS DA SEMANA';
+    }
+    const titleEl=document.getElementById('trendChartTitle');
+    if(titleEl)titleEl.innerHTML=`${title} <small>— QUANTIDADE</small>`;
+    weekdayChart=new Chart(canvas,{
+      type:'bar',
+      data:{labels,datasets:[{label:'Pedidos',data,backgroundColor:grad,borderColor:'#f4cd72',borderWidth:1,borderRadius:8,maxBarThickness:mode==='day'?15:mode==='month'?30:38,barPercentage:.78,categoryPercentage:.82}]},
+      options:{...chartOpts({hideLegend:true,weekday:true}),
+        scales:{
+          x:{ticks:{color:'#e2e3e6',font:{size:10,weight:'700'},autoSkip:false,maxRotation:0,minRotation:0,padding:7},grid:{display:false},border:{color:'#3a3d43'}},
+          y:{beginAtZero:true,ticks:{color:'#9fa3aa',font:{size:9},precision:0,padding:5},grid:{color:'rgba(255,255,255,.075)'},border:{display:false}}
+        },
+        plugins:{legend:{display:false},tooltip:{backgroundColor:'#111317',titleColor:'#f5c451',bodyColor:'#fff',borderColor:'#34373d',borderWidth:1,padding:10,callbacks:{label(c){return ` ${c.raw||0} pedidos`;}}}},
+        animation:{duration:380}
+      },
+      plugins:[valueLabelPlugin]
+    });
   }
 
   const valueLabelPlugin={id:'deliveryValueLabels',afterDatasetsDraw(chart){
@@ -128,5 +154,5 @@
 
   function renderAnalyticTables(rows){const allowedRegions=window.DeliveryMap?.configuredRegions?.()||[];const regs={};rows.forEach(r=>{const reg=allowedRegions.includes(r.regiao)?r.regiao:'NÃO CLASSIFICADO';const x=regs[reg]||(regs[reg]={p:0,e:0,c:0,km:0,v:0,t:[]});x.p++;if(delivered(r)){x.e++;x.km+=r.km||0;if(typeof r.tempoEntrega==='number')x.t.push(r.tempoEntrega)}if(r.status==='CANCELADO')x.c++;x.v+=r.valor||0});document.getElementById('regionsTable').innerHTML=table(['Região','Pedidos','Entregas','Cancelados','KM','Tempo médio','Faturamento'],Object.entries(regs).sort((a,b)=>b[1].p-a[1].p).map(([k,x])=>`<tr><td>${k}</td><td>${x.p}</td><td>${x.e}</td><td>${x.c}</td><td>${n1(x.km)}</td><td>${fmtMin(avg(x.t))}</td><td>${money(x.v)}</td></tr>`));const plats={};rows.forEach(r=>{const x=plats[r.platform]||(plats[r.platform]={p:0,e:0,c:0,v:0});x.p++;if(delivered(r))x.e++;if(r.status==='CANCELADO')x.c++;x.v+=r.valor||0});document.getElementById('platformsTable').innerHTML=table(['Plataforma','Pedidos','Entregas','Cancelados','Faturamento'],Object.entries(plats).sort((a,b)=>b[1].p-a[1].p).map(([k,x])=>`<tr><td>${k}</td><td>${x.p}</td><td>${x.e}</td><td>${x.c}</td><td>${money(x.v)}</td></tr>`));document.getElementById('timesTable').innerHTML=table(['Pedido','Motoboy','Preparo','Coleta','Entrega','Total','Status'],rows.map(r=>`<tr><td>${r.pedido}</td><td>${r.motoboy||'—'}</td><td>${fmtMin(r.tempoPreparo)}</td><td>${fmtMin(r.tempoColeta)}</td><td>${fmtMin(r.tempoEntrega)}</td><td>${fmtMin(r.tempoTotal)}</td><td>${r.status}</td></tr>`));const cc=rows.filter(r=>r.status==='CANCELADO');document.getElementById('cancelTable').innerHTML=table(['Pedido','Hora','Cliente','Região','Motoboy','Plataforma','Valor','Endereço'],cc.map(r=>`<tr><td>${r.pedido}</td><td>${r.hora}</td><td>${r.cliente||'—'}</td><td>${r.regiao}</td><td>${r.motoboy||'—'}</td><td>${r.platform}</td><td>${money(r.valor)}</td><td>${r.endereco||'—'}</td></tr>`))}
   function renderAll(rows,prevRows){renderKpis(rows,prevRows);renderCharts(rows);renderRegions(rows);renderShifts(rows);renderStatusTimes(rows);renderRadius(rows);renderMoto(rows);renderLatest(rows);renderSummary(rows);renderOrders(rows);renderAnalyticTables(rows);renderUnclassified(rows)}
-  window.DeliveryDashboard={renderAll,renderOrders,renderMotoCards,metrics,money,n1,fmtMin};
+  window.DeliveryDashboard={renderAll,renderOrders,renderMotoCards,renderTrendChart,metrics,money,n1,fmtMin};
 })();

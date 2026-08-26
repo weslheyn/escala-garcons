@@ -871,3 +871,120 @@ main {
   #view-visao .overview-map-panel,
   #view-visao .latest-overview-panel{grid-column:span 12!important}
 }
+
+
+/* =========================================================
+   DELIVERY v16 — LEGIBILIDADE E INFORMAÇÕES SEM CORTE
+   Escopo exclusivo: Visão Geral do módulo Delivery.
+   ========================================================= */
+
+/* KPIs: impede corte de valores monetários sem deixar a tipografia pesada. */
+#view-visao .kpi{
+  min-width:0!important;
+  overflow:hidden!important;
+}
+#view-visao .kpi>div:last-child{
+  min-width:0!important;
+  width:100%!important;
+}
+#view-visao .kpi .val{
+  font-family:Barlow,Arial,sans-serif!important;
+  font-weight:500!important;
+  font-size:clamp(17px,1.22vw,21px)!important;
+  line-height:1.05!important;
+  letter-spacing:-.35px!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+/* Faturamento e ticket precisam de mais espaço visual. */
+#view-visao .kpi:nth-child(6) .val,
+#view-visao .kpi:nth-child(7) .val{
+  font-size:clamp(15px,1.05vw,19px)!important;
+  letter-spacing:-.45px!important;
+}
+
+/* Gráficos por hora: mais área inferior para HH:00 na vertical. */
+#view-visao .overview-chart-panel:has(#hourChart) .compact-chart,
+#view-visao .trend-chart-panel .compact-chart{
+  height:242px!important;
+  min-height:242px!important;
+}
+#view-visao .overview-chart-panel:has(#hourChart),
+#view-visao .trend-chart-panel{
+  padding-bottom:8px!important;
+}
+
+/* Plataforma: mais espaço à legenda e nenhuma informação truncada. */
+#view-visao .platform-chart-layout{
+  grid-template-columns:minmax(128px,38%) minmax(0,62%)!important;
+  gap:10px!important;
+}
+#view-visao .platform-legend{
+  width:100%!important;
+  min-width:0!important;
+  overflow:visible!important;
+  padding-right:2px!important;
+}
+#view-visao .platform-legend-row{
+  display:grid!important;
+  grid-template-columns:9px minmax(72px,1fr) auto!important;
+  column-gap:7px!important;
+  align-items:center!important;
+  width:100%!important;
+  min-width:0!important;
+  padding:3px 0!important;
+}
+#view-visao .platform-name{
+  min-width:0!important;
+  font-size:9.5px!important;
+  font-weight:500!important;
+  color:#e8eaed!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+#view-visao .platform-meta{
+  font-family:Arial,sans-serif!important;
+  font-size:9px!important;
+  font-weight:400!important;
+  color:#aeb3ba!important;
+  white-space:nowrap!important;
+  text-align:right!important;
+}
+#view-visao .platform-meta b{
+  color:#f0bb4e!important;
+  font-weight:600!important;
+}
+
+/* Tipografia geral dos números dentro dos cards: firme, não pesada. */
+#view-visao .shift-metrics b,
+#view-visao .status-card b,
+#view-visao .time-card b,
+#view-visao .sum-cell b{
+  font-family:Barlow,Arial,sans-serif!important;
+  font-weight:500!important;
+}
+
+/* Em telas desktop médias, reduzimos apenas o necessário para evitar cortes. */
+@media (max-width:1450px) and (min-width:1051px){
+  #view-visao .kpi{
+    padding-left:9px!important;
+    padding-right:9px!important;
+  }
+  #view-visao .kpi .val{
+    font-size:17px!important;
+  }
+  #view-visao .kpi:nth-child(6) .val,
+  #view-visao .kpi:nth-child(7) .val{
+    font-size:15px!important;
+  }
+  #view-visao .platform-chart-layout{
+    grid-template-columns:minmax(118px,36%) minmax(0,64%)!important;
+    gap:8px!important;
+  }
+  #view-visao .platform-name,
+  #view-visao .platform-meta{
+    font-size:8.5px!important;
+  }
+}

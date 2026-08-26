@@ -20,7 +20,7 @@
     hourGrad.addColorStop(0,'#e8b94f');hourGrad.addColorStop(1,'#b9781d');
     hourChart=new Chart(document.getElementById('hourChart'),{
       type:'bar',
-      data:{labels:hours.map(h=>String(h).padStart(2,'0')+'h'),datasets:[
+      data:{labels:hours.map(h=>String(h).padStart(2,'0')+':00'),datasets:[
         {label:'Pedidos',data:byH,backgroundColor:hourGrad,borderColor:'#f0c867',borderWidth:1,borderRadius:5,maxBarThickness:14,barPercentage:.78,categoryPercentage:.84},
         {label:'Entregas',data:entH,type:'line',borderColor:'#b52646',backgroundColor:'#b52646',tension:.34,pointRadius:1.6,pointHoverRadius:4,borderWidth:2.2,fill:false}
       ]},
@@ -57,7 +57,7 @@
     grad.addColorStop(0,'#f0c35a');grad.addColorStop(.55,'#d79a32');grad.addColorStop(1,'#a96619');
     let labels=[],data=[],title='PEDIDOS DA SEMANA';
     if(mode==='day'){
-      labels=Array.from({length:24},(_,i)=>String(i).padStart(2,'0')+'h');
+      labels=Array.from({length:24},(_,i)=>String(i).padStart(2,'0')+':00');
       data=labels.map((_,h)=>rows.filter(r=>r.dt&&r.dt.getHours()===h).length);
       title='PEDIDOS DO DIA';
     }else if(mode==='month'){
@@ -76,7 +76,7 @@
       data:{labels,datasets:[{label:'Pedidos',data,backgroundColor:grad,borderColor:'#f4cd72',borderWidth:1,borderRadius:8,maxBarThickness:mode==='day'?15:mode==='month'?30:38,barPercentage:.78,categoryPercentage:.82}]},
       options:{...chartOpts({hideLegend:true,weekday:true}),
         scales:{
-          x:{ticks:{color:'#d9dce1',font:{family:'Barlow',size:mode==='day'?8:10,weight:mode==='day'?'500':'600'},autoSkip:false,maxRotation:mode==='day'?90:0,minRotation:mode==='day'?90:0,padding:mode==='day'?3:7},grid:{display:false},border:{color:'#3a3d43'},title:mode==='day'?{display:true,text:'HORA DO PEDIDO',color:'#747b84',font:{family:'Barlow',size:9,weight:'500'},padding:{top:8}}:undefined},
+          x:{ticks:{color:'#d9dce1',font:{family:mode==='day'?'Arial':'Barlow',size:mode==='day'?9:10,weight:mode==='day'?'400':'600'},autoSkip:false,maxRotation:mode==='day'?90:0,minRotation:mode==='day'?90:0,padding:mode==='day'?3:7},grid:{display:false},border:{color:'#3a3d43'},title:mode==='day'?{display:true,text:'HORA DO PEDIDO',color:'#747b84',font:{family:'Barlow',size:9,weight:'500'},padding:{top:8}}:undefined},
           y:{beginAtZero:true,ticks:{color:'#9298a1',font:{family:'Barlow',size:9,weight:'400'},precision:0,padding:5},grid:{color:'rgba(255,255,255,.06)'},border:{display:false}}
         },
         plugins:{legend:{display:false},tooltip:{backgroundColor:'#111317',titleColor:'#f5c451',bodyColor:'#fff',borderColor:'#34373d',borderWidth:1,padding:10,callbacks:{label(c){return ` ${c.raw||0} pedidos`;}}}},
@@ -96,13 +96,13 @@
   }};
   function renderPlatformLegend(labels,vals,total,palette){
     const el=document.getElementById('platformLegend');if(!el)return;
-    el.innerHTML=labels.map((label,i)=>`<div class="platform-legend-row"><span class="platform-dot" style="background:${palette[i%palette.length]}"></span><span class="platform-name">${label}</span><span class="platform-count"><b>${vals[i]}</b> pedidos</span><span class="platform-pct">${total?((vals[i]/total)*100).toFixed(1):'0.0'}%</span></div>`).join('')||'<div class="platform-empty">Sem pedidos no período.</div>';
+    el.innerHTML=labels.map((label,i)=>{const pct=total?((vals[i]/total)*100).toFixed(1):'0.0';return `<div class="platform-legend-row"><span class="platform-dot" style="background:${palette[i%palette.length]}"></span><span class="platform-name">${label}</span><span class="platform-meta"><b>${vals[i]}</b> pedidos · ${pct}%</span></div>`}).join('')||'<div class="platform-empty">Sem pedidos no período.</div>';
   }
   function chartOpts(extra={}){return{
     responsive:true,maintainAspectRatio:false,
     interaction:{mode:'index',intersect:false},
     scales:{
-      x:{ticks:{color:extra.hourly?'#dfe2e7':'#cfd1d5',font:{family:'Barlow',size:extra.hourly?8:10,weight:extra.hourly?'500':'500'},autoSkip:extra.hourly?false:true,maxRotation:extra.hourly?90:0,minRotation:extra.hourly?90:0,padding:extra.hourly?3:5,align:'center'},grid:{display:false},border:{color:'#343840'},title:extra.hourly?{display:true,text:'HORA DO PEDIDO',color:'#747b84',font:{family:'Barlow',size:9,weight:'500'},padding:{top:8}}:undefined},
+      x:{ticks:{color:extra.hourly?'#dfe2e7':'#cfd1d5',font:{family:extra.hourly?'Arial':'Barlow',size:extra.hourly?9:10,weight:extra.hourly?'400':'500'},autoSkip:extra.hourly?false:true,maxRotation:extra.hourly?90:0,minRotation:extra.hourly?90:0,padding:extra.hourly?3:5,align:'center'},grid:{display:false},border:{color:'#343840'},title:extra.hourly?{display:true,text:'HORA DO PEDIDO',color:'#747b84',font:{family:'Barlow',size:9,weight:'500'},padding:{top:8}}:undefined},
       y:{beginAtZero:true,suggestedMax:extra.weekday?undefined:undefined,ticks:{color:'#9298a1',font:{family:'Barlow',size:9,weight:'400'},precision:0,padding:5},grid:{color:'rgba(255,255,255,.06)'},border:{display:false}}
     },
     plugins:{

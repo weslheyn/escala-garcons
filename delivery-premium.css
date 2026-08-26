@@ -1145,3 +1145,48 @@ main {
 .region-summary-floater{
   max-width:190px!important;
 }
+
+
+/* =========================================================
+   DELIVERY v19 — GEOCODIFICAÇÃO PRECISA E MAPA AMPLIADO
+   ========================================================= */
+#view-visao .overview-map-panel{grid-column:span 6!important}
+#view-visao .latest-overview-panel{grid-column:span 3!important}
+#view-visao .radius-overview-panel{grid-column:span 3!important}
+#view-visao .dashboard-map{
+  height:350px!important;
+  min-height:350px!important;
+  background:#ece9df!important;
+}
+.orders-map-filter-panel{
+  max-height:280px!important;
+}
+.map-filter-regeo{
+  width:100%;height:30px;margin-top:5px;border:1px solid #8d6a1e;border-radius:7px;
+  background:#1b1810;color:#f0b83f;font-size:8.5px;font-weight:700;cursor:pointer
+}
+.map-filter-regeo:disabled{opacity:.55;cursor:wait}
+.orders-map-legend{
+  background:rgba(255,255,255,.93)!important;
+  color:#2e3338!important;
+  border-color:#d3d6da!important;
+}
+.orders-map-legend b{color:#111!important}
+.region-summary-floater{
+  background:rgba(255,255,255,.94)!important;
+  color:#25292d!important;
+  border-color:#d0d4d8!important;
+}
+.region-summary-floater b{color:#8d5d00!important}
+.region-summary-floater small{color:#555d65!important}
+.dashboard-map .leaflet-control-zoom a{
+  color:#222!important;background:#fff!important;
+}
+.dashboard-map .leaflet-control-attribution{
+  background:rgba(255,255,255,.85)!important;
+}
+@media(max-width:1280px){
+  #view-visao .radius-overview-panel{grid-column:span 4!important}
+  #view-visao .overview-map-panel{grid-column:span 8!important}
+  #view-visao .latest-overview-panel{grid-column:span 12!important}
+}

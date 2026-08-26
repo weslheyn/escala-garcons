@@ -17,6 +17,7 @@
   let zones=[],geoCache={},currentRows=[],changeHandler=null,drawName='';
   let mapFilters={platform:'TODOS',turno:'TODOS',status:'TODOS',raio:'TODOS',regiao:'TODOS',cluster:false,areas:false};
   const storageZones='cbDeliveryCustomRegionsV1',storageGeo='cbDeliveryGeoCacheV1';
+  const GEO_VERSION=2;
   const safe=s=>String(s||'').trim();
   const norm=s=>window.DeliveryImport?.norm?DeliveryImport.norm(s):String(s||'').toLowerCase();
   const keyAddr=a=>norm(a).replace(/[^a-z0-9]+/g,' ').trim();
@@ -26,7 +27,21 @@
   async function loadRemote(){try{if(window.DeliveryFirebase?.isReady?.()){const [z,g]=await Promise.all([DeliveryFirebase.loadRegions?.(),DeliveryFirebase.loadGeoCache?.()]);if(Array.isArray(z)&&z.length)zones=z;if(g&&typeof g==='object')geoCache={...geoCache,...g}}}catch(e){console.warn('Falha ao carregar áreas/geocache do Delivery',e)}saveLocal()}
   function saveLocal(){try{localStorage.setItem(storageZones,JSON.stringify(zones));localStorage.setItem(storageGeo,JSON.stringify(geoCache))}catch(e){}}
   async function saveZones(){saveLocal();try{await DeliveryFirebase.saveRegions?.(zones)}catch(e){console.warn('Falha ao salvar áreas',e)}renderZoneList();drawZonesOnEditor();reclassify(currentRows);if(changeHandler)changeHandler()}
-  function getCachedPoint(row){if(Number.isFinite(row.lat)&&Number.isFinite(row.lng))return{lat:+row.lat,lng:+row.lng,approx:false};const g=geoCache[keyAddr(row.endereco)];if(g&&Number.isFinite(+g.lat)&&Number.isFinite(+g.lng))return{lat:+g.lat,lng:+g.lng,approx:false};const c=REGION_CENTERS[row._regionHint||row.regiao];if(c)return{lat:c[0],lng:c[1],approx:true};return null}
+  function getCachedPoint(row){
+    const g=geoCache[keyAddr(row.endereco)];
+    if(g&&Number.isFinite(+g.lat)&&Number.isFinite(+g.lng)){
+      const exact=g.geoVersion===GEO_VERSION&&g.quality==='exact';
+      return{lat:+g.lat,lng:+g.lng,approx:!exact,quality:g.quality||'legacy'};
+    }
+    // Coordenadas embutidas no registro só são consideradas exatas se vierem
+    // marcadas pela geocodificação v2. Evita perpetuar cache antigo impreciso.
+    if(Number.isFinite(row.lat)&&Number.isFinite(row.lng)&&row.geoQuality==='exact'){
+      return{lat:+row.lat,lng:+row.lng,approx:false,quality:'exact'};
+    }
+    const c=REGION_CENTERS[row._regionHint||row.regiao];
+    if(c)return{lat:c[0],lng:c[1],approx:true,quality:'region'};
+    return null
+  }
   function polygonFeature(z){return turf.polygon([[...z.coords.map(([lat,lng])=>[lng,lat]),[z.coords[0][1],z.coords[0][0]]]])}
   function classifyPoint(lat,lng){if(!window.turf)return null;const pt=turf.point([lng,lat]);for(const z of zones){try{if(turf.booleanPointInPolygon(pt,polygonFeature(z)))return z.name}catch(e){}}return null}
   function reclassify(rows){let exact=0,approx=0,unassigned=0;for(const r of rows||[]){if(!r._regionHint)r._regionHint=r.regiao;const p=getCachedPoint(r);if(p){r.lat=p.lat;r.lng=p.lng;r.locationApprox=!!p.approx;if(!p.approx){exact++;r.regiao=classifyPoint(p.lat,p.lng)||'FORA DAS ÁREAS'}else{approx++;r.regiao=classifyPoint(p.lat,p.lng)||r._regionHint||'A GEOCODIFICAR'}}else{unassigned++;r.regiao='A GEOCODIFICAR'}}updateBadge(exact,approx,unassigned,rows?.length||0);return rows}
@@ -91,6 +106,7 @@
       <label><span>Raio</span><select id="mapFilterRadius"><option value="TODOS">Todos</option><option value="0-3"${mapFilters.raio==='0-3'?' selected':''}>Até 3 km</option><option value="3-5"${mapFilters.raio==='3-5'?' selected':''}>3–5 km</option><option value="5-10"${mapFilters.raio==='5-10'?' selected':''}>5–10 km</option><option value="10+"${mapFilters.raio==='10+'?' selected':''}>Acima de 10 km</option></select></label>
       <div class="map-switch-row"><span>Agrupar pontos próximos</span><input id="mapFilterCluster" type="checkbox"${mapFilters.cluster?' checked':''}></div>
       <div class="map-switch-row"><span>Exibir áreas das regiões</span><input id="mapFilterAreas" type="checkbox"${mapFilters.areas?' checked':''}></div>
+      <button type="button" class="map-filter-regeo">RELOCALIZAR ENDEREÇOS</button>
       <button type="button" class="map-filter-clear">LIMPAR FILTROS</button>`;
     const rerender=()=>{
       mapFilters.platform=box.querySelector('#mapFilterPlatform').value;
@@ -104,6 +120,7 @@
     };
     box.querySelectorAll('select,input').forEach(x=>x.onchange=rerender);
     box.querySelector('[data-close]').onclick=()=>ui.classList.remove('open');
+    box.querySelector('.map-filter-regeo').onclick=async()=>{const b=box.querySelector('.map-filter-regeo');b.disabled=true;b.textContent='LOCALIZANDO...';for(const r of currentRows){const k=keyAddr(r.endereco);const g=geoCache[k];if(!g||g.geoVersion!==GEO_VERSION||g.quality!=='exact')delete geoCache[k]}saveLocal();await geocodePending();b.disabled=false;b.textContent='RELOCALIZAR ENDEREÇOS'};
     box.querySelector('.map-filter-clear').onclick=()=>{mapFilters={platform:'TODOS',turno:'TODOS',status:'TODOS',raio:'TODOS',regiao:'TODOS',cluster:false,areas:false};renderDashboard(currentRows)};
   }
   function markerPopup(r){
@@ -156,7 +173,7 @@
     const el=document.getElementById('deliveryHeatMap');if(!el||!window.L)return null;
     if(!dashboardMap){
       dashboardMap=L.map(el,{zoomControl:true,attributionControl:true,preferCanvas:true}).setView(DEFAULT_CENTER,DEFAULT_ZOOM);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:20,subdomains:'abcd',attribution:'© OpenStreetMap © CARTO'}).addTo(dashboardMap);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(dashboardMap);
       dashboardZoneLayer=L.featureGroup().addTo(dashboardMap);
       dashboardMarkerLayer=L.featureGroup().addTo(dashboardMap);
       ensureMapUi(dashboardMap);
@@ -257,31 +274,103 @@
     return safe(address)
       .replace(/\.\s*Complemento:.*$/i,'')
       .replace(/\.\s*Refer[eê]ncia:.*$/i,'')
-      .replace(/\s+/g,' ').trim();
+      .replace(/\b(apto|apartamento|bloco|sala|loja|casa)\b.*$/i,'')
+      .replace(/\s+/g,' ')
+      .replace(/\s+,/g,',')
+      .trim();
   }
-  function geocodeQueries(address){
+  function parseBrazilAddress(address){
     const clean=cleanAddress(address);
-    const parts=clean.split(',').map(x=>x.trim()).filter(Boolean);
-    const streetNum=parts.slice(0,2).join(', ');
-    const bairro=parts.find((x,i)=>i>=2 && !/rio de janeiro|rj|brasil/i.test(x));
-    return [...new Set([
-      clean,
-      bairro?`${streetNum}, ${bairro}`:streetNum,
-      streetNum
-    ].filter(Boolean))];
+    const cep=(clean.match(/\b\d{5}-?\d{3}\b/)||[])[0]||'';
+    const withoutCep=clean.replace(/\b\d{5}-?\d{3}\b/g,'').replace(/\s+/g,' ').trim();
+    const parts=withoutCep.split(',').map(x=>x.trim()).filter(Boolean);
+    let street='',number='',bairro='';
+    if(parts.length){
+      street=parts[0].replace(/\s+-\s+.*$/,'').trim();
+      const second=parts[1]||'';
+      let m=second.match(/\b(\d{1,6}[A-Za-z]?)\b/);
+      if(m){number=m[1];bairro=second.replace(m[0],'').replace(/^[-\s]+|[-\s]+$/g,'').trim()}
+      if(!number){
+        m=street.match(/^(.*?)[,\s]+(\d{1,6}[A-Za-z]?)$/);
+        if(m){street=m[1].trim();number=m[2]}
+      }
+      if(!bairro){
+        bairro=(parts.slice(2).find(x=>!/rio de janeiro|\brj\b|brasil/i.test(x))||'')
+          .replace(/^[-\s]+|[-\s]+$/g,'').trim();
+      }
+    }
+    return{clean,street,number,bairro,cep};
+  }
+  function words(s){
+    return norm(s).replace(/[^a-z0-9 ]+/g,' ').split(/\s+/).filter(x=>x.length>2&&!['rua','avenida','av','estrada','rodovia','travessa'].includes(x));
+  }
+  function similarity(a,b){
+    const A=new Set(words(a)),B=new Set(words(b));if(!A.size||!B.size)return 0;
+    let hit=0;A.forEach(x=>{if(B.has(x))hit++});
+    return hit/Math.max(A.size,B.size);
+  }
+  function candidateScore(hit,p){
+    const ad=hit.address||{};
+    const road=ad.road||ad.pedestrian||ad.residential||ad.footway||ad.path||'';
+    const hn=safe(ad.house_number);
+    let score=0;
+    if(p.number&&hn&&norm(hn)===norm(p.number))score+=70;
+    else if(p.number&&hn)score-=35;
+    else if(p.number&&!hn)score-=12;
+    score+=similarity(p.street,road)*35;
+    const place=[ad.suburb,ad.neighbourhood,ad.quarter,ad.city_district].filter(Boolean).join(' ');
+    if(p.bairro&&similarity(p.bairro,place)>.35)score+=12;
+    if(p.cep&&safe(ad.postcode).replace(/\D/g,'')===p.cep.replace(/\D/g,''))score+=15;
+    if(['house','building','apartments','residential'].includes(safe(hit.type)))score+=8;
+    return score;
+  }
+  async function nominatimSearch(url){
+    const res=await fetch(url,{headers:{'Accept':'application/json','Accept-Language':'pt-BR'}});
+    if(!res.ok){if(res.status===429)throw new Error('Limite temporário do mapa. Aguarde e tente novamente.');return[]}
+    return await res.json();
   }
   async function geocodeAddress(address){
-    const queries=geocodeQueries(address);if(!queries.length)return null;
-    for(const q of queries){
-      const url='https://nominatim.openstreetmap.org/search?format=jsonv2&limit=3&countrycodes=br&bounded=1&viewbox=-43.65,-22.80,-43.15,-23.15&q='+encodeURIComponent(q+', Rio de Janeiro, RJ, Brasil');
-      const res=await fetch(url,{headers:{'Accept':'application/json','Accept-Language':'pt-BR'}});
-      if(!res.ok){if(res.status===429)throw new Error('Limite temporário do mapa. Aguarde e tente novamente.');continue}
-      const a=await res.json();
-      const hit=(a||[]).map(x=>({lat:+x.lat,lng:+x.lon,display:x.display_name||''})).find(x=>Number.isFinite(x.lat)&&Number.isFinite(x.lng)&&x.lat<=-22.80&&x.lat>=-23.15&&x.lng>=-43.65&&x.lng<=-43.15);
-      if(hit)return{...hit,updatedAt:new Date().toISOString(),query:q};
-      await sleep(250);
+    const p=parseBrazilAddress(address);if(!p.clean)return null;
+    const base='https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=10&countrycodes=br&bounded=1&viewbox=-43.65,-22.80,-43.15,-23.15';
+    const urls=[];
+    if(p.street&&p.number){
+      const streetParam=`${p.number} ${p.street}`;
+      urls.push(base+'&street='+encodeURIComponent(streetParam)+'&city='+encodeURIComponent('Rio de Janeiro')+'&state='+encodeURIComponent('Rio de Janeiro')+(p.cep?'&postalcode='+encodeURIComponent(p.cep):''));
     }
-    return null
+    const q1=[p.street,p.number,p.bairro,'Rio de Janeiro','RJ',p.cep,'Brasil'].filter(Boolean).join(', ');
+    if(q1)urls.push(base+'&q='+encodeURIComponent(q1));
+    urls.push(base+'&q='+encodeURIComponent(p.clean+', Rio de Janeiro, RJ, Brasil'));
+
+    let best=null,bestScore=-999;
+    for(const url of [...new Set(urls)]){
+      const arr=await nominatimSearch(url);
+      for(const hit of arr||[]){
+        const lat=+hit.lat,lng=+hit.lon;
+        if(!(Number.isFinite(lat)&&Number.isFinite(lng)&&lat<=-22.80&&lat>=-23.15&&lng>=-43.65&&lng<=-43.15))continue;
+        const sc=candidateScore(hit,p);
+        if(sc>bestScore){bestScore=sc;best={hit,lat,lng,score:sc}}
+      }
+      if(bestScore>=85)break;
+      await sleep(300);
+    }
+    if(!best)return null;
+    const ad=best.hit.address||{};
+    const exactNumber=!p.number || (ad.house_number&&norm(ad.house_number)===norm(p.number));
+    const road=ad.road||ad.pedestrian||ad.residential||'';
+    const exactRoad=!p.street || similarity(p.street,road)>=.45;
+    const quality=(exactNumber&&exactRoad&&best.score>=55)?'exact':'approx';
+    return{
+      lat:best.lat,lng:best.lng,
+      display:best.hit.display_name||'',
+      address:ad,
+      matchedHouseNumber:ad.house_number||'',
+      matchedRoad:road,
+      score:best.score,
+      quality,
+      geoVersion:GEO_VERSION,
+      updatedAt:new Date().toISOString(),
+      source:'nominatim-v2'
+    }
   }
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   async function retryUnclassified(){
@@ -313,7 +402,7 @@
     }
   }
 
-  async function geocodePending(){const btn=document.getElementById('geoPendingBtn'),prog=document.getElementById('geoProgress');const uniq=[];const seen=new Set();for(const r of currentRows){const k=keyAddr(r.endereco);if(!k||seen.has(k))continue;const cached=geoCache[k];if(cached&&Number.isFinite(+cached.lat)&&Number.isFinite(+cached.lng))continue;seen.add(k);uniq.push({k,address:r.endereco})}if(!uniq.length){if(prog)prog.textContent='Todos os endereços deste período já foram processados.';return}if(btn){btn.disabled=true;btn.textContent='LOCALIZANDO...'}let ok=0,fail=0;for(let i=0;i<uniq.length;i++){const item=uniq[i];if(prog)prog.textContent=`Localizando ${i+1} de ${uniq.length} • ${item.address}`;try{const g=await geocodeAddress(item.address);if(g){geoCache[item.k]=g;ok++}else{geoCache[item.k]={notFound:true,updatedAt:new Date().toISOString()};fail++}}catch(e){console.warn(e);fail++}saveLocal();if((i+1)%10===0){try{await DeliveryFirebase.saveGeoCache?.(geoCache)}catch(e){}}await sleep(1100)}try{await DeliveryFirebase.saveGeoCache?.(geoCache)}catch(e){}reclassify(currentRows);drawOrderMarkers();renderZoneList();renderDashboard(currentRows);if(changeHandler)changeHandler();if(prog)prog.textContent=`Concluído: ${ok} novos endereços localizados • ${fail} ainda pendentes.`;if(btn){btn.disabled=false;btn.textContent='LOCALIZAR ENDEREÇOS'}}
+  async function geocodePending(){const btn=document.getElementById('geoPendingBtn'),prog=document.getElementById('geoProgress');const uniq=[];const seen=new Set();for(const r of currentRows){const k=keyAddr(r.endereco);if(!k||seen.has(k))continue;const cached=geoCache[k];const isExactV2=cached&&cached.geoVersion===GEO_VERSION&&cached.quality==='exact'&&Number.isFinite(+cached.lat)&&Number.isFinite(+cached.lng);if(isExactV2)continue;seen.add(k);uniq.push({k,address:r.endereco})}if(!uniq.length){if(prog)prog.textContent='Todos os endereços deste período já foram processados.';return}if(btn){btn.disabled=true;btn.textContent='LOCALIZANDO...'}let ok=0,fail=0;for(let i=0;i<uniq.length;i++){const item=uniq[i];if(prog)prog.textContent=`Localizando ${i+1} de ${uniq.length} • ${item.address}`;try{const g=await geocodeAddress(item.address);if(g){geoCache[item.k]=g;if(g.quality==='exact')ok++;else fail++}else{geoCache[item.k]={notFound:true,geoVersion:GEO_VERSION,quality:'notFound',updatedAt:new Date().toISOString()};fail++}}catch(e){console.warn(e);fail++}saveLocal();if((i+1)%10===0){try{await DeliveryFirebase.saveGeoCache?.(geoCache)}catch(e){}}await sleep(1100)}try{await DeliveryFirebase.saveGeoCache?.(geoCache)}catch(e){}reclassify(currentRows);drawOrderMarkers();renderZoneList();renderDashboard(currentRows);if(changeHandler)changeHandler();if(prog)prog.textContent=`Concluído: ${ok} novos endereços localizados • ${fail} ainda pendentes.`;if(btn){btn.disabled=false;btn.textContent='LOCALIZAR ENDEREÇOS'}}
   async function init(){loadLocal();await loadRemote();bindEditor()}
   function showRegionView(rows){currentRows=rows||currentRows;reclassify(currentRows);ensureRegionMap();drawOrderMarkers();renderZoneList()}
   function onChange(fn){changeHandler=fn}

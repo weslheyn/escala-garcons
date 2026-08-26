@@ -44,7 +44,7 @@
   }
   function polygonFeature(z){return turf.polygon([[...z.coords.map(([lat,lng])=>[lng,lat]),[z.coords[0][1],z.coords[0][0]]]])}
   function classifyPoint(lat,lng){if(!window.turf)return null;const pt=turf.point([lng,lat]);for(const z of zones){try{if(turf.booleanPointInPolygon(pt,polygonFeature(z)))return z.name}catch(e){}}return null}
-  function reclassify(rows){let exact=0,approx=0,unassigned=0;for(const r of rows||[]){if(!r._regionHint)r._regionHint=r.regiao;const p=getCachedPoint(r);if(p){r.lat=p.lat;r.lng=p.lng;r.locationApprox=!!p.approx;if(!p.approx){exact++;r.regiao=classifyPoint(p.lat,p.lng)||'FORA DAS ÁREAS'}else{approx++;r.regiao=classifyPoint(p.lat,p.lng)||r._regionHint||'A GEOCODIFICAR'}}else{unassigned++;r.regiao='A GEOCODIFICAR'}}updateBadge(exact,approx,unassigned,rows?.length||0);return rows}
+  function reclassify(rows){let exact=0,approx=0,unassigned=0;for(const r of rows||[]){if(!r._regionHint)r._regionHint=r.regiao;const p=getCachedPoint(r);if(p){r.lat=p.lat;r.lng=p.lng;r.locationApprox=!!p.approx;r.geoQuality=p.quality||'';if(!p.approx){exact++;r.regiao=classifyPoint(p.lat,p.lng)||'FORA DAS ÁREAS'}else{approx++;r.regiao=classifyPoint(p.lat,p.lng)||r._regionHint||'A GEOCODIFICAR'}}else{unassigned++;r.regiao='A GEOCODIFICAR'}}updateBadge(exact,approx,unassigned,rows?.length||0);return rows}
   function updateBadge(exact,approx,unassigned,total){const b=document.getElementById('mapAccuracyBadge');if(b){b.textContent=`${exact}/${total} localizados`;b.classList.toggle('warn',exact<total)}const u=document.getElementById('unassignedCount');if(u){u.textContent=`${unassigned+approx} a revisar`;u.classList.toggle('warn',unassigned+approx>0)}}
   async function prepareRows(rows){currentRows=rows||[];reclassify(currentRows);return currentRows}
 
@@ -197,15 +197,17 @@
 
     const filtered=mapFilteredRows(currentRows);
     const exactRows=filtered.filter(r=>!r.locationApprox&&Number.isFinite(r.lat)&&Number.isFinite(r.lng));
+    const approxRows=filtered.filter(r=>r.locationApprox&&Number.isFinite(r.lat)&&Number.isFinite(r.lng));
+    const mappedRows=[...exactRows,...approxRows];
     const renderedBounds=[];
 
     if(mapFilters.cluster){
-      exactCoordinateGroups(exactRows).forEach(group=>{
+      exactCoordinateGroups(mappedRows).forEach(group=>{
         if(group.length===1){
-          const r=group[0],c=platformColor(r.platform),ll=[r.lat,r.lng];
+          const r=group[0],c=platformColor(r.platform),ll=[r.lat,r.lng],approx=!!r.locationApprox;
           renderedBounds.push(ll);
-          L.circleMarker(ll,{radius:6,color:'#111318',weight:1.7,fillColor:c,fillOpacity:.98})
-            .bindPopup(markerPopup(r),{maxWidth:300})
+          L.circleMarker(ll,{radius:approx?5.5:6,color:approx?'#ffffff':'#111318',weight:approx?1.8:1.7,fillColor:c,fillOpacity:approx?.5:.98,dashArray:approx?'3 2':null})
+            .bindPopup(markerPopup(r)+(approx?'<div class="approx-note">⚠ posição aproximada</div>':''),{maxWidth:300})
             .bindTooltip(`Pedido ${esc(r.pedido)} • ${esc(r.platform||'')}`,{direction:'top',offset:[0,-5]})
             .addTo(dashboardMarkerLayer);
         }else{
@@ -225,26 +227,28 @@
     }else{
       // Exibe TODOS os pedidos. Se vários tiverem a mesma coordenada,
       // abre levemente os pontos em volta dela para não ficarem escondidos.
-      exactCoordinateGroups(exactRows).forEach(group=>{
+      exactCoordinateGroups(mappedRows).forEach(group=>{
         group.forEach((r,i)=>{
           const c=platformColor(r.platform);
           const ll=displayLatLng(r,i,group.length);
           renderedBounds.push(ll);
+          const approx=!!r.locationApprox;
           const marker=L.circleMarker(ll,{
-            radius:6,
-            color:'#111318',
-            weight:1.7,
+            radius:approx?5.5:6,
+            color:approx?'#ffffff':'#111318',
+            weight:approx?1.8:1.7,
             fillColor:c,
-            fillOpacity:.98
+            fillOpacity:approx?.5:.98,
+            dashArray:approx?'3 2':null
           });
-          marker.bindPopup(markerPopup(r),{maxWidth:310});
+          marker.bindPopup(markerPopup(r)+(approx?'<div class="approx-note">⚠ posição aproximada — número exato não confirmado</div>':''),{maxWidth:310});
           marker.bindTooltip(`Pedido ${esc(r.pedido)} • ${esc(r.platform||'')}`,{direction:'top',offset:[0,-6]});
           marker.addTo(dashboardMarkerLayer);
         });
       });
     }
 
-    renderMapLegend(map,exactRows);
+    renderMapLegend(map,mappedRows);
 
     const bounds=renderedBounds;
     if(bounds.length>=2)map.fitBounds(bounds,{padding:[34,34],maxZoom:14});
@@ -257,9 +261,10 @@
     const panel=map.getContainer();
     let fl=panel.querySelector('.region-summary-floater');
     if(!fl){fl=document.createElement('div');fl.className='region-summary-floater';panel.appendChild(fl)}
-    fl.innerHTML=`<b>${exactRows.length} pontos de pedidos</b><small>${filtered.length} pedidos no filtro • ${Math.max(0,filtered.length-exactRows.length)} pendentes de localização</small>`;
+    const noPoint=Math.max(0,filtered.length-mappedRows.length);
+    fl.innerHTML=`<b>${mappedRows.length} pedidos demarcados</b><small>${exactRows.length} exatos • ${approxRows.length} aproximados${noPoint?` • ${noPoint} sem ponto`:''}</small>`;
     const badge=document.getElementById('mapAccuracyBadge');
-    if(badge)badge.textContent=`${exactRows.length}/${filtered.length} localizados`;
+    if(badge)badge.textContent=`${mappedRows.length}/${filtered.length} no mapa`;
   }
   function ensureRegionMap(){const el=document.getElementById('deliveryRegionMap');if(!el||!window.L)return null;if(!regionMap){regionMap=L.map(el,{zoomControl:true,preferCanvas:true}).setView(DEFAULT_CENTER,DEFAULT_ZOOM);L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:20,subdomains:'abcd',attribution:'© OpenStreetMap © CARTO'}).addTo(regionMap);drawLayer=L.featureGroup().addTo(regionMap);drawControl=new L.Control.Draw({position:'topleft',draw:{polyline:false,rectangle:false,circle:false,circlemarker:false,marker:false,polygon:{allowIntersection:false,showArea:true,shapeOptions:{color:'#f0b83f',weight:2,fillOpacity:.15}}},edit:{featureGroup:drawLayer,remove:false}});regionMap.addControl(drawControl);regionMap.on(L.Draw.Event.CREATED,e=>{const name=safe(drawName||document.getElementById('newRegionName')?.value)||`Região ${zones.length+1}`;const coords=e.layer.getLatLngs()[0].map(p=>[+p.lat.toFixed(6),+p.lng.toFixed(6)]);zones.push({id:'z_'+Date.now(),name,color:colorFor(zones.length),coords});drawName='';const inp=document.getElementById('newRegionName');if(inp)inp.value='';saveZones()});regionMap.on(L.Draw.Event.EDITED,e=>{e.layers.eachLayer(layer=>{const id=layer.options.zoneId,z=zones.find(x=>x.id===id);if(z)z.coords=layer.getLatLngs()[0].map(p=>[+p.lat.toFixed(6),+p.lng.toFixed(6)])});saveZones()})}setTimeout(()=>regionMap.invalidateSize(),20);drawZonesOnEditor();drawOrderMarkers();return regionMap}
   function drawZonesOnEditor(){if(!regionMap||!drawLayer)return;drawLayer.clearLayers();zones.forEach(z=>{const l=L.polygon(z.coords,{color:z.color,weight:2,fillColor:z.color,fillOpacity:.14,zoneId:z.id}).addTo(drawLayer);l.options.zoneId=z.id;l.bindTooltip(z.name,{permanent:true,direction:'center',className:'region-label'});l.on('click',()=>selectZone(z.id))})}
@@ -372,6 +377,64 @@
       source:'nominatim-v2'
     }
   }
+
+  function regionHintFromAddress(address){
+    const a=norm(address);
+    const pairs=[
+      ['recreio','Recreio'],['barra da tijuca','Barra da Tijuca'],['barra olimpica','Barra Olímpica'],
+      ['barra olímpica','Barra Olímpica'],['vargem grande','Vargem Grande'],['vargem pequena','Vargem Pequena'],
+      ['taquara','Taquara'],['jacarepagua','Jacarepaguá'],['jacarepaguá','Jacarepaguá'],
+      ['itanhanga','Itanhangá'],['itanhangá','Itanhangá'],['camorim','Camorim'],
+      ['pechincha','Pechincha'],['freguesia','Freguesia'],['curicica','Curicica'],['joa','Joá'],['joá','Joá']
+    ];
+    for(const [k,v] of pairs)if(a.includes(k))return v;
+    return '';
+  }
+  async function geocodeFallback(address,rowHint=''){
+    const p=parseBrazilAddress(address);if(!p.clean)return null;
+    const base='https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=8&countrycodes=br&bounded=1&viewbox=-43.65,-22.80,-43.15,-23.15';
+    const hints=[p.bairro,rowHint,regionHintFromAddress(address)].filter(Boolean);
+    const queries=[
+      [p.street,p.bairro,'Rio de Janeiro','RJ','Brasil'].filter(Boolean).join(', '),
+      [p.street,rowHint,'Rio de Janeiro','RJ','Brasil'].filter(Boolean).join(', '),
+      [p.bairro,'Rio de Janeiro','RJ','Brasil'].filter(Boolean).join(', ')
+    ].filter(Boolean);
+    let best=null,bestScore=-999;
+    for(const q of [...new Set(queries)]){
+      const arr=await nominatimSearch(base+'&q='+encodeURIComponent(q));
+      for(const hit of arr||[]){
+        const lat=+hit.lat,lng=+hit.lon;
+        if(!(Number.isFinite(lat)&&Number.isFinite(lng)&&lat<=-22.80&&lat>=-23.15&&lng>=-43.65&&lng<=-43.15))continue;
+        const ad=hit.address||{};
+        const road=ad.road||ad.pedestrian||ad.residential||'';
+        let sc=similarity(p.street,road)*45;
+        const place=[ad.suburb,ad.neighbourhood,ad.quarter,ad.city_district].filter(Boolean).join(' ');
+        for(const h of hints)if(similarity(h,place)>.3)sc+=18;
+        if(sc>bestScore){bestScore=sc;best={lat,lng,hit,score:sc}}
+      }
+      if(bestScore>=40)break;
+      await sleep(250);
+    }
+    if(best){
+      const ad=best.hit.address||{};
+      return{
+        lat:best.lat,lng:best.lng,display:best.hit.display_name||'',address:ad,
+        matchedHouseNumber:ad.house_number||'',
+        matchedRoad:ad.road||ad.pedestrian||ad.residential||'',
+        score:best.score,quality:'approx',geoVersion:GEO_VERSION,
+        updatedAt:new Date().toISOString(),source:'nominatim-v2-fallback'
+      };
+    }
+    const region=rowHint||regionHintFromAddress(address);
+    const c=REGION_CENTERS[region];
+    if(c){
+      return{
+        lat:c[0],lng:c[1],display:region,score:0,quality:'region',
+        geoVersion:GEO_VERSION,updatedAt:new Date().toISOString(),source:'region-fallback'
+      };
+    }
+    return null;
+  }
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   async function retryUnclassified(){
     const allowed=configuredRegions();
@@ -402,7 +465,48 @@
     }
   }
 
-  async function geocodePending(){const btn=document.getElementById('geoPendingBtn'),prog=document.getElementById('geoProgress');const uniq=[];const seen=new Set();for(const r of currentRows){const k=keyAddr(r.endereco);if(!k||seen.has(k))continue;const cached=geoCache[k];const isExactV2=cached&&cached.geoVersion===GEO_VERSION&&cached.quality==='exact'&&Number.isFinite(+cached.lat)&&Number.isFinite(+cached.lng);if(isExactV2)continue;seen.add(k);uniq.push({k,address:r.endereco})}if(!uniq.length){if(prog)prog.textContent='Todos os endereços deste período já foram processados.';return}if(btn){btn.disabled=true;btn.textContent='LOCALIZANDO...'}let ok=0,fail=0;for(let i=0;i<uniq.length;i++){const item=uniq[i];if(prog)prog.textContent=`Localizando ${i+1} de ${uniq.length} • ${item.address}`;try{const g=await geocodeAddress(item.address);if(g){geoCache[item.k]=g;if(g.quality==='exact')ok++;else fail++}else{geoCache[item.k]={notFound:true,geoVersion:GEO_VERSION,quality:'notFound',updatedAt:new Date().toISOString()};fail++}}catch(e){console.warn(e);fail++}saveLocal();if((i+1)%10===0){try{await DeliveryFirebase.saveGeoCache?.(geoCache)}catch(e){}}await sleep(1100)}try{await DeliveryFirebase.saveGeoCache?.(geoCache)}catch(e){}reclassify(currentRows);drawOrderMarkers();renderZoneList();renderDashboard(currentRows);if(changeHandler)changeHandler();if(prog)prog.textContent=`Concluído: ${ok} novos endereços localizados • ${fail} ainda pendentes.`;if(btn){btn.disabled=false;btn.textContent='LOCALIZAR ENDEREÇOS'}}
+  async function geocodePending(){
+    const btn=document.getElementById('geoPendingBtn'),prog=document.getElementById('geoProgress');
+    const uniq=[],seen=new Set();
+    for(const r of currentRows){
+      const k=keyAddr(r.endereco);if(!k||seen.has(k))continue;
+      const cached=geoCache[k];
+      const isExactV2=cached&&cached.geoVersion===GEO_VERSION&&cached.quality==='exact'&&Number.isFinite(+cached.lat)&&Number.isFinite(+cached.lng);
+      if(isExactV2)continue;
+      seen.add(k);uniq.push({k,address:r.endereco});
+    }
+    if(!uniq.length){if(prog)prog.textContent='Todos os endereços deste período já foram processados.';return}
+    if(btn){btn.disabled=true;btn.textContent='LOCALIZANDO...'}
+    let exact=0,approx=0,fail=0;
+    for(let i=0;i<uniq.length;i++){
+      const item=uniq[i];
+      if(prog)prog.textContent=`Localizando ${i+1} de ${uniq.length} • ${item.address}`;
+      try{
+        let g=await geocodeAddress(item.address);
+        if(!g||g.quality!=='exact'){
+          const related=currentRows.find(r=>keyAddr(r.endereco)===item.k);
+          const hint=related?related._regionHint||related.regiao:'';
+          const fb=await geocodeFallback(item.address,hint);
+          if(fb)g=fb;
+        }
+        if(g){
+          geoCache[item.k]=g;
+          if(g.quality==='exact')exact++;else approx++;
+        }else{
+          geoCache[item.k]={notFound:true,geoVersion:GEO_VERSION,quality:'notFound',updatedAt:new Date().toISOString()};
+          fail++;
+        }
+      }catch(e){console.warn(e);fail++}
+      saveLocal();
+      if((i+1)%10===0){try{await DeliveryFirebase.saveGeoCache?.(geoCache)}catch(e){}}
+      await sleep(1100);
+    }
+    try{await DeliveryFirebase.saveGeoCache?.(geoCache)}catch(e){}
+    reclassify(currentRows);drawOrderMarkers();renderZoneList();renderDashboard(currentRows);
+    if(changeHandler)changeHandler();
+    if(prog)prog.textContent=`Concluído: ${exact} exatos • ${approx} aproximados • ${fail} sem ponto.`;
+    if(btn){btn.disabled=false;btn.textContent='LOCALIZAR ENDEREÇOS'}
+  }
   async function init(){loadLocal();await loadRemote();bindEditor()}
   function showRegionView(rows){currentRows=rows||currentRows;reclassify(currentRows);ensureRegionMap();drawOrderMarkers();renderZoneList()}
   function onChange(fn){changeHandler=fn}

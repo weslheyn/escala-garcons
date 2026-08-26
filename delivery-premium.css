@@ -1215,3 +1215,23 @@ main {
   #view-visao .radius-overview-panel,
   #view-visao .overview-map-panel{grid-column:span 12!important}
 }
+
+
+/* =========================================================
+   DELIVERY v21 — TODOS OS PEDIDOS VISÍVEIS NO MAPA
+   ========================================================= */
+.approx-note{
+  margin-top:8px;padding:6px 8px;border-radius:6px;
+  background:#fff4d6;color:#7a5400;font:600 10px/1.25 Arial,sans-serif
+}
+#view-visao .overview-map-panel .panel-title-row::after{
+  content:"● exato   ◌ aproximado";
+  margin-left:auto;
+  margin-right:112px;
+  color:#777f88;
+  font:500 9px Arial,sans-serif;
+  white-space:nowrap;
+}
+@media(max-width:1000px){
+  #view-visao .overview-map-panel .panel-title-row::after{display:none}
+}

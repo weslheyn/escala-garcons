@@ -1190,3 +1190,28 @@ main {
   #view-visao .overview-map-panel{grid-column:span 8!important}
   #view-visao .latest-overview-panel{grid-column:span 12!important}
 }
+
+
+/* =========================================================
+   DELIVERY v20 — MAPA AMPLIADO / SEM ÚLTIMOS PEDIDOS
+   ========================================================= */
+#view-visao .radius-overview-panel{
+  grid-column:span 3!important;
+  min-height:430px!important;
+}
+#view-visao .overview-map-panel{
+  grid-column:span 9!important;
+  min-height:430px!important;
+}
+#view-visao .dashboard-map{
+  height:372px!important;
+  min-height:372px!important;
+}
+@media(max-width:1280px){
+  #view-visao .radius-overview-panel{grid-column:span 4!important}
+  #view-visao .overview-map-panel{grid-column:span 8!important}
+}
+@media(max-width:900px){
+  #view-visao .radius-overview-panel,
+  #view-visao .overview-map-panel{grid-column:span 12!important}
+}

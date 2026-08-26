@@ -1235,3 +1235,17 @@ main {
 @media(max-width:1000px){
   #view-visao .overview-map-panel .panel-title-row::after{display:none}
 }
+
+
+/* =========================================================
+   DELIVERY v22 — LOCALIZAÇÃO POR ENDEREÇO REAL
+   ========================================================= */
+.order-map-popup .same-address-list{margin-top:6px}
+.cluster-count{
+  pointer-events:none!important;
+  color:#fff!important;
+  text-shadow:0 1px 3px rgba(0,0,0,.8)!important;
+}
+#view-visao .overview-map-panel .panel-title-row::after{
+  content:"● endereço confirmado   ◌ aproximado"!important;
+}

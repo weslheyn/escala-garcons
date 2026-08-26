@@ -17,7 +17,7 @@
   let zones=[],geoCache={},currentRows=[],changeHandler=null,drawName='';
   let mapFilters={platform:'TODOS',turno:'TODOS',status:'TODOS',raio:'TODOS',regiao:'TODOS',cluster:false,areas:false};
   const storageZones='cbDeliveryCustomRegionsV1',storageGeo='cbDeliveryGeoCacheV1';
-  const GEO_VERSION=2;
+  const GEO_VERSION=3;
   const safe=s=>String(s||'').trim();
   const norm=s=>window.DeliveryImport?.norm?DeliveryImport.norm(s):String(s||'').toLowerCase();
   const keyAddr=a=>norm(a).replace(/[^a-z0-9]+/g,' ').trim();
@@ -134,15 +134,14 @@
       <small>KM</small><strong>${esc(km)}</strong>
       <small>Status</small><strong>${esc(r.status||'—')}</strong>
       <small>Valor</small><strong>${esc(val)}</strong>
-      <small>Endereço</small><strong>${esc(r.endereco||'—')}</strong></div>`;
+      <small>Endereço</small><strong>${esc(r.enderecoMaestro||r.endereco||r.enderecoAgilizone||'—')}</strong>
+      <small>Fonte</small><strong>${esc(r.enderecoFonte||'MAESTRO')}</strong></div>`;
   }
   function exactCoordinateGroups(rows){
     const groups=new Map();
     for(const r of rows){
-      // Agrupa apenas coordenadas praticamente idênticas.
-      // Muitos pedidos podem ter o mesmo destino/endereço ou o geocoder pode
-      // devolver o mesmo ponto. No mapa, cada pedido continua sendo exibido.
-      const key=`${(+r.lat).toFixed(6)}|${(+r.lng).toFixed(6)}`;
+      // Agrupa SOMENTE pedidos realmente destinados ao mesmo endereço.
+      const key=sameAddressKey(r)||`${(+r.lat).toFixed(7)}|${(+r.lng).toFixed(7)}|${r.pedido}`;
       if(!groups.has(key))groups.set(key,[]);
       groups.get(key).push(r);
     }
@@ -228,23 +227,25 @@
       // Exibe TODOS os pedidos. Se vários tiverem a mesma coordenada,
       // abre levemente os pontos em volta dela para não ficarem escondidos.
       exactCoordinateGroups(mappedRows).forEach(group=>{
-        group.forEach((r,i)=>{
-          const c=platformColor(r.platform);
-          const ll=displayLatLng(r,i,group.length);
-          renderedBounds.push(ll);
-          const approx=!!r.locationApprox;
-          const marker=L.circleMarker(ll,{
-            radius:approx?5.5:6,
-            color:approx?'#ffffff':'#111318',
-            weight:approx?1.8:1.7,
-            fillColor:c,
-            fillOpacity:approx?.5:.98,
-            dashArray:approx?'3 2':null
-          });
+        const r=group[0],c=platformColor(r.platform),approx=!!r.locationApprox;
+        const ll=[+r.lat,+r.lng];renderedBounds.push(ll);
+        const radius=group.length>1?8:6;
+        const marker=L.circleMarker(ll,{
+          radius,
+          color:approx?'#ffffff':'#111318',
+          weight:approx?1.8:1.7,
+          fillColor:c,
+          fillOpacity:approx?.55:.98,
+          dashArray:approx?'3 2':null
+        });
+        if(group.length>1){
+          marker.bindTooltip(String(group.length),{permanent:true,direction:'center',className:'cluster-count'});
+          marker.bindPopup(`<div class="order-map-popup"><b>${group.length} pedidos no mesmo endereço</b><span>${esc(r.enderecoMaestro||r.endereco||'')}</span>${group.map(x=>`<small>Pedido</small><strong>${esc(x.pedido)} • ${esc(x.cliente||'')}</strong>`).join('')}</div>`,{maxWidth:320});
+        }else{
           marker.bindPopup(markerPopup(r)+(approx?'<div class="approx-note">⚠ posição aproximada — número exato não confirmado</div>':''),{maxWidth:310});
           marker.bindTooltip(`Pedido ${esc(r.pedido)} • ${esc(r.platform||'')}`,{direction:'top',offset:[0,-6]});
-          marker.addTo(dashboardMarkerLayer);
-        });
+        }
+        marker.addTo(dashboardMarkerLayer);
       });
     }
 
@@ -334,18 +335,73 @@
     if(!res.ok){if(res.status===429)throw new Error('Limite temporário do mapa. Aguarde e tente novamente.');return[]}
     return await res.json();
   }
+
+  function canonicalStreetName(s){
+    return safe(s)
+      .replace(/\bAv\.?\s+/i,'Avenida ')
+      .replace(/\bR\.?\s+/i,'Rua ')
+      .replace(/\bEstr\.?\s+/i,'Estrada ')
+      .replace(/\bRod\.?\s+/i,'Rodovia ')
+      .replace(/\bTv\.?\s+/i,'Travessa ')
+      .replace(/\s+/g,' ').trim();
+  }
+  function canonicalForGeocode(address){
+    const p=parseBrazilAddress(address);
+    let street=canonicalStreetName(p.street);
+    // Remove observações dentro do nome da via, ex: "(Majestic - Cidade Jardim)"
+    street=street.replace(/\([^)]*\)/g,' ').replace(/\s+/g,' ').trim();
+    return{
+      ...p,
+      street,
+      single:[street,p.number,p.bairro,'Rio de Janeiro','RJ',p.cep,'Brasil'].filter(Boolean).join(', ')
+    };
+  }
+  async function arcgisGeocode(address){
+    const p=canonicalForGeocode(address);if(!p.single)return null;
+    try{
+      const url='https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates'
+        +'?f=json&countryCode=BRA&maxLocations=8&outFields=Match_addr,Addr_type,StAddr,City,Nbrhd,Postal'
+        +'&SingleLine='+encodeURIComponent(p.single);
+      const res=await fetch(url,{headers:{'Accept':'application/json'}});
+      if(!res.ok)return null;
+      const data=await res.json(),cands=Array.isArray(data.candidates)?data.candidates:[];
+      let best=null;
+      for(const c of cands){
+        const lat=+(c.location&&c.location.y),lng=+(c.location&&c.location.x);
+        if(!(Number.isFinite(lat)&&Number.isFinite(lng)&&lat<=-22.80&&lat>=-23.15&&lng>=-43.65&&lng<=-43.15))continue;
+        const score=+c.score||0;
+        const attrs=c.attributes||{};
+        const type=safe(attrs.Addr_type);
+        const exactType=/PointAddress|StreetAddress|Subaddress/i.test(type);
+        const candidate={lat,lng,score,attrs,type,quality:(score>=88&&exactType)?'exact':'approx'};
+        if(!best||score>best.score)best=candidate;
+      }
+      if(!best||best.score<70)return null;
+      return{
+        lat:best.lat,lng:best.lng,display:best.attrs.Match_addr||p.single,
+        matchedHouseNumber:p.number||'',matchedRoad:best.attrs.StAddr||p.street,
+        score:best.score,quality:best.quality,geoVersion:GEO_VERSION,
+        updatedAt:new Date().toISOString(),source:'arcgis-world'
+      };
+    }catch(e){console.warn('ArcGIS geocode',e);return null}
+  }
+  function sameAddressKey(row){
+    const a=canonicalForGeocode(row.enderecoMaestro||row.endereco||row.enderecoAgilizone||'');
+    return norm([a.street,a.number,a.bairro].filter(Boolean).join('|'));
+  }
   async function geocodeAddress(address){
-    const p=parseBrazilAddress(address);if(!p.clean)return null;
+    const p=canonicalForGeocode(address);if(!p.clean)return null;
+    // 1) ArcGIS costuma localizar números de porta que não existem no OSM.
+    const arc=await arcgisGeocode(address);
+    if(arc&&arc.quality==='exact')return arc;
+
+    // 2) Nominatim/OpenStreetMap com rua + número + bairro/CEP.
     const base='https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=10&countrycodes=br&bounded=1&viewbox=-43.65,-22.80,-43.15,-23.15';
     const urls=[];
     if(p.street&&p.number){
-      const streetParam=`${p.number} ${p.street}`;
-      urls.push(base+'&street='+encodeURIComponent(streetParam)+'&city='+encodeURIComponent('Rio de Janeiro')+'&state='+encodeURIComponent('Rio de Janeiro')+(p.cep?'&postalcode='+encodeURIComponent(p.cep):''));
+      urls.push(base+'&street='+encodeURIComponent(`${p.number} ${p.street}`)+'&city='+encodeURIComponent('Rio de Janeiro')+'&state='+encodeURIComponent('Rio de Janeiro')+(p.cep?'&postalcode='+encodeURIComponent(p.cep):''));
     }
-    const q1=[p.street,p.number,p.bairro,'Rio de Janeiro','RJ',p.cep,'Brasil'].filter(Boolean).join(', ');
-    if(q1)urls.push(base+'&q='+encodeURIComponent(q1));
-    urls.push(base+'&q='+encodeURIComponent(p.clean+', Rio de Janeiro, RJ, Brasil'));
-
+    urls.push(base+'&q='+encodeURIComponent(p.single));
     let best=null,bestScore=-999;
     for(const url of [...new Set(urls)]){
       const arr=await nominatimSearch(url);
@@ -356,28 +412,26 @@
         if(sc>bestScore){bestScore=sc;best={hit,lat,lng,score:sc}}
       }
       if(bestScore>=85)break;
-      await sleep(300);
+      await sleep(260);
     }
-    if(!best)return null;
-    const ad=best.hit.address||{};
-    const exactNumber=!p.number || (ad.house_number&&norm(ad.house_number)===norm(p.number));
-    const road=ad.road||ad.pedestrian||ad.residential||'';
-    const exactRoad=!p.street || similarity(p.street,road)>=.45;
-    const quality=(exactNumber&&exactRoad&&best.score>=55)?'exact':'approx';
-    return{
-      lat:best.lat,lng:best.lng,
-      display:best.hit.display_name||'',
-      address:ad,
-      matchedHouseNumber:ad.house_number||'',
-      matchedRoad:road,
-      score:best.score,
-      quality,
-      geoVersion:GEO_VERSION,
-      updatedAt:new Date().toISOString(),
-      source:'nominatim-v2'
+    let osm=null;
+    if(best){
+      const ad=best.hit.address||{},hn=safe(ad.house_number);
+      const road=ad.road||ad.pedestrian||ad.residential||'';
+      const exactNumber=!p.number||(hn&&norm(hn)===norm(p.number));
+      const exactRoad=!p.street||similarity(p.street,road)>=.45;
+      osm={
+        lat:best.lat,lng:best.lng,display:best.hit.display_name||'',
+        address:ad,matchedHouseNumber:hn,matchedRoad:road,score:best.score,
+        quality:(exactNumber&&exactRoad&&best.score>=55)?'exact':'approx',
+        geoVersion:GEO_VERSION,updatedAt:new Date().toISOString(),source:'nominatim-v3'
+      };
     }
+    if(osm&&osm.quality==='exact')return osm;
+    // Se nenhum serviço confirmou o número, usa o melhor candidato como aproximado.
+    if(arc&&(!osm||arc.score>osm.score))return arc;
+    return osm;
   }
-
   function regionHintFromAddress(address){
     const a=norm(address);
     const pairs=[
@@ -473,7 +527,7 @@
       const cached=geoCache[k];
       const isExactV2=cached&&cached.geoVersion===GEO_VERSION&&cached.quality==='exact'&&Number.isFinite(+cached.lat)&&Number.isFinite(+cached.lng);
       if(isExactV2)continue;
-      seen.add(k);uniq.push({k,address:r.endereco});
+      seen.add(k);uniq.push({k,address:r.enderecoMaestro||r.endereco||r.enderecoAgilizone});
     }
     if(!uniq.length){if(prog)prog.textContent='Todos os endereços deste período já foram processados.';return}
     if(btn){btn.disabled=true;btn.textContent='LOCALIZANDO...'}

@@ -663,150 +663,198 @@ main {
 
 
 /* =========================================================
-   DELIVERY v14 — DISTRIBUIÇÃO FINAL APROVADA
-   Escopo: somente #view-visao do módulo Delivery.
+   DELIVERY v15 — CORREÇÃO DE REGRESSÃO + LAYOUT FINAL
+   Somente Visão Geral do módulo Delivery.
    ========================================================= */
 #view-visao{
   max-width:1540px;
   margin:0 auto;
 }
 #view-visao .grid-main{
-  display:grid;
-  grid-template-columns:repeat(12,minmax(0,1fr));
-  gap:12px;
-  align-items:stretch;
+  display:grid!important;
+  grid-template-columns:repeat(12,minmax(0,1fr))!important;
+  gap:12px!important;
+  align-items:stretch!important;
 }
 
-/* 1 — três gráficos, mesma altura */
+/* Linha 1: três gráficos iguais */
 #view-visao .overview-chart-panel{
   grid-column:span 4!important;
+  min-width:0!important;
   height:300px!important;
   min-height:300px!important;
-  padding:14px 15px 12px!important;
+  padding:14px 14px 10px!important;
 }
 #view-visao .overview-chart-panel .compact-chart,
-#view-visao .overview-chart-panel:has(#hourChart) .compact-chart,
 #view-visao .trend-chart-panel .compact-chart{
-  height:240px!important;
-  min-height:240px!important;
-}
-#view-visao .platform-chart-layout{
   height:238px!important;
   min-height:238px!important;
-  grid-template-columns:minmax(150px,43%) minmax(0,57%)!important;
+}
+#view-visao .platform-chart-layout{
+  height:235px!important;
+  min-height:235px!important;
+  display:grid!important;
+  grid-template-columns:minmax(145px,42%) minmax(0,58%)!important;
+  gap:12px!important;
+  align-items:center!important;
 }
 
-/* 2 — região + turnos + ranking, sem espaço morto */
-#view-visao .region-overview-panel{
-  grid-column:span 5!important;
-  min-height:300px!important;
-}
-#view-visao .turn-summary-panel{
-  grid-column:span 3!important;
-  min-height:300px!important;
-}
-#view-visao .ranking-overview-panel{
-  grid-column:span 4!important;
-  min-height:300px!important;
-}
-
-/* 3 — status e tempos equilibrados */
-#view-visao .status-overview-panel,
-#view-visao .times-overview-panel{
-  grid-column:span 6!important;
-  min-height:190px!important;
-}
-
-/* 4 — raio + mapa + últimos pedidos */
-#view-visao .radius-overview-panel{
-  grid-column:span 3!important;
-  min-height:350px!important;
-}
-#view-visao .overview-map-panel{
-  grid-column:span 4!important;
-  min-height:350px!important;
-}
-#view-visao .latest-overview-panel{
-  grid-column:span 5!important;
-  min-height:350px!important;
-}
-#view-visao .dashboard-map{
-  height:292px!important;
-}
-
-/* Tipografia executiva: números fortes sem excesso de peso */
-#view-visao .kpi .val{
-  font-family:Barlow,Arial,sans-serif!important;
-  font-weight:600!important;
-  font-size:clamp(18px,1.42vw,22px)!important;
-  letter-spacing:-.25px;
-  overflow:visible!important;
-  text-overflow:unset!important;
-}
-#view-visao .kpi .lbl{font-weight:600!important}
-#view-visao .sum-cell b,
-#view-visao .shift-metrics b,
-#view-visao .status-card b,
-#view-visao .time-card b{
-  font-family:Barlow,Arial,sans-serif!important;
-  font-weight:600!important;
-}
-
-/* Plataforma: nome, quantidade e percentual sempre visíveis */
+/* Plataforma: nunca cortar nome, quantidade ou percentual */
 #view-visao .platform-legend{
+  min-width:0!important;
   overflow:visible!important;
-  padding-right:0!important;
 }
 #view-visao .platform-legend-row{
-  grid-template-columns:9px minmax(82px,1fr) auto 42px!important;
-  column-gap:7px!important;
-  overflow:visible!important;
+  display:grid!important;
+  grid-template-columns:10px minmax(86px,1fr) auto 44px!important;
+  gap:7px!important;
+  align-items:center!important;
+  width:100%!important;
 }
 #view-visao .platform-name,
 #view-visao .platform-count,
 #view-visao .platform-pct{
   white-space:nowrap!important;
   overflow:visible!important;
-  text-overflow:unset!important;
+  text-overflow:clip!important;
+  font-size:10px!important;
 }
 
-/* Status e tempos centralizados */
+/* Linha 2: Região + Turnos + Ranking = 12 */
+#view-visao .region-overview-panel{
+  grid-column:span 5!important;
+  min-height:292px!important;
+}
+#view-visao .turn-summary-panel{
+  grid-column:span 3!important;
+  min-height:292px!important;
+}
+#view-visao .ranking-overview-panel{
+  grid-column:span 4!important;
+  min-height:292px!important;
+}
+
+/* Linha 3: Status + Tempos */
+#view-visao .status-overview-panel,
+#view-visao .times-overview-panel{
+  grid-column:span 6!important;
+  min-height:182px!important;
+}
 #view-visao .status-grid,
 #view-visao .time-grid{
-  height:130px!important;
-  min-height:130px!important;
-  align-items:center;
+  min-height:122px!important;
+  height:122px!important;
+  align-items:center!important;
 }
 #view-visao .status-card,
 #view-visao .time-card{
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
+  padding:7px 6px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
 }
 
-/* Região e ranking aproveitam o card inteiro */
+/* Linha 4: Raio + Mapa + Últimos = 12 */
+#view-visao .radius-overview-panel{
+  grid-column:span 3!important;
+  min-height:360px!important;
+}
+#view-visao .overview-map-panel{
+  grid-column:span 4!important;
+  min-height:360px!important;
+}
+#view-visao .latest-overview-panel{
+  grid-column:span 5!important;
+  min-height:360px!important;
+}
+#view-visao .dashboard-map{
+  height:300px!important;
+  min-height:300px!important;
+}
+
+/* Tabelas e rankings usam o espaço disponível sem “buracos” */
+#view-visao .ranking-overview-panel #motoRanking,
+#view-visao .latest-overview-panel #latestOrders{
+  min-height:0!important;
+  height:auto!important;
+}
+#view-visao .rank-table{
+  width:100%!important;
+  table-layout:auto!important;
+}
+#view-visao .rank-table th{
+  font-size:9px!important;
+  padding:8px 6px!important;
+}
+#view-visao .rank-table td{
+  font-size:10px!important;
+  padding:8px 6px!important;
+}
+
+/* Região mais limpa */
 #view-visao .region-overview-panel .bar-row{
   grid-template-columns:140px minmax(0,1fr) 72px!important;
   min-height:28px!important;
+  gap:8px!important;
 }
-#view-visao .ranking-overview-panel .rank-table td,
-#view-visao .ranking-overview-panel .rank-table th{
-  padding:9px 6px!important;
+#view-visao .region-overview-panel .bar-bg{
+  height:10px!important;
 }
 
-/* Resumo do dia em faixa final limpa */
+/* Tipografia numérica profissional: menos peso e sem corte */
+#view-visao .kpi .val,
+#view-visao .sum-cell b,
+#view-visao .shift-metrics b,
+#view-visao .status-card b,
+#view-visao .time-card b{
+  font-family:Barlow,Arial,sans-serif!important;
+  font-weight:600!important;
+  letter-spacing:-.2px!important;
+}
+#view-visao .kpi .val{
+  font-size:clamp(18px,1.35vw,22px)!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+#view-visao .kpi .lbl{
+  font-weight:600!important;
+}
+
+/* Horários: todos visíveis, verticais e finos */
+#view-visao .overview-chart-panel canvas{
+  max-width:100%!important;
+}
+#view-visao .overview-chart-panel:has(#hourChart),
+#view-visao .trend-chart-panel{
+  overflow:visible!important;
+}
+
+/* Últimos pedidos sem card gigante vazio */
+#view-visao .latest-overview-panel{
+  overflow:hidden!important;
+}
+#view-visao .latest-overview-panel .rank-table tbody tr:last-child td{
+  border-bottom:none!important;
+}
+
+/* Resumo final */
 #view-visao .day-summary{
+  width:100%!important;
   margin-top:12px!important;
-  min-height:86px!important;
+  min-height:84px!important;
+  border-radius:12px!important;
 }
 
-/* Responsividade exclusiva do Delivery */
+/* Responsivo somente dentro do Delivery */
 @media(max-width:1280px){
   #view-visao .overview-chart-panel{grid-column:span 6!important}
   #view-visao .platform-chart-panel{grid-column:span 12!important}
   #view-visao .region-overview-panel{grid-column:span 7!important}
   #view-visao .turn-summary-panel{grid-column:span 5!important}
   #view-visao .ranking-overview-panel{grid-column:span 12!important}
+  #view-visao .status-overview-panel,
+  #view-visao .times-overview-panel{grid-column:span 6!important}
   #view-visao .radius-overview-panel{grid-column:span 4!important}
   #view-visao .overview-map-panel{grid-column:span 8!important}
   #view-visao .latest-overview-panel{grid-column:span 12!important}

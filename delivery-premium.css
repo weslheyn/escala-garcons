@@ -1473,3 +1473,56 @@ main {
   position: relative;
   z-index: 1;
 }
+
+/* =========================================================
+   DELIVERY v29 — BLOCO SUPERIOR DE PEDIDOS FIXO NO SCROLL
+   =========================================================
+   Somente na tela PEDIDOS:
+   - barra de filtros/atualização permanece fixa no topo;
+   - título PEDIDOS + busca permanecem logo abaixo;
+   - cabeçalho da tabela permanece logo abaixo do título;
+   - somente as linhas da tabela rolam por trás desse bloco.
+*/
+@media (min-width: 1051px){
+  /* Evita que o main vire o ancestral de rolagem e quebre o sticky. */
+  body > main{
+    overflow: visible !important;
+  }
+
+  .topbar{
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1200 !important;
+    background: #08090a !important;
+  }
+
+  #view-pedidos .page-head{
+    position: sticky !important;
+    top: 82px !important;
+    z-index: 1100 !important;
+    background: #08090a !important;
+    min-height: 82px !important;
+    margin: 0 2px !important;
+    padding: 20px 0 10px !important;
+    box-shadow: 0 1px 0 #24262a !important;
+  }
+
+  #view-pedidos .table-panel{
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  #view-pedidos .table-panel .data-table thead{
+    position: relative !important;
+    z-index: 1050 !important;
+  }
+
+  #view-pedidos .table-panel .data-table th{
+    position: sticky !important;
+    top: 164px !important;
+    z-index: 1060 !important;
+    background: #17181a !important;
+    background-clip: padding-box !important;
+    box-shadow: 0 1px 0 #32343a !important;
+  }
+}

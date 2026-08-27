@@ -1526,3 +1526,79 @@ main {
     box-shadow: 0 1px 0 #32343a !important;
   }
 }
+
+/* =========================================================
+   DELIVERY v30 — TELA PEDIDOS COM TOPO REALMENTE FIXO
+   =========================================================
+   Na tela PEDIDOS, a pagina deixa de rolar como um todo.
+   O bloco superior (filtros + titulo/busca + cabecalho) fica parado
+   e SOMENTE o corpo/lista de pedidos possui rolagem vertical.
+   Isso evita a falha de position:sticky causada por ancestrais/overflow.
+*/
+@media (min-width:1051px){
+  body:has(#view-pedidos.active){
+    height:100vh !important;
+    overflow:hidden !important;
+  }
+
+  body:has(#view-pedidos.active) > main{
+    height:100vh !important;
+    overflow:hidden !important;
+    display:flex !important;
+    flex-direction:column !important;
+  }
+
+  /* O topo faz parte do layout fixo; nao precisa mais acompanhar scroll. */
+  body:has(#view-pedidos.active) .topbar{
+    position:relative !important;
+    top:auto !important;
+    flex:0 0 82px !important;
+    z-index:1200 !important;
+    background:#08090a !important;
+  }
+
+  body:has(#view-pedidos.active) #view-pedidos.active{
+    flex:1 1 auto !important;
+    min-height:0 !important;
+    overflow:hidden !important;
+    display:flex !important;
+    flex-direction:column !important;
+  }
+
+  body:has(#view-pedidos.active) #view-pedidos .page-head{
+    position:relative !important;
+    top:auto !important;
+    flex:0 0 auto !important;
+    z-index:1100 !important;
+    background:#08090a !important;
+    min-height:82px !important;
+    margin:0 2px !important;
+    padding:20px 0 10px !important;
+    box-shadow:0 1px 0 #24262a !important;
+  }
+
+  /* Esta passa a ser a UNICA area que rola. */
+  body:has(#view-pedidos.active) #view-pedidos .table-panel{
+    flex:1 1 auto !important;
+    min-height:0 !important;
+    max-height:none !important;
+    overflow-y:auto !important;
+    overflow-x:auto !important;
+    position:relative !important;
+    border-radius:11px !important;
+  }
+
+  body:has(#view-pedidos.active) #view-pedidos .table-panel .data-table thead{
+    position:relative !important;
+    z-index:50 !important;
+  }
+
+  body:has(#view-pedidos.active) #view-pedidos .table-panel .data-table th{
+    position:sticky !important;
+    top:0 !important;
+    z-index:60 !important;
+    background:#17181a !important;
+    background-clip:padding-box !important;
+    box-shadow:0 1px 0 #32343a !important;
+  }
+}

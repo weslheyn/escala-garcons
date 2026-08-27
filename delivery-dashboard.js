@@ -22,7 +22,7 @@
       data:{labels:hours.map(h=>String(h).padStart(2,'0')+':00'),datasets:[
         {label:'Pedidos',data:byH,backgroundColor:hourGrad,borderColor:'#f0c867',borderWidth:1,borderRadius:5,maxBarThickness:14,barPercentage:.78,categoryPercentage:.84}
       ]},
-      options:chartOpts({hourly:true}),
+      options:chartOpts({hourly:true,hideLegend:true}),
       plugins:[valueLabelPlugin]
     });
 

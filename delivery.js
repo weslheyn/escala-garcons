@@ -209,8 +209,26 @@
     renderOrderColumnsMenu();
     const colBtn=$('ordersColumnsBtn'),colMenu=$('ordersColumnsMenu');
     if(colBtn&&colMenu){
-      colBtn.onclick=e=>{e.stopPropagation();colMenu.hidden=!colMenu.hidden};
+      const placeColumnsMenu=()=>{
+        const r=colBtn.getBoundingClientRect();
+        const menuW=Math.min(240,Math.max(200,window.innerWidth-16));
+        const left=Math.max(8,Math.min(r.right-menuW,window.innerWidth-menuW-8));
+        const below=r.bottom+6;
+        const maxH=Math.max(180,window.innerHeight-below-8);
+        colMenu.style.width=menuW+'px';
+        colMenu.style.left=left+'px';
+        colMenu.style.right='auto';
+        colMenu.style.top=below+'px';
+        colMenu.style.maxHeight=maxH+'px';
+      };
+      colBtn.onclick=e=>{
+        e.stopPropagation();
+        const opening=colMenu.hidden;
+        colMenu.hidden=!opening;
+        if(opening){placeColumnsMenu();requestAnimationFrame(placeColumnsMenu)}
+      };
       colMenu.onclick=e=>e.stopPropagation();
+      window.addEventListener('resize',()=>{if(!colMenu.hidden)placeColumnsMenu()});
       document.addEventListener('click',()=>{colMenu.hidden=true});
     }
     $('motoShiftFilter').onchange=()=>DeliveryDashboard.renderMotoCards(currentRows);

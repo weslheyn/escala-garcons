@@ -1731,3 +1731,18 @@ main {
   #view-pedidos .orders-toolbar{grid-template-columns:1fr 1fr}
   #view-pedidos .orders-search{grid-column:1/-1}
 }
+
+/* DELIVERY v33 — seletor de colunas na tela PEDIDOS */
+#view-pedidos .orders-toolbar{grid-template-columns:112px minmax(150px,1.15fr) 122px 150px minmax(175px,1.35fr) 92px}
+#view-pedidos .orders-columns-wrap{position:relative;display:flex;flex-direction:column;gap:4px;min-width:0}
+#view-pedidos .orders-columns-wrap>span{color:#878c94;font:700 8px/1 "Barlow Condensed",Arial,sans-serif;letter-spacing:.55px}
+#view-pedidos .orders-columns-btn{height:34px;border:1px solid #5d481d;border-radius:8px;background:#17140e;color:#e9b443;font:700 10px Barlow,Arial,sans-serif;cursor:pointer}
+#view-pedidos .orders-columns-btn:hover{border-color:#a97825;background:#1d1810}
+#view-pedidos .orders-columns-menu{position:absolute;right:0;top:44px;width:190px;z-index:1200;background:#111317;border:1px solid #3a3d43;border-radius:9px;padding:9px;box-shadow:0 14px 35px rgba(0,0,0,.55)}
+#view-pedidos .orders-columns-menu[hidden]{display:none!important}
+#view-pedidos .orders-columns-title{color:#e6ad3d;font:700 10px "Barlow Condensed",Arial,sans-serif;padding:3px 5px 7px;border-bottom:1px solid #292c31;margin-bottom:4px}
+#view-pedidos .orders-columns-menu label{display:flex;align-items:center;gap:8px;padding:5px;border-radius:5px;color:#ddd;font-size:10px;cursor:pointer}
+#view-pedidos .orders-columns-menu label:hover{background:#1d2025}
+#view-pedidos .orders-columns-menu input{accent-color:#d6a23b;margin:0}
+@media (max-width:1250px) and (min-width:1051px){#view-pedidos .orders-toolbar{grid-template-columns:95px 130px 105px 125px minmax(145px,1fr) 82px}}
+@media (max-width:1050px){#view-pedidos .orders-columns-wrap{grid-column:auto}#view-pedidos .orders-columns-menu{left:0;right:auto}}

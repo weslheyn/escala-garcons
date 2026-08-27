@@ -172,11 +172,20 @@
   function renderSummary(rows){const m=metrics(rows),date=rows[0]?.data||'—';const vals=[['RESUMO DO DIA',date],['Entregas',m.entregas],['Pedidos',m.pedidos],['Motoboys',m.motoboys],['KM Total',n1(m.km)+' km'],['Faturamento',money(m.faturamento)],['Ticket Médio',money(m.ticket)],['Tempo Médio Entrega',fmtMin(m.tempoEntrega)],['Cancelados',`${m.cancelados} (${m.pedidos?(m.cancelados/m.pedidos*100).toFixed(1):0}%)`]];document.getElementById('daySummary').innerHTML=vals.map(([a,b])=>`<div class="sum-cell"><small>${a}</small><b>${b}</b></div>`).join('')}
   function table(headers,rows){return`<table class="data-table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`}
   function renderOrders(rows){
-    const headers=['Pedido','Data','Hora','Status','Turno','Motoboy','Cliente','Região','Plataforma','KM','Valor','Tempo'];
-    const widths=['4%','7%','5%','7%','5%','9%','22%','15%','10%','4%','7%','5%'];
-    const cols=`<colgroup>${widths.map(w=>`<col style="width:${w}">`).join('')}</colgroup>`;
-    const head=`<table class="data-table orders-fixed-head">${cols}<thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead></table>`;
-    const bodyRows=rows.map(r=>`<tr><td>${r.pedido}</td><td>${r.data}</td><td>${r.hora}</td><td>${r.status}</td><td>${r.turno}</td><td>${r.motoboy||'—'}</td><td>${r.cliente||'—'}</td><td>${r.regiao}</td><td>${r.platform}</td><td>${n1(r.km)}</td><td>${money(r.valor)}</td><td>${fmtMin(r.tempoEntrega)}</td></tr>`).join('');
+    const defs={
+      pedido:{label:'Pedido',w:5,val:r=>r.pedido},data:{label:'Data',w:8,val:r=>r.data},hora:{label:'Hora',w:6,val:r=>r.hora},
+      status:{label:'Status',w:8,val:r=>r.status},turno:{label:'Turno',w:6,val:r=>r.turno},motoboy:{label:'Motoboy',w:11,val:r=>r.motoboy||'—'},
+      cliente:{label:'Cliente',w:18,val:r=>r.cliente||'—'},regiao:{label:'Região',w:14,val:r=>r.regiao||'—'},endereco:{label:'Endereço',w:24,val:r=>r.endereco||'—'},
+      platform:{label:'Plataforma',w:11,val:r=>r.platform||'—'},km:{label:'KM',w:5,val:r=>n1(r.km)},valor:{label:'Valor',w:8,val:r=>money(r.valor)},tempo:{label:'Tempo',w:6,val:r=>fmtMin(r.tempoEntrega)}
+    };
+    const fallback=['pedido','data','hora','status','turno','motoboy','cliente','regiao','platform','km','valor','tempo'];
+    const selected=(window.DeliveryOrdersColumns?.()||fallback).filter(k=>defs[k]);
+    const keys=selected.length?selected:fallback;
+    const total=keys.reduce((a,k)=>a+defs[k].w,0);
+    const esc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const cols=`<colgroup>${keys.map(k=>`<col style="width:${(defs[k].w/total*100).toFixed(3)}%">`).join('')}</colgroup>`;
+    const head=`<table class="data-table orders-fixed-head">${cols}<thead><tr>${keys.map(k=>`<th>${defs[k].label}</th>`).join('')}</tr></thead></table>`;
+    const bodyRows=rows.map(r=>`<tr>${keys.map(k=>`<td title="${esc(defs[k].val(r))}">${esc(defs[k].val(r))}</td>`).join('')}</tr>`).join('');
     const body=`<div class="orders-body-scroll"><table class="data-table orders-body-table">${cols}<tbody>${bodyRows}</tbody></table></div>`;
     document.getElementById('ordersTable').innerHTML=`<div class="orders-table-shell">${head}${body}</div>`;
   }

@@ -104,6 +104,27 @@
     motoEl.innerHTML='<option value="TODOS">Todos os motoboys</option>'+names.map(n=>`<option value="${n.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}">${n}</option>`).join('');
     motoEl.value=names.includes(selected)?selected:'TODOS';
   }
+  const ORDER_COLUMNS=[
+    ['pedido','Pedido'],['data','Data'],['hora','Hora'],['status','Status'],['turno','Turno'],['motoboy','Motoboy'],
+    ['cliente','Cliente'],['regiao','Região'],['endereco','Endereço'],['platform','Plataforma'],['km','KM'],['valor','Valor'],['tempo','Tempo']
+  ];
+  const ORDER_COLUMNS_KEY='delivery_orders_columns_v1';
+  const ORDER_COLUMNS_DEFAULT=['pedido','data','hora','status','turno','motoboy','cliente','regiao','platform','km','valor','tempo'];
+  function getOrderColumns(){
+    try{const x=JSON.parse(localStorage.getItem(ORDER_COLUMNS_KEY)||'null');if(Array.isArray(x)&&x.length)return ORDER_COLUMNS.filter(c=>x.includes(c[0])).map(c=>c[0])}catch(e){}
+    return ORDER_COLUMNS_DEFAULT.slice();
+  }
+  function saveOrderColumns(cols){localStorage.setItem(ORDER_COLUMNS_KEY,JSON.stringify(cols))}
+  function renderOrderColumnsMenu(){
+    const menu=$('ordersColumnsMenu');if(!menu)return;const selected=getOrderColumns();
+    menu.innerHTML='<div class="orders-columns-title">COLUNAS VISÍVEIS</div>'+ORDER_COLUMNS.map(([key,label])=>`<label><input type="checkbox" value="${key}" ${selected.includes(key)?'checked':''}><span>${label}</span></label>`).join('');
+    menu.querySelectorAll('input').forEach(inp=>inp.onchange=()=>{
+      let cols=[...menu.querySelectorAll('input:checked')].map(x=>x.value);
+      if(!cols.length){inp.checked=true;cols=[inp.value]}
+      saveOrderColumns(cols);applyOrdersFilters();
+    });
+  }
+  window.DeliveryOrdersColumns=getOrderColumns;
   function applyOrdersFilters(){
     if(!$('ordersTable'))return;
     let rows=currentRows.slice();
@@ -185,6 +206,13 @@
     $('ordersShiftFilter').onchange=applyOrdersFilters;
     $('ordersSortFilter').onchange=applyOrdersFilters;
     $('orderSearch').oninput=applyOrdersFilters;
+    renderOrderColumnsMenu();
+    const colBtn=$('ordersColumnsBtn'),colMenu=$('ordersColumnsMenu');
+    if(colBtn&&colMenu){
+      colBtn.onclick=e=>{e.stopPropagation();colMenu.hidden=!colMenu.hidden};
+      colMenu.onclick=e=>e.stopPropagation();
+      document.addEventListener('click',()=>{colMenu.hidden=true});
+    }
     $('motoShiftFilter').onchange=()=>DeliveryDashboard.renderMotoCards(currentRows);
     setupNav();loadHistory();DeliveryMap?.init?.();DeliveryMap?.onChange?.(()=>applyPeriod($('dateFilter').value));
     const today=dateKeyLocal(new Date());$('dateFilter').value=today;

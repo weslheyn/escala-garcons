@@ -22,7 +22,12 @@
       data:{labels:hours.map(h=>String(h).padStart(2,'0')+':00'),datasets:[
         {label:'Pedidos',data:byH,backgroundColor:hourGrad,borderColor:'#f0c867',borderWidth:1,borderRadius:5,maxBarThickness:14,barPercentage:.78,categoryPercentage:.84}
       ]},
-      options:chartOpts({hourly:true,hideLegend:true}),
+      options:(()=>{
+        const o=chartOpts({hourly:true,hideLegend:true});
+        o.scales.y.suggestedMax=Math.max(1,...byH)+1;
+        o.layout.padding.top=14;
+        return o;
+      })(),
       plugins:[valueLabelPlugin]
     });
 
@@ -75,7 +80,7 @@
       options:{...chartOpts({hideLegend:true,weekday:true}),
         scales:{
           x:{ticks:{color:'#d9dce1',font:{family:mode==='day'?'Arial':'Barlow',size:mode==='day'?9:10,weight:mode==='day'?'400':'600'},autoSkip:false,maxRotation:mode==='day'?90:0,minRotation:mode==='day'?90:0,padding:mode==='day'?3:7},grid:{display:false},border:{color:'#3a3d43'},title:mode==='day'?{display:true,text:'HORA DO PEDIDO',color:'#747b84',font:{family:'Barlow',size:9,weight:'500'},padding:{top:8}}:undefined},
-          y:{beginAtZero:true,grace:'22%',ticks:{color:'#9298a1',font:{family:'Barlow',size:9,weight:'400'},precision:0,padding:5},grid:{color:'rgba(255,255,255,.06)'},border:{display:false}}
+          y:{beginAtZero:true,suggestedMax:Math.max(1,...data)+1,grace:'22%',ticks:{color:'#9298a1',font:{family:'Barlow',size:9,weight:'400'},precision:0,padding:5},grid:{color:'rgba(255,255,255,.06)'},border:{display:false}}
         },
         layout:{padding:{top:16,right:4,left:2,bottom:0}},
         plugins:{legend:{display:false},tooltip:{backgroundColor:'#111317',titleColor:'#f5c451',bodyColor:'#fff',borderColor:'#34373d',borderWidth:1,padding:10,callbacks:{label(c){return ` ${c.raw||0} pedidos`;}}}},

@@ -16,6 +16,7 @@
   let dashboardMap=null,regionMap=null,dashboardZoneLayer=null,dashboardMarkerLayer=null,drawLayer=null,drawControl=null;
   let zones=[],geoCache={},currentRows=[],changeHandler=null,drawName='';
   let mapFilters={platform:'TODOS',turno:'TODOS',status:'TODOS',raio:'TODOS',regiao:'TODOS',cluster:false,areas:false};
+  let geocodeRunning=false,autoGeocodeTimer=null;
   const storageZones='cbDeliveryCustomRegionsV1',storageGeo='cbDeliveryGeoCacheV1';
   const GEO_VERSION=3;
   const safe=s=>String(s||'').trim();
@@ -180,6 +181,21 @@
     setTimeout(()=>dashboardMap.invalidateSize(),20);
     return dashboardMap;
   }
+  function queueAutoGeocode(){
+    if(geocodeRunning||autoGeocodeTimer||!currentRows?.length)return;
+    const hasPending=currentRows.some(r=>{
+      const k=keyAddr(r.endereco);if(!k)return false;
+      const g=geoCache[k];
+      const validPoint=g&&g.geoVersion===GEO_VERSION&&Number.isFinite(+g.lat)&&Number.isFinite(+g.lng);
+      const processedMissing=g&&g.geoVersion===GEO_VERSION&&g.notFound;
+      return !validPoint&&!processedMissing;
+    });
+    if(!hasPending)return;
+    autoGeocodeTimer=setTimeout(async()=>{
+      autoGeocodeTimer=null;
+      try{await geocodePending(true)}catch(e){console.warn('Geocodificação automática',e)}
+    },80);
+  }
   function renderDashboard(rows){
     const map=ensureDashboardMap();if(!map)return;
     currentRows=rows||currentRows;reclassify(currentRows);
@@ -266,6 +282,7 @@
     fl.innerHTML=`<b>${mappedRows.length} pedidos demarcados</b><small>${exactRows.length} exatos • ${approxRows.length} aproximados${noPoint?` • ${noPoint} sem ponto`:''}</small>`;
     const badge=document.getElementById('mapAccuracyBadge');
     if(badge)badge.textContent=`${mappedRows.length}/${filtered.length} no mapa`;
+    queueAutoGeocode();
   }
   function ensureRegionMap(){const el=document.getElementById('deliveryRegionMap');if(!el||!window.L)return null;if(!regionMap){regionMap=L.map(el,{zoomControl:true,preferCanvas:true}).setView(DEFAULT_CENTER,DEFAULT_ZOOM);L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:20,subdomains:'abcd',attribution:'© OpenStreetMap © CARTO'}).addTo(regionMap);drawLayer=L.featureGroup().addTo(regionMap);drawControl=new L.Control.Draw({position:'topleft',draw:{polyline:false,rectangle:false,circle:false,circlemarker:false,marker:false,polygon:{allowIntersection:false,showArea:true,shapeOptions:{color:'#f0b83f',weight:2,fillOpacity:.15}}},edit:{featureGroup:drawLayer,remove:false}});regionMap.addControl(drawControl);regionMap.on(L.Draw.Event.CREATED,e=>{const name=safe(drawName||document.getElementById('newRegionName')?.value)||`Região ${zones.length+1}`;const coords=e.layer.getLatLngs()[0].map(p=>[+p.lat.toFixed(6),+p.lng.toFixed(6)]);zones.push({id:'z_'+Date.now(),name,color:colorFor(zones.length),coords});drawName='';const inp=document.getElementById('newRegionName');if(inp)inp.value='';saveZones()});regionMap.on(L.Draw.Event.EDITED,e=>{e.layers.eachLayer(layer=>{const id=layer.options.zoneId,z=zones.find(x=>x.id===id);if(z)z.coords=layer.getLatLngs()[0].map(p=>[+p.lat.toFixed(6),+p.lng.toFixed(6)])});saveZones()})}setTimeout(()=>regionMap.invalidateSize(),20);drawZonesOnEditor();drawOrderMarkers();return regionMap}
   function drawZonesOnEditor(){if(!regionMap||!drawLayer)return;drawLayer.clearLayers();zones.forEach(z=>{const l=L.polygon(z.coords,{color:z.color,weight:2,fillColor:z.color,fillOpacity:.14,zoneId:z.id}).addTo(drawLayer);l.options.zoneId=z.id;l.bindTooltip(z.name,{permanent:true,direction:'center',className:'region-label'});l.on('click',()=>selectZone(z.id))})}
@@ -519,22 +536,25 @@
     }
   }
 
-  async function geocodePending(){
+  async function geocodePending(auto=false){
+    if(geocodeRunning)return;
+    geocodeRunning=true;
     const btn=document.getElementById('geoPendingBtn'),prog=document.getElementById('geoProgress');
     const uniq=[],seen=new Set();
     for(const r of currentRows){
       const k=keyAddr(r.endereco);if(!k||seen.has(k))continue;
       const cached=geoCache[k];
-      const isExactV2=cached&&cached.geoVersion===GEO_VERSION&&cached.quality==='exact'&&Number.isFinite(+cached.lat)&&Number.isFinite(+cached.lng);
-      if(isExactV2)continue;
+      const validCached=cached&&cached.geoVersion===GEO_VERSION&&Number.isFinite(+cached.lat)&&Number.isFinite(+cached.lng);
+      const alreadyTried=cached&&cached.geoVersion===GEO_VERSION&&cached.notFound;
+      if(validCached||alreadyTried)continue;
       seen.add(k);uniq.push({k,address:r.enderecoMaestro||r.endereco||r.enderecoAgilizone});
     }
-    if(!uniq.length){if(prog)prog.textContent='Todos os endereços deste período já foram processados.';return}
-    if(btn){btn.disabled=true;btn.textContent='LOCALIZANDO...'}
+    if(!uniq.length){geocodeRunning=false;if(prog&&!auto)prog.textContent='Todos os endereços deste período já foram processados.';return}
+    if(btn&&!auto){btn.disabled=true;btn.textContent='LOCALIZANDO...'}
     let exact=0,approx=0,fail=0;
     for(let i=0;i<uniq.length;i++){
       const item=uniq[i];
-      if(prog)prog.textContent=`Localizando ${i+1} de ${uniq.length} • ${item.address}`;
+      if(prog&&!auto)prog.textContent=`Localizando ${i+1} de ${uniq.length} • ${item.address}`;
       try{
         let g=await geocodeAddress(item.address);
         if(!g||g.quality!=='exact'){
@@ -553,13 +573,14 @@
       }catch(e){console.warn(e);fail++}
       saveLocal();
       if((i+1)%10===0){try{await DeliveryFirebase.saveGeoCache?.(geoCache)}catch(e){}}
-      await sleep(1100);
+      await sleep(350);
     }
     try{await DeliveryFirebase.saveGeoCache?.(geoCache)}catch(e){}
     reclassify(currentRows);drawOrderMarkers();renderZoneList();renderDashboard(currentRows);
     if(changeHandler)changeHandler();
-    if(prog)prog.textContent=`Concluído: ${exact} exatos • ${approx} aproximados • ${fail} sem ponto.`;
-    if(btn){btn.disabled=false;btn.textContent='LOCALIZAR ENDEREÇOS'}
+    if(prog&&!auto)prog.textContent=`Concluído: ${exact} exatos • ${approx} aproximados • ${fail} sem ponto.`;
+    if(btn&&!auto){btn.disabled=false;btn.textContent='LOCALIZAR ENDEREÇOS'}
+    geocodeRunning=false
   }
   async function init(){loadLocal();await loadRemote();bindEditor()}
   function showRegionView(rows){currentRows=rows||currentRows;reclassify(currentRows);ensureRegionMap();drawOrderMarkers();renderZoneList()}

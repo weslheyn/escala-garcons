@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
   <link rel="stylesheet" href="delivery-map.css?v=1.17.0">
-  <link rel="stylesheet" href="delivery-premium.css?v=1.22.0">
+  <link rel="stylesheet" href="delivery-premium.css?v=1.23.0">
 </head>
 <body>
   <aside class="sidebar">
@@ -59,7 +59,7 @@
         <article class="panel span-4 overview-chart-panel trend-chart-panel"><div class="chart-panel-head"><h3 id="trendChartTitle">PEDIDOS DA SEMANA <small>— QUANTIDADE</small></h3><select id="trendChartMode" class="chart-mode-select" aria-label="Período do gráfico"><option value="day">DIA</option><option value="week" selected>SEMANA</option><option value="month">MÊS</option></select></div><div class="chart-wrap compact-chart"><canvas id="weekdayChart"></canvas></div></article>
         <article class="panel span-4 overview-chart-panel platform-chart-panel"><h3>PEDIDOS POR PLATAFORMA <small>— QUANTIDADE</small></h3><div class="platform-chart-layout"><div class="chart-wrap compact-chart donut"><canvas id="platformChart"></canvas></div><div id="platformLegend" class="platform-legend"></div></div></article>
 
-        <article class="panel span-5 region-overview-panel"><h3>PEDIDOS POR REGIÃO <small>— TODOS OS PEDIDOS</small></h3><div id="regionBars" class="bars"></div></article>
+        <article class="panel span-5 region-overview-panel"><h3>TOP BAIRROS</h3><div id="regionBars" class="top-neighborhoods"></div></article>
         <article class="panel span-3 turn-summary-panel"><h3>RESUMO DOS TURNOS</h3><div id="shiftSummary"></div></article>
         <article class="panel span-4 ranking-overview-panel"><h3>RANKING MOTOBOYS <small>(POR PEDIDOS)</small></h3><div id="motoRanking"></div></article>
 
@@ -126,8 +126,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="delivery-firebase.js?v=1.7.0"></script>
   <script src="delivery-import.js?v=1.22.0"></script>
-  <script src="delivery-map.js?v=1.22.0"></script>
-  <script src="delivery-dashboard.js?v=1.20.0"></script>
+  <script src="delivery-map.js?v=1.23.0"></script>
+  <script src="delivery-dashboard.js?v=1.23.0"></script>
   <script src="delivery.js?v=1.12.0"></script>
 </body>
 </html>

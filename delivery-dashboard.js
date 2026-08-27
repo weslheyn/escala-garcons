@@ -13,7 +13,6 @@
   function renderCharts(rows){
     const hours=Array.from({length:24},(_,i)=>i);
     const byH=hours.map(h=>rows.filter(r=>r.dt&&r.dt.getHours()===h).length);
-    const entH=hours.map(h=>rows.filter(r=>r.dt&&r.dt.getHours()===h&&delivered(r)).length);
     if(hourChart)hourChart.destroy();
     const hourCtx=document.getElementById('hourChart').getContext('2d');
     const hourGrad=hourCtx.createLinearGradient(0,0,0,210);
@@ -21,8 +20,7 @@
     hourChart=new Chart(document.getElementById('hourChart'),{
       type:'bar',
       data:{labels:hours.map(h=>String(h).padStart(2,'0')+':00'),datasets:[
-        {label:'Pedidos',data:byH,backgroundColor:hourGrad,borderColor:'#f0c867',borderWidth:1,borderRadius:5,maxBarThickness:14,barPercentage:.78,categoryPercentage:.84},
-        {label:'Entregas',data:entH,type:'line',borderColor:'#b52646',backgroundColor:'#b52646',tension:.34,pointRadius:1.6,pointHoverRadius:4,borderWidth:2.2,fill:false}
+        {label:'Pedidos',data:byH,backgroundColor:hourGrad,borderColor:'#f0c867',borderWidth:1,borderRadius:5,maxBarThickness:14,barPercentage:.78,categoryPercentage:.84}
       ]},
       options:chartOpts({hourly:true}),
       plugins:[valueLabelPlugin]
@@ -77,8 +75,9 @@
       options:{...chartOpts({hideLegend:true,weekday:true}),
         scales:{
           x:{ticks:{color:'#d9dce1',font:{family:mode==='day'?'Arial':'Barlow',size:mode==='day'?9:10,weight:mode==='day'?'400':'600'},autoSkip:false,maxRotation:mode==='day'?90:0,minRotation:mode==='day'?90:0,padding:mode==='day'?3:7},grid:{display:false},border:{color:'#3a3d43'},title:mode==='day'?{display:true,text:'HORA DO PEDIDO',color:'#747b84',font:{family:'Barlow',size:9,weight:'500'},padding:{top:8}}:undefined},
-          y:{beginAtZero:true,ticks:{color:'#9298a1',font:{family:'Barlow',size:9,weight:'400'},precision:0,padding:5},grid:{color:'rgba(255,255,255,.06)'},border:{display:false}}
+          y:{beginAtZero:true,grace:'22%',ticks:{color:'#9298a1',font:{family:'Barlow',size:9,weight:'400'},precision:0,padding:5},grid:{color:'rgba(255,255,255,.06)'},border:{display:false}}
         },
+        layout:{padding:{top:16,right:4,left:2,bottom:0}},
         plugins:{legend:{display:false},tooltip:{backgroundColor:'#111317',titleColor:'#f5c451',bodyColor:'#fff',borderColor:'#34373d',borderWidth:1,padding:10,callbacks:{label(c){return ` ${c.raw||0} pedidos`;}}}},
         animation:{duration:380}
       },
@@ -111,7 +110,53 @@
     },
     layout:{padding:{left:2,right:5,top:6,bottom:extra.hourly?10:0}}
   }}
-  function renderRegions(rows){const allowed=window.DeliveryMap?.configuredRegions?.()||[];const c={};rows.forEach(r=>{const region=allowed.includes(r.regiao)?r.regiao:'NÃO CLASSIFICADO';c[region]=(c[region]||0)+1});const arr=Object.entries(c).sort((a,b)=>b[1]-a[1]),max=arr[0]?.[1]||1,total=rows.length||1;document.getElementById('regionBars').innerHTML=arr.length?arr.map(([k,v])=>`<div class="bar-row ${k==='NÃO CLASSIFICADO'?'bar-unclassified':''}"><span>${k}</span><div class="bar-bg"><div class="bar-fill" style="width:${v/max*100}%"></div></div><span class="bar-val"><b>${v}</b> (${(v/total*100).toFixed(1)}%)</span></div>`).join('')+`<div class="distribution-total">TOTAL <b>${rows.length} PEDIDOS</b></div>`:'<div style="color:#888;font-size:11px;padding:10px">Sem pedidos no período.</div>';window.DeliveryMap?.renderDashboard?.(rows)}
+  function bairroFromAddress(row){
+    const raw=String(row?.enderecoMaestro||row?.endereco||row?.enderecoAgilizone||'').trim();
+    if(!raw)return 'Não identificado';
+    const clean=raw.replace(/\s+/g,' ').replace(/\s*\.\s*(Complemento|Referência)\s*:.*$/i,'').trim();
+    const parts=clean.split(',').map(x=>x.trim()).filter(Boolean);
+    let bairro='';
+    const cityIdx=parts.findIndex(x=>/^rio de janeiro(?:\s*-\s*rj)?$/i.test(x)||/^rio de janeiro\s*\/\s*rj$/i.test(x));
+    if(cityIdx>0)bairro=parts[cityIdx-1];
+    if(!bairro){
+      const m=clean.match(/,\s*([^,]+?)\s*,\s*Rio de Janeiro(?:\s*-\s*RJ)?(?:\.|,|$)/i);
+      if(m)bairro=m[1].trim();
+    }
+    bairro=bairro.replace(/^bairro\s+/i,'').replace(/\s*-\s*RJ$/i,'').trim();
+    return bairro||row?.regiao||'Não identificado';
+  }
+  function bairroKey(name){
+    return String(name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+  }
+  function bairroDisplay(name){
+    const key=bairroKey(name);
+    const canon={
+      'recreio dos bandeirantes':'Recreio dos Bandeirantes',
+      'barra da tijuca':'Barra da Tijuca',
+      'vargem grande':'Vargem Grande',
+      'vargem pequena':'Vargem Pequena',
+      'curicica':'Curicica',
+      'guaratiba':'Guaratiba',
+      'barra olimpica':'Barra Olímpica',
+      'camorim':'Camorim',
+      'ilha de guaratiba':'Ilha de Guaratiba',
+      'jacarepagua':'Jacarepaguá'
+    };
+    if(canon[key])return canon[key];
+    return String(name||'Não identificado').toLowerCase().replace(/(^|\s)([a-zà-ÿ])/g,(_,a,b)=>a+b.toUpperCase());
+  }
+  function renderRegions(rows){
+    const target=document.getElementById('regionBars');if(!target)return;
+    const grouped={};
+    (rows||[]).forEach(r=>{
+      const raw=bairroFromAddress(r),key=bairroKey(raw)||'nao identificado';
+      const x=grouped[key]||(grouped[key]={name:bairroDisplay(raw),count:0});x.count++;
+    });
+    const arr=Object.values(grouped).sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name,'pt-BR'));
+    target.className='top-neighborhoods';
+    target.innerHTML=arr.length?`<div class="top-neighborhood-head"><span>BAIRRO</span><span>↓&nbsp; PEDIDOS</span></div>${arr.map(x=>`<div class="top-neighborhood-row"><span>${x.name}</span><b>${x.count}</b></div>`).join('')}`:'<div class="top-neighborhood-empty">Sem pedidos no período.</div>';
+    window.DeliveryMap?.renderDashboard?.(rows);
+  }
   function shiftMetrics(rows,shift){const rr=rows.filter(r=>r.turno===shift),assigned=rr.filter(r=>r.motoboy);return{rows:rr,ped:rr.length,moto:new Set(assigned.map(r=>r.motoboy).filter(Boolean)).size,km:sum(rr.map(r=>r.km)),tempo:avg(rr.map(r=>r.tempoEntrega))}}
   function renderShifts(rows){const a=shiftMetrics(rows,'MANHÃ'),b=shiftMetrics(rows,'NOITE');const box=(n,x,range,night=false)=>`<div class="shift-box"><div class="shift-title ${night?'night':''}">${night?'☾':'☀'} TURNO ${n}<span class="shift-range">${range}</span></div><div class="shift-metrics"><div><small>Pedidos</small><b>${x.ped}</b></div><div><small>Motoboys</small><b>${x.moto}</b></div><div><small>KM</small><b>${n1(x.km)}</b></div><div><small>Média entrega</small><b>${fmtMin(x.tempo)}</b></div></div></div>`;document.getElementById('shiftSummary').innerHTML=box('MANHÃ',a,'até 16:59')+box('NOITE',b,'17:00 em diante',true);const mini=document.getElementById('shiftMini');if(mini)mini.innerHTML=`${box('MANHÃ',a,'até 16:59')}${box('NOITE',b,'17:00+',true)}`;renderShiftDetail(rows)}
   function renderStatusTimes(rows){const st=count(rows,'status');const total=rows.length||1;const arr=[['✓','ENTREGUE','st-ok'],['◷','EM ROTA','st-route'],['⊗','CANCELADO','st-cancel'],['Ⅱ','EM ANDAMENTO','']];document.getElementById('statusCards').innerHTML=arr.map(([i,k,c])=>`<div class="status-card"><div class="status-icon ${c}">${i}</div><small>${k}</small><b>${st[k]||0}</b><span>${((st[k]||0)/total*100).toFixed(1)}%</span></div>`).join('');const t=[['PREPARO',avg(rows.map(r=>r.tempoPreparo))],['ESPERA MOTOBOY',avg(rows.map(r=>{const a=DeliveryImport.dateBR(r.pronto),b=DeliveryImport.dateBR(r.alocado);return a&&b?(b-a)/60000:null}))],['ATÉ SAÍDA',avg(rows.map(r=>{const a=DeliveryImport.dateBR(r.alocado),b=DeliveryImport.dateBR(r.caminho);return a&&b?(b-a)/60000:null}))],['ENTREGA',avg(rows.map(r=>r.tempoEntrega))],['TEMPO TOTAL',avg(rows.map(r=>r.tempoTotal))]];document.getElementById('timeCards').innerHTML=t.map(([k,v])=>`<div class="time-card"><small>${k}</small><div style="font-size:26px;margin-top:8px">${k==='PREPARO'?'♨':k==='ESPERA MOTOBOY'?'👤':k==='ATÉ SAÍDA'?'🛵':k==='ENTREGA'?'⚑':'◴'}</div><b>${fmtMin(v)}</b></div>`).join('')}

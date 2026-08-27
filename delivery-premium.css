@@ -1249,3 +1249,15 @@ main {
 #view-visao .overview-map-panel .panel-title-row::after{
   content:"● endereço confirmado   ◌ aproximado"!important;
 }
+
+
+/* V23 — TOP BAIRROS no mesmo design do dashboard */
+.region-overview-panel .top-neighborhoods{display:flex;flex-direction:column;gap:0;min-height:210px}
+.top-neighborhood-head,.top-neighborhood-row{display:grid;grid-template-columns:minmax(0,1fr) 72px;align-items:center;column-gap:12px}
+.top-neighborhood-head{padding:3px 2px 8px;border-bottom:1px solid rgba(255,255,255,.12);color:#8f959e;font-family:"Barlow Condensed",Arial,sans-serif;font-size:10px;letter-spacing:.25px}
+.top-neighborhood-head span:last-child{text-align:right;color:#d9dce1;font-weight:700}
+.top-neighborhood-row{min-height:26px;padding:5px 2px;border-bottom:1px solid rgba(255,255,255,.085);font-size:11px;color:#f0f1f2}
+.top-neighborhood-row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top-neighborhood-row b{text-align:right;color:#f1c65e;font-weight:700}
+.top-neighborhood-row:last-child{border-bottom:0}
+.top-neighborhood-empty{padding:12px 2px;color:#888;font-size:11px}

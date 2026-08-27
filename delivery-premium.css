@@ -1602,3 +1602,75 @@ main {
     box-shadow:0 1px 0 #32343a !important;
   }
 }
+
+/* =========================================================
+   DELIVERY v31 — PEDIDOS: CABEÇALHO FÍSICO FORA DO SCROLL
+   =========================================================
+   Correção definitiva: o cabeçalho não usa sticky e não faz parte
+   da área rolável. Somente as linhas de pedidos possuem scroll.
+*/
+@media (min-width:1051px){
+  body:has(#view-pedidos.active) #view-pedidos .table-panel{
+    overflow:hidden !important;
+    display:flex !important;
+    flex-direction:column !important;
+    padding:0 !important;
+  }
+
+  body:has(#view-pedidos.active) #ordersTable{
+    height:100% !important;
+    min-height:0 !important;
+    display:flex !important;
+    flex-direction:column !important;
+  }
+
+  body:has(#view-pedidos.active) #ordersTable .orders-table-shell{
+    height:100% !important;
+    min-height:0 !important;
+    display:flex !important;
+    flex-direction:column !important;
+  }
+
+  body:has(#view-pedidos.active) #ordersTable .orders-fixed-head{
+    flex:0 0 auto !important;
+    width:100% !important;
+    table-layout:fixed !important;
+    border-collapse:collapse !important;
+    margin:0 !important;
+    position:relative !important;
+    z-index:20 !important;
+    background:#17181a !important;
+  }
+
+  body:has(#view-pedidos.active) #ordersTable .orders-fixed-head thead,
+  body:has(#view-pedidos.active) #ordersTable .orders-fixed-head th{
+    position:static !important;
+    top:auto !important;
+  }
+
+  body:has(#view-pedidos.active) #ordersTable .orders-fixed-head th{
+    background:#17181a !important;
+    box-shadow:0 1px 0 #32343a !important;
+  }
+
+  body:has(#view-pedidos.active) #ordersTable .orders-body-scroll{
+    flex:1 1 auto !important;
+    min-height:0 !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+    scrollbar-width:thin;
+  }
+
+  body:has(#view-pedidos.active) #ordersTable .orders-body-table{
+    width:100% !important;
+    table-layout:fixed !important;
+    border-collapse:collapse !important;
+    margin:0 !important;
+  }
+
+  body:has(#view-pedidos.active) #ordersTable .orders-body-table td{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+}

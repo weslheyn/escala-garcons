@@ -1444,20 +1444,32 @@ main {
 .sidebar .import-help{display:none!important;}
 
 /* =========================================================
-   DELIVERY v27 — CORREÇÃO TABELA PEDIDOS NO SCROLL
+   DELIVERY v28 — CABEÇALHO FIXO DA TABELA PEDIDOS
    =========================================================
-   Na tela PEDIDOS o cabeçalho acompanha o fluxo normal da tabela.
-   Isso evita que linhas de dados apareçam acima dos títulos das colunas
-   quando a página inteira é rolada.
+   Mantém os títulos das colunas visíveis enquanto a página é rolada.
+   O cabeçalho fica logo abaixo da barra superior fixa e as linhas
+   passam por baixo dele, sem sobreposição visual.
 */
-#view-pedidos .table-panel .data-table thead,
-#view-pedidos .table-panel .data-table th {
-  position: static !important;
-  top: auto !important;
-  z-index: auto !important;
+#view-pedidos .table-panel {
+  overflow: visible !important;
+  max-height: none !important;
 }
 
-#view-pedidos .table-panel {
-  overflow-x: auto !important;
-  overflow-y: visible !important;
+#view-pedidos .table-panel .data-table thead {
+  position: relative !important;
+  z-index: 45 !important;
+}
+
+#view-pedidos .table-panel .data-table th {
+  position: sticky !important;
+  top: 82px !important;
+  z-index: 46 !important;
+  background: #17181a !important;
+  background-clip: padding-box !important;
+  box-shadow: 0 1px 0 #32343a, 0 -1px 0 #17181a !important;
+}
+
+#view-pedidos .table-panel .data-table tbody td {
+  position: relative;
+  z-index: 1;
 }

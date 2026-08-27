@@ -171,6 +171,9 @@
   function renderLatest(rows){const el=document.getElementById('latestOrders');if(!el)return;el.innerHTML=`<table class="rank-table"><thead><tr><th>PEDIDO</th><th>HORÁRIO</th><th>CLIENTE</th><th>REGIÃO</th><th>MOTOBOY</th><th>STATUS</th><th>VALOR</th></tr></thead><tbody>${rows.slice(0,7).map(r=>`<tr><td>${r.pedido}</td><td>${r.hora}</td><td>${r.cliente||'—'}</td><td>${r.regiao}</td><td>${r.motoboy||'—'}</td><td><span class="latest-status ${r.status==='ENTREGUE'?'st-ok':r.status==='CANCELADO'?'st-cancel':'st-route'}">${r.status}</span></td><td>${money(r.valor)}</td></tr>`).join('')}</tbody></table>`}
   function renderSummary(rows){const m=metrics(rows),date=rows[0]?.data||'—';const vals=[['RESUMO DO DIA',date],['Entregas',m.entregas],['Pedidos',m.pedidos],['Motoboys',m.motoboys],['KM Total',n1(m.km)+' km'],['Faturamento',money(m.faturamento)],['Ticket Médio',money(m.ticket)],['Tempo Médio Entrega',fmtMin(m.tempoEntrega)],['Cancelados',`${m.cancelados} (${m.pedidos?(m.cancelados/m.pedidos*100).toFixed(1):0}%)`]];document.getElementById('daySummary').innerHTML=vals.map(([a,b])=>`<div class="sum-cell"><small>${a}</small><b>${b}</b></div>`).join('')}
   function table(headers,rows){return`<table class="data-table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`}
+  const MANUAL_KM_KEY='delivery_manual_km_v1';
+  function getManualKmMap(){try{return JSON.parse(localStorage.getItem(MANUAL_KM_KEY)||'{}')||{}}catch(e){return {}}}
+  function saveManualKm(order,value){const m=getManualKmMap();if(value===''||value==null||!Number.isFinite(Number(String(value).replace(',','.'))))delete m[String(order)];else m[String(order)]=Number(String(value).replace(',','.'));localStorage.setItem(MANUAL_KM_KEY,JSON.stringify(m))}
   function renderOrders(rows){
     const defs={
       pedido:{label:'Pedido',w:72,val:r=>r.pedido},data:{label:'Data',w:96,val:r=>r.data},hora:{label:'Hora',w:72,val:r=>r.hora},
@@ -186,10 +189,13 @@
     const esc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     const template=()=>keys.map(k=>`${widths[k]}px`).join(' ');
     const head=`<div class="orders-grid-head" style="grid-template-columns:${template()}">${keys.map(k=>`<div class="orders-grid-cell orders-grid-th col-${k}" data-col="${k}"><span>${defs[k].label}</span><i class="orders-col-resizer" data-col="${k}" title="Arraste para ajustar a largura"></i></div>`).join('')}</div>`;
+    const manual=getManualKmMap();
     const bodyRows=rows.map(r=>`<div class="orders-grid-row" style="grid-template-columns:${template()}">${keys.map(k=>{const v=defs[k].val(r);return `<div class="orders-grid-cell col-${k}" data-col="${k}" title="${esc(v)}">${esc(v)}</div>`}).join('')}</div>`).join('');
     const body=`<div class="orders-body-scroll orders-grid-body">${bodyRows||'<div class="orders-grid-empty">Nenhum pedido encontrado para os filtros selecionados.</div>'}</div>`;
+    const manualHead='<div class="orders-manual-head"><span>KM INFORMADO</span><small>motoboy</small><b>DIFERENÇA</b></div>';
+    const manualRows=rows.map(r=>{const mv=manual[String(r.pedido)];const has=Number.isFinite(Number(mv));const sys=Number(r.km);const diff=has&&Number.isFinite(sys)?Number(mv)-sys:null;const cls=diff!=null&&diff>0?' is-over':'';const d=diff==null?'—':`${diff>0?'+':''}${n1(diff)} km`;return `<div class="orders-manual-row" data-order="${esc(r.pedido)}" data-system-km="${Number.isFinite(sys)?sys:''}"><input class="orders-manual-km" inputmode="decimal" placeholder="—" value="${has?String(mv).replace('.',','):''}"><span class="orders-manual-diff${cls}">${d}</span></div>`}).join('');
     const host=document.getElementById('ordersTable');
-    host.innerHTML=`<div class="orders-table-shell orders-grid-shell"><div class="orders-grid-xscroll">${head}${body}</div></div>`;
+    host.innerHTML=`<div class="orders-table-shell orders-grid-shell orders-with-manual"><div class="orders-grid-xscroll">${head}${body}</div><aside class="orders-manual-pane">${manualHead}<div class="orders-manual-body">${manualRows}</div></aside></div>`;
 
     const xscroll=host.querySelector('.orders-grid-xscroll');
     const headEl=host.querySelector('.orders-grid-head');
@@ -201,6 +207,9 @@
       xscroll.style.setProperty('--orders-grid-width',keys.reduce((a,k)=>a+widths[k],0)+'px');
     };
     applyTemplate();
+    const mainBody=host.querySelector('.orders-grid-body'), manualBody=host.querySelector('.orders-manual-body');
+    if(mainBody&&manualBody){let syncing=false;const sync=(a,b)=>{if(syncing)return;syncing=true;b.scrollTop=a.scrollTop;requestAnimationFrame(()=>syncing=false)};mainBody.addEventListener('scroll',()=>sync(mainBody,manualBody));manualBody.addEventListener('scroll',()=>sync(manualBody,mainBody));}
+    host.querySelectorAll('.orders-manual-km').forEach(inp=>inp.addEventListener('input',()=>{const row=inp.closest('.orders-manual-row'),order=row.dataset.order,sys=Number(row.dataset.systemKm),raw=inp.value.trim().replace(',','.');saveManualKm(order,raw);const val=Number(raw),diff=raw!==''&&Number.isFinite(val)&&Number.isFinite(sys)?val-sys:null,el=row.querySelector('.orders-manual-diff');el.textContent=diff==null?'—':`${diff>0?'+':''}${n1(diff)} km`;el.classList.toggle('is-over',diff!=null&&diff>0)}));
 
     host.querySelectorAll('.orders-col-resizer').forEach(handle=>{
       handle.addEventListener('pointerdown',ev=>{

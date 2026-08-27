@@ -93,6 +93,38 @@
     const trendRows=allRows.filter(r=>between(r,range.start,range.end));
     DeliveryDashboard.renderTrendChart(trendRows,mode,ref);
   }
+  function syncOrdersFilterOptions(){
+    const periodEl=$('ordersPeriodFilter');
+    if(periodEl&&$('periodFilter'))periodEl.value=$('periodFilter').value||'day';
+    const motoEl=$('ordersMotoboyFilter');
+    if(!motoEl)return;
+    const selected=motoEl.value||'TODOS';
+    const names=[...new Set(currentRows.map(r=>String(r.motoboy||'').trim()).filter(Boolean))]
+      .sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
+    motoEl.innerHTML='<option value="TODOS">Todos os motoboys</option>'+names.map(n=>`<option value="${n.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}">${n}</option>`).join('');
+    motoEl.value=names.includes(selected)?selected:'TODOS';
+  }
+  function applyOrdersFilters(){
+    if(!$('ordersTable'))return;
+    let rows=currentRows.slice();
+    const moto=$('ordersMotoboyFilter')?.value||'TODOS';
+    const turno=$('ordersShiftFilter')?.value||'TODOS';
+    const q=DeliveryImport.norm($('orderSearch')?.value||'');
+    const sort=$('ordersSortFilter')?.value||'orders';
+    if(moto!=='TODOS')rows=rows.filter(r=>String(r.motoboy||'').trim()===moto);
+    if(turno!=='TODOS')rows=rows.filter(r=>r.turno===turno);
+    if(q)rows=rows.filter(r=>DeliveryImport.norm([r.pedido,r.cliente,r.motoboy,r.endereco,r.regiao,r.platform,r.status,r.turno].join(' ')).includes(q));
+    if(sort==='motoboy'){
+      rows.sort((a,b)=>{
+        const am=String(a.motoboy||'').trim(),bm=String(b.motoboy||'').trim();
+        if(!am&&!bm)return (b.dt?.getTime()||0)-(a.dt?.getTime()||0);
+        if(!am)return 1;if(!bm)return -1;
+        const c=am.localeCompare(bm,'pt-BR',{sensitivity:'base'});
+        return c||((b.dt?.getTime()||0)-(a.dt?.getTime()||0));
+      });
+    }
+    DeliveryDashboard.renderOrders(rows);
+  }
   async function applyPeriod(ref){
     if(!ref)return;
     const period=$('periodFilter').value;
@@ -108,6 +140,8 @@
       if(window.DeliveryMap)await DeliveryMap.prepareRows(prevRows);
     }
     DeliveryDashboard.renderAll(currentRows,prevRows);
+    syncOrdersFilterOptions();
+    applyOrdersFilters();
     await updateTrendChart();
     updatePeriodUI(range,period);
   }
@@ -146,7 +180,11 @@
     $('compareSelect').onchange=()=>applyPeriod($('dateFilter').value);
     $('trendChartMode').onchange=()=>updateTrendChart();
     $('saveDay').onclick=saveDay;$('exportCsv').onclick=exportCsv;
-    $('orderSearch').oninput=e=>{const q=DeliveryImport.norm(e.target.value);DeliveryDashboard.renderOrders(currentRows.filter(r=>DeliveryImport.norm([r.pedido,r.cliente,r.motoboy,r.endereco,r.regiao,r.platform].join(' ')).includes(q)))};
+    $('ordersPeriodFilter').onchange=async e=>{ $('periodFilter').value=e.target.value; await applyPeriod($('dateFilter').value); };
+    $('ordersMotoboyFilter').onchange=applyOrdersFilters;
+    $('ordersShiftFilter').onchange=applyOrdersFilters;
+    $('ordersSortFilter').onchange=applyOrdersFilters;
+    $('orderSearch').oninput=applyOrdersFilters;
     $('motoShiftFilter').onchange=()=>DeliveryDashboard.renderMotoCards(currentRows);
     setupNav();loadHistory();DeliveryMap?.init?.();DeliveryMap?.onChange?.(()=>applyPeriod($('dateFilter').value));
     const today=dateKeyLocal(new Date());$('dateFilter').value=today;

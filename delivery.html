@@ -73,7 +73,19 @@
       <div class="day-summary" id="daySummary"></div>
     </section>
 
-    <section id="view-pedidos" class="view"><div class="page-head"><h2>PEDIDOS</h2><input id="orderSearch" placeholder="Buscar pedido, cliente, motoboy, endereço..."></div><div class="panel table-panel"><div id="ordersTable"></div></div></section>
+    <section id="view-pedidos" class="view">
+      <div class="page-head orders-page-head">
+        <h2>PEDIDOS</h2>
+        <div class="orders-toolbar">
+          <label class="orders-filter"><span>PERÍODO</span><select id="ordersPeriodFilter"><option value="day">Diário</option><option value="week">Semanal</option><option value="month">Mensal</option></select></label>
+          <label class="orders-filter"><span>MOTOBOY</span><select id="ordersMotoboyFilter"><option value="TODOS">Todos os motoboys</option></select></label>
+          <label class="orders-filter"><span>TURNO</span><select id="ordersShiftFilter"><option value="TODOS">Todos os turnos</option><option value="MANHÃ">Manhã</option><option value="NOITE">Noite</option></select></label>
+          <label class="orders-filter"><span>ORDENAR POR</span><select id="ordersSortFilter"><option value="orders">Ordem dos pedidos</option><option value="motoboy">Motoboy</option></select></label>
+          <label class="orders-search"><span>BUSCAR</span><input id="orderSearch" placeholder="Pedido, cliente, motoboy, endereço..."></label>
+        </div>
+      </div>
+      <div class="panel table-panel"><div id="ordersTable"></div></div>
+    </section>
     <section id="view-motoboys" class="view"><div class="page-head"><h2>MOTOBOYS</h2><select id="motoShiftFilter"><option value="TODOS">Todos os turnos</option><option>MANHÃ</option><option>NOITE</option></select></div><div id="motoCards" class="detail-cards"></div></section>
     <section id="view-turnos" class="view"><div class="page-head"><h2>TURNOS</h2><p>Manhã até 16:59 • Noite a partir de 17:00</p></div><div id="shiftDetail" class="detail-cards"></div></section>
     <section id="view-regioes" class="view">

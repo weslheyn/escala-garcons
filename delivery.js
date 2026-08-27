@@ -109,12 +109,24 @@
     ['cliente','Cliente'],['regiao','Região'],['endereco','Endereço'],['platform','Plataforma'],['km','KM'],['valor','Valor'],['tempo','Tempo']
   ];
   const ORDER_COLUMNS_KEY='delivery_orders_columns_v1';
+  const ORDER_WIDTHS_KEY='delivery_orders_column_widths_v1';
   const ORDER_COLUMNS_DEFAULT=['pedido','data','hora','status','turno','motoboy','cliente','regiao','platform','km','valor','tempo'];
+  const ORDER_WIDTHS_DEFAULT={pedido:72,data:96,hora:72,status:94,turno:76,motoboy:130,cliente:190,regiao:150,endereco:320,platform:145,km:64,valor:92,tempo:78};
   function getOrderColumns(){
     try{const x=JSON.parse(localStorage.getItem(ORDER_COLUMNS_KEY)||'null');if(Array.isArray(x)&&x.length)return ORDER_COLUMNS.filter(c=>x.includes(c[0])).map(c=>c[0])}catch(e){}
     return ORDER_COLUMNS_DEFAULT.slice();
   }
   function saveOrderColumns(cols){localStorage.setItem(ORDER_COLUMNS_KEY,JSON.stringify(cols))}
+  function getOrderColumnWidths(){
+    let saved={};
+    try{saved=JSON.parse(localStorage.getItem(ORDER_WIDTHS_KEY)||'{}')||{}}catch(e){}
+    return {...ORDER_WIDTHS_DEFAULT,...saved};
+  }
+  function saveOrderColumnWidth(key,width){
+    const widths=getOrderColumnWidths();
+    widths[key]=Math.max(48,Math.round(Number(width)||ORDER_WIDTHS_DEFAULT[key]||90));
+    localStorage.setItem(ORDER_WIDTHS_KEY,JSON.stringify(widths));
+  }
   function renderOrderColumnsMenu(){
     const menu=$('ordersColumnsMenu');if(!menu)return;const selected=getOrderColumns();
     menu.innerHTML='<div class="orders-columns-title">COLUNAS VISÍVEIS</div>'+ORDER_COLUMNS.map(([key,label])=>`<label><input type="checkbox" value="${key}" ${selected.includes(key)?'checked':''}><span>${label}</span></label>`).join('');
@@ -125,6 +137,8 @@
     });
   }
   window.DeliveryOrdersColumns=getOrderColumns;
+  window.DeliveryOrdersColumnWidths=getOrderColumnWidths;
+  window.DeliverySaveOrdersColumnWidth=saveOrderColumnWidth;
   function applyOrdersFilters(){
     if(!$('ordersTable'))return;
     let rows=currentRows.slice();

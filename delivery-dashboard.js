@@ -173,20 +173,57 @@
   function table(headers,rows){return`<table class="data-table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`}
   function renderOrders(rows){
     const defs={
-      pedido:{label:'Pedido',w:5,val:r=>r.pedido},data:{label:'Data',w:8,val:r=>r.data},hora:{label:'Hora',w:6,val:r=>r.hora},
-      status:{label:'Status',w:8,val:r=>r.status},turno:{label:'Turno',w:6,val:r=>r.turno},motoboy:{label:'Motoboy',w:11,val:r=>r.motoboy||'—'},
-      cliente:{label:'Cliente',w:18,val:r=>r.cliente||'—'},regiao:{label:'Região',w:14,val:r=>r.regiao||'—'},endereco:{label:'Endereço',w:26,val:r=>r.endereco||'—'},
-      platform:{label:'Plataforma',w:11,val:r=>r.platform||'—'},km:{label:'KM',w:5,val:r=>n1(r.km)},valor:{label:'Valor',w:8,val:r=>money(r.valor)},tempo:{label:'Tempo',w:6,val:r=>fmtMin(r.tempoEntrega)}
+      pedido:{label:'Pedido',w:72,val:r=>r.pedido},data:{label:'Data',w:96,val:r=>r.data},hora:{label:'Hora',w:72,val:r=>r.hora},
+      status:{label:'Status',w:94,val:r=>r.status},turno:{label:'Turno',w:76,val:r=>r.turno},motoboy:{label:'Motoboy',w:130,val:r=>r.motoboy||'—'},
+      cliente:{label:'Cliente',w:190,val:r=>r.cliente||'—'},regiao:{label:'Região',w:150,val:r=>r.regiao||'—'},endereco:{label:'Endereço',w:320,val:r=>r.endereco||'—'},
+      platform:{label:'Plataforma',w:145,val:r=>r.platform||'—'},km:{label:'KM',w:64,val:r=>n1(r.km)},valor:{label:'Valor',w:92,val:r=>money(r.valor)},tempo:{label:'Tempo',w:78,val:r=>fmtMin(r.tempoEntrega)}
     };
     const fallback=['pedido','data','hora','status','turno','motoboy','cliente','regiao','platform','km','valor','tempo'];
     const selected=(window.DeliveryOrdersColumns?.()||fallback).filter(k=>defs[k]);
     const keys=selected.length?selected:fallback;
+    const savedWidths=window.DeliveryOrdersColumnWidths?.()||{};
+    const widths={}; keys.forEach(k=>widths[k]=Math.max(48,Number(savedWidths[k]||defs[k].w||90)));
     const esc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    const template=keys.map(k=>`minmax(0,${defs[k].w}fr)`).join(' ');
-    const head=`<div class="orders-grid-head" style="grid-template-columns:${template}">${keys.map(k=>`<div class="orders-grid-cell orders-grid-th col-${k}">${defs[k].label}</div>`).join('')}</div>`;
-    const bodyRows=rows.map(r=>`<div class="orders-grid-row" style="grid-template-columns:${template}">${keys.map(k=>{const v=defs[k].val(r);return `<div class="orders-grid-cell col-${k}" title="${esc(v)}">${esc(v)}</div>`}).join('')}</div>`).join('');
+    const template=()=>keys.map(k=>`${widths[k]}px`).join(' ');
+    const head=`<div class="orders-grid-head" style="grid-template-columns:${template()}">${keys.map(k=>`<div class="orders-grid-cell orders-grid-th col-${k}" data-col="${k}"><span>${defs[k].label}</span><i class="orders-col-resizer" data-col="${k}" title="Arraste para ajustar a largura"></i></div>`).join('')}</div>`;
+    const bodyRows=rows.map(r=>`<div class="orders-grid-row" style="grid-template-columns:${template()}">${keys.map(k=>{const v=defs[k].val(r);return `<div class="orders-grid-cell col-${k}" data-col="${k}" title="${esc(v)}">${esc(v)}</div>`}).join('')}</div>`).join('');
     const body=`<div class="orders-body-scroll orders-grid-body">${bodyRows||'<div class="orders-grid-empty">Nenhum pedido encontrado para os filtros selecionados.</div>'}</div>`;
-    document.getElementById('ordersTable').innerHTML=`<div class="orders-table-shell orders-grid-shell">${head}${body}</div>`;
+    const host=document.getElementById('ordersTable');
+    host.innerHTML=`<div class="orders-table-shell orders-grid-shell"><div class="orders-grid-xscroll">${head}${body}</div></div>`;
+
+    const xscroll=host.querySelector('.orders-grid-xscroll');
+    const headEl=host.querySelector('.orders-grid-head');
+    const bodyEl=host.querySelector('.orders-grid-body');
+    const applyTemplate=()=>{
+      const t=template();
+      headEl.style.gridTemplateColumns=t;
+      bodyEl.querySelectorAll('.orders-grid-row').forEach(row=>row.style.gridTemplateColumns=t);
+      xscroll.style.setProperty('--orders-grid-width',keys.reduce((a,k)=>a+widths[k],0)+'px');
+    };
+    applyTemplate();
+
+    host.querySelectorAll('.orders-col-resizer').forEach(handle=>{
+      handle.addEventListener('pointerdown',ev=>{
+        ev.preventDefault(); ev.stopPropagation();
+        const key=handle.dataset.col;
+        const startX=ev.clientX, startW=widths[key];
+        document.body.classList.add('orders-resizing');
+        handle.setPointerCapture?.(ev.pointerId);
+        const move=e=>{
+          widths[key]=Math.max(48,startW+(e.clientX-startX));
+          applyTemplate();
+        };
+        const up=e=>{
+          document.removeEventListener('pointermove',move);
+          document.removeEventListener('pointerup',up);
+          document.body.classList.remove('orders-resizing');
+          window.DeliverySaveOrdersColumnWidth?.(key,widths[key]);
+          try{handle.releasePointerCapture?.(ev.pointerId)}catch(_){ }
+        };
+        document.addEventListener('pointermove',move);
+        document.addEventListener('pointerup',up,{once:true});
+      });
+    });
   }
   function renderMotoCards(rows){const filter=document.getElementById('motoShiftFilter')?.value||'TODOS';const data=motoStats(filter==='TODOS'?rows:rows.filter(r=>r.turno===filter));document.getElementById('motoCards').innerHTML=data.map(x=>`<div class="detail-card"><h3>🛵 ${x.m}</h3><div class="mini-kpis"><div class="mini-kpi"><small>Pedidos</small><b>${x.p}</b></div><div class="mini-kpi"><small>KM</small><b>${n1(x.km)}</b></div><div class="mini-kpi"><small>KM médio</small><b>${n1(x.kmMed)}</b></div><div class="mini-kpi"><small>Tempo médio</small><b>${fmtMin(x.tMed)}</b></div></div><div style="margin-top:10px;color:#aaa;font-size:11px">Turnos: ${[...x.turnos].join(', ')}</div></div>`).join('')||'<div class="panel">Nenhum motoboy encontrado.</div>'}
   function renderShiftDetail(rows){document.getElementById('shiftDetail').innerHTML=['MANHÃ','NOITE'].map(s=>{const rr=rows.filter(r=>r.turno===s);return`<div class="detail-card"><h3>${s==='MANHÃ'?'☀':'☾'} TURNO ${s}</h3>${table(['Motoboy','Pedidos','KM','KM médio/pedido','Tempo médio'],motoStats(rr).map(x=>`<tr><td>${x.m}</td><td>${x.p}</td><td>${n1(x.km)}</td><td>${n1(x.kmMed)}</td><td>${fmtMin(x.tMed)}</td></tr>`))}</div>`}).join('')}

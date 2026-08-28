@@ -3,6 +3,7 @@
   const norm=s=>window.DeliveryImport?.norm?DeliveryImport.norm(s):String(s??'').trim().toLowerCase();
   const num=v=>window.DeliveryImport?.num?DeliveryImport.num(v):Number(v)||0;
   const dateBR=v=>window.DeliveryImport?.dateBR?DeliveryImport.dateBR(v):new Date(v);
+  const dateIfood=v=>{if(!v||String(v).trim()==='—')return null;const x=String(v).trim();let m=x.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);if(m)return new Date(+m[1],+m[2]-1,+m[3],+(m[4]||0),+(m[5]||0),+(m[6]||0));return dateBR(v)};
   const money=v=>(Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
   const n0=v=>(Number(v)||0).toLocaleString('pt-BR',{maximumFractionDigits:0});
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -11,13 +12,13 @@
   let ifoodRowsRecreio=[],ifoodRowsBarra=[];
   let maestroRaw1=[],maestroRaw2=[];
   let charts={hour:null,weekday:null,reason:null};
-  const STORE_RECREIO='delivery_ifood_recreio_normalized_v4';
-  const STORE_BARRA='delivery_ifood_barra_normalized_v4';
+  const STORE_RECREIO='delivery_ifood_recreio_normalized_v5';
+  const STORE_BARRA='delivery_ifood_barra_normalized_v5';
   const BORDERE='delivery_cancel_bordere_v1';
 
   function normalizeIfood(o,storeKey){
-    const dt=dateBR(get(o,['DATA E HORA DO PEDIDO','Data do pedido']));
-    const cancelDt=dateBR(get(o,['DATA DO CANCELAMENTO','Data e hora do cancelamento']))||dt;
+    const dt=dateIfood(get(o,['DATA E HORA DO PEDIDO','Data do pedido']));
+    const cancelDt=dateIfood(get(o,['DATA DO CANCELAMENTO','Data e hora do cancelamento']))||dt;
     const finalStatus=String(get(o,['STATUS FINAL DO PEDIDO','Status final','Status'])).trim();
     const cancelType=String(get(o,['TIPO DE CANCELAMENTO','Tipo cancelamento'])).trim();
     const valueCancelled=num(get(o,['VALOR DOS ITENS CANCELADOS','Valor dos itens cancelados']))||0;
@@ -25,6 +26,7 @@
     const isCancelled=/cancel/i.test(finalStatus+' '+cancelType) || valueCancelled>0 || !!get(o,['DATA DO CANCELAMENTO']);
     return {
       fullId:String(get(o,['ID COMPLETO DO PEDIDO'])),
+      shortIdRaw:String(get(o,['ID CURTO DO PEDIDO','ID DO PEDIDO','Pedido'])).trim().replace(/\.0$/,''),
       shortId:cleanId(get(o,['ID CURTO DO PEDIDO','ID DO PEDIDO','Pedido'])),
       orderDt:dt?dt.toISOString():'',
       cancelDt:cancelDt?cancelDt.toISOString():'',
@@ -63,7 +65,7 @@
   function selectedIfoodRows(){const store=selectedStore();return store==='recreio'?ifoodRowsRecreio:store==='barra'?ifoodRowsBarra:allIfoodRows()}
   function ifoodDateBounds(){const keys=selectedIfoodRows().map(r=>r.dateKey).filter(Boolean).sort();return{min:keys[0]||'',max:keys[keys.length-1]||''}}
   function syncIfoodDateToData(force=false){
-    const el=$('cancelDateFilter');if(!el)return;const b=ifoodDateBounds();if(!b.max)return;
+    const el=$('dateFilter');if(!el)return;const b=ifoodDateBounds();if(!b.max)return;
     el.min=b.min;el.max=b.max;
     if(force||!el.value||el.value<b.min||el.value>b.max)el.value=b.max;
   }
@@ -86,16 +88,17 @@
     return[ref,ref];
   }
   const inRange=(k,a,b)=>k&&k>=a&&k<=b;
-  function filteredIfood(){const ref=$('cancelDateFilter')?.value||$('dateFilter')?.value;const per=$('cancelPeriodFilter')?.value||'day';const [a,b]=rangeFor(ref,per);return selectedIfoodRows().filter(r=>inRange(r.dateKey,a,b));}
+  function filteredIfood(){const ref=$('dateFilter')?.value;const per=$('periodFilter')?.value||'day';const [a,b]=rangeFor(ref,per);return selectedIfoodRows().filter(r=>inRange(r.dateKey,a,b));}
   function filteredMaestro(){
-    const ref=$('cancelDateFilter')?.value||$('dateFilter')?.value;const per=$('cancelPeriodFilter')?.value||'day';const [a,b]=rangeFor(ref,per);
+    const ref=$('dateFilter')?.value;const per=$('periodFilter')?.value||'day';const [a,b]=rangeFor(ref,per);
     // O cruzamento de cancelamentos é Maestro x iFood. O segundo relatório é Agilizone
     // e não pode gerar linhas "Só Maestro", pois isso criava falsos cancelamentos.
     // Também limitamos o Maestro aos pedidos de origem iFood.
     const all=maestroRaw1.map(x=>normalizeMaestro(x,'MAESTRO')).filter(r=>/ifood/i.test(r.platform||''));
-    const store=selectedStore();
-    const scoped=store==='all'?all:all.filter(r=>!r.store||r.store===store);
-    const map=new Map();scoped.forEach(r=>{if(!r.pedido&&!r.partner)return;const k=`${r.store||store||''}|${r.partner||r.pedido}`;const old=map.get(k);if(!old||(/cancel/i.test(r.status)&&!/cancel/i.test(old.status)))map.set(k,r)});
+    // A loja gravada no Maestro não é confiável para este cruzamento. No arquivo atual,
+    // pedidos que pertencem ao iFood Barra também aparecem confirmados por usuário do Recreio.
+    // Para a auditoria, o vínculo confiável é ID parceiro + data.
+    const map=new Map();all.forEach(r=>{if(!r.pedido&&!r.partner)return;const k=`${r.dateKey}|${r.partner||r.pedido}`;const old=map.get(k);if(!old||(/cancel/i.test(r.status)&&!/cancel/i.test(old.status)))map.set(k,r)});
     return [...map.values()].filter(r=>inRange(r.dateKey,a,b));
   }
   function cancelIfood(){return filteredIfood().filter(r=>r.isCancelled)}
@@ -129,7 +132,6 @@
         if(usedM.has(x.idx))return false;
         const mid=cleanId(x.m.partner||x.m.pedido); if(mid!==iid)return false;
         if(x.m.dateKey&&i.dateKey&&x.m.dateKey!==i.dateKey)return false;
-        if(x.m.store&&i.store&&x.m.store!==i.store)return false;
         return true;
       });
       // Prioriza coincidência explícita de loja; depois registro sem loja; nunca força outra loja.
@@ -154,20 +156,20 @@
     // Mantém cancelamentos totais e parciais, exatamente no formato de auditoria solicitado.
     let divergencias=onlyI;
     if(q)divergencias=divergencias.filter(r=>norm([r.key,r.i?.shortId,r.i?.reason,r.store].join(' ')).includes(q));
-    const divBody=divergencias.map(r=>`<tr><td>${r.store==='barra'?'BARRA':r.store==='recreio'?'RECREIO':'—'}</td><td><b>${esc(r.i?.shortId||'—')}</b></td><td>${r.i?.isPartial?'Cancelamento parcial':'Cancelado'}</td><td><b>${money(r.i?.valueCancelled||0)}</b></td></tr>`).join('');
+    const divBody=divergencias.map(r=>`<tr><td>${r.store==='barra'?'BARRA':r.store==='recreio'?'RECREIO':'—'}</td><td><b>${esc(r.i?.shortIdRaw||r.i?.shortId||'—')}</b></td><td>${r.i?.isPartial?'Cancelamento parcial':'Cancelado'}</td><td><b>${money(r.i?.valueCancelled||0)}</b></td></tr>`).join('');
     const divTable=$('cancelDivergenceTable');if(divTable)divTable.innerHTML=`<table><thead><tr><th>LOJA</th><th>PEDIDO IFOOD</th><th>TIPO</th><th>VALOR CANCELADO</th></tr></thead><tbody>${divBody||'<tr><td colspan="4" class="cancel-empty">Nenhum cancelamento exclusivo do iFood no período selecionado.</td></tr>'}</tbody></table>`;
     const divCount=$('cancelDivergenceCount');if(divCount)divCount.textContent=`${divergencias.length} pedido${divergencias.length===1?'':'s'} para verificar no Maestro`;
-    const tbody=visible.map(r=>{const cls=r.situacao==='Nos dois'?'both':r.situacao==='Só iFood'?'only-ifood':r.situacao==='Só Maestro'?'only-maestro':'partial';const obs=r.situacao==='Nos dois'?'Pedido cancelado nas duas plataformas':r.situacao==='Só iFood'?'Não localizado como cancelado no Maestro':r.situacao==='Só Maestro'?'Não encontrado como cancelado no iFood':'Cancelamento parcial no iFood';const dt=r.i?.cancelDt?new Date(r.i.cancelDt).toLocaleString('pt-BR'):'—';return `<tr><td>${r.store==='barra'?'BARRA':r.store==='recreio'?'RECREIO':'—'}</td><td>${esc(r.i?.shortId||'—')}</td><td>${esc(r.m?.partner||r.m?.pedido||'—')}</td><td>${dt}</td><td><span class="cancel-pill ${r.m?'cancelled':'neutral'}">${r.m?'CANCELADO':'NÃO CANCELADO'}</span></td><td><span class="cancel-pill ${r.i?'cancelled':'neutral'}">${r.i?(r.i.isPartial?'PARCIAL':'CANCELADO'):'NÃO CANCELADO'}</span></td><td>${money(r.value)}</td><td><span class="cancel-situation ${cls}">${esc(r.situacao)}</span></td><td>${esc(obs)}</td></tr>`}).join('');
+    const tbody=visible.map(r=>{const cls=r.situacao==='Nos dois'?'both':r.situacao==='Só iFood'?'only-ifood':r.situacao==='Só Maestro'?'only-maestro':'partial';const obs=r.situacao==='Nos dois'?'Pedido cancelado nas duas plataformas':r.situacao==='Só iFood'?'Não localizado como cancelado no Maestro':r.situacao==='Só Maestro'?'Não encontrado como cancelado no iFood':'Cancelamento parcial no iFood';const dt=r.i?.cancelDt?new Date(r.i.cancelDt).toLocaleString('pt-BR'):'—';return `<tr><td>${r.store==='barra'?'BARRA':r.store==='recreio'?'RECREIO':'—'}</td><td>${esc(r.i?.shortIdRaw||r.i?.shortId||'—')}</td><td>${esc(r.m?.partner||r.m?.pedido||'—')}</td><td>${dt}</td><td><span class="cancel-pill ${r.m?'cancelled':'neutral'}">${r.m?'CANCELADO':'NÃO CANCELADO'}</span></td><td><span class="cancel-pill ${r.i?'cancelled':'neutral'}">${r.i?(r.i.isPartial?'PARCIAL':'CANCELADO'):'NÃO CANCELADO'}</span></td><td>${money(r.value)}</td><td><span class="cancel-situation ${cls}">${esc(r.situacao)}</span></td><td>${esc(obs)}</td></tr>`}).join('');
     const table=$('cancelCompareTable');if(table)table.innerHTML=`<table><thead><tr><th>LOJA</th><th>PEDIDO IFOOD<br><small>(ID curto)</small></th><th>Nº PARCEIRO<br><small>(Maestro)</small></th><th>DATA CANCELAMENTO</th><th>MAESTRO</th><th>IFOOD</th><th>VALOR CANCELADO</th><th>SITUAÇÃO</th><th>OBSERVAÇÃO</th></tr></thead><tbody>${tbody||'<tr><td colspan="9" class="cancel-empty">Nenhum registro para os filtros selecionados.</td></tr>'}</tbody></table>`;
   }
   function getBordere(){try{return JSON.parse(localStorage.getItem(BORDERE)||'{}')||{}}catch(e){return{}}}
-  function renderBordere(){const key=$('cancelDateFilter')?.value||$('dateFilter')?.value;if(!key)return;const all=getBordere(),x=all[key]||{cancelamento:'',falha:'',outros:''};['cancelamento','falha','outros'].forEach(k=>{const el=$('bordere_'+k);if(el)el.value=x[k]??''});updateBordereTotal()}
+  function renderBordere(){const key=$('dateFilter')?.value;if(!key)return;const all=getBordere(),x=all[key]||{cancelamento:'',falha:'',outros:''};['cancelamento','falha','outros'].forEach(k=>{const el=$('bordere_'+k);if(el)el.value=x[k]??''});updateBordereTotal()}
   function updateBordereTotal(){const vals=['cancelamento','falha','outros'].map(k=>num($('bordere_'+k)?.value)||0);const el=$('bordereTotal');if(el)el.textContent=money(vals.reduce((a,b)=>a+b,0))}
-  function saveBordere(){const key=$('cancelDateFilter')?.value||$('dateFilter')?.value;if(!key)return;const all=getBordere();all[key]={};['cancelamento','falha','outros'].forEach(k=>all[key][k]=$('bordere_'+k)?.value||'');localStorage.setItem(BORDERE,JSON.stringify(all));updateBordereTotal()}
-  function render(){if(!$('view-cancelamentos'))return;syncIfoodDateToData(false);renderIfoodDashboard();renderComparison();renderBordere();const meta=$('ifoodImportedAt');if(meta){const b=ifoodDateBounds(),ref=$('cancelDateFilter')?.value||'',total=allIfoodRows().length;if(total){const fmt=k=>k?k.split('-').reverse().join('/'):'—';const sel=selectedStore()==='recreio'?'Recreio':selectedStore()==='barra'?'Barra':'Todas';meta.innerHTML=`Recreio ${ifoodRowsRecreio.length} • Barra ${ifoodRowsBarra.length} • exibindo ${sel} • período ${fmt(b.min)} a ${fmt(b.max)}${ref&&!filteredIfood().length?` <strong class="ifood-no-data">• sem dados em ${fmt(ref)}</strong>`:''}`;}else meta.textContent='Aguardando relatórios iFood';}}
+  function saveBordere(){const key=$('dateFilter')?.value;if(!key)return;const all=getBordere();all[key]={};['cancelamento','falha','outros'].forEach(k=>all[key][k]=$('bordere_'+k)?.value||'');localStorage.setItem(BORDERE,JSON.stringify(all));updateBordereTotal()}
+  function render(){if(!$('view-cancelamentos'))return;syncIfoodDateToData(false);renderIfoodDashboard();renderComparison();renderBordere();const meta=$('ifoodImportedAt');if(meta){const b=ifoodDateBounds(),ref=$('dateFilter')?.value||'',total=allIfoodRows().length;if(total){const fmt=k=>k?k.split('-').reverse().join('/'):'—';const sel=selectedStore()==='recreio'?'Recreio':selectedStore()==='barra'?'Barra':'Todas';meta.innerHTML=`Recreio ${ifoodRowsRecreio.length} • Barra ${ifoodRowsBarra.length} • exibindo ${sel} • período ${fmt(b.min)} a ${fmt(b.max)}${ref&&!filteredIfood().length?` <strong class="ifood-no-data">• sem dados em ${fmt(ref)}</strong>`:''}`;}else meta.textContent='Aguardando relatórios iFood';}}
   function bind(){
-    const ref=$('dateFilter')?.value;if($('cancelDateFilter')&&ref)$('cancelDateFilter').value=ref;
-    ['cancelStoreFilter','cancelPeriodFilter','cancelDateFilter','cancelQuickFilter'].forEach(id=>{const el=$(id);if(el)el.onchange=render});
+    ['cancelStoreFilter','cancelQuickFilter'].forEach(id=>{const el=$(id);if(el)el.onchange=render});
+    ['periodFilter','dateFilter'].forEach(id=>{const el=$(id);if(el)el.addEventListener('change',render)});
     const storeFilter=$('cancelStoreFilter');if(storeFilter)storeFilter.onchange=()=>{syncIfoodDateToData(true);render()};
     const s=$('cancelSearch');if(s)s.oninput=renderComparison;
     ['cancelamento','falha','outros'].forEach(k=>{const el=$('bordere_'+k);if(el)el.oninput=saveBordere});

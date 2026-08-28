@@ -3,31 +3,39 @@
   const num=v=>{if(v===null||v===undefined||v==='')return null;if(typeof v==='number')return Number.isFinite(v)?v:null;let s=String(v).replace(/R\$/gi,'').replace(/\s/g,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',','.');const n=Number(s);return Number.isFinite(n)?n:null};
   const dateBR=v=>{if(v instanceof Date&&!isNaN(v))return v;if(!v||String(v).trim()==='—')return null;const s=String(v).trim();let m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s*-?\s*|\s+)(\d{2}):(\d{2})(?::(\d{2}))?/);if(m)return new Date(+m[3],+m[2]-1,+m[1],+m[4],+m[5],+(m[6]||0));const d=new Date(s);return isNaN(d)?null:d};
   const get=(o,names)=>{for(const n of names){const k=norm(n);if(o[k]!==undefined&&o[k]!==null&&String(o[k]).trim()!==''&&String(o[k]).trim()!=='—')return o[k]}return ''};
+  async function patchBrokenXlsxDimension(data){
+    if(!window.JSZip)return data;
+    try{
+      const zip=await JSZip.loadAsync(data);
+      const sheetNames=Object.keys(zip.files).filter(n=>/^xl\/worksheets\/sheet\d+\.xml$/i.test(n));
+      let changed=false;
+      for(const name of sheetNames){
+        const f=zip.file(name);if(!f)continue;
+        let xml=await f.async('string');
+        const dim=(xml.match(/<dimension\s+ref="([^"]+)"\s*\/?\s*>/i)||[])[1]||'';
+        if(!/^A1(?::A1)?$/i.test(dim))continue;
+        let maxR=0,maxC=0;
+        const re=/<c\b[^>]*\br="([A-Z]+)(\d+)"/g;let m;
+        const colNum=letters=>{let n=0;for(const ch of letters)n=n*26+(ch.charCodeAt(0)-64);return n};
+        const colLetters=n=>{let s='';while(n>0){n--;s=String.fromCharCode(65+n%26)+s;n=Math.floor(n/26)}return s};
+        while((m=re.exec(xml))){maxC=Math.max(maxC,colNum(m[1]));maxR=Math.max(maxR,Number(m[2])||0)}
+        if(maxR>1||maxC>1){
+          const real=`A1:${colLetters(maxC)}${maxR}`;
+          xml=xml.replace(/<dimension\s+ref="[^"]+"\s*\/?\s*>/i,`<dimension ref="${real}"/>`);
+          zip.file(name,xml);changed=true;
+        }
+      }
+      if(!changed)return data;
+      return await zip.generateAsync({type:'arraybuffer',compression:'DEFLATE'});
+    }catch(e){console.warn('Falha ao reparar dimensão do XLSX; usando leitura padrão.',e);return data}
+  }
   async function parseFile(file){
-    const data=await file.arrayBuffer();
-    // IMPORTANTE: os XLSX atuais exportados pelo iFood informam <dimension ref="A1">
-    // mesmo tendo 54 colunas e centenas de linhas. `nodim:true` manda o SheetJS ignorar
-    // esse intervalo incorreto e calcular a área real pelas células existentes.
-    const wb=XLSX.read(data,{type:'array',cellDates:false,raw:false,nodim:true});
+    let data=await file.arrayBuffer();
+    const name=String(file?.name||'').toLowerCase();
+    if(/\.xlsx$/.test(name))data=await patchBrokenXlsxDimension(data);
+    const wb=XLSX.read(data,{type:'array',cellDates:false,raw:false});
     const ws=wb.Sheets[wb.SheetNames[0]];
     if(!ws)return [];
-
-    // Mantém uma segunda proteção para arquivos de terceiros com dimensão inconsistente.
-    try{
-      const refs=Object.keys(ws).filter(k=>k[0]!=='!');
-      if(refs.length){
-        let minR=Infinity,minC=Infinity,maxR=-1,maxC=-1;
-        refs.forEach(ref=>{
-          const c=XLSX.utils.decode_cell(ref);
-          if(c.r<minR)minR=c.r;if(c.c<minC)minC=c.c;
-          if(c.r>maxR)maxR=c.r;if(c.c>maxC)maxC=c.c;
-        });
-        if(maxR>=0&&maxC>=0)ws['!ref']=XLSX.utils.encode_range({s:{r:minR,c:minC},e:{r:maxR,c:maxC}});
-      }
-    }catch(e){console.warn('Não foi possível recalcular o intervalo do Excel',e)}
-
-    // Lê como matriz e monta os objetos explicitamente. Isso evita perder colunas quando
-    // o exportador gera metadados de planilha fora do padrão.
     const matrix=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false,blankrows:false});
     if(!matrix.length)return [];
     const headers=(matrix[0]||[]).map(h=>norm(h));

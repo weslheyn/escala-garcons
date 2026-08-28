@@ -11,8 +11,8 @@
   let ifoodRowsRecreio=[],ifoodRowsBarra=[];
   let maestroRaw1=[],maestroRaw2=[];
   let charts={hour:null,weekday:null,reason:null};
-  const STORE_RECREIO='delivery_ifood_recreio_normalized_v3';
-  const STORE_BARRA='delivery_ifood_barra_normalized_v3';
+  const STORE_RECREIO='delivery_ifood_recreio_normalized_v4';
+  const STORE_BARRA='delivery_ifood_barra_normalized_v4';
   const BORDERE='delivery_cancel_bordere_v1';
 
   function normalizeIfood(o,storeKey){
@@ -77,8 +77,6 @@
   function restore(){
     try{const x=JSON.parse(localStorage.getItem(STORE_RECREIO)||'[]');if(Array.isArray(x))ifoodRowsRecreio=x}catch(e){}
     try{const x=JSON.parse(localStorage.getItem(STORE_BARRA)||'[]');if(Array.isArray(x))ifoodRowsBarra=x}catch(e){}
-    // Migração suave do cache antigo: era o relatório do Recreio.
-    if(!ifoodRowsRecreio.length){try{const x=JSON.parse(localStorage.getItem('delivery_ifood_normalized_v1')||'[]');if(Array.isArray(x))ifoodRowsRecreio=x.map(r=>({...r,store:r.store||'recreio'}))}catch(e){}}
   }
 
   function rangeFor(ref,period){

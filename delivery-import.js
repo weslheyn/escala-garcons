@@ -5,11 +5,14 @@
   const get=(o,names)=>{for(const n of names){const k=norm(n);if(o[k]!==undefined&&o[k]!==null&&String(o[k]).trim()!==''&&String(o[k]).trim()!=='—')return o[k]}return ''};
   async function parseFile(file){
     const data=await file.arrayBuffer();
-    const wb=XLSX.read(data,{type:'array',cellDates:false,raw:false});
+    // IMPORTANTE: os XLSX atuais exportados pelo iFood informam <dimension ref="A1">
+    // mesmo tendo 54 colunas e centenas de linhas. `nodim:true` manda o SheetJS ignorar
+    // esse intervalo incorreto e calcular a área real pelas células existentes.
+    const wb=XLSX.read(data,{type:'array',cellDates:false,raw:false,nodim:true});
     const ws=wb.Sheets[wb.SheetNames[0]];
-    // Alguns relatórios exportados pelo iFood trazem !ref=A1 mesmo contendo dezenas
-    // de colunas e centenas de linhas. Corrige o intervalo real antes do sheet_to_json.
-    // Sem isso, campos como ID curto, status e data do cancelamento podem não ser lidos.
+    if(!ws)return [];
+
+    // Mantém uma segunda proteção para arquivos de terceiros com dimensão inconsistente.
     try{
       const refs=Object.keys(ws).filter(k=>k[0]!=='!');
       if(refs.length){
@@ -22,7 +25,17 @@
         if(maxR>=0&&maxC>=0)ws['!ref']=XLSX.utils.encode_range({s:{r:minR,c:minC},e:{r:maxR,c:maxC}});
       }
     }catch(e){console.warn('Não foi possível recalcular o intervalo do Excel',e)}
-    return XLSX.utils.sheet_to_json(ws,{defval:'',raw:false}).map(row=>{const o={};Object.keys(row).forEach(k=>o[norm(k)]=row[k]);return o});
+
+    // Lê como matriz e monta os objetos explicitamente. Isso evita perder colunas quando
+    // o exportador gera metadados de planilha fora do padrão.
+    const matrix=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false,blankrows:false});
+    if(!matrix.length)return [];
+    const headers=(matrix[0]||[]).map(h=>norm(h));
+    return matrix.slice(1).filter(row=>row.some(v=>String(v??'').trim()!=='' )).map(row=>{
+      const o={};
+      headers.forEach((h,i)=>{if(h)o[h]=row[i]??''});
+      return o;
+    });
   }
   function regionFromAddress(addr){const s=norm(addr);const rules=[['recreio dos bandeirantes','Recreio'],['recreio','Recreio'],['barra da tijuca','Barra da Tijuca'],['itanhanga','Itanhangá'],['jacarepagua','Jacarepaguá'],['taquara','Taquara'],['vargem grande','Vargem Grande'],['vargem pequena','Vargem Pequena'],['camorim','Camorim'],['anil','Anil'],['rocinha','Rocinha'],['barra guaratiba','Barra de Guaratiba'],['joa,','Joá'],['pechincha','Pechincha'],['freguesia','Freguesia'],['curicica','Curicica'],['rio 2','Barra Olímpica'],['barra olimpica','Barra Olímpica'],['olimpica','Barra Olímpica'],['abelardo bueno','Barra Olímpica'],['jaime poggi','Barra Olímpica'],['lucio costa','Barra da Tijuca'],['lúcio costa','Barra da Tijuca'],['americas','Recreio'],['américas','Recreio']];for(const [a,b] of rules)if(s.includes(norm(a)))return b;return 'A GEOCODIFICAR'}
   const platform=o=>{const p=String(get(o,['Origem']));if(/ifood/i.test(p))return'iFood';if(/99food/i.test(p))return'99Food';if(/app coco/i.test(p))return'App Coco Bambu';if(/pedido manual/i.test(p))return'Pedido manual';return p&& !/system|coco bambu/i.test(p)?p:'Outros'};

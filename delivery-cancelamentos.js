@@ -89,20 +89,28 @@
   }
   const inRange=(k,a,b)=>k&&k>=a&&k<=b;
   function filteredIfood(){const ref=$('dateFilter')?.value;const per=$('periodFilter')?.value||'day';const [a,b]=rangeFor(ref,per);return selectedIfoodRows().filter(r=>inRange(r.dateKey,a,b));}
-  function filteredMaestro(){
+  function filteredMaestroAll(){
     const ref=$('dateFilter')?.value;const per=$('periodFilter')?.value||'day';const [a,b]=rangeFor(ref,per);
-    // O cruzamento de cancelamentos é Maestro x iFood. O segundo relatório é Agilizone
-    // e não pode gerar linhas "Só Maestro", pois isso criava falsos cancelamentos.
-    // Também limitamos o Maestro aos pedidos de origem iFood.
-    const all=maestroRaw1.map(x=>normalizeMaestro(x,'MAESTRO')).filter(r=>/ifood/i.test(r.platform||''));
-    // A loja gravada no Maestro não é confiável para este cruzamento. No arquivo atual,
-    // pedidos que pertencem ao iFood Barra também aparecem confirmados por usuário do Recreio.
-    // Para a auditoria, o vínculo confiável é ID parceiro + data.
-    const map=new Map();all.forEach(r=>{if(!r.pedido&&!r.partner)return;const k=`${r.dateKey}|${r.partner||r.pedido}`;const old=map.get(k);if(!old||(/cancel/i.test(r.status)&&!/cancel/i.test(old.status)))map.set(k,r)});
+    // Para os KPIs do Maestro, contamos TODOS os pedidos do relatório Maestro no período,
+    // independentemente da plataforma (iFood, App Coco Bambu, 99Food etc.).
+    // O Agilizone continua fora desta rotina.
+    const all=maestroRaw1.map(x=>normalizeMaestro(x,'MAESTRO'));
+    const map=new Map();all.forEach(r=>{
+      if(!r.pedido&&!r.partner)return;
+      // O número interno do Maestro é a chave mais segura para não misturar plataformas.
+      const k=`${r.dateKey}|${r.pedido||r.partner}`;
+      const old=map.get(k);
+      if(!old||(/cancel/i.test(r.status)&&!/cancel/i.test(old.status)))map.set(k,r);
+    });
     return [...map.values()].filter(r=>inRange(r.dateKey,a,b));
+  }
+  function filteredMaestro(){
+    // A correlação Maestro x iFood usa somente pedidos cuja origem no Maestro é iFood.
+    return filteredMaestroAll().filter(r=>/ifood/i.test(r.platform||''));
   }
   function cancelIfood(){return filteredIfood().filter(r=>r.isCancelled)}
   function cancelMaestro(){return filteredMaestro().filter(r=>/cancel/i.test(r.status))}
+  function cancelMaestroAll(){return filteredMaestroAll().filter(r=>/cancel/i.test(r.status))}
 
   function makeChart(id,type,data,options){const c=$(id);if(!c||!window.Chart)return null;if(charts[id])charts[id].destroy();charts[id]=new Chart(c,{type,data,options});return charts[id]}
   function renderIfoodDashboard(){
@@ -163,17 +171,19 @@
   function cancelColgroup(widths){return `<colgroup>${widths.map((w,i)=>`<col data-col="${i}" style="width:${w}px">`).join('')}</colgroup>`}
   function cancelTh(label,i){return `<th><span>${label}</span><i class="cancel-col-resizer" data-col="${i}" title="Arraste para ajustar a largura"></i></th>`}
   function renderComparison(){
-    const rows=buildComparison(),mac=cancelMaestro(),ifc=cancelIfood();
+    const rows=buildComparison(),mac=cancelMaestro(),macAll=cancelMaestroAll(),ifc=cancelIfood();
     const onlyI=rows.filter(r=>r.i&&!r.m),onlyM=rows.filter(r=>r.m&&!r.i),partials=rows.filter(r=>r.i?.isPartial);
-    const maestroVal=mac.reduce((s,r)=>s+(r.value||0),0), ifoodVal=ifc.reduce((s,r)=>s+(r.valueCancelled||0),0);
+    const maestroVal=macAll.reduce((s,r)=>s+(r.value||0),0), ifoodVal=ifc.reduce((s,r)=>s+(r.valueCancelled||0),0);
     const barra=ifc.filter(r=>r.store==='barra'), recreio=ifc.filter(r=>r.store==='recreio');
     const barraVal=barra.reduce((s,r)=>s+(r.valueCancelled||0),0), recreioVal=recreio.reduce((s,r)=>s+(r.valueCancelled||0),0);
-    // Total cancelado = total consolidado sem duplicidade. Como o mesmo pedido pode existir no Maestro e no iFood,
-    // a contagem vem das linhas consolidadas e não da soma bruta entre as fontes.
-    const totalVal=rows.reduce((s,r)=>s+r.value,0);
+    // O consolidado inclui a união dos cancelamentos iFood + os cancelamentos Maestro de outras plataformas.
+    // Pedidos iFood presentes nos dois sistemas continuam contados uma única vez.
+    const maestroOutras=macAll.filter(r=>!/ifood/i.test(r.platform||''));
+    const totalCount=rows.length+maestroOutras.length;
+    const totalVal=rows.reduce((s,r)=>s+r.value,0)+maestroOutras.reduce((s,r)=>s+(r.value||0),0);
     const cards=[
-      ['total','TOTAL DE PEDIDOS CANCELADOS',rows.length,totalVal,'sem duplicidade'],
-      ['maestro','CANCELADOS NO MAESTRO',mac.length,maestroVal,''],
+      ['total','TOTAL DE PEDIDOS CANCELADOS',totalCount,totalVal,'sem duplicidade'],
+      ['maestro','CANCELADOS NO MAESTRO',macAll.length,maestroVal,''],
       ['ifood-barra','CANCELADOS IFOOD BARRA',barra.length,barraVal,'Barra da Tijuca'],
       ['ifood-recreio','CANCELADOS IFOOD RECREIO',recreio.length,recreioVal,'Recreio']
     ];

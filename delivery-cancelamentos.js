@@ -11,8 +11,8 @@
   let ifoodRowsRecreio=[],ifoodRowsBarra=[];
   let maestroRaw1=[],maestroRaw2=[];
   let charts={hour:null,weekday:null,reason:null};
-  const STORE_RECREIO='delivery_ifood_recreio_normalized_v2';
-  const STORE_BARRA='delivery_ifood_barra_normalized_v2';
+  const STORE_RECREIO='delivery_ifood_recreio_normalized_v3';
+  const STORE_BARRA='delivery_ifood_barra_normalized_v3';
   const BORDERE='delivery_cancel_bordere_v1';
 
   function normalizeIfood(o,storeKey){
@@ -91,7 +91,10 @@
   function filteredIfood(){const ref=$('cancelDateFilter')?.value||$('dateFilter')?.value;const per=$('cancelPeriodFilter')?.value||'day';const [a,b]=rangeFor(ref,per);return selectedIfoodRows().filter(r=>inRange(r.dateKey,a,b));}
   function filteredMaestro(){
     const ref=$('cancelDateFilter')?.value||$('dateFilter')?.value;const per=$('cancelPeriodFilter')?.value||'day';const [a,b]=rangeFor(ref,per);
-    const all=[...maestroRaw1.map(x=>normalizeMaestro(x,'MAESTRO 1')),...maestroRaw2.map(x=>normalizeMaestro(x,'MAESTRO 2'))];
+    // O cruzamento de cancelamentos é Maestro x iFood. O segundo relatório é Agilizone
+    // e não pode gerar linhas "Só Maestro", pois isso criava falsos cancelamentos.
+    // Também limitamos o Maestro aos pedidos de origem iFood.
+    const all=maestroRaw1.map(x=>normalizeMaestro(x,'MAESTRO')).filter(r=>/ifood/i.test(r.platform||''));
     const store=selectedStore();
     const scoped=store==='all'?all:all.filter(r=>!r.store||r.store===store);
     const map=new Map();scoped.forEach(r=>{if(!r.pedido&&!r.partner)return;const k=`${r.store||store||''}|${r.partner||r.pedido}`;const old=map.get(k);if(!old||(/cancel/i.test(r.status)&&!/cancel/i.test(old.status)))map.set(k,r)});
@@ -134,7 +137,7 @@
       // Prioriza coincidência explícita de loja; depois registro sem loja; nunca força outra loja.
       candidates.sort((a,b)=>Number(Boolean(b.m.store&&b.m.store===i.store))-Number(Boolean(a.m.store&&a.m.store===i.store)));
       const hit=candidates[0]; const m=hit?.m||null; if(hit)usedM.add(hit.idx);
-      let situacao;if(i.isPartial)situacao='Parcial iFood';else if(m)situacao='Nos dois';else situacao='Só iFood';
+      let situacao;if(m)situacao='Nos dois';else situacao='Só iFood';
       rows.push({key:i.shortId,m,i,situacao,value:i.valueCancelled||0,store:i.store||m?.store||''});
     });
     mac.forEach((m,idx)=>{if(usedM.has(idx))return;const id=cleanId(m.partner||m.pedido);if(!id)return;rows.push({key:m.partner||m.pedido,m,i:null,situacao:'Só Maestro',value:m.value||0,store:m.store||''});});
@@ -142,13 +145,20 @@
   }
   function renderComparison(){
     const rows=buildComparison(),mac=cancelMaestro(),ifc=cancelIfood();
-    const onlyI=rows.filter(r=>r.situacao==='Só iFood'),onlyM=rows.filter(r=>r.situacao==='Só Maestro'),partials=rows.filter(r=>r.situacao==='Parcial iFood');
+    const onlyI=rows.filter(r=>r.i&&!r.m),onlyM=rows.filter(r=>r.m&&!r.i),partials=rows.filter(r=>r.i?.isPartial);
     const maestroVal=mac.reduce((s,r)=>s+(r.value||0),0), ifoodVal=ifc.reduce((s,r)=>s+(r.valueCancelled||0),0), consolidado=rows.reduce((s,r)=>s+r.value,0);
     const cards=[['maestro','CANCELADOS MAESTRO',mac.length,maestroVal],['ifood','CANCELADOS IFOOD',ifc.length,ifoodVal],['total','TOTAL CONSOLIDADO','SEM DUPLICIDADE',consolidado],['alert','SÓ IFOOD','NÃO CANCELADOS NO MAESTRO',onlyI.reduce((s,r)=>s+r.value,0)],['info','SÓ MAESTRO','NÃO ENCONTRADOS NO IFOOD',onlyM.reduce((s,r)=>s+r.value,0)]];
     const el=$('cancelCompareKpis');if(el)el.innerHTML=cards.map((c,i)=>`<div class="cancel-compare-card ${c[0]}"><small>${c[1]}</small>${i<2?`<b>${c[2]}</b>`:`<b>${i===2?rows.length:(i===3?onlyI.length:onlyM.length)}</b>`}<span>${money(c[3])}${i===2?' • sem duplicidade':''}</span></div>`).join('');
     const partialEl=$('cancelPartialNotice');if(partialEl)partialEl.innerHTML=partials.length?`<b>◐ ${partials.length} CANCELAMENTO${partials.length>1?'S':''} PARCIAL${partials.length>1?'IS':''}</b><span>${money(partials.reduce((s,r)=>s+r.value,0))} em itens cancelados parcialmente</span>`:'<b>◐ NENHUM CANCELAMENTO PARCIAL</b><span>Não há cancelamentos parciais no período.</span>';
     let visible=rows;const mode=$('cancelQuickFilter')?.value||'all';if(mode==='div')visible=rows.filter(r=>r.situacao!=='Nos dois');if(mode==='ifood')visible=onlyI;if(mode==='partial')visible=partials;
     const q=norm($('cancelSearch')?.value||'');if(q)visible=visible.filter(r=>norm([r.key,r.m?.pedido,r.m?.partner,r.m?.cliente,r.i?.reason,r.situacao].join(' ')).includes(q));
+    // Lista operacional principal: tudo que foi cancelado no iFood e NÃO está cancelado no Maestro.
+    // Mantém cancelamentos totais e parciais, exatamente no formato de auditoria solicitado.
+    let divergencias=onlyI;
+    if(q)divergencias=divergencias.filter(r=>norm([r.key,r.i?.shortId,r.i?.reason,r.store].join(' ')).includes(q));
+    const divBody=divergencias.map(r=>`<tr><td>${r.store==='barra'?'BARRA':r.store==='recreio'?'RECREIO':'—'}</td><td><b>${esc(r.i?.shortId||'—')}</b></td><td>${r.i?.isPartial?'Cancelamento parcial':'Cancelado'}</td><td><b>${money(r.i?.valueCancelled||0)}</b></td></tr>`).join('');
+    const divTable=$('cancelDivergenceTable');if(divTable)divTable.innerHTML=`<table><thead><tr><th>LOJA</th><th>PEDIDO IFOOD</th><th>TIPO</th><th>VALOR CANCELADO</th></tr></thead><tbody>${divBody||'<tr><td colspan="4" class="cancel-empty">Nenhum cancelamento exclusivo do iFood no período selecionado.</td></tr>'}</tbody></table>`;
+    const divCount=$('cancelDivergenceCount');if(divCount)divCount.textContent=`${divergencias.length} pedido${divergencias.length===1?'':'s'} para verificar no Maestro`;
     const tbody=visible.map(r=>{const cls=r.situacao==='Nos dois'?'both':r.situacao==='Só iFood'?'only-ifood':r.situacao==='Só Maestro'?'only-maestro':'partial';const obs=r.situacao==='Nos dois'?'Pedido cancelado nas duas plataformas':r.situacao==='Só iFood'?'Não localizado como cancelado no Maestro':r.situacao==='Só Maestro'?'Não encontrado como cancelado no iFood':'Cancelamento parcial no iFood';const dt=r.i?.cancelDt?new Date(r.i.cancelDt).toLocaleString('pt-BR'):'—';return `<tr><td>${r.store==='barra'?'BARRA':r.store==='recreio'?'RECREIO':'—'}</td><td>${esc(r.i?.shortId||'—')}</td><td>${esc(r.m?.partner||r.m?.pedido||'—')}</td><td>${dt}</td><td><span class="cancel-pill ${r.m?'cancelled':'neutral'}">${r.m?'CANCELADO':'NÃO CANCELADO'}</span></td><td><span class="cancel-pill ${r.i?'cancelled':'neutral'}">${r.i?(r.i.isPartial?'PARCIAL':'CANCELADO'):'NÃO CANCELADO'}</span></td><td>${money(r.value)}</td><td><span class="cancel-situation ${cls}">${esc(r.situacao)}</span></td><td>${esc(obs)}</td></tr>`}).join('');
     const table=$('cancelCompareTable');if(table)table.innerHTML=`<table><thead><tr><th>LOJA</th><th>PEDIDO IFOOD<br><small>(ID curto)</small></th><th>Nº PARCEIRO<br><small>(Maestro)</small></th><th>DATA CANCELAMENTO</th><th>MAESTRO</th><th>IFOOD</th><th>VALOR CANCELADO</th><th>SITUAÇÃO</th><th>OBSERVAÇÃO</th></tr></thead><tbody>${tbody||'<tr><td colspan="9" class="cancel-empty">Nenhum registro para os filtros selecionados.</td></tr>'}</tbody></table>`;
   }

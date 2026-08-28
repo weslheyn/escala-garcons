@@ -7,6 +7,21 @@
     const data=await file.arrayBuffer();
     const wb=XLSX.read(data,{type:'array',cellDates:false,raw:false});
     const ws=wb.Sheets[wb.SheetNames[0]];
+    // Alguns relatórios exportados pelo iFood trazem !ref=A1 mesmo contendo dezenas
+    // de colunas e centenas de linhas. Corrige o intervalo real antes do sheet_to_json.
+    // Sem isso, campos como ID curto, status e data do cancelamento podem não ser lidos.
+    try{
+      const refs=Object.keys(ws).filter(k=>k[0]!=='!');
+      if(refs.length){
+        let minR=Infinity,minC=Infinity,maxR=-1,maxC=-1;
+        refs.forEach(ref=>{
+          const c=XLSX.utils.decode_cell(ref);
+          if(c.r<minR)minR=c.r;if(c.c<minC)minC=c.c;
+          if(c.r>maxR)maxR=c.r;if(c.c>maxC)maxC=c.c;
+        });
+        if(maxR>=0&&maxC>=0)ws['!ref']=XLSX.utils.encode_range({s:{r:minR,c:minC},e:{r:maxR,c:maxC}});
+      }
+    }catch(e){console.warn('Não foi possível recalcular o intervalo do Excel',e)}
     return XLSX.utils.sheet_to_json(ws,{defval:'',raw:false}).map(row=>{const o={};Object.keys(row).forEach(k=>o[norm(k)]=row[k]);return o});
   }
   function regionFromAddress(addr){const s=norm(addr);const rules=[['recreio dos bandeirantes','Recreio'],['recreio','Recreio'],['barra da tijuca','Barra da Tijuca'],['itanhanga','Itanhangá'],['jacarepagua','Jacarepaguá'],['taquara','Taquara'],['vargem grande','Vargem Grande'],['vargem pequena','Vargem Pequena'],['camorim','Camorim'],['anil','Anil'],['rocinha','Rocinha'],['barra guaratiba','Barra de Guaratiba'],['joa,','Joá'],['pechincha','Pechincha'],['freguesia','Freguesia'],['curicica','Curicica'],['rio 2','Barra Olímpica'],['barra olimpica','Barra Olímpica'],['olimpica','Barra Olímpica'],['abelardo bueno','Barra Olímpica'],['jaime poggi','Barra Olímpica'],['lucio costa','Barra da Tijuca'],['lúcio costa','Barra da Tijuca'],['americas','Recreio'],['américas','Recreio']];for(const [a,b] of rules)if(s.includes(norm(a)))return b;return 'A GEOCODIFICAR'}

@@ -147,6 +147,8 @@
       <div class="cancel-control-head"><div><h2>CONTROLE DE CANCELAMENTOS</h2><p>Compare os cancelamentos do Maestro com os cancelamentos do iFood por loja ou consolidados.</p></div><div class="cancel-control-tools"><input id="cancelSearch" placeholder="Buscar pedido, parceiro ou cliente..."><select id="cancelQuickFilter"><option value="all">Todos</option><option value="div">Somente divergências</option><option value="ifood">Só iFood</option><option value="partial">Cancelamento parcial</option></select><button id="cancelRefreshBtn" class="action-btn compact">ATUALIZAR COMPARAÇÃO</button></div></div>
       <div id="cancelCompareKpis" class="cancel-compare-kpis"></div>
       <div id="cancelPartialNotice" class="cancel-partial-notice"></div>
+      <div class="cancel-divergence-head"><div><h3>DIVERGÊNCIAS — CANCELADOS NO IFOOD E NÃO NO MAESTRO</h3><p>Lista operacional dos pedidos que precisam ser conferidos no Maestro.</p></div><b id="cancelDivergenceCount">0 pedidos para verificar no Maestro</b></div>
+      <div class="panel cancel-divergence-wrap"><div id="cancelDivergenceTable" class="cancel-divergence-table"></div></div>
       <div class="panel bordere-card"><h3>BORDERE MANUAL DO DIA</h3><label>Cancelamento<input id="bordere_cancelamento" inputmode="decimal" placeholder="R$ 0,00"></label><label>Falha operacional<input id="bordere_falha" inputmode="decimal" placeholder="R$ 0,00"></label><label>Outros<input id="bordere_outros" inputmode="decimal" placeholder="R$ 0,00"></label><div class="bordere-total"><small>TOTAL BORDERE</small><b id="bordereTotal">R$ 0,00</b></div></div>
       <div class="panel cancel-table-wrap"><div id="cancelCompareTable" class="cancel-compare-table"></div></div>
       <div id="cancelTable" hidden></div>

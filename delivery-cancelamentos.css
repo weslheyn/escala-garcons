@@ -7,3 +7,21 @@
 @media(max-width:900px){.ifood-demand-grid{grid-template-columns:1fr}}
 
 .cancel-divergence-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:14px 0 8px}.cancel-divergence-head h3{margin:0;color:#fff;font-size:15px;letter-spacing:.35px}.cancel-divergence-head p{margin:3px 0 0;color:#858990;font-size:10px}.cancel-divergence-head>b{color:#ffb03a;font-size:11px}.cancel-divergence-wrap{overflow:auto;max-height:310px;margin-bottom:10px;border-color:#653b17}.cancel-divergence-table table{width:100%;border-collapse:collapse;font-size:11px}.cancel-divergence-table th{position:sticky;top:0;background:#1b1814;color:#d8b277;text-align:left;padding:10px 12px;border-bottom:1px solid #5d4020;z-index:1}.cancel-divergence-table td{padding:10px 12px;border-bottom:1px solid #302b25;color:#f1f1f1}.cancel-divergence-table td:nth-child(2) b{color:#fff}.cancel-divergence-table td:last-child b{color:#f4c15d}.cancel-divergence-table tr:hover td{background:#1b1a18}
+
+/* V45 — tabelas de cancelamentos: cabeçalho estável e colunas redimensionáveis */
+.cancel-compare-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+.cancel-compare-card.ifood-barra{border-color:#8e4d10;background:#251507}.cancel-compare-card.ifood-barra small,.cancel-compare-card.ifood-barra b{color:#f2a02d}
+.cancel-compare-card.ifood-recreio{border-color:#27547f;background:#0c1722}.cancel-compare-card.ifood-recreio small,.cancel-compare-card.ifood-recreio b{color:#69aeea}
+.cancel-divergence-wrap,.cancel-table-wrap{position:relative;isolation:isolate;overflow:auto;overscroll-behavior:contain;background:#15171a;clip-path:inset(0 round 9px)}
+.cancel-divergence-table,.cancel-compare-table{position:relative;z-index:0;min-width:100%}
+.cancel-divergence-table table,.cancel-compare-table table{border-collapse:separate;border-spacing:0;table-layout:fixed;min-width:100%}
+.cancel-divergence-table thead,.cancel-compare-table thead{position:sticky;top:0;z-index:30}
+.cancel-divergence-table th,.cancel-compare-table th{position:relative!important;top:auto!important;z-index:31;background-clip:padding-box;box-shadow:0 1px 0 #34373d}
+.cancel-divergence-table th{background:#1b1814}.cancel-compare-table th{background:#191b1f}
+.cancel-divergence-table tbody,.cancel-compare-table tbody{position:relative;z-index:0}
+.cancel-divergence-table td,.cancel-compare-table td{position:relative;z-index:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cancel-col-resizer{position:absolute;right:-5px;top:0;width:10px;height:100%;cursor:col-resize;z-index:40;touch-action:none}
+.cancel-col-resizer:after{content:'';position:absolute;right:4px;top:20%;width:1px;height:60%;background:transparent}
+.cancel-col-resizer:hover:after,.cancel-resizing .cancel-col-resizer:after{background:#d1a037}
+body.cancel-resizing{cursor:col-resize!important;user-select:none!important}
+@media(max-width:1150px){.cancel-compare-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}

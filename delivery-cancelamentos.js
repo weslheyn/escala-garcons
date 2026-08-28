@@ -143,12 +143,41 @@
     mac.forEach((m,idx)=>{if(usedM.has(idx))return;const id=cleanId(m.partner||m.pedido);if(!id)return;rows.push({key:m.partner||m.pedido,m,i:null,situacao:'Só Maestro',value:m.value||0,store:m.store||''});});
     rows.sort((a,b)=>{const rank={'Só iFood':0,'Parcial iFood':1,'Só Maestro':2,'Nos dois':3};return (rank[a.situacao]-rank[b.situacao])||String(b.key).localeCompare(String(a.key),'pt-BR',{numeric:true})});return rows;
   }
+  function cancelTableWidths(storageKey,defaults){
+    try{const saved=JSON.parse(localStorage.getItem(storageKey)||'{}')||{};return defaults.map((w,i)=>Math.max(70,Number(saved[i]||w)));}catch(e){return defaults.slice()}
+  }
+  function bindCancelableTableResize(hostId,storageKey,defaults){
+    const host=$(hostId),table=host?.querySelector('table');if(!host||!table)return;
+    const cols=[...table.querySelectorAll('col[data-col]')],handles=[...table.querySelectorAll('.cancel-col-resizer')];
+    let widths=cancelTableWidths(storageKey,defaults);
+    const apply=()=>{cols.forEach((col,i)=>col.style.width=`${widths[i]}px`);table.style.width=`${widths.reduce((a,b)=>a+b,0)}px`;table.style.minWidth='100%'};
+    apply();
+    handles.forEach(handle=>handle.addEventListener('pointerdown',ev=>{
+      ev.preventDefault();ev.stopPropagation();const idx=Number(handle.dataset.col),startX=ev.clientX,startW=widths[idx];
+      document.body.classList.add('cancel-resizing');handle.setPointerCapture?.(ev.pointerId);
+      const move=e=>{widths[idx]=Math.max(70,startW+(e.clientX-startX));apply()};
+      const up=()=>{document.removeEventListener('pointermove',move);document.body.classList.remove('cancel-resizing');try{localStorage.setItem(storageKey,JSON.stringify(Object.fromEntries(widths.map((w,i)=>[i,Math.round(w)]))))}catch(e){};try{handle.releasePointerCapture?.(ev.pointerId)}catch(e){}};
+      document.addEventListener('pointermove',move);document.addEventListener('pointerup',up,{once:true});
+    }));
+  }
+  function cancelColgroup(widths){return `<colgroup>${widths.map((w,i)=>`<col data-col="${i}" style="width:${w}px">`).join('')}</colgroup>`}
+  function cancelTh(label,i){return `<th><span>${label}</span><i class="cancel-col-resizer" data-col="${i}" title="Arraste para ajustar a largura"></i></th>`}
   function renderComparison(){
     const rows=buildComparison(),mac=cancelMaestro(),ifc=cancelIfood();
     const onlyI=rows.filter(r=>r.i&&!r.m),onlyM=rows.filter(r=>r.m&&!r.i),partials=rows.filter(r=>r.i?.isPartial);
-    const maestroVal=mac.reduce((s,r)=>s+(r.value||0),0), ifoodVal=ifc.reduce((s,r)=>s+(r.valueCancelled||0),0), consolidado=rows.reduce((s,r)=>s+r.value,0);
-    const cards=[['maestro','CANCELADOS MAESTRO',mac.length,maestroVal],['ifood','CANCELADOS IFOOD',ifc.length,ifoodVal],['total','TOTAL CONSOLIDADO','SEM DUPLICIDADE',consolidado],['alert','SÓ IFOOD','NÃO CANCELADOS NO MAESTRO',onlyI.reduce((s,r)=>s+r.value,0)],['info','SÓ MAESTRO','NÃO ENCONTRADOS NO IFOOD',onlyM.reduce((s,r)=>s+r.value,0)]];
-    const el=$('cancelCompareKpis');if(el)el.innerHTML=cards.map((c,i)=>`<div class="cancel-compare-card ${c[0]}"><small>${c[1]}</small>${i<2?`<b>${c[2]}</b>`:`<b>${i===2?rows.length:(i===3?onlyI.length:onlyM.length)}</b>`}<span>${money(c[3])}${i===2?' • sem duplicidade':''}</span></div>`).join('');
+    const maestroVal=mac.reduce((s,r)=>s+(r.value||0),0), ifoodVal=ifc.reduce((s,r)=>s+(r.valueCancelled||0),0);
+    const barra=ifc.filter(r=>r.store==='barra'), recreio=ifc.filter(r=>r.store==='recreio');
+    const barraVal=barra.reduce((s,r)=>s+(r.valueCancelled||0),0), recreioVal=recreio.reduce((s,r)=>s+(r.valueCancelled||0),0);
+    // Total cancelado = total consolidado sem duplicidade. Como o mesmo pedido pode existir no Maestro e no iFood,
+    // a contagem vem das linhas consolidadas e não da soma bruta entre as fontes.
+    const totalVal=rows.reduce((s,r)=>s+r.value,0);
+    const cards=[
+      ['total','TOTAL DE PEDIDOS CANCELADOS',rows.length,totalVal,'sem duplicidade'],
+      ['maestro','CANCELADOS NO MAESTRO',mac.length,maestroVal,''],
+      ['ifood-barra','CANCELADOS IFOOD BARRA',barra.length,barraVal,'Barra da Tijuca'],
+      ['ifood-recreio','CANCELADOS IFOOD RECREIO',recreio.length,recreioVal,'Recreio']
+    ];
+    const el=$('cancelCompareKpis');if(el)el.innerHTML=cards.map(c=>`<div class="cancel-compare-card ${c[0]}"><small>${c[1]}</small><b>${c[2]}</b><span>${money(c[3])}${c[4]?` • ${c[4]}`:''}</span></div>`).join('');
     const partialEl=$('cancelPartialNotice');if(partialEl)partialEl.innerHTML=partials.length?`<b>◐ ${partials.length} CANCELAMENTO${partials.length>1?'S':''} PARCIAL${partials.length>1?'IS':''}</b><span>${money(partials.reduce((s,r)=>s+r.value,0))} em itens cancelados parcialmente</span>`:'<b>◐ NENHUM CANCELAMENTO PARCIAL</b><span>Não há cancelamentos parciais no período.</span>';
     let visible=rows;const mode=$('cancelQuickFilter')?.value||'all';if(mode==='div')visible=rows.filter(r=>r.situacao!=='Nos dois');if(mode==='ifood')visible=onlyI;if(mode==='partial')visible=partials;
     const q=norm($('cancelSearch')?.value||'');if(q)visible=visible.filter(r=>norm([r.key,r.m?.pedido,r.m?.partner,r.m?.cliente,r.i?.reason,r.situacao].join(' ')).includes(q));
@@ -157,10 +186,12 @@
     let divergencias=onlyI;
     if(q)divergencias=divergencias.filter(r=>norm([r.key,r.i?.shortId,r.i?.reason,r.store].join(' ')).includes(q));
     const divBody=divergencias.map(r=>`<tr><td>${r.store==='barra'?'BARRA':r.store==='recreio'?'RECREIO':'—'}</td><td><b>${esc(r.i?.shortIdRaw||r.i?.shortId||'—')}</b></td><td>${r.i?.isPartial?'Cancelamento parcial':'Cancelado'}</td><td><b>${money(r.i?.valueCancelled||0)}</b></td></tr>`).join('');
-    const divTable=$('cancelDivergenceTable');if(divTable)divTable.innerHTML=`<table><thead><tr><th>LOJA</th><th>PEDIDO IFOOD</th><th>TIPO</th><th>VALOR CANCELADO</th></tr></thead><tbody>${divBody||'<tr><td colspan="4" class="cancel-empty">Nenhum cancelamento exclusivo do iFood no período selecionado.</td></tr>'}</tbody></table>`;
+    const divDefaults=[140,190,300,190],divWidths=cancelTableWidths('delivery_cancel_divergence_widths_v1',divDefaults);
+    const divTable=$('cancelDivergenceTable');if(divTable){divTable.innerHTML=`<table>${cancelColgroup(divWidths)}<thead><tr>${cancelTh('LOJA',0)}${cancelTh('PEDIDO IFOOD',1)}${cancelTh('TIPO',2)}${cancelTh('VALOR CANCELADO',3)}</tr></thead><tbody>${divBody||'<tr><td colspan="4" class="cancel-empty">Nenhum cancelamento exclusivo do iFood no período selecionado.</td></tr>'}</tbody></table>`;bindCancelableTableResize('cancelDivergenceTable','delivery_cancel_divergence_widths_v1',divDefaults)};
     const divCount=$('cancelDivergenceCount');if(divCount)divCount.textContent=`${divergencias.length} pedido${divergencias.length===1?'':'s'} para verificar no Maestro`;
     const tbody=visible.map(r=>{const cls=r.situacao==='Nos dois'?'both':r.situacao==='Só iFood'?'only-ifood':r.situacao==='Só Maestro'?'only-maestro':'partial';const obs=r.situacao==='Nos dois'?'Pedido cancelado nas duas plataformas':r.situacao==='Só iFood'?'Não localizado como cancelado no Maestro':r.situacao==='Só Maestro'?'Não encontrado como cancelado no iFood':'Cancelamento parcial no iFood';const dt=r.i?.cancelDt?new Date(r.i.cancelDt).toLocaleString('pt-BR'):'—';return `<tr><td>${r.store==='barra'?'BARRA':r.store==='recreio'?'RECREIO':'—'}</td><td>${esc(r.i?.shortIdRaw||r.i?.shortId||'—')}</td><td>${esc(r.m?.partner||r.m?.pedido||'—')}</td><td>${dt}</td><td><span class="cancel-pill ${r.m?'cancelled':'neutral'}">${r.m?'CANCELADO':'NÃO CANCELADO'}</span></td><td><span class="cancel-pill ${r.i?'cancelled':'neutral'}">${r.i?(r.i.isPartial?'PARCIAL':'CANCELADO'):'NÃO CANCELADO'}</span></td><td>${money(r.value)}</td><td><span class="cancel-situation ${cls}">${esc(r.situacao)}</span></td><td>${esc(obs)}</td></tr>`}).join('');
-    const table=$('cancelCompareTable');if(table)table.innerHTML=`<table><thead><tr><th>LOJA</th><th>PEDIDO IFOOD<br><small>(ID curto)</small></th><th>Nº PARCEIRO<br><small>(Maestro)</small></th><th>DATA CANCELAMENTO</th><th>MAESTRO</th><th>IFOOD</th><th>VALOR CANCELADO</th><th>SITUAÇÃO</th><th>OBSERVAÇÃO</th></tr></thead><tbody>${tbody||'<tr><td colspan="9" class="cancel-empty">Nenhum registro para os filtros selecionados.</td></tr>'}</tbody></table>`;
+    const cmpDefaults=[110,135,145,185,125,125,165,135,315],cmpWidths=cancelTableWidths('delivery_cancel_compare_widths_v1',cmpDefaults);
+    const table=$('cancelCompareTable');if(table){table.innerHTML=`<table>${cancelColgroup(cmpWidths)}<thead><tr>${cancelTh('LOJA',0)}${cancelTh('PEDIDO IFOOD<br><small>(ID curto)</small>',1)}${cancelTh('Nº PARCEIRO<br><small>(Maestro)</small>',2)}${cancelTh('DATA CANCELAMENTO',3)}${cancelTh('MAESTRO',4)}${cancelTh('IFOOD',5)}${cancelTh('VALOR CANCELADO',6)}${cancelTh('SITUAÇÃO',7)}${cancelTh('OBSERVAÇÃO',8)}</tr></thead><tbody>${tbody||'<tr><td colspan="9" class="cancel-empty">Nenhum registro para os filtros selecionados.</td></tr>'}</tbody></table>`;bindCancelableTableResize('cancelCompareTable','delivery_cancel_compare_widths_v1',cmpDefaults)};
   }
   function getBordere(){try{return JSON.parse(localStorage.getItem(BORDERE)||'{}')||{}}catch(e){return{}}}
   function renderBordere(){const key=$('dateFilter')?.value;if(!key)return;const all=getBordere(),x=all[key]||{cancelamento:'',falha:'',outros:''};['cancelamento','falha','outros'].forEach(k=>{const el=$('bordere_'+k);if(el)el.value=x[k]??''});updateBordereTotal()}

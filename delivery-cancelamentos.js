@@ -7,7 +7,7 @@
   const n0=v=>(Number(v)||0).toLocaleString('pt-BR',{maximumFractionDigits:0});
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const get=(o,names)=>{for(const n of names){const k=norm(n);if(o&&o[k]!==undefined&&o[k]!==null&&String(o[k]).trim()!==''&&String(o[k]).trim()!=='—')return o[k]}return ''};
-  const cleanId=v=>String(v??'').trim().replace(/\.0$/,'').replace(/\s+/g,'');
+  const cleanId=v=>{const s=String(v??'').trim().replace(/\.0$/,'').replace(/\s+/g,'');return /^\d+$/.test(s)?(s.replace(/^0+(?=\d)/,'')||'0'):s};
   let ifoodRowsRecreio=[],ifoodRowsBarra=[];
   let maestroRaw1=[],maestroRaw2=[];
   let charts={hour:null,weekday:null,reason:null};
@@ -53,7 +53,9 @@
     if(!partner && /ifood/i.test(platform)) partner=cleanId(get(o,['N Pedido','Pedido']));
     const dt=dateBR(get(o,['Data e Hora Início de Preparo','Data e Hora Inicio de Preparo','Data de criação','Data de criacao','Data','Criado em']));
     const storeName=String(get(o,['Loja','NOME DA LOJA','Restaurante'])).trim();
-    const store=/barra/i.test(storeName)?'barra':/recreio/i.test(storeName)?'recreio':'';
+    const confirmInfo=String(get(o,['Confirmado / Cancelado','Confirmado/Cancelado','Usuário confirmação','Usuario confirmacao'])).trim();
+    const storeHint=`${storeName} ${confirmInfo}`;
+    const store=/barra/i.test(storeHint)?'barra':/recreio/i.test(storeHint)?'recreio':'';
     return {source,pedido,partner,status,platform,value:num(get(o,['Valor do pedido','Total R$','Total','Valor']))||0,dt:dt?dt.toISOString():'',dateKey:dt?`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`:'',cliente:String(get(o,['Cliente','Nome'])).trim(),store};
   }
   function selectedStore(){return $('cancelStoreFilter')?.value||'all'}
@@ -117,12 +119,25 @@
     const leg=$('ifoodReasonLegend');if(leg){const tot=cc.length||1;leg.innerHTML=entries.map((x,i)=>`<div><i style="background:${palette[i]}"></i><span>${esc(x[0])}</span><b>${(x[1]/tot*100).toFixed(1)}%</b></div>`).join('')||'<small>Sem cancelamentos no período.</small>'}
   }
   function buildComparison(){
-    const ifc=cancelIfood(),mac=cancelMaestro();const mm=new Map(),im=new Map();
-    const activeStore=selectedStore();
-    mac.forEach(r=>{const id=cleanId(r.partner||r.pedido);if(!id)return;const k=`${r.store||activeStore||''}|${id}`;mm.set(k,r)});
-    ifc.forEach(r=>{const id=cleanId(r.shortId);if(!id)return;const k=`${r.store||activeStore||''}|${id}`;im.set(k,r)});
-    const keys=new Set([...mm.keys(),...im.keys()]), rows=[];
-    keys.forEach(k=>{const m=mm.get(k),i=im.get(k);let situacao;if(i?.isPartial)situacao='Parcial iFood';else if(m&&i)situacao='Nos dois';else if(i)situacao='Só iFood';else situacao='Só Maestro';const value=i?(i.valueCancelled||0):(m?.value||0);rows.push({key:(i?.shortId||m?.partner||m?.pedido||k.split('|').pop()),m,i,situacao,value,store:i?.store||m?.store||''});});
+    const ifc=cancelIfood(),mac=cancelMaestro(),rows=[],usedM=new Set();
+    // Faz o vínculo pelo número externo real: Nº App Parceiro (Maestro) = ID curto (iFood).
+    // Loja e data entram como validação para não cruzar pedidos iguais de unidades/dias diferentes.
+    ifc.forEach(i=>{
+      const iid=cleanId(i.shortId); if(!iid)return;
+      const candidates=mac.map((m,idx)=>({m,idx})).filter(x=>{
+        if(usedM.has(x.idx))return false;
+        const mid=cleanId(x.m.partner||x.m.pedido); if(mid!==iid)return false;
+        if(x.m.dateKey&&i.dateKey&&x.m.dateKey!==i.dateKey)return false;
+        if(x.m.store&&i.store&&x.m.store!==i.store)return false;
+        return true;
+      });
+      // Prioriza coincidência explícita de loja; depois registro sem loja; nunca força outra loja.
+      candidates.sort((a,b)=>Number(Boolean(b.m.store&&b.m.store===i.store))-Number(Boolean(a.m.store&&a.m.store===i.store)));
+      const hit=candidates[0]; const m=hit?.m||null; if(hit)usedM.add(hit.idx);
+      let situacao;if(i.isPartial)situacao='Parcial iFood';else if(m)situacao='Nos dois';else situacao='Só iFood';
+      rows.push({key:i.shortId,m,i,situacao,value:i.valueCancelled||0,store:i.store||m?.store||''});
+    });
+    mac.forEach((m,idx)=>{if(usedM.has(idx))return;const id=cleanId(m.partner||m.pedido);if(!id)return;rows.push({key:m.partner||m.pedido,m,i:null,situacao:'Só Maestro',value:m.value||0,store:m.store||''});});
     rows.sort((a,b)=>{const rank={'Só iFood':0,'Parcial iFood':1,'Só Maestro':2,'Nos dois':3};return (rank[a.situacao]-rank[b.situacao])||String(b.key).localeCompare(String(a.key),'pt-BR',{numeric:true})});return rows;
   }
   function renderComparison(){

@@ -36,23 +36,32 @@
       valueCancelled,
       isPartial,isCancelled,
       channel:String(get(o,['CANAL DE VENDA'])).trim(),
-      deliveryType:String(get(o,['TIPO DE ENTREGA'])).trim()
+      deliveryType:String(get(o,['TIPO DE ENTREGA'])).trim(),
+      productLogistic:String(get(o,['PRODUTO LOGISTICO','Produto logístico','Produto logistico'])).trim(),
+      demandDistance:String(get(o,['DISTÂNCIA CONSIDERADA NA COTAÇÃO (APENAS SOB DEMANDA)','Distância considerada na cotação apenas sob demanda'])).trim(),
+      demandFreight:num(get(o,['FRETE COBRADO DO RESTAURANTE (APENAS SOB DEMANDA)','Frete cobrado do restaurante apenas sob demanda']))||0
     };
   }
   function normalizeMaestro(o,source){
     const status=String(get(o,['Status','STATUS FINAL DO PEDIDO','Situação','Situacao'])).trim();
     const platform=String(get(o,['Plataforma','Origem','Canal','Canal de venda'])).trim();
     const pedido=cleanId(get(o,['Número','Numero','N Pedido','Pedido']));
-    let partner=cleanId(get(o,['Número do parceiro','Numero do parceiro','Nº do parceiro','N° do parceiro','Pedido parceiro','ID do parceiro','ID pedido parceiro','Número pedido parceiro']));
+    let partner=cleanId(get(o,['N App Parceiro','Nº App Parceiro','N° App Parceiro','Número do parceiro','Numero do parceiro','Nº do parceiro','N° do parceiro','Pedido parceiro','ID do parceiro','ID pedido parceiro','Número pedido parceiro']));
     // Alguns relatórios do integrador usam o próprio campo "N Pedido" como identificação externa.
     if(!partner && /ifood/i.test(platform)) partner=cleanId(get(o,['N Pedido','Pedido']));
     const dt=dateBR(get(o,['Data e Hora Início de Preparo','Data e Hora Inicio de Preparo','Data de criação','Data de criacao','Data','Criado em']));
     return {source,pedido,partner,status,platform,value:num(get(o,['Valor do pedido','Total R$','Total','Valor']))||0,dt:dt?dt.toISOString():'',dateKey:dt?`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`:'',cliente:String(get(o,['Cliente','Nome'])).trim()};
   }
+  function ifoodDateBounds(){const keys=ifoodRows.map(r=>r.dateKey).filter(Boolean).sort();return{min:keys[0]||'',max:keys[keys.length-1]||''}}
+  function syncIfoodDateToData(force=false){
+    const el=$('cancelDateFilter');if(!el)return;const b=ifoodDateBounds();if(!b.max)return;
+    el.min=b.min;el.max=b.max;
+    if(force||!el.value||el.value<b.min||el.value>b.max)el.value=b.max;
+  }
   function setIfoodRows(raw){
     ifoodRows=(raw||[]).map(normalizeIfood).filter(r=>r.shortId||r.fullId);
     try{localStorage.setItem(STORE,JSON.stringify(ifoodRows))}catch(e){console.warn('iFood cache indisponível',e)}
-    render();
+    syncIfoodDateToData(true);render();
   }
   function setMaestroRows(raw1,raw2){maestroRaw1=raw1||[];maestroRaw2=raw2||[];render();}
   function restore(){try{const x=JSON.parse(localStorage.getItem(STORE)||'[]');if(Array.isArray(x))ifoodRows=x}catch(e){}}
@@ -81,6 +90,9 @@
     const prev='—';
     const kpis=[['⊗','PEDIDOS CANCELADOS',cc.length,`${rows.length?((cc.length/rows.length)*100).toFixed(1):'0,0'}% do total de pedidos`],['▣','VALOR CANCELADO (ITENS)',money(valueCancel),'Valor dos itens cancelados'],['◐','CANCELAMENTO PARCIAL',partials.length,'Itens/pedidos parcialmente cancelados'],['☷','TOTAL DE PEDIDOS',rows.length,'Pedidos no período'],['▣','VALOR TOTAL (ITENS)',money(totalItems),'Valor dos itens no período']];
     const grid=$('ifoodKpis');if(grid)grid.innerHTML=kpis.map((k,i)=>`<div class="ifood-kpi ifood-kpi-${i}"><div class="ifood-kpi-icon">${k[0]}</div><div><small>${k[1]}</small><b>${k[2]}</b><span>${k[3]}</span></div></div>`).join('');
+    const demand=rows.filter(r=>/sob\s*demanda/i.test(r.productLogistic||''));
+    const demandFreight=demand.reduce((s,r)=>s+(r.demandFreight||0),0);
+    const dg=$('ifoodDemandKpis');if(dg)dg.innerHTML=`<div class="ifood-demand-card"><div class="ifood-demand-icon">🛵</div><div><small>ENTREGAS SOB DEMANDA</small><b>${n0(demand.length)}</b><span>Solicitações no período selecionado</span></div></div><div class="ifood-demand-card value"><div class="ifood-demand-icon">R$</div><div><small>VALOR SOB DEMANDA</small><b>${money(demandFreight)}</b><span>Frete cobrado do restaurante</span></div></div>`;
     const byHour=Array(24).fill(0);cc.forEach(r=>{const d=r.cancelDt?new Date(r.cancelDt):null;if(d&&!isNaN(d))byHour[d.getHours()]++});
     makeChart('ifoodCancelHourChart','bar',{labels:Array.from({length:24},(_,i)=>String(i).padStart(2,'0')),datasets:[{data:byHour,backgroundColor:'#cf2946',borderRadius:3,maxBarThickness:16}]},{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#aeb1b7',font:{size:9}}},y:{beginAtZero:true,grid:{color:'rgba(255,255,255,.07)'},ticks:{color:'#aeb1b7',precision:0}}}});
     const days=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],vals=Array(7).fill(0);cc.forEach(r=>{const d=r.cancelDt?new Date(r.cancelDt):null;if(d&&!isNaN(d))vals[d.getDay()]++});
@@ -112,14 +124,14 @@
   function renderBordere(){const key=$('cancelDateFilter')?.value||$('dateFilter')?.value;if(!key)return;const all=getBordere(),x=all[key]||{cancelamento:'',falha:'',outros:''};['cancelamento','falha','outros'].forEach(k=>{const el=$('bordere_'+k);if(el)el.value=x[k]??''});updateBordereTotal()}
   function updateBordereTotal(){const vals=['cancelamento','falha','outros'].map(k=>num($('bordere_'+k)?.value)||0);const el=$('bordereTotal');if(el)el.textContent=money(vals.reduce((a,b)=>a+b,0))}
   function saveBordere(){const key=$('cancelDateFilter')?.value||$('dateFilter')?.value;if(!key)return;const all=getBordere();all[key]={};['cancelamento','falha','outros'].forEach(k=>all[key][k]=$('bordere_'+k)?.value||'');localStorage.setItem(BORDERE,JSON.stringify(all));updateBordereTotal()}
-  function render(){if(!$('view-cancelamentos'))return;renderIfoodDashboard();renderComparison();renderBordere();const meta=$('ifoodImportedAt');if(meta)meta.textContent=ifoodRows.length?`${ifoodRows.length} registros carregados`:'Aguardando relatório iFood';}
+  function render(){if(!$('view-cancelamentos'))return;syncIfoodDateToData(false);renderIfoodDashboard();renderComparison();renderBordere();const meta=$('ifoodImportedAt');if(meta){const b=ifoodDateBounds(),ref=$('cancelDateFilter')?.value||'';if(ifoodRows.length){const fmt=k=>k?k.split('-').reverse().join('/'):'—';meta.innerHTML=`${ifoodRows.length} registros • período real ${fmt(b.min)} a ${fmt(b.max)}${ref&&!filteredIfood().length?` <strong class="ifood-no-data">• sem dados em ${fmt(ref)}</strong>`:''}`;}else meta.textContent='Aguardando relatório iFood';}}
   function bind(){
     const ref=$('dateFilter')?.value;if($('cancelDateFilter')&&ref)$('cancelDateFilter').value=ref;
     ['cancelPeriodFilter','cancelDateFilter','cancelQuickFilter'].forEach(id=>{const el=$(id);if(el)el.onchange=render});
     const s=$('cancelSearch');if(s)s.oninput=renderComparison;
     ['cancelamento','falha','outros'].forEach(k=>{const el=$('bordere_'+k);if(el)el.oninput=saveBordere});
     const btn=$('cancelRefreshBtn');if(btn)btn.onclick=render;
-    restore();render();
+    restore();syncIfoodDateToData(false);render();
   }
   window.DeliveryCancelamentos={setIfoodRows,setMaestroRows,render,bind};
 })();

@@ -1,5 +1,5 @@
 (function(){
-  let raw1=[],raw2=[],importRows=[],historyRows=[],allRows=[],currentRows=[],prevRows=[];
+  let raw1=[],raw2=[],rawIfood=[],importRows=[],historyRows=[],allRows=[],currentRows=[],prevRows=[];
   const loadedMonths=new Set();
   const $=id=>document.getElementById(id);
   const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)};
@@ -42,8 +42,9 @@
     try{
       const rows=await DeliveryImport.parseFile(file);
       if(which===1){raw1=rows;$('file1Label').textContent=`${file.name} • ${rows.length} linhas`}
-      else{raw2=rows;$('file2Label').textContent=`${file.name} • ${rows.length} linhas`}
-      toast(`Relatório ${which} carregado: ${rows.length} registros`)
+      else if(which===2){raw2=rows;$('file2Label').textContent=`${file.name} • ${rows.length} linhas`}
+      else{rawIfood=rows;if($('fileIfoodLabel'))$('fileIfoodLabel').textContent=`${file.name} • ${rows.length} linhas`;window.DeliveryCancelamentos?.setIfoodRows?.(rows)}
+      toast(`${which===3?'Relatório iFood':`Relatório ${which}`} carregado: ${rows.length} registros`)
     }catch(e){console.error(e);toast('Erro ao ler o arquivo')}
   }
   async function persistImportedMonth(rows){
@@ -66,8 +67,10 @@
     }
   }
   async function process(){
-    if(!raw1.length&&!raw2.length){toast('Importe pelo menos um relatório');return}
+    if(!raw1.length&&!raw2.length){if(rawIfood.length){window.DeliveryCancelamentos?.setIfoodRows?.(rawIfood);toast('Relatório iFood atualizado');return}toast('Importe pelo menos um relatório');return}
     importRows=DeliveryImport.consolidate(raw1,raw2);
+    window.DeliveryCancelamentos?.setMaestroRows?.(raw1,raw2);
+    if(rawIfood.length)window.DeliveryCancelamentos?.setIfoodRows?.(rawIfood);
     if(!importRows.length){toast('Nenhum pedido identificado');return}
     rebuildPool();
     const keys=importRows.map(r=>r.dateKey).filter(Boolean).sort();
@@ -204,10 +207,11 @@
     const data=currentRows.map(r=>({Pedido:r.pedido,Data:r.data,Hora:r.hora,Status:r.status,Turno:r.turno,Plataforma:r.platform,Cliente:r.cliente,Motoboy:r.motoboy,Regiao:r.regiao,Endereco:r.endereco,KM:r.km,Valor:r.valor,TempoPreparo:r.tempoPreparo,TempoEntrega:r.tempoEntrega,TempoTotal:r.tempoTotal}));
     const ws=XLSX.utils.json_to_sheet(data),csv=XLSX.utils.sheet_to_csv(ws,{FS:';'});const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`delivery_${$('periodFilter').value}_${$('dateFilter').value||'relatorio'}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)
   }
-  function setupNav(){document.querySelectorAll('#deliveryNav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#deliveryNav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));$('view-'+b.dataset.view).classList.add('active');if(b.dataset.view==='regioes')setTimeout(()=>DeliveryMap?.showRegionView?.(currentRows),40)})}
+  function setupNav(){document.querySelectorAll('#deliveryNav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#deliveryNav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));$('view-'+b.dataset.view).classList.add('active');if(b.dataset.view==='regioes')setTimeout(()=>DeliveryMap?.showRegionView?.(currentRows),40);if(b.dataset.view==='cancelamentos'){window.DeliveryCancelamentos?.setMaestroRows?.(raw1,raw2);if($('cancelDateFilter')&&$('dateFilter'))$('cancelDateFilter').value=$('dateFilter').value;setTimeout(()=>window.DeliveryCancelamentos?.render?.(),30)}})}
   function bind(){
     $('file1').addEventListener('change',e=>fileChanged(1,e.target.files[0]));
     $('file2').addEventListener('change',e=>fileChanged(2,e.target.files[0]));
+    $('fileIfood')?.addEventListener('change',e=>fileChanged(3,e.target.files[0]));
     $('processBtn').onclick=process;
     $('refreshBtn').onclick=()=>applyPeriod($('dateFilter').value);
     $('dateFilter').onchange=e=>applyPeriod(e.target.value);
@@ -247,6 +251,7 @@
     }
     $('motoShiftFilter').onchange=()=>DeliveryDashboard.renderMotoCards(currentRows);
     setupNav();loadHistory();DeliveryMap?.init?.();DeliveryMap?.onChange?.(()=>applyPeriod($('dateFilter').value));
+    window.DeliveryCancelamentos?.setMaestroRows?.(raw1,raw2);window.DeliveryCancelamentos?.bind?.();
     const today=dateKeyLocal(new Date());$('dateFilter').value=today;
   }
   document.addEventListener('DOMContentLoaded',bind);

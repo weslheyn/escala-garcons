@@ -1868,3 +1868,6 @@ main {
  body:has(#view-pedidos.active) #ordersTable .orders-manual-diff{height:100%;display:flex;align-items:center;justify-content:center;color:#aeb3ba;font:700 10px Barlow,Arial,sans-serif;background:transparent}
  body:has(#view-pedidos.active) #ordersTable .orders-manual-diff.is-over{background:#741d2c;color:#fff;box-shadow:inset 3px 0 0 #c72545}
 }
+/* V37 — importação iFood isolada para Cancelamentos */
+.file-card.ifood-file-card{border-color:#5c2530;background:linear-gradient(180deg,#201216,#171114)}
+.file-card.ifood-file-card b{color:#f3f3f3}.file-card.ifood-file-card i{color:#f1ba35}

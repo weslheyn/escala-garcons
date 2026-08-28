@@ -36,7 +36,8 @@
       <h4>IMPORTAR RELATÓRIOS</h4>
       <label class="file-card"><span><b>Relatório Maestro</b><small id="file1Label">CSV Maestro</small></span><input id="file1" type="file" accept=".csv,.xlsx,.xls"><i>⇧</i></label>
       <label class="file-card"><span><b>Relatório Agilizone</b><small id="file2Label">Excel Agilizone</small></span><input id="file2" type="file" accept=".xlsx,.xls,.csv"><i>⇧</i></label>
-      <label class="file-card ifood-file-card"><span><b>Relatório iFood</b><small id="fileIfoodLabel">Excel iFood • somente Cancelamentos</small></span><input id="fileIfood" type="file" accept=".xlsx,.xls,.csv"><i>⇧</i></label>
+      <label class="file-card ifood-file-card"><span><b>Relatório iFood Recreio</b><small id="fileIfoodRecreioLabel">Excel iFood Recreio • Cancelamentos</small></span><input id="fileIfoodRecreio" type="file" accept=".xlsx,.xls,.csv"><i>⇧</i></label>
+      <label class="file-card ifood-file-card"><span><b>Relatório iFood Barra</b><small id="fileIfoodBarraLabel">Excel iFood Barra • Cancelamentos</small></span><input id="fileIfoodBarra" type="file" accept=".xlsx,.xls,.csv"><i>⇧</i></label>
       <button id="processBtn" class="process-btn">ATUALIZAR DASHBOARD</button>
     </div>
     <button class="back-app" onclick="location.href='index.html'">← Voltar ao sistema</button>
@@ -129,8 +130,9 @@
     <section id="view-plataformas" class="view"><div class="page-head"><h2>PLATAFORMAS</h2></div><div class="panel table-panel"><div id="platformsTable"></div></div></section>
     <section id="view-tempos" class="view"><div class="page-head"><h2>TEMPOS</h2></div><div class="panel table-panel"><div id="timesTable"></div></div></section>
     <section id="view-cancelamentos" class="view">
-      <div class="cancel-dashboard-head"><div><h2>DASHBOARD IFOOD</h2><p>Análise dos dados importados do relatório iFood.</p></div><div class="ifood-import-meta">Relatório iFood: <b id="ifoodImportedAt">Aguardando relatório iFood</b></div></div>
+      <div class="cancel-dashboard-head"><div><h2>DASHBOARD IFOOD</h2><p>Análise dos dados importados dos relatórios iFood Recreio e Barra.</p></div><div class="ifood-import-meta">Relatórios iFood: <b id="ifoodImportedAt">Aguardando relatórios iFood</b></div></div>
       <div class="cancel-filter-row">
+        <label>LOJA<select id="cancelStoreFilter"><option value="all">Todas</option><option value="recreio">Recreio</option><option value="barra">Barra da Tijuca</option></select></label>
         <label>PERÍODO<select id="cancelPeriodFilter"><option value="day">Diário</option><option value="week">Semanal</option><option value="month">Mensal</option></select></label>
         <label>DATA<input id="cancelDateFilter" type="date"></label>
       </div>
@@ -142,7 +144,7 @@
         <article class="panel ifood-chart-card"><h3>Cancelamentos por motivo</h3><div class="ifood-reason-layout"><div class="chart-box"><canvas id="ifoodCancelReasonChart"></canvas></div><div id="ifoodReasonLegend" class="ifood-reason-legend"></div></div></article>
       </div>
       <div class="cancel-section-divider"></div>
-      <div class="cancel-control-head"><div><h2>CONTROLE DE CANCELAMENTOS</h2><p>Compare os cancelamentos do Maestro com os cancelamentos do iFood.</p></div><div class="cancel-control-tools"><input id="cancelSearch" placeholder="Buscar pedido, parceiro ou cliente..."><select id="cancelQuickFilter"><option value="all">Todos</option><option value="div">Somente divergências</option><option value="ifood">Só iFood</option><option value="partial">Cancelamento parcial</option></select><button id="cancelRefreshBtn" class="action-btn compact">ATUALIZAR COMPARAÇÃO</button></div></div>
+      <div class="cancel-control-head"><div><h2>CONTROLE DE CANCELAMENTOS</h2><p>Compare os cancelamentos do Maestro com os cancelamentos do iFood por loja ou consolidados.</p></div><div class="cancel-control-tools"><input id="cancelSearch" placeholder="Buscar pedido, parceiro ou cliente..."><select id="cancelQuickFilter"><option value="all">Todos</option><option value="div">Somente divergências</option><option value="ifood">Só iFood</option><option value="partial">Cancelamento parcial</option></select><button id="cancelRefreshBtn" class="action-btn compact">ATUALIZAR COMPARAÇÃO</button></div></div>
       <div id="cancelCompareKpis" class="cancel-compare-kpis"></div>
       <div id="cancelPartialNotice" class="cancel-partial-notice"></div>
       <div class="panel bordere-card"><h3>BORDERE MANUAL DO DIA</h3><label>Cancelamento<input id="bordere_cancelamento" inputmode="decimal" placeholder="R$ 0,00"></label><label>Falha operacional<input id="bordere_falha" inputmode="decimal" placeholder="R$ 0,00"></label><label>Outros<input id="bordere_outros" inputmode="decimal" placeholder="R$ 0,00"></label><div class="bordere-total"><small>TOTAL BORDERE</small><b id="bordereTotal">R$ 0,00</b></div></div>
@@ -166,7 +168,7 @@
   <script src="delivery-import.js?v=1.22.0"></script>
   <script src="delivery-map.js?v=1.23.0"></script>
   <script src="delivery-dashboard.js?v=1.23.0"></script>
-  <script src="delivery-cancelamentos.js?v=1.1.0"></script>
-  <script src="delivery.js?v=1.13.0"></script>
+  <script src="delivery-cancelamentos.js?v=1.2.0"></script>
+  <script src="delivery.js?v=1.14.0"></script>
 </body>
 </html>

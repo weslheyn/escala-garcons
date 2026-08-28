@@ -1,5 +1,5 @@
 (function(){
-  let raw1=[],raw2=[],rawIfood=[],importRows=[],historyRows=[],allRows=[],currentRows=[],prevRows=[];
+  let raw1=[],raw2=[],rawIfoodRecreio=[],rawIfoodBarra=[],importRows=[],historyRows=[],allRows=[],currentRows=[],prevRows=[];
   const loadedMonths=new Set();
   const $=id=>document.getElementById(id);
   const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)};
@@ -43,8 +43,9 @@
       const rows=await DeliveryImport.parseFile(file);
       if(which===1){raw1=rows;$('file1Label').textContent=`${file.name} • ${rows.length} linhas`}
       else if(which===2){raw2=rows;$('file2Label').textContent=`${file.name} • ${rows.length} linhas`}
-      else{rawIfood=rows;if($('fileIfoodLabel'))$('fileIfoodLabel').textContent=`${file.name} • ${rows.length} linhas`;window.DeliveryCancelamentos?.setIfoodRows?.(rows)}
-      toast(`${which===3?'Relatório iFood':`Relatório ${which}`} carregado: ${rows.length} registros`)
+      else if(which===3){rawIfoodRecreio=rows;if($('fileIfoodRecreioLabel'))$('fileIfoodRecreioLabel').textContent=`${file.name} • ${rows.length} linhas`;window.DeliveryCancelamentos?.setIfoodRows?.(rows,'recreio')}
+      else{rawIfoodBarra=rows;if($('fileIfoodBarraLabel'))$('fileIfoodBarraLabel').textContent=`${file.name} • ${rows.length} linhas`;window.DeliveryCancelamentos?.setIfoodRows?.(rows,'barra')}
+      toast(`${which===3?'Relatório iFood Recreio':which===4?'Relatório iFood Barra':`Relatório ${which}`} carregado: ${rows.length} registros`)
     }catch(e){console.error(e);toast('Erro ao ler o arquivo')}
   }
   async function persistImportedMonth(rows){
@@ -67,10 +68,11 @@
     }
   }
   async function process(){
-    if(!raw1.length&&!raw2.length){if(rawIfood.length){window.DeliveryCancelamentos?.setIfoodRows?.(rawIfood);toast('Relatório iFood atualizado');return}toast('Importe pelo menos um relatório');return}
+    if(!raw1.length&&!raw2.length){if(rawIfoodRecreio.length||rawIfoodBarra.length){if(rawIfoodRecreio.length)window.DeliveryCancelamentos?.setIfoodRows?.(rawIfoodRecreio,'recreio');if(rawIfoodBarra.length)window.DeliveryCancelamentos?.setIfoodRows?.(rawIfoodBarra,'barra');toast('Relatórios iFood atualizados');return}toast('Importe pelo menos um relatório');return}
     importRows=DeliveryImport.consolidate(raw1,raw2);
     window.DeliveryCancelamentos?.setMaestroRows?.(raw1,raw2);
-    if(rawIfood.length)window.DeliveryCancelamentos?.setIfoodRows?.(rawIfood);
+    if(rawIfoodRecreio.length)window.DeliveryCancelamentos?.setIfoodRows?.(rawIfoodRecreio,'recreio');
+    if(rawIfoodBarra.length)window.DeliveryCancelamentos?.setIfoodRows?.(rawIfoodBarra,'barra');
     if(!importRows.length){toast('Nenhum pedido identificado');return}
     rebuildPool();
     const keys=importRows.map(r=>r.dateKey).filter(Boolean).sort();
@@ -211,7 +213,8 @@
   function bind(){
     $('file1').addEventListener('change',e=>fileChanged(1,e.target.files[0]));
     $('file2').addEventListener('change',e=>fileChanged(2,e.target.files[0]));
-    $('fileIfood')?.addEventListener('change',e=>fileChanged(3,e.target.files[0]));
+    $('fileIfoodRecreio')?.addEventListener('change',e=>fileChanged(3,e.target.files[0]));
+    $('fileIfoodBarra')?.addEventListener('change',e=>fileChanged(4,e.target.files[0]));
     $('processBtn').onclick=process;
     $('refreshBtn').onclick=()=>applyPeriod($('dateFilter').value);
     $('dateFilter').onchange=e=>applyPeriod(e.target.value);
